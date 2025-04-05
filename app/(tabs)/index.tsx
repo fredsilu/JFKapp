@@ -1,22 +1,20 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React from 'react';
+import { View, Text, Platform, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { useOrders, useClients, useDishes } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { useRouter } from 'expo-router';
+import { getFirestore, collection, runTransaction, doc, serverTimestamp } from "firebase/firestore";
+import app from '@/lib/firebase'; // Assurez-vous d'importer votre configuration Firebase
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function DashboardScreen() {
-
   const router = useRouter();
-  /*
   const { data: orders = [], loading: loadingOrders, error: ordersError } = useOrders({
     orderBy: ['createdAt', 'desc']
   });
   const { data: clients = [], loading: loadingClients, error: clientsError } = useClients();
- const { data: dishes = [], loading: loadingDishes, error: dishesError } = useDishes();
+  const { data: dishes = [], loading: loadingDishes, error: dishesError } = useDishes();
 
   if (loadingOrders || loadingClients || loadingDishes) {
     return <LoadingSpinner />;
@@ -26,72 +24,175 @@ export default function DashboardScreen() {
     return <ErrorMessage message="Error loading dashboard data" />;
   }
 
-*/
+  const activeOrders = orders.filter(order => order.status !== 'Livré');
+  const todayOrders = orders.filter(order => {
+    const orderDate = new Date(order.createdAt);
+    const today = new Date();
+    return orderDate.toDateString() === today.toDateString();
+  });
+
+  const calculateDailyRevenue = () => {
+    return todayOrders.reduce((total, order) => {
+      const dishesTotal = order.dishes.reduce((orderTotal, { dish, quantity }) => {
+        const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
+          return dishTotal + (ingredient.price * ingredientQty);
+        }, 0);
+        return orderTotal + (dishPrice * quantity);
+      }, 0);
+
+      const ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
+        return total + (ingredient.price * quantity);
+      }, 0);
+
+      return total + dishesTotal + ingredientsTotal;
+    }, 0);
+  };
+
+  const dailyRevenue = calculateDailyRevenue();
+  const previousDayRevenue = dailyRevenue * 0.8; // Mock data for comparison
+  const revenueChange = ((dailyRevenue - previousDayRevenue) / previousDayRevenue) * 100;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Dashboard</Text>
+        <Text style={styles.subtitle}>Welcome to CrepoTraiteur</Text>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <View style={[styles.statCard, styles.revenueCard]}>
+          <View style={styles.statHeader}>
+            <Text style={styles.statLabel}>Today's Revenue</Text>
+            <View style={[
+              styles.changeBadge,
+              { backgroundColor: revenueChange >= 0 ? '#34C75915' : '#FF3B3015' }
+            ]}>
+              {revenueChange >= 0 ? (
+                <Icon name="trending-up" size={16} color="#34C759" />
+              ) : (
+                <Icon name="trending-down" size={16} color="#FF3B30" />
+              )}
+              <Text style={[
+                styles.changeText,
+                { color: revenueChange >= 0 ? '#34C759' : '#FF3B30' }
+              ]}>
+                {Math.abs(revenueChange).toFixed(1)}%
+              </Text>
+            </View>
+          </View>
+          <View style={styles.revenueAmount}>
+            <Icon name="attach-money" size={24} color="#007AFF" />
+            <Text style={styles.revenueText}>{dailyRevenue.toFixed(2)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.statCard}>
+          <Icon name="inventory" size={24} color="#007AFF" />
+          <Text style={styles.statNumber}>{activeOrders.length}</Text>
+          <Text style={styles.statLabel}>Active Orders</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <Icon name="people" size={24} color="#007AFF" />
+          <Text style={styles.statNumber}>{clients.length}</Text>
+          <Text style={styles.statLabel}>Total Clients</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <Icon name="schedule" size={24} color="#007AFF" />
+          <Text style={styles.statNumber}>{todayOrders.length}</Text>
+          <Text style={styles.statLabel}>Today's Orders</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Orders</Text>
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={() => router.push('/all-orders')}>
+            <Text style={styles.seeAllText}>See All</Text>
+            <Icon name="chevron-right" size={20} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+
+        {orders.slice(0, 5).map((order) => (
+          <View key={order.id} style={styles.orderCard}>
+            <Image
+              source={{
+                uri: order.client.profilePicture ||
+                  'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&q=80&fit=crop'
+              }}
+              style={styles.clientImage}
+            />
+            <View style={styles.orderInfo}>
+              <Text style={styles.clientName}>{order.client.name}</Text>
+              <Text style={styles.orderMeta}>
+                {order.dishes.reduce((total, { quantity }) => total + quantity, 0)} items
+                • Delivery at {order.deliveryTime}
+              </Text>
+            </View>
+            <View style={[
+              styles.statusBadge,
+              { backgroundColor: getStatusColor(order.status) + '15' }
+            ]}>
+              <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                {order.status}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Popular Dishes</Text>
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={() => router.push('/all-dishes')}>
+            <Text style={styles.seeAllText}>See All</Text>
+            <Icon name="chevron-right" size={20} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dishesContainer}>
+          {dishes.slice(0, 5).map((dish) => (
+            <View key={dish.id} style={styles.dishCard}>
+              <Image
+                source={{ uri: dish.image }}
+                style={styles.dishImage}
+              />
+              <View style={styles.dishInfo}>
+                <Text style={styles.dishName}>{dish.name}</Text>
+                <Text style={styles.dishMeta}>
+                  {dish.preparationTime} min • {dish.servings} servings
+                </Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </ScrollView>
   );
 }
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'En cours':
+      return '#007AFF';
+    case 'En préparation':
+      return '#FF9500';
+    case 'Livré':
+      return '#34C759';
+    default:
+      return '#666';
+  }
+};
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
