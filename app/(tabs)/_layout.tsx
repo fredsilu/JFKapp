@@ -1,43 +1,66 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Import MaterialIcons
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  //const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopColor: '#f5f5f5',
+        },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#999',
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Tableau de bord',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="dashboard" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="clients"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Clients',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="people" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ingredients"
+        options={{
+          title: 'Ingrédients',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="local-cafe" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="dishes"
+        options={{
+          title: 'Plats',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="book" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: 'Commandes',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="shopping-bag" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen 
+        name="all-orders"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen 
+        name="all-dishes"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
