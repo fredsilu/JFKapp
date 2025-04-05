@@ -51,18 +51,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }: { color: string; size: number }) => <Icon name="shopping-bag" size={size} color={color} />,
         }}
       />
-      <Tabs.Screen 
-        name="all-orders"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen 
-        name="all-dishes"
-        options={{
-          href: null,
-        }}
-      />
+   
+     
     </Tabs>
   );
 }

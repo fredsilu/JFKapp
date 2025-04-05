@@ -1,9 +1,10 @@
 // Update the title and text content
-export const dishesTitle = "Tous les plats";
-export const servingsText = "portions";
-export const minutesText = "min";
+const dishesTitle = "Tous les plats";
+const servingsText = "portions";
+const minutesText = "min";
+
 // Define the dishes array
-export const dishes = [
+const dishes = [
     {
         id: 1,
         name: "Spaghetti Carbonara",
@@ -23,3 +24,10 @@ export const dishes = [
         cookTime: 40,
     },
 ];
+
+export default {
+    dishesTitle,
+    servingsText,
+    minutesText,
+    dishes,
+};

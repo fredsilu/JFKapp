@@ -455,7 +455,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-   
+
     onSubmit({
       clientId: selectedClient!.id,
       client: selectedClient!,
@@ -466,7 +466,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       address,
       deliveryAddress: address,
       //createdAt: order?.createdAt || new Date().toISOString(),
-      
+
     });
   };
   // const [loading, setLoading] = useState(true);
@@ -474,7 +474,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   if (loadingClients || loadingDishes || loadingIngredients) {
     return <LoadingSpinner />;
   }
-  
+
 
 
   return (
@@ -496,18 +496,18 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           <View style={styles.errorContainer}>
             <ErrorMessage message={formError} />
           </View>
-          )}
-        
+        )}
+
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Client</Text>
           {selectedClient && !showClientSearch ? (
             <View style={styles.selectedClient}>
+
               <Image
-                source={{
-                  uri: selectedClient.profilePicture ||
-                    'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&q=80&fit=crop'
-                }}
+                source={selectedClient.profilePicture
+                  ? { uri: selectedClient.profilePicture }
+                  : require('@/assets/images/no_client_picture_small.jpg')}
                 style={styles.clientImage}
               />
               <View style={styles.clientInfo}>
@@ -544,11 +544,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                       setShowClientSearch(false);
                       setAddress(client.address);
                     }}>
+
                     <Image
-                      source={{
-                        uri: client.profilePicture ||
-                          'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&q=80&fit=crop'
-                      }}
+                      source={client.profilePicture
+                        ? { uri: client.profilePicture }
+                        : require('@/assets/images/no_client_picture_small.jpg')}
                       style={styles.resultImage}
                     />
                     <View style={styles.resultInfo}>
@@ -771,7 +771,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           </TouchableOpacity>
         </View>
 
-        </ScrollView>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

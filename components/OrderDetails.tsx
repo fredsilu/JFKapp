@@ -14,7 +14,7 @@ interface OrderDetailsProps {
 
 export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
-  
+
   const STATUS_TRANSITIONS: Record<Order['status'], Order['status']> = {
     'En cours': 'En préparation',
     'En préparation': 'Livré',
@@ -60,7 +60,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Détails de la commande</Text>
           <View style={styles.headerActions}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.editButton}
               onPress={() => setShowEditForm(true)}>
               <MaterialIcons name="edit" size={20} color="#007AFF" />
@@ -77,7 +77,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
               <MaterialIcons name="inventory" size={20} color="#1a1a1a" />
               <Text style={styles.sectionTitle}>Statut de la commande</Text>
             </View>
-            
+
             <View style={styles.statusContainer}>
               <View style={[
                 styles.statusBadge,
@@ -89,7 +89,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
               </View>
 
               {order.status !== 'Livré' && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.updateStatusButton,
                     { backgroundColor: getStatusColor(STATUS_TRANSITIONS[order.status]) }
@@ -111,13 +111,15 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
             </View>
 
             <View style={styles.clientCard}>
-              <Image 
-                source={{ 
-                  uri: order.client.profilePicture || 
-                       'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&q=80&fit=crop'
-                }}
+
+              <Image
+                source={order.client.profilePicture
+                  ? { uri: order.client.profilePicture }
+                  : require('@/assets/images/no_client_picture.jpg')}
                 style={styles.clientImage}
               />
+
+
               <View style={styles.clientInfo}>
                 <Text style={styles.clientName}>{order.client.name}</Text>
                 <Text style={styles.clientMeta}>{order.client.phone}</Text>

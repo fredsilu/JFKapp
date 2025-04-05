@@ -53,129 +53,129 @@ export default function DashboardScreen() {
   const revenueChange = ((dailyRevenue - previousDayRevenue) / previousDayRevenue) * 100;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Welcome to CrepoTraiteur</Text>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <View style={[styles.statCard, styles.revenueCard]}>
-          <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>Today's Revenue</Text>
-            <View style={[
-              styles.changeBadge,
-              { backgroundColor: revenueChange >= 0 ? '#34C75915' : '#FF3B3015' }
-            ]}>
-              {revenueChange >= 0 ? (
-                <Icon name="trending-up" size={16} color="#34C759" />
-              ) : (
-                <Icon name="trending-down" size={16} color="#FF3B30" />
-              )}
-              <Text style={[
-                styles.changeText,
-                { color: revenueChange >= 0 ? '#34C759' : '#FF3B30' }
+    <View style={styles.container}>
+       <View style={styles.header_content}>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.subtitle}>Welcome to CrepoTraiteur</Text>
+        </View>
+      <ScrollView style={styles.container}>
+        <View style={styles.statsGrid}>
+          <View style={[styles.statCard, styles.revenueCard]}>
+            <View style={styles.statHeader}>
+              <Text style={styles.statLabel}>Today's Revenue</Text>
+              <View style={[
+                styles.changeBadge,
+                { backgroundColor: revenueChange >= 0 ? '#34C75915' : '#FF3B3015' }
               ]}>
-                {Math.abs(revenueChange).toFixed(1)}%
-              </Text>
+                {revenueChange >= 0 ? (
+                  <Icon name="trending-up" size={16} color="#34C759" />
+                ) : (
+                  <Icon name="trending-down" size={16} color="#FF3B30" />
+                )}
+                <Text style={[
+                  styles.changeText,
+                  { color: revenueChange >= 0 ? '#34C759' : '#FF3B30' }
+                ]}>
+                  {Math.abs(revenueChange).toFixed(1)}%
+                </Text>
+              </View>
+            </View>
+            <View style={styles.revenueAmount}>
+              <Icon name="attach-money" size={24} color="#007AFF" />
+              <Text style={styles.revenueText}>{dailyRevenue.toFixed(2)}</Text>
             </View>
           </View>
-          <View style={styles.revenueAmount}>
-            <Icon name="attach-money" size={24} color="#007AFF" />
-            <Text style={styles.revenueText}>{dailyRevenue.toFixed(2)}</Text>
+
+          <View style={styles.statCard}>
+            <Icon name="inventory" size={24} color="#007AFF" />
+            <Text style={styles.statNumber}>{activeOrders.length}</Text>
+            <Text style={styles.statLabel}>Active Orders</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="people" size={24} color="#007AFF" />
+            <Text style={styles.statNumber}>{clients.length}</Text>
+            <Text style={styles.statLabel}>Total Clients</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="schedule" size={24} color="#007AFF" />
+            <Text style={styles.statNumber}>{todayOrders.length}</Text>
+            <Text style={styles.statLabel}>Today's Orders</Text>
           </View>
         </View>
 
-        <View style={styles.statCard}>
-          <Icon name="inventory" size={24} color="#007AFF" />
-          <Text style={styles.statNumber}>{activeOrders.length}</Text>
-          <Text style={styles.statLabel}>Active Orders</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Icon name="people" size={24} color="#007AFF" />
-          <Text style={styles.statNumber}>{clients.length}</Text>
-          <Text style={styles.statLabel}>Total Clients</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Icon name="schedule" size={24} color="#007AFF" />
-          <Text style={styles.statNumber}>{todayOrders.length}</Text>
-          <Text style={styles.statLabel}>Today's Orders</Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Orders</Text>
-          <TouchableOpacity
-            style={styles.seeAllButton}
-            onPress={() => router.push('/all-orders')}>
-            <Text style={styles.seeAllText}>See All</Text>
-            <Icon name="chevron-right" size={20} color="#007AFF" />
-          </TouchableOpacity>
-        </View>
-
-        {orders.slice(0, 5).map((order) => (
-          <View key={order.id} style={styles.orderCard}>
-            <Image
-              source={{
-                uri: order.client.profilePicture ||
-                  'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&q=80&fit=crop'
-              }}
-              style={styles.clientImage}
-            />
-            <View style={styles.orderInfo}>
-              <Text style={styles.clientName}>{order.client.name}</Text>
-              <Text style={styles.orderMeta}>
-                {order.dishes.reduce((total, { quantity }) => total + quantity, 0)} items
-                • Delivery at {order.deliveryTime}
-              </Text>
-            </View>
-            <View style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusColor(order.status) + '15' }
-            ]}>
-              <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                {order.status}
-              </Text>
-            </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Orders</Text>
+            <TouchableOpacity
+              style={styles.seeAllButton}
+              onPress={() => router.push('/all-orders')}>
+              <Text style={styles.seeAllText}>See All</Text>
+              <Icon name="chevron-right" size={20} color="#007AFF" />
+            </TouchableOpacity>
           </View>
-        ))}
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Dishes</Text>
-          <TouchableOpacity
-            style={styles.seeAllButton}
-            onPress={() => router.push('/all-dishes')}>
-            <Text style={styles.seeAllText}>See All</Text>
-            <Icon name="chevron-right" size={20} color="#007AFF" />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dishesContainer}>
-          {dishes.slice(0, 5).map((dish) => (
-            <View key={dish.id} style={styles.dishCard}>
+          {orders.slice(0, 5).map((order) => (
+            <View key={order.id} style={styles.orderCard}>
               <Image
-                source={{ uri: dish.image }}
-                style={styles.dishImage}
+                source={order.client.profilePicture
+                  ? { uri: order.client.profilePicture }
+                  : require('@/assets/images/no_client_picture.jpg')}
+                style={styles.clientImage}
               />
-              <View style={styles.dishInfo}>
-                <Text style={styles.dishName}>{dish.name}</Text>
-                <Text style={styles.dishMeta}>
-                  {dish.preparationTime} min • {dish.servings} servings
+
+              <View style={styles.orderInfo}>
+                <Text style={styles.clientName}>{order.client.name}</Text>
+                <Text style={styles.orderMeta}>
+                  {order.dishes.reduce((total, { quantity }) => total + quantity, 0)} items
+                  • Delivery at {order.deliveryTime}
+                </Text>
+              </View>
+              <View style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(order.status) + '15' }
+              ]}>
+                <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                  {order.status}
                 </Text>
               </View>
             </View>
           ))}
-        </ScrollView>
-      </View>
-    </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular Dishes</Text>
+            <TouchableOpacity
+              style={styles.seeAllButton}
+              onPress={() => router.push('/all-dishes')}>
+              <Text style={styles.seeAllText}>See All</Text>
+              <Icon name="chevron-right" size={20} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dishesContainer}>
+            {dishes.slice(0, 5).map((dish) => (
+              <View key={dish.id} style={styles.dishCard}>
+                <Image
+                  source={{ uri: dish.image }}
+                  style={styles.dishImage}
+                />
+                <View style={styles.dishInfo}>
+                  <Text style={styles.dishName}>{dish.name}</Text>
+                  <Text style={styles.dishMeta}>
+                    {dish.preparationTime} min • {dish.servings} servings
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>  </View>
   );
 }
 
@@ -196,6 +196,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingTop: Platform.OS === 'android' ? 25 : 10, // Add top space for Android
+    marginTop: Platform.OS === 'android' ? 15 : 15, // Add top space for iOS
+  },
+  header_content: {
+    padding: 20,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    color: '#FFFFFF',
   },
   printButtonText: {
     fontFamily: 'Inter_500Medium',

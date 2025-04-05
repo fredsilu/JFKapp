@@ -138,7 +138,7 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
             <Image source={{ uri: image }} style={styles.previewImage} />
           ) : (
             <View style={styles.placeholderContainer}>
-              <Icon name="image" size={48} color="#666" />
+              <Icon name="image" size={48} color="#667" />
               <Text style={styles.placeholderText}>Ajouter une image (optionnel)</Text>
             </View>
           )}

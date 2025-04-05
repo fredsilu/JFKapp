@@ -56,12 +56,14 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
 
       <ScrollView style={styles.content}>
         <View style={styles.profile}>
-          <Image 
-            source={{ 
-              uri: client.profilePicture || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200&h=200&q=80&fit=crop'
-            }} 
-            style={styles.profileImage} 
+
+          <Image
+            source={client.profilePicture
+              ? { uri: client.profilePicture }
+              : require('@/assets/images/no_client_picture.jpg')}
+            style={styles.profileImage}
           />
+
           <View style={styles.profileInfo}>
             <Text style={styles.name}>{client.name}</Text>
             <View style={styles.contactInfo}>
@@ -125,7 +127,7 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
                     <View style={styles.orderMeta}>
                       <Icon name="calendar-today" size={16} color="#666" />
                       <Text style={styles.orderDate}>
-                      {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.createdAt).toLocaleDateString()}
                       </Text>
                     </View>
 
@@ -146,7 +148,7 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
                     <View style={styles.deliveryInfo}>
                       <Icon name="schedule" size={16} color="#666" />
                       <Text style={styles.deliveryText}>
-                      Livraison à {order.deliveryTime}
+                        Livraison à {order.deliveryTime}
                       </Text>
                     </View>
                   </View>

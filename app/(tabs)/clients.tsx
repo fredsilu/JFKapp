@@ -22,7 +22,7 @@ export default function ClientsScreen() {
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.toLowerCase().includes(searchQuery.toLowerCase())
+    (typeof client.phone === 'string' && client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleCreateClient = async (values: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>) => {
@@ -71,35 +71,36 @@ export default function ClientsScreen() {
               style={styles.clientCard}
               onPress={() => setSelectedClient(client)}>
               <Image 
-                source={{ 
-                  uri: client.profilePicture || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200&h=200&q=80&fit=crop'
-                }} 
-                style={styles.clientImage} 
+              source={client.profilePicture 
+                ? { uri: client.profilePicture } 
+                : require('@/assets/images/no_client_picture.jpg')} 
+              style={styles.clientImage} 
               />
               <View style={styles.clientInfo}>
-                <Text style={styles.clientName}>{client.name}</Text>
-                <View style={styles.contactInfo}>
-                  <View style={styles.contactItem}>
-                    <Icon name="email" size={14} color="#665" />
-                    <Text style={styles.contactText}>{client.email}</Text>
-                  </View>
-                  <View style={styles.contactItem}>
-                    <Icon name="phone" size={14} color="#665" />
-                    <Text style={styles.contactText}>{client.phone}</Text>
-                  </View>
+              <Text style={styles.clientName}>{client.name}</Text>
+              <View style={styles.contactInfo}>
+                <View style={styles.contactItem}>
+                <Icon name="email" size={14} color="#665" />
+                <Text style={styles.contactText}>{client.email}</Text>
                 </View>
-                <View style={styles.statsContainer}>
-                  <View style={styles.stat}>
-                    <Icon name="shopping-bag" size={16} color="#007AFF" />
-                    <Text style={styles.statNumber}>{client.totalOrders}</Text>
-                    <Text style={styles.statLabel}>orders</Text>
-                  </View>
-                  {client.lastOrderDate && (
-                    <Text style={styles.lastOrder}>
-                      Last order: {new Date(client.lastOrderDate).toLocaleDateString()}
-                    </Text>
-                  )}
+                <View style={styles.contactItem}>
+                <Icon name="phone" size={14} color="#665" />
+                <Text style={styles.contactText}> 
+                {typeof client.phone === 'number' || typeof client.phone === 'string' ? client.phone.toString() : 'N/A'}</Text>
                 </View>
+              </View>
+              <View style={styles.statsContainer}>
+                <View style={styles.stat}>
+                <Icon name="shopping-bag" size={16} color="#007AFF" />
+                <Text style={styles.statNumber}>{client.totalOrders}</Text>
+                <Text style={styles.statLabel}>orders</Text>
+                </View>
+                {client.lastOrderDate && (
+                <Text style={styles.lastOrder}>
+                  Last order: {new Date(client.lastOrderDate).toLocaleDateString()}
+                </Text>
+                )}
+              </View>
               </View>
             </TouchableOpacity>
           ))}
@@ -129,6 +130,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    marginTop: 40,
   },
   header: {
     padding: 20,
