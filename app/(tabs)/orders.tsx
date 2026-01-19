@@ -13,11 +13,16 @@ import { Order } from '@/types';
 import { addOrder } from '@/src/services/firestore';
 
 export default function OrdersScreen() {
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const { data: orders = [], loading, error } = useOrders({
     orderBy: ['createdAt', 'desc']
   });
+
+  // Get the current order from the updated list
+  const selectedOrder = selectedOrderId 
+    ? orders.find(o => o.id === selectedOrderId) || null
+    : null;
 
   if (loading) {
     return <LoadingSpinner />;
@@ -28,16 +33,31 @@ export default function OrdersScreen() {
   }
 
   const calculateOrderTotal = (order: Order) => {
-    const dishesTotal = order.dishes.reduce((total, { dish, quantity }) => {
-      const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
-        return dishTotal + (ingredient.price * ingredientQty);
+    let dishesTotal = 0;
+    if (order.dishes && Array.isArray(order.dishes)) {
+      dishesTotal = order.dishes.reduce((total, { dish, quantity }) => {
+        if (!dish || !dish.ingredients) {
+          return total;
+        }
+        const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
+          if (!ingredient || !ingredient.price) {
+            return dishTotal;
+          }
+          return dishTotal + (ingredient.price * ingredientQty);
+        }, 0);
+        return total + (dishPrice * quantity);
       }, 0);
-      return total + (dishPrice * quantity);
-    }, 0);
+    }
 
-    const ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
-      return total + (ingredient.price * quantity);
-    }, 0);
+    let ingredientsTotal = 0;
+    if (order.additionalIngredients && Array.isArray(order.additionalIngredients)) {
+      ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
+        if (!ingredient || !ingredient.price) {
+          return total;
+        }
+        return total + (ingredient.price * quantity);
+      }, 0);
+    }
 
     return dishesTotal + ingredientsTotal;
   };
@@ -83,7 +103,7 @@ export default function OrdersScreen() {
           <TouchableOpacity 
             key={order.id} 
             style={styles.orderCard}
-            onPress={() => setSelectedOrder(order)}>
+            onPress={() => setSelectedOrderId(order.id)}>
             <View style={styles.orderHeader}>
               <View>
                 <Text style={styles.clientName}>{order.client.name}</Text>
@@ -129,7 +149,7 @@ export default function OrdersScreen() {
         {selectedOrder && (
           <OrderDetails
             order={selectedOrder}
-            onClose={() => setSelectedOrder(null)}
+            onClose={() => setSelectedOrderId(null)}
           />
         )}
       </Modal>

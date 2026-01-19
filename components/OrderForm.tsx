@@ -603,30 +603,33 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           {selectedDishes.length > 0 && (
             <View style={styles.selectedDishes}>
               <Text style={styles.subsectionTitle}>Plats sélectionnés</Text>
-              {selectedDishes.map(({ dish, quantity }) => (
-                <View key={dish.id} style={styles.selectedDishItem}>
-                  <Image
-                    source={{ uri: dish.image }}
-                    style={styles.selectedDishImage}
-                  />
-                  <View style={styles.selectedDishInfo}>
-                    <Text style={styles.selectedDishName}>{dish.name}</Text>
-                    <View style={styles.quantityContainer}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleUpdateDishQuantity(dish.id, quantity - 1)}>
-                        <Text style={styles.quantityButtonText}>-</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.quantityText}>{quantity}</Text>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleUpdateDishQuantity(dish.id, quantity + 1)}>
-                        <Text style={styles.quantityButtonText}>+</Text>
-                      </TouchableOpacity>
+              {selectedDishes && Array.isArray(selectedDishes) && selectedDishes.map(({ dish, quantity }) => {
+                if (!dish || !dish.id) return null;
+                return (
+                  <View key={dish.id} style={styles.selectedDishItem}>
+                    <Image
+                      source={{ uri: dish.image || 'https://via.placeholder.com/100' }}
+                      style={styles.selectedDishImage}
+                    />
+                    <View style={styles.selectedDishInfo}>
+                      <Text style={styles.selectedDishName}>{dish.name}</Text>
+                      <View style={styles.quantityContainer}>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleUpdateDishQuantity(dish.id, quantity - 1)}>
+                          <Text style={styles.quantityButtonText}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.quantityText}>{quantity}</Text>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleUpdateDishQuantity(dish.id, quantity + 1)}>
+                          <Text style={styles.quantityButtonText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
         </View>
@@ -649,65 +652,71 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               showsHorizontalScrollIndicator={false}
               style={styles.ingredientsScroll}
               contentContainerStyle={styles.ingredientsContainer}>
-              {filteredIngredients.map(ingredient => (
-                <TouchableOpacity
-                  key={ingredient.id}
-                  style={styles.ingredientCard}
-                  onPress={() => handleAddIngredient(ingredient)}>
-                  <View style={styles.ingredientCardContent}>
-                    <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                    <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
-                    <View style={styles.ingredientPrice}>
-                      <Icon name="attach-money" size={14} color="#007AFF" />
-                      <Text style={styles.priceText}>
-                        {formatCurrency(ingredient.price)} / {ingredient.unit}
-                      </Text>
+              {filteredIngredients && Array.isArray(filteredIngredients) && filteredIngredients.map(ingredient => {
+                if (!ingredient || !ingredient.id) return null;
+                return (
+                  <TouchableOpacity
+                    key={ingredient.id}
+                    style={styles.ingredientCard}
+                    onPress={() => handleAddIngredient(ingredient)}>
+                    <View style={styles.ingredientCardContent}>
+                      <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                      <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
+                      <View style={styles.ingredientPrice}>
+                        <Icon name="attach-money" size={14} color="#007AFF" />
+                        <Text style={styles.priceText}>
+                          {formatCurrency(ingredient.price || 0)} / {ingredient.unit}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             {additionalIngredients.length > 0 && (
               <View style={styles.selectedIngredients}>
                 <Text style={styles.subsectionTitle}>Ingrédients sélectionnés</Text>
-                {additionalIngredients.map(({ ingredient, quantity }) => (
-                  <View key={ingredient.id} style={styles.selectedIngredientItem}>
-                    <View style={styles.selectedIngredientInfo}>
-                      <Text style={styles.selectedIngredientName}>{ingredient.name}</Text>
-                      <Text style={styles.selectedIngredientCategory}>{ingredient.category}</Text>
-                    </View>
-                    <View style={styles.quantityContainer}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity - 1)}>
-                        <Text style={styles.quantityButtonText}>-</Text>
-                      </TouchableOpacity>
-                      <View style={styles.quantityInputContainer}>
-                        <TextInput
-                          style={styles.quantityInput}
-                          value={quantity.toString()}
-                          onChangeText={(value) => handleUpdateIngredientQuantity(
-                            ingredient.id,
-                            parseFloat(value) || 0
-                          )}
-                          keyboardType="decimal-pad"
-                        />
-                        <Text style={styles.unitText}>{ingredient.unit}</Text>
+                {additionalIngredients && Array.isArray(additionalIngredients) && additionalIngredients.map(({ ingredient, quantity }) => {
+                  if (!ingredient || !ingredient.id) return null;
+                  return (
+                    <View key={ingredient.id} style={styles.selectedIngredientItem}>
+                      <View style={styles.selectedIngredientInfo}>
+                        <Text style={styles.selectedIngredientName}>{ingredient.name}</Text>
+                        <Text style={styles.selectedIngredientCategory}>{ingredient.category}</Text>
+                      </View>
+                      <View style={styles.quantityContainer}>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity - 1)}>
+                          <Text style={styles.quantityButtonText}>-</Text>
+                        </TouchableOpacity>
+                        <View style={styles.quantityInputContainer}>
+                          <TextInput
+                            style={styles.quantityInput}
+                            value={quantity.toString()}
+                            onChangeText={(value) => handleUpdateIngredientQuantity(
+                              ingredient.id,
+                              parseFloat(value) || 0
+                            )}
+                            keyboardType="decimal-pad"
+                          />
+                          <Text style={styles.unitText}>{ingredient.unit}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity + 1)}>
+                          <Text style={styles.quantityButtonText}>+</Text>
+                        </TouchableOpacity>
                       </View>
                       <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity + 1)}>
-                        <Text style={styles.quantityButtonText}>+</Text>
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveIngredient(ingredient.id)}>
+                        <Icon name="close" size={20} color="#FF3B30" />
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.removeButton}
-                      onPress={() => handleRemoveIngredient(ingredient.id)}>
-                      <Icon name="close" size={20} color="#FF3B30" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
+                  );
+                })}}
               </View>
             )}
           </View>

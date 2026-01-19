@@ -18,15 +18,15 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
   const [name, setName] = useState(dish?.name || '');
   const [description, setDescription] = useState(dish?.description || '');
   const [image, setImage] = useState(dish?.image || '');
-  const [preparationTime, setPreparationTime] = useState(dish?.preparationTime.toString() || '');
-  const [servings, setServings] = useState(dish?.servings.toString() || '');
+  const [preparationTime, setPreparationTime] = useState((dish?.preparationTime || '').toString());
+  const [servings, setServings] = useState((dish?.servings || '').toString());
   const [selectedIngredients, setSelectedIngredients] = useState<DishIngredient[]>(
     dish?.ingredients || []
   );
   const [error, setError] = useState<string | null>(null);
 
   const handleAddIngredient = (ingredient: Ingredient) => {
-    if (!selectedIngredients.some(i => i.ingredient.id === ingredient.id)) {
+    if (!selectedIngredients.some(i => i.ingredient && i.ingredient.id === ingredient.id)) {
       setSelectedIngredients([...selectedIngredients, { ingredient, quantity: 0 }]);
     }
   };
@@ -34,7 +34,7 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
   const handleUpdateQuantity = (ingredientId: string, quantity: string) => {
     setSelectedIngredients(prev => 
       prev.map(item => 
-        item.ingredient.id === ingredientId 
+        item.ingredient && item.ingredient.id === ingredientId 
           ? { ...item, quantity: parseFloat(quantity) || 0 }
           : item
       )
@@ -42,7 +42,7 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
   };
 
   const handleRemoveIngredient = (ingredientId: string) => {
-    setSelectedIngredients(prev => prev.filter(item => item.ingredient.id !== ingredientId));
+    setSelectedIngredients(prev => prev.filter(item => item.ingredient && item.ingredient.id !== ingredientId));
   };
 
   const calculateTotalPrice = () => {
@@ -217,53 +217,59 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
               showsHorizontalScrollIndicator={false} 
               style={styles.ingredientsList}
               contentContainerStyle={styles.ingredientsListContent}>
-              {ingredients.map(ingredient => (
-                <TouchableOpacity
-                  key={ingredient.id}
-                  style={[
-                    styles.ingredientChip,
-                    selectedIngredients.some(i => i.ingredient.id === ingredient.id) && 
-                    styles.ingredientChipSelected
-                  ]}
-                  onPress={() => handleAddIngredient(ingredient)}>
-                  <Text style={[
-                    styles.ingredientChipText,
-                    selectedIngredients.some(i => i.ingredient.id === ingredient.id) && 
-                    styles.ingredientChipTextSelected
-                  ]}>
-                    {ingredient.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {ingredients && Array.isArray(ingredients) && ingredients.map(ingredient => {
+                if (!ingredient || !ingredient.id) return null;
+                return (
+                  <TouchableOpacity
+                    key={ingredient.id}
+                    style={[
+                      styles.ingredientChip,
+                      selectedIngredients.some(i => i.ingredient && i.ingredient.id === ingredient.id) && 
+                      styles.ingredientChipSelected
+                    ]}
+                    onPress={() => handleAddIngredient(ingredient)}>
+                    <Text style={[
+                      styles.ingredientChipText,
+                      selectedIngredients.some(i => i.ingredient && i.ingredient.id === ingredient.id) && 
+                      styles.ingredientChipTextSelected
+                    ]}>
+                      {ingredient.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
-            {selectedIngredients.map(({ ingredient, quantity }) => (
-              <View key={ingredient.id} style={styles.selectedIngredient}>
-                <View style={styles.selectedIngredientInfo}>
-                  <Text style={styles.selectedIngredientName}>{ingredient.name}</Text>
-                  <Text style={styles.selectedIngredientPrice}>
-                    ${(ingredient.price * (quantity || 0)).toFixed(2)}
-                  </Text>
-                </View>
-                
-                <View style={styles.quantityContainer}>
-                  <TextInput
-                    style={styles.quantityInput}
-                    value={quantity.toString()}
-                    onChangeText={(value) => handleUpdateQuantity(ingredient.id, value)}
-                    keyboardType="decimal-pad"
-                    placeholder="0"
-                  />
-                  <Text style={styles.unitText}>{ingredient.unit}</Text>
-                </View>
+            {selectedIngredients && Array.isArray(selectedIngredients) && selectedIngredients.map(({ ingredient, quantity }) => {
+              if (!ingredient || !ingredient.id) return null;
+              return (
+                <View key={ingredient.id} style={styles.selectedIngredient}>
+                  <View style={styles.selectedIngredientInfo}>
+                    <Text style={styles.selectedIngredientName}>{ingredient.name}</Text>
+                    <Text style={styles.selectedIngredientPrice}>
+                      ${((ingredient.price || 0) * (quantity || 0)).toFixed(2)}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.quantityContainer}>
+                    <TextInput
+                      style={styles.quantityInput}
+                      value={quantity.toString()}
+                      onChangeText={(value) => handleUpdateQuantity(ingredient.id, value)}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                    />
+                    <Text style={styles.unitText}>{ingredient.unit}</Text>
+                  </View>
 
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemoveIngredient(ingredient.id)}>
-                  <Icon name="close" size={20} color="#FF3B30" />
-                </TouchableOpacity>
-              </View>
-            ))}
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveIngredient(ingredient.id)}>
+                    <Icon name="close" size={20} color="#FF3B30" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
 
             {selectedIngredients.length > 0 && (
               <View style={styles.totalPrice}>

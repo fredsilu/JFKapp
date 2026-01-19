@@ -35,16 +35,31 @@ export default function DashboardScreen() {
 
   const calculateDailyRevenue = () => {
     return todayOrders.reduce((total, order) => {
-      const dishesTotal = order.dishes.reduce((orderTotal, { dish, quantity }) => {
-        const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
-          return dishTotal + (ingredient.price * ingredientQty);
+      let dishesTotal = 0;
+      if (order.dishes && Array.isArray(order.dishes)) {
+        dishesTotal = order.dishes.reduce((orderTotal, { dish, quantity }) => {
+          if (!dish || !dish.ingredients) {
+            return orderTotal;
+          }
+          const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
+            if (!ingredient || !ingredient.price) {
+              return dishTotal;
+            }
+            return dishTotal + (ingredient.price * ingredientQty);
+          }, 0);
+          return orderTotal + (dishPrice * quantity);
         }, 0);
-        return orderTotal + (dishPrice * quantity);
-      }, 0);
+      }
 
-      const ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
-        return total + (ingredient.price * quantity);
-      }, 0);
+      let ingredientsTotal = 0;
+      if (order.additionalIngredients && Array.isArray(order.additionalIngredients)) {
+        ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
+          if (!ingredient || !ingredient.price) {
+            return total;
+          }
+          return total + (ingredient.price * quantity);
+        }, 0);
+      }
 
       return total + dishesTotal + ingredientsTotal;
     }, 0);

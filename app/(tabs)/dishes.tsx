@@ -15,7 +15,7 @@ const DEFAULT_DISH_IMAGE = 'https://images.unsplash.com/photo-1546241072-48010ad
 export default function DishesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
   
   const { data: dishes = [], loading: dishesLoading, error: dishesError } = useDishes({
     orderBy: ['name', 'asc']
@@ -28,6 +28,11 @@ export default function DishesScreen() {
     (dish.name && dish.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (dish.description && dish.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // Get the current dish object from the updated list
+  const selectedDish = selectedDishId 
+    ? dishes.find(d => d.id === selectedDishId) || null
+    : null;
 
   const calculateDishPrice = (dish: Dish) => {
     if (!dish?.ingredients || dish.ingredients.length === 0) {
@@ -94,7 +99,7 @@ export default function DishesScreen() {
               <TouchableOpacity 
                 key={dish.id} 
                 style={styles.dishCard}
-                onPress={() => setSelectedDish(dish)}>
+                onPress={() => setSelectedDishId(dish.id)}>
                 <Image 
                   source={{ uri: dish.image || DEFAULT_DISH_IMAGE }} 
                   style={styles.dishImage}
@@ -129,7 +134,7 @@ export default function DishesScreen() {
         {selectedDish && (
           <DishDetails
             dish={selectedDish}
-            onClose={() => setSelectedDish(null)}
+            onClose={() => setSelectedDishId(null)}
           />
         )}
       </Modal>

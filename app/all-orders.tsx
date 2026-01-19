@@ -18,11 +18,16 @@ export default function AllOrdersScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   
   const { data: orders = [], loading, error } = useOrders({
     orderBy: ['createdAt', 'desc']
   });
+
+  // Get the current order from the updated list
+  const selectedOrder = selectedOrderId 
+    ? orders.find(o => o.id === selectedOrderId) || null
+    : null;
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
@@ -145,7 +150,7 @@ export default function AllOrdersScreen() {
           <TouchableOpacity
             key={order.id}
             style={styles.orderCard}
-            onPress={() => setSelectedOrder(order)}>
+            onPress={() => setSelectedOrderId(order.id)}>
             <View style={styles.orderHeader}>
               <View>
                 <Text style={styles.clientName}>{order.client.name}</Text>
@@ -203,7 +208,7 @@ export default function AllOrdersScreen() {
         {selectedOrder && (
           <OrderDetails
             order={selectedOrder}
-            onClose={() => setSelectedOrder(null)}
+            onClose={() => setSelectedOrderId(null)}
           />
         )}
       </Modal>

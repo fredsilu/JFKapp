@@ -101,55 +101,61 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Ingrédients</Text>
             <View style={styles.ingredientsList}>
-              {dish.ingredients.map(({ ingredient, quantity }) => (
-                <View key={ingredient.id} style={styles.ingredientItem}>
-                  <View style={styles.ingredientInfo}>
-                    <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                    <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
+              {dish.ingredients && Array.isArray(dish.ingredients) && dish.ingredients.map(({ ingredient, quantity }) => {
+                if (!ingredient) return null;
+                return (
+                  <View key={ingredient.id} style={styles.ingredientItem}>
+                    <View style={styles.ingredientInfo}>
+                      <Text style={styles.ingredientName}>{ingredient.name || 'N/A'}</Text>
+                      <Text style={styles.ingredientCategory}>{ingredient.category || 'N/A'}</Text>
+                    </View>
+                    <View style={styles.quantityContainer}>
+                      <Text style={styles.quantity}>{quantity}</Text>
+                      <Text style={styles.unit}>{ingredient.unit || ''}</Text>
+                    </View>
+                    <View style={styles.priceContainer}>
+                      <MaterialIcons name="attach-money" size={16} color="#007AFF" />
+                      <Text style={styles.price}>
+                        {(ingredient.price ? ingredient.price * quantity : 0).toFixed(2)}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.quantityContainer}>
-                    <Text style={styles.quantity}>{quantity}</Text>
-                    <Text style={styles.unit}>{ingredient.unit}</Text>
-                  </View>
-                  <View style={styles.priceContainer}>
-                    <MaterialIcons name="attach-money" size={16} color="#007AFF" />
-                    <Text style={styles.price}>
-                      {(ingredient.price * quantity).toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Stock des ingrédients</Text>
-            {dish.ingredients.map(({ ingredient, quantity }) => (
-              <View key={ingredient.id} style={styles.stockItem}>
-                <View style={styles.stockInfo}>
-                  <Text style={styles.stockName}>{ingredient.name}</Text>
-                  <Text style={styles.stockQuantity}>
-                    Stock: {ingredient.stock} {ingredient.unit}
-                  </Text>
-                </View>
-                <View style={styles.stockBarContainer}>
-                  <View style={styles.stockBar}>
-                    <View 
-                      style={[
-                        styles.stockLevel,
-                        {
-                          width: `${Math.min((ingredient.stock / 100) * 100, 100)}%`,
-                          backgroundColor: ingredient.stock < 20 ? '#FF3B30' : '#34C759'
-                        }
-                      ]}
-                    />
+            {dish.ingredients && Array.isArray(dish.ingredients) && dish.ingredients.map(({ ingredient, quantity }) => {
+              if (!ingredient) return null;
+              return (
+                <View key={ingredient.id} style={styles.stockItem}>
+                  <View style={styles.stockInfo}>
+                    <Text style={styles.stockName}>{ingredient.name || 'N/A'}</Text>
+                    <Text style={styles.stockQuantity}>
+                      Stock: {ingredient.stock || 0} {ingredient.unit || ''}
+                    </Text>
                   </View>
-                  {ingredient.stock < 20 && (
-                    <Text style={styles.stockWarning}>Stock bas</Text>
-                  )}
+                  <View style={styles.stockBarContainer}>
+                    <View style={styles.stockBar}>
+                      <View 
+                        style={[
+                          styles.stockLevel,
+                          {
+                            width: `${Math.min(((ingredient.stock || 0) / 100) * 100, 100)}%`,
+                            backgroundColor: (ingredient.stock || 0) < 20 ? '#FF3B30' : '#34C759'
+                          }
+                        ]}
+                      />
+                    </View>
+                    {(ingredient.stock || 0) < 20 && (
+                      <Text style={styles.stockWarning}>Stock bas</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         </ScrollView>
       </View>
