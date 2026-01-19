@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Import MaterialIcons
+//import Icon from 'react-native-vector-icons/MaterialIcons'; // Import MaterialIcons
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 
 export default function TabLayout() {
   //const colorScheme = useColorScheme();

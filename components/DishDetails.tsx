@@ -20,7 +20,13 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
   const { data: ingredients = [], loading, error } = useIngredients();
 
   const calculateTotalPrice = () => {
+    if (!dish?.ingredients || dish.ingredients.length === 0) {
+      return 0;
+    }
     return dish.ingredients.reduce((total, { ingredient, quantity }) => {
+      if (!ingredient || !ingredient.price) {
+        return total;
+      }
       return total + (ingredient.price * quantity);
     }, 0);
   };

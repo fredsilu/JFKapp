@@ -20,15 +20,17 @@ export function useFirestore<T>(
 
   useEffect(() => {
     const colRef = collection(db, collectionName);
-    let q = query(colRef);
+    const constraints = [];
     
     if (options.where) {
-      q = query(q, where(...options.where));
+      constraints.push(where(...options.where));
     }
     
     if (options.orderBy) {
-      q = query(q, firestoreOrderBy(options.orderBy[0] as string, options.orderBy[1]));
+      constraints.push(firestoreOrderBy(options.orderBy[0] as string, options.orderBy[1]));
     }
+
+    const q = query(colRef, ...constraints);
 
     const unsubscribe = onSnapshot(
       q,
@@ -52,8 +54,10 @@ export function useFirestore<T>(
         }) as T[];
         setData(items);
         setLoading(false);
+        setError(null);
       },
       (err) => {
+        console.error(`Error loading ${collectionName}:`, err);
         setError(err as Error);
         setLoading(false);
       }

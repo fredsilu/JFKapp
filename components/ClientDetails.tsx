@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { Client } from '@/types';
 import { useOrders } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
@@ -12,22 +14,43 @@ interface ClientDetailsProps {
 }
 
 export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
-  const { data: clientOrders = [], loading, error } = useOrders({
+  const { data: rawOrders = [], loading, error } = useOrders({
     where: ['clientId', '==', client.id],
-    orderBy: ['createdAt', 'desc']
+  });
+
+  // Sort orders client-side by createdAt descending
+  const clientOrders = [...rawOrders].sort((a, b) => {
+    const dateA = new Date(a.createdAt || 0).getTime();
+    const dateB = new Date(b.createdAt || 0).getTime();
+    return dateB - dateA;
   });
 
   const calculateOrderTotal = (order: any) => {
-    const dishesTotal = order.dishes.reduce((total: number, { dish, quantity }: any) => {
-      const dishPrice = dish.ingredients.reduce((dishTotal: number, { ingredient, quantity: ingredientQty }: any) => {
-        return dishTotal + (ingredient.price * ingredientQty);
+    let dishesTotal = 0;
+    if (order.dishes && Array.isArray(order.dishes)) {
+      dishesTotal = order.dishes.reduce((total: number, { dish, quantity }: any) => {
+        if (!dish || !dish.ingredients || !Array.isArray(dish.ingredients)) {
+          return total;
+        }
+        const dishPrice = dish.ingredients.reduce((dishTotal: number, { ingredient, quantity: ingredientQty }: any) => {
+          if (!ingredient || !ingredient.price) {
+            return dishTotal;
+          }
+          return dishTotal + (ingredient.price * ingredientQty);
+        }, 0);
+        return total + (dishPrice * quantity);
       }, 0);
-      return total + (dishPrice * quantity);
-    }, 0);
+    }
 
-    const ingredientsTotal = order.additionalIngredients.reduce((total: number, { ingredient, quantity }: any) => {
-      return total + (ingredient.price * quantity);
-    }, 0);
+    let ingredientsTotal = 0;
+    if (order.additionalIngredients && Array.isArray(order.additionalIngredients)) {
+      ingredientsTotal = order.additionalIngredients.reduce((total: number, { ingredient, quantity }: any) => {
+        if (!ingredient || !ingredient.price) {
+          return total;
+        }
+        return total + (ingredient.price * quantity);
+      }, 0);
+    }
 
     return dishesTotal + ingredientsTotal;
   };
@@ -127,20 +150,20 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
                     <View style={styles.orderMeta}>
                       <Icon name="calendar-today" size={16} color="#666" />
                       <Text style={styles.orderDate}>
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                       </Text>
                     </View>
 
                     <View style={styles.orderItems}>
                       <Text style={styles.itemsTitle}>Articles :</Text>
-                      {order.dishes.map(({ dish, quantity }: any) => (
-                        <Text key={dish.id} style={styles.itemText}>
-                          • {quantity}x {dish.name}
+                      {order.dishes && Array.isArray(order.dishes) && order.dishes.map(({ dish, quantity }: any) => (
+                        <Text key={dish?.id} style={styles.itemText}>
+                          • {quantity}x {dish?.name || 'N/A'}
                         </Text>
                       ))}
-                      {order.additionalIngredients.map(({ ingredient, quantity }: any) => (
-                        <Text key={ingredient.id} style={styles.itemText}>
-                          • {quantity} {ingredient.unit} {ingredient.name}
+                      {order.additionalIngredients && Array.isArray(order.additionalIngredients) && order.additionalIngredients.map(({ ingredient, quantity }: any) => (
+                        <Text key={ingredient?.id} style={styles.itemText}>
+                          • {quantity} {ingredient?.unit || ''} {ingredient?.name || 'N/A'}
                         </Text>
                       ))}
                     </View>
@@ -148,7 +171,7 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
                     <View style={styles.deliveryInfo}>
                       <Icon name="schedule" size={16} color="#666" />
                       <Text style={styles.deliveryText}>
-                        Livraison à {order.deliveryTime}
+                        Livraison à {order.deliveryTime || 'N/A'}
                       </Text>
                     </View>
                   </View>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { useClients, useDishes } from '@/src/hooks/useFirestore';
 import { Order, Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
 import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
@@ -351,16 +353,16 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   // Filtrage des clients et plats
   const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchQuery.toLowerCase())
+    (client.name && client.name.toLowerCase().includes(clientSearchQuery.toLowerCase())) ||
+    (client.email && client.email.toLowerCase().includes(clientSearchQuery.toLowerCase()))
   );
 
   const filteredDishes = dishes.filter(dish =>
-    dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())
+    dish.name && dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())
   );
   const filteredIngredients = ingredients.filter(ingredient =>
-    ingredient.name.toLowerCase().includes(ingredientSearchQuery.toLowerCase()) ||
-    ingredient.category.toLowerCase().includes(ingredientSearchQuery.toLowerCase())
+    (ingredient.name && ingredient.name.toLowerCase().includes(ingredientSearchQuery.toLowerCase())) ||
+    (ingredient.category && ingredient.category.toLowerCase().includes(ingredientSearchQuery.toLowerCase()))
   );
 
   const handleAddIngredient = (ingredient: Ingredient) => {

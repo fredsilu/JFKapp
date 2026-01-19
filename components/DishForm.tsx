@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { Ingredient, DishIngredient, Dish } from '@/types';
 import { updateDish } from '@/src/services/firestore';
 import ErrorMessage from '@/src/components/ErrorMessage';
@@ -44,7 +46,13 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
   };
 
   const calculateTotalPrice = () => {
+    if (!selectedIngredients || selectedIngredients.length === 0) {
+      return 0;
+    }
     return selectedIngredients.reduce((total, { ingredient, quantity }) => {
+      if (!ingredient || !ingredient.price) {
+        return total;
+      }
       return total + (ingredient.price * quantity);
     }, 0);
   };

@@ -6,7 +6,9 @@ import ErrorMessage from '@/src/components/ErrorMessage';
 import { useRouter } from 'expo-router';
 import { getFirestore, collection, runTransaction, doc, serverTimestamp } from "firebase/firestore";
 import app from '@/lib/firebase'; // Assurez-vous d'importer votre configuration Firebase
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 
 export default function DashboardScreen() {
   const router = useRouter();

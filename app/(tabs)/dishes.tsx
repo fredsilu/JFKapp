@@ -25,17 +25,20 @@ export default function DishesScreen() {
   });
 
   const filteredDishes = dishes.filter(dish => 
-    dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dish.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    (dish.name && dish.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (dish.description && dish.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const calculateDishPrice = (dish: Dish) => {
-    if (!dish.ingredients || dish.ingredients.length === 0) {
+    if (!dish?.ingredients || dish.ingredients.length === 0) {
       return 0;
     }
-    return dish.ingredients.reduce((total, { ingredient, quantity }) => 
-      total + (ingredient.price * quantity), 0
-    );
+    return dish.ingredients.reduce((total, { ingredient, quantity }) => {
+      if (!ingredient || !ingredient.price) {
+        return total;
+      }
+      return total + (ingredient.price * quantity);
+    }, 0);
   };
 
   const handleCreateDish = async (values: Omit<Dish, 'id' | 'createdAt' | 'updatedAt'>) => {

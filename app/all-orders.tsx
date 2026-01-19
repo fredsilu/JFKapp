@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { useOrders } from '@/src/hooks/useFirestore';
 import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
 import Modal from '@/components/Modal';
@@ -24,8 +26,8 @@ export default function AllOrdersScreen() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.address.toLowerCase().includes(searchQuery.toLowerCase());
+      (order.client?.name && order.client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.address && order.address.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     

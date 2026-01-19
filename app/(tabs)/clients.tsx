@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+//import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { useClients } from '@/src/hooks/useFirestore';
 import { addClient } from '@/src/services/firestore';
 import Modal from '@/components/Modal';
@@ -20,8 +22,8 @@ export default function ClientsScreen() {
   });
 
   const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (typeof client.phone === 'string' && client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 

@@ -1,0 +1,117 @@
+A FAIRE
+
+
+Modifier un ingredient
+dans nouvelle commande : possibilite de chercher un plat et possibilie de chercher un ingredient supplementaire
+
+Voici les prochaines fonctionnalités à mettre en place pour améliorer l'application :
+
+Gestion des stocks et inventaire
+Système d'alerte pour les stocks bas
+Historique des mouvements de stock
+Prévisions de consommation
+Gestion des commandes fournisseurs
+Scanner de codes-barres pour l'inventaire
+Gestion des commandes avancée
+Système de statuts personnalisables
+Notifications en temps réel
+Impression des bons de commande
+Système de paiement intégré
+Gestion des retours et remboursements
+Gestion des clients
+Programme de fidélité
+Notes et préférences clients
+Segmentation client
+Envoi automatique d'emails/SMS
+Système de feedback
+Gestion des plats et menus
+Gestion des allergènes
+Photos et descriptions détaillées
+Menus saisonniers
+Suggestions personnalisées
+Gestion des promotions
+Tableau de bord et analytics
+KPIs personnalisables
+Graphiques de performance
+Rapports exportables
+Prévisions de vente
+Analyse des tendances
+Administration et paramètres
+Gestion des utilisateurs et rôles
+Configuration des taxes
+Personnalisation de l'interface
+Sauvegarde automatique
+Journal d'activité
+Optimisation mobile
+Mode hors ligne
+Performance optimisée
+Interface adaptative
+Gestes et animations
+Push notifications
+Intégrations
+Comptabilité (export)
+Services de livraison
+Agenda/calendrier
+Fournisseurs
+Marketing automation
+Sécurité et conformité
+Authentification forte
+Chiffrement des données
+Conformité RGPD
+Audit trail
+Sauvegardes automatiques
+Internationalisation
+Multi-langues
+Multi-devises
+Formats régionaux
+Fuseaux horaires
+Ces fonctionnalités permettront d'avoir une application complète et professionnelle pour la gestion d'un service traiteur.
+
+
+---------------------------------------------------------------
+
+
+
+J'ai créé un module utilitaire costs.ts qui contient toutes les fonctions nécessaires pour :
+
+Calculer le coût des ingrédients d'un plat
+Calculer le coût total d'un plat avec marge
+Calculer le coût des ingrédients supplémentaires
+Calculer le coût total d'une commande
+Calculer la marge bénéficiaire
+Formater les montants en euros
+Ces fonctions peuvent maintenant être utilisées dans les composants DishDetails, OrderDetails et partout où nous avons besoin de calculer des coûts.
+
+Pour utiliser ces fonctions, il suffit de les importer :
+
+
+import { 
+  calculateDishTotalCost, 
+  calculateOrderTotalCost,
+  formatCurrency 
+} from '@/src/utils/costs';
+Par exemple dans OrderDetails :
+
+
+const totalCost = calculateOrderTotalCost(order);
+const profit = calculateOrderProfit(order);
+
+// Affichage
+<Text>Total : {formatCurrency(totalCost)}</Text>
+<Text>Marge : {formatCurrency(profit)}</Text>
+Les avantages de cette approche sont :
+
+Centralisation des calculs
+Cohérence des calculs dans toute l'application
+Facilité de maintenance
+Possibilité d'ajuster la marge globalement
+Format monétaire uniforme
+
+
+-----------------------------------------------
+
+The error is clear: Firebase Firestore requires a composite index when you combine a where clause (clientId) with an orderBy clause (createdAt).
+Option 1: Create the Firebase Index (Recommended)
+Click the link provided in the error message to create the composite index automatically:
+
+Firebase will create the index and it should take a few minutes to be ready.
