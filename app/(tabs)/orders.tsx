@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
@@ -13,6 +14,7 @@ import { Order } from '@/types';
 import { addOrder } from '@/src/services/firestore';
 
 export default function OrdersScreen() {
+  const router = useRouter();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const { data: orders = [], loading, error } = useOrders({
@@ -90,11 +92,19 @@ export default function OrdersScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Commandes</Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={() => setShowOrderForm(true)}>
-            <Icon name="add" size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.preparationButton}
+              onPress={() => router.push('/preparation-ingredients')}>
+              <Icon name="list" size={20} color="#fff" />
+              <Text style={styles.preparationButtonText}>Ingrédients</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.addButton}
+              onPress={() => setShowOrderForm(true)}>
+              <Icon name="add" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -179,7 +189,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  preparationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FF9500',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  preparationButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
   },
   title: {
     fontFamily: 'Inter_600SemiBold',

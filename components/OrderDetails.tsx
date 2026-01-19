@@ -6,6 +6,7 @@ import { updateOrder, updateOrderStatus } from '@/src/services/firestore';
 import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
 import Modal from '@/components/Modal';
 import OrderForm from '@/components/OrderForm';
+import OrderIngredientsModal from '@/components/OrderIngredientsModal';
 
 interface OrderDetailsProps {
   order: Order;
@@ -14,6 +15,7 @@ interface OrderDetailsProps {
 
 export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showIngredientsModal, setShowIngredientsModal] = useState(false);
 
   const STATUS_TRANSITIONS: Record<Order['status'], Order['status']> = {
     'En cours': 'En préparation',
@@ -60,6 +62,11 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Détails de la commande</Text>
           <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => setShowIngredientsModal(true)}>
+              <MaterialIcons name="list" size={20} color="#34C759" />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => setShowEditForm(true)}>
@@ -195,6 +202,69 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
             </View>
           )}
 
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialIcons name="list" size={20} color="#1a1a1a" />
+              <Text style={styles.sectionTitle}>Récapitulatif des ingrédients</Text>
+            </View>
+            <View style={styles.ingredientsList}>
+              {order.dishes && Array.isArray(order.dishes) && 
+                order.dishes.flatMap(({ dish, quantity }) => {
+                  if (!dish || !dish.ingredients || !Array.isArray(dish.ingredients)) {
+                    return [];
+                  }
+                  return dish.ingredients
+                    .filter(({ ingredient }) => ingredient && ingredient.id)
+                    .map(({ ingredient, quantity: ingredientQty }) => (
+                      <View key={`${dish.id}-${ingredient.id}`} style={styles.ingredientItem}>
+                        <View style={styles.ingredientInfo}>
+                          <Text style={styles.ingredientName}>{ingredient?.name || 'N/A'}</Text>
+                          <Text style={styles.ingredientCategory}>
+                            De: {dish.name} (x{quantity})
+                          </Text>
+                        </View>
+                        <View style={styles.ingredientQuantity}>
+                          <Text style={styles.quantityText}>
+                            {ingredientQty} {ingredient?.unit || ''}
+                          </Text>
+                          <View style={styles.ingredientPrice}>
+                            <MaterialIcons name="attach-money" size={14} color="#007AFF" />
+                            <Text style={styles.priceText}>
+                              {formatCurrency((ingredient?.price || 0) * ingredientQty * quantity)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    ));
+                })
+              }
+              
+              {order.additionalIngredients && Array.isArray(order.additionalIngredients) && 
+                order.additionalIngredients
+                  .filter(({ ingredient }) => ingredient && ingredient.id)
+                  .map(({ ingredient, quantity: addQty }) => (
+                  <View key={`add-${ingredient.id}`} style={styles.ingredientItem}>
+                    <View style={styles.ingredientInfo}>
+                      <Text style={styles.ingredientName}>{ingredient?.name || 'N/A'}</Text>
+                      <Text style={styles.ingredientCategory}>Supplément</Text>
+                    </View>
+                    <View style={styles.ingredientQuantity}>
+                      <Text style={styles.quantityText}>
+                        {addQty} {ingredient?.unit || ''}
+                      </Text>
+                      <View style={styles.ingredientPrice}>
+                        <MaterialIcons name="attach-money" size={14} color="#007AFF" />
+                        <Text style={styles.priceText}>
+                          {formatCurrency((ingredient?.price || 0) * addQty)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
+              }
+            </View>
+          </View>
+
           <View style={styles.totalSection}>
             <Text style={styles.totalLabel}>Total de la commande</Text>
             <View style={styles.totalAmount}>
@@ -214,6 +284,12 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
           onSubmit={handleUpdateOrder}
         />
       </Modal>
+
+      <OrderIngredientsModal
+        visible={showIngredientsModal}
+        order={order}
+        onClose={() => setShowIngredientsModal(false)}
+      />
     </>
   );
 }

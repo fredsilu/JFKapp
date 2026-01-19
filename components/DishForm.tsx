@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
@@ -24,6 +24,30 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
     dish?.ingredients || []
   );
   const [error, setError] = useState<string | null>(null);
+
+  const handlePickImage = async () => {
+    // For web using Expo
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input') as HTMLInputElement;
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const result = event.target?.result as string;
+            setImage(result);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    } else {
+      // For mobile (would need expo-image-picker library)
+      Alert.alert('Image Upload', 'Please use the URL field or take a photo to get a URL');
+    }
+  };
 
   const handleAddIngredient = (ingredient: Ingredient) => {
     if (!selectedIngredients.some(i => i.ingredient && i.ingredient.id === ingredient.id)) {
@@ -141,16 +165,23 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
           </View>
         )}
 
-        <View style={styles.imagePreview}>
+        <TouchableOpacity 
+          style={styles.imagePreview}
+          onPress={handlePickImage}>
           {image ? (
-            <Image source={{ uri: image }} style={styles.previewImage} />
+            <View style={styles.imagePreviewWithButton}>
+              <Image source={{ uri: image }} style={styles.previewImage} />
+              <View style={styles.changeImageButton}>
+                <Icon name="photo-camera" size={20} color="#fff" />
+              </View>
+            </View>
           ) : (
             <View style={styles.placeholderContainer}>
               <Icon name="image" size={48} color="#667" />
               <Text style={styles.placeholderText}>Ajouter une image (optionnel)</Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
@@ -329,24 +360,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  imagePreviewWithButton: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+  },
   previewImage: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
     borderRadius: 8,
+  },
+  changeImageButton: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   placeholderContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 100,
-    height: 100,
-    borderWidth: 1,
+    width: 120,
+    height: 120,
+    borderWidth: 2,
     borderColor: '#ddd',
     borderRadius: 8,
+    borderStyle: 'dashed',
   },
   placeholderText: {
     marginTop: 8,
     fontSize: 12,
     color: '#666',
+    textAlign: 'center',
   },
   form: {
     marginBottom: 16,

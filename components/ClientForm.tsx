@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Client } from '@/types';
 
 interface ClientFormProps {
+  client?: Client;
   onClose: () => void;
-  onSubmit: (values: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>) => void;
+  onSubmit: (values: Partial<Client>) => void | Promise<void>;
 }
 
-export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
+export default function ClientForm({ client, onClose, onSubmit }: ClientFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -17,6 +18,17 @@ export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
   const [notes, setNotes] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (client) {
+      setName(client.name || '');
+      setEmail(client.email || '');
+      setPhone(client.phone || '');
+      setAddress(client.address || '');
+      setNotes(client.notes || '');
+      setProfilePicture(client.profilePicture || '');
+    }
+  }, [client]);
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -79,6 +91,7 @@ export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
     payload.profilePicture = profilePicture.trim();
   }
 
+    Alert.alert('Success', client ? 'Client updated successfully' : 'Client created successfully');
     onSubmit(payload);
   };
 
@@ -87,7 +100,7 @@ export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>New Client</Text>
+        <Text style={styles.title}>{client ? 'Edit Client' : 'New Client'}</Text>
         <TouchableOpacity onPress={onClose}>
           <MaterialIcons name="close" size={24} color="#666" />
         </TouchableOpacity>
@@ -183,7 +196,7 @@ export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
         <TouchableOpacity 
           style={styles.submitButton}
           onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Add Client</Text>
+          <Text style={styles.submitButtonText}>{client ? 'Update Client' : 'Add Client'}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

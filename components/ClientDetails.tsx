@@ -1,19 +1,44 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import { Client } from '@/types';
 import { useOrders } from '@/src/hooks/useFirestore';
+import { updateClient } from '@/src/services/firestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
+import Modal from '@/components/Modal';
+import ClientForm from '@/components/ClientForm';
 
 interface ClientDetailsProps {
-  client: Client;
+  clientId: string;
+  clients: Client[];
   onClose: () => void;
 }
 
-export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
+export default function ClientDetails({ clientId, clients, onClose }: ClientDetailsProps) {
+  const [showEditForm, setShowEditForm] = useState(false);
+  
+  // Dynamic lookup from live clients array
+  const client = useMemo(() => 
+    clients.find(c => c.id === clientId),
+    [clients, clientId]
+  );
+
+  if (!client) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Client Not Found</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Icon name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const { data: rawOrders = [], loading, error } = useOrders({
     where: ['clientId', '==', client.id],
   });
@@ -68,13 +93,29 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
     }
   };
 
+  const handleUpdateClient = async (updatedData: Partial<Client>) => {
+    try {
+      await updateClient(client.id, updatedData);
+      setShowEditForm(false);
+    } catch (error) {
+      console.error('Failed to update client:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Détails du client</Text>
-        <TouchableOpacity onPress={onClose}>
-          <Icon name="close" size={24} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setShowEditForm(true)}>
+            <Icon name="edit" size={20} color="#007AFF" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onClose}>
+            <Icon name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -181,6 +222,14 @@ export default function ClientDetails({ client, onClose }: ClientDetailsProps) {
           )}
         </View>
       </ScrollView>
+
+      <Modal visible={showEditForm}>
+        <ClientForm
+          client={client}
+          onClose={() => setShowEditForm(false)}
+          onSubmit={handleUpdateClient}
+        />
+      </Modal>
     </View>
   );
 }
@@ -204,6 +253,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 20,
     color: '#1a1a1a',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editButton: {
+    padding: 4,
   },
   content: {
     flex: 1,

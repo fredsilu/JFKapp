@@ -15,7 +15,7 @@ import { Client } from '@/types';
 export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   
   const { data: clients = [], loading, error } = useClients({
     orderBy: ['name', 'asc']
@@ -27,10 +27,10 @@ export default function ClientsScreen() {
     (typeof client.phone === 'string' && client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleCreateClient = async (values: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>) => {
+  const handleCreateClient = async (values: Partial<Client>) => {
     try {
       console.log('Creating client', values);
-      await addClient(values);
+      await addClient(values as Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>);
       alert('Client added successfully');
       setIsFormModalVisible(false);
     } catch (err) {
@@ -73,7 +73,7 @@ export default function ClientsScreen() {
             <TouchableOpacity 
               key={client.id} 
               style={styles.clientCard}
-              onPress={() => setSelectedClient(client)}>
+              onPress={() => setSelectedClientId(client.id)}>
               <Image 
               source={client.profilePicture 
                 ? { uri: client.profilePicture } 
@@ -118,11 +118,12 @@ export default function ClientsScreen() {
         />
       </Modal>
 
-      <Modal visible={!!selectedClient}>
-        {selectedClient && (
+      <Modal visible={!!selectedClientId}>
+        {selectedClientId && (
           <ClientDetails
-            client={selectedClient}
-            onClose={() => setSelectedClient(null)}
+            clientId={selectedClientId}
+            clients={clients}
+            onClose={() => setSelectedClientId(null)}
           />
         )}
       </Modal>

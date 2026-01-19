@@ -67,7 +67,11 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
 
         <ScrollView style={styles.content}>
           <Image 
-            source={{ uri: dish.image }} 
+            source={
+              dish.image && dish.image.trim()
+                ? { uri: dish.image }
+                : require('@/assets/images/no_dishes_picture.jpg')
+            }
             style={styles.dishImage}
           />
 
