@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import { useIngredients } from '@/src/hooks/useFirestore';
+import { addIngredient } from '@/src/services/firestore';
 import IngredientDetails from '@/components/IngredientDetails';
 import Modal from '@/components/Modal';
 import IngredientForm from '@/components/IngredientForm';
@@ -14,7 +15,7 @@ import { Ingredient } from '@/types';
 export default function Ingredients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
 
   const { data: ingredients, loading, error } = useIngredients({
     orderBy: ['category', 'asc']
@@ -24,6 +25,11 @@ export default function Ingredients() {
     ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     ingredient.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Get the current ingredient object from the updated list
+  const selectedIngredient = selectedIngredientId 
+    ? ingredients.find(i => i.id === selectedIngredientId) || null
+    : null;
 
   if (loading) {
     return <LoadingSpinner />;
@@ -64,7 +70,7 @@ export default function Ingredients() {
             <TouchableOpacity
               key={ingredient.id}
               style={styles.ingredientCard}
-              onPress={() => setSelectedIngredient(ingredient)}>
+              onPress={() => setSelectedIngredientId(ingredient.id)}>
               <View style={styles.ingredientHeader}>
                 <View>
                   <Text style={styles.ingredientName}>{ingredient.name}</Text>
@@ -104,8 +110,13 @@ export default function Ingredients() {
       <Modal visible={isModalVisible}>
         <IngredientForm 
           onClose={() => setIsModalVisible(false)} 
-          onSubmit={(values) => {
-            // handle form submission
+          onSubmit={async (values) => {
+            try {
+              await addIngredient(values);
+              setIsModalVisible(false);
+            } catch (error) {
+              console.error('Error adding ingredient:', error);
+            }
           }} 
         />
       </Modal>
@@ -113,7 +124,7 @@ export default function Ingredients() {
         {selectedIngredient && (
           <IngredientDetails
             ingredient={selectedIngredient}
-            onClose={() => setSelectedIngredient(null)}
+            onClose={() => setSelectedIngredientId(null)}
           />
         )}
       </Modal>

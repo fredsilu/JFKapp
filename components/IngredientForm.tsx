@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { addIngredient } from '@/src/services/firestore';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Ingredient } from '@/types';
 
@@ -42,7 +41,7 @@ interface IngredientFormProps {
   onSubmit: (values: Omit<Ingredient, 'id' | 'createdAt' | 'updatedAt'>) => void;
 }
 
-export default function IngredientForm({ ingredient, onClose }: IngredientFormProps) {
+export default function IngredientForm({ ingredient, onClose, onSubmit }: IngredientFormProps) {
   const [formData, setFormData] = useState<IngredientFormData>({
     name: ingredient?.name || '',
     price: ingredient?.price.toString() || '',
@@ -76,20 +75,30 @@ export default function IngredientForm({ ingredient, onClose }: IngredientFormPr
         return;
       }
 
-      await addIngredient({
+      const ingredientData = {
         name: formData.name,
         price,
         unit: formData.unit,
         stock,
         category: formData.category,
-        quantity: 0, // or any default value
-        description: '', // or any default value
-      });
+        quantity: ingredient?.quantity || 0,
+        description: ingredient?.description || '',
+      };
 
-      setFormData(initialFormData);
+      // Call the onSubmit callback that will either create or update
+      await onSubmit(ingredientData);
+      
+      // Show success message BEFORE closing so data has time to sync
+      const message = ingredient ? 'Ingrédient modifié avec succès!' : 'Ingrédient ajouté avec succès!';
+      alert(message);
+      
+      if (!ingredient) {
+        // Only reset form if creating new ingredient
+        setFormData(initialFormData);
+      }
       onClose();
     } catch (err) {
-      setFormError('An error occurred while adding the ingredient');
+      setFormError('An error occurred while saving the ingredient');
     }
   };
 
