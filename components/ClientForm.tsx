@@ -63,16 +63,23 @@ export default function ClientForm({ onClose, onSubmit }: ClientFormProps) {
 
     if (!validateForm()) {
       return;
-    }
+    } 
+    
+    const payload: any = {
+    name: name.trim(),
+    email: email.trim(),
+    phone: phone.trim(),
+    address: address.trim(),
+  };
+  if (notes.trim()) {
+    payload.notes = notes.trim();
+  }
 
-    onSubmit({
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      notes: notes.trim() || undefined,
-      profilePicture: profilePicture.trim() || undefined,
-    });
+  if (profilePicture.trim()) {
+    payload.profilePicture = profilePicture.trim();
+  }
+
+    onSubmit(payload);
   };
 
   return (

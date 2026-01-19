@@ -27,7 +27,9 @@ export default function ClientsScreen() {
 
   const handleCreateClient = async (values: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>) => {
     try {
+      console.log('Creating client', values);
       await addClient(values);
+      alert('Client added successfully');
       setIsFormModalVisible(false);
     } catch (err) {
       console.error('Error creating client:', err);

@@ -60,7 +60,7 @@ export function useFirestore<T>(
     );
 
     return () => unsubscribe();
-  }, [collectionName]);
+  }, [collectionName, JSON.stringify(options)]);
 
   return { data, loading, error };
 }

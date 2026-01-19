@@ -40,7 +40,9 @@ export default function DishesScreen() {
 
   const handleCreateDish = async (values: Omit<Dish, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      console.log('Creating dishe', values);
       await addDish(values);
+      alert('Dishe added successfully');
       setIsFormModalVisible(false);
     } catch (err) {
       console.error('Error creating dish:', err);

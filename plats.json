@@ -1,0 +1,1265 @@
+[
+  {
+    "nom": "Accra de Morue",
+    "description": "6 pieces",
+    "listeIngredients": [
+      {
+        "categorie": "POISSON",
+        "nom": "Morue",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 7.5,
+        "couttotalingredient": 0.375
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Thym",
+        "unite": "g",
+        "quantite": 7.5,
+        "coutingredient": 0.135,
+        "couttotalingredient": 1.0125
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Oignon",
+        "unite": "kg",
+        "quantite": 0.02,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.0294
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Crème liquide",
+        "unite": "ml",
+        "quantite": 1.875,
+        "coutingredient": 0.01,
+        "couttotalingredient": 0.01875
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Persil",
+        "unite": "botte",
+        "quantite": 1,
+        "coutingredient": 0.3,
+        "couttotalingredient": 0.3
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "ciboulette",
+        "unite": "g",
+        "quantite": 0.025,
+        "coutingredient": 0.056,
+        "couttotalingredient": 0.0014
+      }
+    ],
+    "cout unitaire ($)": 1.74
+  },
+  {
+    "nom": "Blini",
+    "description": "10 pieces",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.18,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.477
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine de Sarrasin",
+        "unite": "kg",
+        "quantite": 0.075,
+        "coutingredient": 20,
+        "couttotalingredient": 1.5
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "sel",
+        "unite": "kg",
+        "quantite": 0.0075,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.004425
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 7.5,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.09
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Lait liquide",
+        "unite": "l",
+        "quantite": 0.25,
+        "coutingredient": 2.22,
+        "couttotalingredient": 0.555
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 1.75,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.35
+      }
+    ],
+    "cout unitaire ($)": 2.98
+  },
+  {
+    "nom": "Brochette capitaine",
+    "description": "1 pièce",
+    "listeIngredients": [
+      {
+        "categorie": "POISSON",
+        "nom": "Capitaine",
+        "unite": "kg",
+        "quantite": 0.15,
+        "coutingredient": 16,
+        "couttotalingredient": 2.4
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Sel",
+        "unite": "kg",
+        "quantite": 0.01,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.59
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Poivre blanc",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.02475,
+        "couttotalingredient": 0.02475
+      }
+    ],
+    "cout unitaire ($)": 3.02
+  },
+  {
+    "nom": "Brochette gambas",
+    "description": "1 pièce",
+    "listeIngredients": [
+      {
+        "categorie": "POISSON",
+        "nom": "Gambas moyen",
+        "unite": "kg",
+        "quantite": 0.15,
+        "coutingredient": 16,
+        "couttotalingredient": 2.4
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Sel",
+        "unite": "kg",
+        "quantite": 0.01,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.59
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Poivre blanc",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.02475,
+        "couttotalingredient": 0.02475
+      }
+    ],
+    "cout unitaire ($)": 3.02
+  },
+  {
+    "nom": "Brochette poulet",
+    "description": "1 pièce",
+    "listeIngredients": [
+      {
+        "categorie": "VIANDE",
+        "nom": "Filet de poulet",
+        "unite": "kg",
+        "quantite": 0.15,
+        "coutingredient": 8,
+        "couttotalingredient": 1.2
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Sel",
+        "unite": "kg",
+        "quantite": 0.01,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.59
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Poivre blanc",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.02475,
+        "couttotalingredient": 0.02475
+      }
+    ],
+    "cout unitaire ($)": 1.82
+  },
+  {
+    "nom": "Brochette viande",
+    "description": "1 pièce",
+    "listeIngredients": [
+      {
+        "categorie": "VIANDE",
+        "nom": "Boeuf",
+        "unite": "kg",
+        "quantite": 0.15,
+        "coutingredient": 12,
+        "couttotalingredient": 1.8
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Sel",
+        "unite": "kg",
+        "quantite": 0.01,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.59
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Poivre blanc",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.02475,
+        "couttotalingredient": 0.02475
+      }
+    ],
+    "cout unitaire ($)": 2.42
+  },
+  {
+    "nom": "Crepe",
+    "description": "30 crepes",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 1,
+        "coutingredient": 2.65,
+        "couttotalingredient": 2.65
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 6,
+        "coutingredient": 0.2,
+        "couttotalingredient": 1.2
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre",
+        "unite": "kg",
+        "quantite": 0.3,
+        "coutingredient": 1.2,
+        "couttotalingredient": 0.36
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 40,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.32
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre vanille",
+        "unite": "g",
+        "quantite": 30,
+        "coutingredient": 0.01,
+        "couttotalingredient": 0.3
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Lait liquide",
+        "unite": "l",
+        "quantite": 1.8,
+        "coutingredient": 2.22,
+        "couttotalingredient": 3.996
+      }
+    ],
+    "cout unitaire ($)": "8,826"
+  },
+  {
+    "nom": "Gaufre",
+    "description": "20 gaufres",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.2,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.53
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 100,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.8
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre",
+        "unite": "kg",
+        "quantite": 0.1,
+        "coutingredient": 1.2,
+        "couttotalingredient": 0.12
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 3,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.6
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre vanille",
+        "unite": "g",
+        "quantite": 15,
+        "coutingredient": 0.01,
+        "couttotalingredient": 0.15
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 5,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.06
+      }
+    ],
+    "cout unitaire ($)": 2.26
+  },
+  {
+    "nom": "Guacamole",
+    "description": "",
+    "listeIngredients": [
+      {
+        "categorie": "FRUIT",
+        "nom": "Avocat",
+        "unite": "pc",
+        "quantite": 3,
+        "coutingredient": 1,
+        "couttotalingredient": 3
+      },
+      {
+        "categorie": "FRUIT",
+        "nom": "Citron jaune",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0045,
+        "couttotalingredient": 0.0045
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Tomates",
+        "unite": "kg",
+        "quantite": 0.4,
+        "coutingredient": 2.5,
+        "couttotalingredient": 1
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "oignon",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.074
+      }
+    ],
+    "cout unitaire ($)": 4.078
+  },
+  {
+    "nom": "Mousse au chocolat",
+    "description": "30 verrines",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Chocolat",
+        "unite": "g",
+        "quantite": 200,
+        "coutingredient": 0.0225,
+        "couttotalingredient": 4.5
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 6,
+        "coutingredient": 0.2,
+        "couttotalingredient": 1.2
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre vanille",
+        "unite": "g",
+        "quantite": 15,
+        "coutingredient": 0.01,
+        "couttotalingredient": 0.15
+      }
+    ],
+    "cout unitaire ($)": "5,85"
+  },
+  {
+    "nom": "Omelettes lardons",
+    "description": "1 personne 2 oeufs",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 2,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.4
+      },
+      {
+        "categorie": "CHARCUTERIE",
+        "nom": "Lardon, bacon",
+        "unite": "kg",
+        "quantite": 0.02,
+        "coutingredient": 25,
+        "couttotalingredient": 0.5
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "oignon",
+        "unite": "kg",
+        "quantite": 0.005,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.00735
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Persil",
+        "unite": "botte",
+        "quantite": 0.05,
+        "coutingredient": 0.3,
+        "couttotalingredient": 0.015
+      }
+    ],
+    "cout unitaire ($)": "0,92235"
+  },
+  {
+    "nom": "Omelettes natures",
+    "description": "1 personne 2 oeufs",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 2,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.4
+      }
+    ],
+    "cout unitaire ($)": "0,4"
+  },
+  {
+    "nom": "Pancakes",
+    "description": "3 pièces",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.1,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.265
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Lait liquide",
+        "unite": "l",
+        "quantite": 0.16,
+        "coutingredient": 2.22,
+        "couttotalingredient": 0.3552
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "beurre",
+        "unite": "g",
+        "quantite": 5,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.04
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "œufs",
+        "unite": "pc",
+        "quantite": 0.6,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.12
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Sel",
+        "unite": "kg",
+        "quantite": 0.001,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.00059
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 3,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.036
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre",
+        "unite": "kg",
+        "quantite": 0.03,
+        "coutingredient": 1.2,
+        "couttotalingredient": 0.036
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Huile",
+        "unite": "l",
+        "quantite": 0.001,
+        "coutingredient": 4.75,
+        "couttotalingredient": 0.00475
+      }
+    ],
+    "cout unitaire ($)": 0.86
+  },
+  {
+    "nom": "Quiche au saumon",
+    "description": "1 piece pour 6 personnes",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Pate brisée",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 5.893,
+        "couttotalingredient": 5.893
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 2,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.4
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Crème liquide",
+        "unite": "ml",
+        "quantite": 200,
+        "coutingredient": 0.01,
+        "couttotalingredient": 2
+      },
+      {
+        "categorie": "CHARCUTERIE",
+        "nom": "Saumon",
+        "unite": "g",
+        "quantite": 100,
+        "coutingredient": 0.071,
+        "couttotalingredient": 7.1
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Fromage emmental",
+        "unite": "g",
+        "quantite": 100,
+        "coutingredient": 0.01461,
+        "couttotalingredient": 1.461
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "oignon",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.0735
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 10,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.08
+      }
+    ],
+    "cout unitaire ($)": 17.0075
+  },
+  {
+    "nom": "Quiche aux légumes",
+    "description": "1 piece pour 6 personnes",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Pate brisée",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 5.893,
+        "couttotalingredient": 5.893
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 2,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.4
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Crème liquide",
+        "unite": "ml",
+        "quantite": 200,
+        "coutingredient": 0.01,
+        "couttotalingredient": 2
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Fromage emmental",
+        "unite": "g",
+        "quantite": 100,
+        "coutingredient": 0.01461,
+        "couttotalingredient": 1.461
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "oignon",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.0735
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 10,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.08
+      }
+    ],
+    "cout unitaire ($)": 9.9
+  },
+  {
+    "nom": "Quiche lorraine",
+    "description": "1 piece pour 6 personnes",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Pate brisée",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 5.893,
+        "couttotalingredient": 5.893
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 2,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.4
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Crème liquide",
+        "unite": "ml",
+        "quantite": 200,
+        "coutingredient": 0.01,
+        "couttotalingredient": 2
+      },
+      {
+        "categorie": "CHARCUTERIE",
+        "nom": "Lardon, bacon",
+        "unite": "kg",
+        "quantite": 25,
+        "coutingredient": 0.2,
+        "couttotalingredient": 5
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Fromage emmental",
+        "unite": "g",
+        "quantite": 100,
+        "coutingredient": 0.01461,
+        "couttotalingredient": 1.461
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "oignon",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.0735
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 10,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.08
+      }
+    ],
+    "cout unitaire ($)": "=17.01-2.1"
+  },
+  {
+    "nom": "Salade aux crevettes",
+    "description": "1 personne",
+    "listeIngredients": [
+      {
+        "categorie": "LEGUME",
+        "nom": "Salade",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.02,
+        "couttotalingredient": 0.0009
+      },
+      {
+        "categorie": "POISSON",
+        "nom": "Gambas petit",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 16,
+        "couttotalingredient": 0.8
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Ciboulette",
+        "unite": "g",
+        "quantite": 20,
+        "coutingredient": 0.056,
+        "couttotalingredient": 1.11
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Olives VERTES",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.013,
+        "couttotalingredient": 0.013
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "ŒufS",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Carotte",
+        "unite": "Kg",
+        "quantite": 0.045,
+        "coutingredient": 0.938,
+        "couttotalingredient": 0.04221
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Concombre",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.002,
+        "couttotalingredient": 9e-05
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Oignon",
+        "unite": "kg",
+        "quantite": 0.045,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.06615
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Vinaigrette",
+        "unite": "ml",
+        "quantite": 100,
+        "coutingredient": 0.00358,
+        "couttotalingredient": 0.358
+      }
+    ],
+    "cout unitaire ($)": 2.59
+  },
+  {
+    "nom": "Salade Caesar",
+    "description": "1 personne",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "œufs",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Fromage emmental",
+        "unite": "g",
+        "quantite": 50,
+        "coutingredient": 0.01461,
+        "couttotalingredient": 0.7305
+      },
+      {
+        "categorie": "FRUIT",
+        "nom": "Avocat",
+        "unite": "pc",
+        "quantite": 0.5,
+        "coutingredient": 1,
+        "couttotalingredient": 0.5
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Salade",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.02,
+        "couttotalingredient": 0.0009
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Tomates",
+        "unite": "kg",
+        "quantite": 0.045,
+        "coutingredient": 2.5,
+        "couttotalingredient": 0.1125
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Concombre",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.002,
+        "couttotalingredient": 9e-05
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Carotte",
+        "unite": "Kg",
+        "quantite": 0.045,
+        "coutingredient": 0.938,
+        "couttotalingredient": 0.04221
+      },
+      {
+        "categorie": "POISSON",
+        "nom": "Capitaine",
+        "unite": "kg",
+        "quantite": 0.08,
+        "coutingredient": 16,
+        "couttotalingredient": 1.28
+      }
+    ],
+    "cout unitaire ($)": 2.87
+  },
+  {
+    "nom": "Salade kinoise",
+    "description": "1 personne",
+    "listeIngredients": [
+      {
+        "categorie": "LEGUME",
+        "nom": "Salade",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.02,
+        "couttotalingredient": 0.0009
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Graines de courge",
+        "unite": "g",
+        "quantite": 50,
+        "coutingredient": 0.001,
+        "couttotalingredient": 0.05
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Poivrons",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.0035,
+        "couttotalingredient": 0.0035
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Ciboulette",
+        "unite": "g",
+        "quantite": 20,
+        "coutingredient": 0.0055,
+        "couttotalingredient": 1.11
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Olives VERTES",
+        "unite": "g",
+        "quantite": 1,
+        "coutingredient": 0.013,
+        "couttotalingredient": 0.013
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "ŒufS",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Carotte",
+        "unite": "Kg",
+        "quantite": 0.045,
+        "coutingredient": 0.938,
+        "couttotalingredient": 0.04221
+      },
+      {
+        "categorie": "LEGUME",
+        "nom": "Concombre",
+        "unite": "g",
+        "quantite": 0.045,
+        "coutingredient": 0.002,
+        "couttotalingredient": 9e-05
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "Oignon",
+        "unite": "kg",
+        "quantite": 0.045,
+        "coutingredient": 1.47,
+        "couttotalingredient": 0.06615
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Vinaigrette",
+        "unite": "ml",
+        "quantite": 100,
+        "coutingredient": 0.00358,
+        "couttotalingredient": 0.358
+      }
+    ],
+    "cout unitaire ($)": 1.84
+  },
+  {
+    "nom": "Samoussa bœuf",
+    "description": "8 pièces",
+    "listeIngredients": [
+      {
+        "categorie": "",
+        "nom": "Crêpe nue",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.275,
+        "couttotalingredient": 0.275
+      },
+      {
+        "categorie": "VIANDE",
+        "nom": "Boeuf",
+        "unite": "kg",
+        "quantite": 0.14,
+        "coutingredient": 12,
+        "couttotalingredient": 1.68
+      }
+    ],
+    "cout unitaire ($)": 1.955
+  },
+  {
+    "nom": "Tenders poisson",
+    "description": "6 pièces",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "POISSON",
+        "nom": "Capitaine",
+        "unite": "kg",
+        "quantite": 0.075,
+        "coutingredient": 16,
+        "couttotalingredient": 1.2
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.05,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.1325
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Chapelure",
+        "unite": "g",
+        "quantite": 50,
+        "coutingredient": 0.0068,
+        "couttotalingredient": 0.34
+      }
+    ],
+    "cout unitaire ($)": "1,8725"
+  },
+  {
+    "nom": "Pain hamburger",
+    "description": "Recette pour 20 petits pains hamburger",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.5,
+        "coutingredient": 2.65,
+        "couttotalingredient": 1.325
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Lait liquide",
+        "unite": "l",
+        "quantite": 0.1,
+        "coutingredient": 2.22,
+        "couttotalingredient": 0.222
+      },
+      {
+        "categorie": "BOISSON",
+        "nom": "Eau",
+        "unite": "l",
+        "quantite": 0.15,
+        "coutingredient": 0.263157894736842,
+        "couttotalingredient": 0.0394736842105263
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Sucre",
+        "unite": "kg",
+        "quantite": 0.015,
+        "coutingredient": 1.2,
+        "couttotalingredient": 0.018
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "sel",
+        "unite": "kg",
+        "quantite": 0.005,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.00295
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 10,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.12
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 30,
+        "coutingredient": 0.008,
+        "couttotalingredient": 0.24
+      }
+    ],
+    "cout unitaire ($)": 2.16742368421053
+  },
+  {
+    "nom": "Pate pizza",
+    "description": "Recette pour 3 petites pizza",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.5,
+        "coutingredient": 2.65,
+        "couttotalingredient": 1.325
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 30,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.36
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Huile d'olive",
+        "unite": "l",
+        "quantite": 0.015,
+        "coutingredient": 8.45,
+        "couttotalingredient": 0.12675
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "sel",
+        "unite": "kg",
+        "quantite": 0.005,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.00295
+      }
+    ],
+    "cout unitaire ($)": "1,8147"
+  },
+  {
+    "nom": "Pate brisee",
+    "description": "",
+    "listeIngredients": [
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.2,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.53
+      },
+      {
+        "categorie": "PRODUIT LAITIER",
+        "nom": "Beurre",
+        "unite": "g",
+        "quantite": 125,
+        "coutingredient": 0.008,
+        "couttotalingredient": 1
+      },
+      {
+        "categorie": "BOISSON",
+        "nom": "Eau",
+        "unite": "l",
+        "quantite": 0.06,
+        "coutingredient": 0.263157894736842,
+        "couttotalingredient": 0.0157894736842105
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Œufs",
+        "unite": "pc",
+        "quantite": 1,
+        "coutingredient": 0.2,
+        "couttotalingredient": 0.2
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "sel",
+        "unite": "kg",
+        "quantite": 0.005,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.00295
+      }
+    ],
+    "cout unitaire ($)": 1.74873947368421
+  },
+  {
+    "nom": "Pain pitta",
+    "description": "recette pour 4 pieces",
+    "listeIngredients": [
+      {
+        "categorie": "BOISSON",
+        "nom": "Eau",
+        "unite": "l",
+        "quantite": 0.12,
+        "coutingredient": 0.263157894736842,
+        "couttotalingredient": 0.031578947368421
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Farine",
+        "unite": "kg",
+        "quantite": 0.2,
+        "coutingredient": 2.65,
+        "couttotalingredient": 0.53
+      },
+      {
+        "categorie": "CONDIMENT",
+        "nom": "sel",
+        "unite": "kg",
+        "quantite": 0.005,
+        "coutingredient": 0.59,
+        "couttotalingredient": 0.00295
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Huile",
+        "unite": "l",
+        "quantite": 0.005,
+        "coutingredient": 4.75,
+        "couttotalingredient": 0.02375
+      },
+      {
+        "categorie": "EPICERIE",
+        "nom": "Levure",
+        "unite": "g",
+        "quantite": 5,
+        "coutingredient": 0.012,
+        "couttotalingredient": 0.06
+      }
+    ],
+    "cout unitaire ($)": 0.648278947368421
+  }
+]

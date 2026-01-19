@@ -56,6 +56,7 @@ export default function OrdersScreen() {
   async function handleCreateOrder(values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     try {
       await addOrder(values);
+      alert('Order added successfully');
       setShowOrderForm(false);
     } catch (error) {
       console.error('Error creating order:', error);
