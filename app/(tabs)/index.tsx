@@ -54,10 +54,8 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-       <View style={styles.header_content}>
-          <Text style={styles.title}>Dashboard</Text>
-          <Text style={styles.subtitle}>Welcome to CrepoTraiteur</Text>
-        </View>
+     
+
       <ScrollView style={styles.container}>
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, styles.revenueCard]}>
@@ -175,7 +173,8 @@ export default function DashboardScreen() {
             ))}
           </ScrollView>
         </View>
-      </ScrollView>  </View>
+      </ScrollView>
+    </View>
   );
 }
 
