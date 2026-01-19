@@ -7,7 +7,9 @@ interface KPICardProps {
   kpi: KPI;
 }
 
-const kpiIcons: Record<string, string> = {
+type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
+
+const kpiIcons: Record<string, MaterialIconName> = {
   'Revenus du jour': 'attach-money',
   'Revenus de la semaine': 'attach-money',
   'Revenus du mois': 'attach-money',
@@ -17,6 +19,7 @@ const kpiIcons: Record<string, string> = {
   'Panier moyen': 'trending-up',
   'Taux de livraison': 'local-shipping',
 };
+
 
 const kpiColors: Record<string, { bg: string; icon: string }> = {
   'Revenus du jour': { bg: '#FFE5B4', icon: '#FF9500' },

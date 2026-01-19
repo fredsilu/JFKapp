@@ -3,22 +3,32 @@
  * This file demonstrates the analytics features with sample data
  */
 
-import { Order } from '@/types';
+/**
+ * Analytics Demo & Sample Data
+ * Fully aligned with real Firestore + analytics model
+ */
 
 /**
- * Sample orders for testing analytics
- * These represent typical data that would come from Firestore
+ * Analytics Demo & Sample Data
+ * Strictly aligned with Firestore + analytics engine
  */
+/**
+ * Analytics Demo & Sample Data
+ * Strictly aligned with Firestore + analytics engine
+ */
+
+import { Order } from '@/types';
+
 export const SAMPLE_ORDERS: Order[] = [
   {
-    id: '1',
+    id: 'order1',
     clientId: 'client1',
     client: {
       id: 'client1',
       name: 'Jean Dupont',
       phone: '06 12 34 56 78',
       profilePicture: '',
-      createdAt: new Date('2024-01-15'),
+      createdAt: '2024-01-15T00:00:00.000Z',
     },
     dishes: [
       {
@@ -29,8 +39,20 @@ export const SAMPLE_ORDERS: Order[] = [
           servings: 2,
           image: '',
           ingredients: [
-            { ingredient: { id: 'ing1', name: 'Semoule', price: 2.5 }, quantity: 300 },
-            { ingredient: { id: 'ing2', name: 'Merguez', price: 8 }, quantity: 200 },
+            {
+              ingredientId: 'ing1',
+              name: 'Semoule',
+              quantity: 0.3,
+              unit: 'kg',
+              cost: 2.5,
+            },
+            {
+              ingredientId: 'ing2',
+              name: 'Merguez',
+              quantity: 0.2,
+              unit: 'kg',
+              cost: 8,
+            },
           ],
         },
         quantity: 1,
@@ -42,17 +64,18 @@ export const SAMPLE_ORDERS: Order[] = [
     deliveryTime: '12:30',
     address: '123 Rue de Paris',
     deliveryAddress: '123 Rue de Paris',
-    createdAt: new Date('2024-01-01T10:00:00').toISOString(),
+    createdAt: '2024-01-01T10:00:00.000Z',
   },
+
   {
-    id: '2',
+    id: 'order2',
     clientId: 'client2',
     client: {
       id: 'client2',
       name: 'Marie Martin',
       phone: '06 98 76 54 32',
       profilePicture: '',
-      createdAt: new Date('2024-01-10'),
+      createdAt: '2024-01-10T00:00:00.000Z',
     },
     dishes: [
       {
@@ -63,24 +86,44 @@ export const SAMPLE_ORDERS: Order[] = [
           servings: 3,
           image: '',
           ingredients: [
-            { ingredient: { id: 'ing3', name: 'Agneau', price: 15 }, quantity: 500 },
-            { ingredient: { id: 'ing4', name: 'Pruneaux', price: 5 }, quantity: 100 },
+            {
+              ingredientId: 'ing3',
+              name: 'Agneau',
+              quantity: 0.5,
+              unit: 'kg',
+              cost: 15,
+            },
+            {
+              ingredientId: 'ing4',
+              name: 'Pruneaux',
+              quantity: 0.1,
+              unit: 'kg',
+              cost: 5,
+            },
           ],
         },
         quantity: 2,
       },
     ],
     additionalIngredients: [
-      { ingredient: { id: 'ing1', name: 'Semoule', price: 2.5 }, quantity: 100 },
+      {
+        ingredientId: 'ing1',
+        name: 'Semoule',
+        quantity: 0.1,
+        unit: 'kg',
+        cost: 2.5,
+      },
     ],
     status: 'Livré',
     deliveryDate: '2024-01-02',
     deliveryTime: '13:00',
     address: '456 Avenue de Lyon',
     deliveryAddress: '456 Avenue de Lyon',
-    createdAt: new Date('2024-01-02T11:30:00').toISOString(),
+    createdAt: '2024-01-02T11:30:00.000Z',
   },
 ];
+
+
 
 /**
  * Analytics Example Output
