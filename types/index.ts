@@ -82,7 +82,8 @@ export interface Order {
   dishes: OrderDish[];
   additionalIngredients: OrderIngredient[];
   deliveryAddress: string; // Added deliveryAddress property
-  deliveryTime: string;
+  deliveryDate: string; // Date de livraison (YYYY-MM-DD)
+  deliveryTime: string; // Heure de livraison (HH:MM)
   address: string;
   createdAt: string;
   updatedAt?: Date;

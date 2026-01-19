@@ -138,8 +138,12 @@ export default function OrdersScreen() {
 
             <View style={styles.orderDetails}>
               <View style={styles.detailRow}>
+                <Icon name="event" size={16} color="#666" />
+                <Text style={styles.detailText}>{order.deliveryDate}</Text>
+              </View>
+              <View style={styles.detailRow}>
                 <Icon name="access-time" size={16} color="#666" />
-                <Text style={styles.detailText}>Livraison à {order.deliveryTime}</Text>
+                <Text style={styles.detailText}>à {order.deliveryTime}</Text>
               </View>
               <View style={styles.detailRow}>
                 <Icon name="location-on" size={16} color="#666" />

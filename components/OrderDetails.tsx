@@ -143,8 +143,12 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 
             <View style={styles.deliveryInfo}>
               <View style={styles.deliveryDetail}>
+                <MaterialIcons name="event" size={16} color="#666" />
+                <Text style={styles.deliveryText}>Livraison le {order.deliveryDate}</Text>
+              </View>
+              <View style={styles.deliveryDetail}>
                 <MaterialIcons name="access-time" size={16} color="#666" />
-                <Text style={styles.deliveryText}>Livraison à {order.deliveryTime}</Text>
+                <Text style={styles.deliveryText}>à {order.deliveryTime}</Text>
               </View>
               <View style={styles.deliveryDetail}>
                 <MaterialIcons name="location-on" size={16} color="#666" />

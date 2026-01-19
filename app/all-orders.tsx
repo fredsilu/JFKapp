@@ -184,8 +184,12 @@ export default function AllOrdersScreen() {
 
               <View style={styles.orderMeta}>
                 <View style={styles.metaItem}>
+                  <Icon name="event" size={16} color="#666" />
+                  <Text style={styles.metaText}>{order.deliveryDate}</Text>
+                </View>
+                <View style={styles.metaItem}>
                   <Icon name="access-time" size={16} color="#666" />
-                  <Text style={styles.metaText}>Livraison à {order.deliveryTime}</Text>
+                  <Text style={styles.metaText}>à {order.deliveryTime}</Text>
                 </View>
                 <View style={styles.metaItem}>
                   <Icon name="location-on" size={16} color="#666" />

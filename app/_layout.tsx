@@ -34,6 +34,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="preparation-ingredients" options={{ title: 'Ingrédients en préparation' }} />
+        <Stack.Screen name="analytics" options={{ title: 'Analytics', headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

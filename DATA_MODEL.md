@@ -138,13 +138,15 @@ Champs:
 - `additionalIngredients` (array of OrderIngredient)
   - OrderIngredient: `{ ingredient: <Ingredient object>, quantity: number }`
 - `deliveryAddress` (string)
-- `deliveryTime` (string)
+- `deliveryDate` (string) — date de livraison (format: YYYY-MM-DD)
+- `deliveryTime` (string) — heure de livraison (format: HH:MM)
 - `address` (string) — (duplication possible, vérifier usage)
 - `createdAt` (Timestamp or string in types currently)
 - `updatedAt` (Timestamp)
 
 Remarques:
 - `dishes` contient l'objet `dish` complet et liste d'ingrédients utilisés — utile pour historique immuable des prix et composition.
+- `deliveryDate` et `deliveryTime` sont des champs obligatoires pour chaque commande.
 - Vérifier cohérence: `createdAt` dans `types` est `string` (probablement erroné) — standardiser sur `Timestamp`.
 
 Exemple:
@@ -164,6 +166,7 @@ Exemple:
   ],
   "additionalIngredients": [],
   "deliveryAddress": "12 rue Exemple",
+  "deliveryDate": "2024-01-15",
   "deliveryTime": "12:30",
   "createdAt": <Timestamp>
 }

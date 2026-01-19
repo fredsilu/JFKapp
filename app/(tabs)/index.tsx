@@ -71,7 +71,17 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-     
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.subtitle}>Restaurant Overview</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          onPress={() => router.push('/analytics')}>
+          <Icon name="analytics" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView style={styles.container}>
         <View style={styles.statsGrid}>
@@ -144,7 +154,7 @@ export default function DashboardScreen() {
                 <Text style={styles.clientName}>{order.client.name}</Text>
                 <Text style={styles.orderMeta}>
                   {order.dishes.reduce((total, { quantity }) => total + quantity, 0)} items
-                  • Delivery at {order.deliveryTime}
+                  • {order.deliveryDate} at {order.deliveryTime}
                 </Text>
               </View>
               <View style={[
@@ -227,8 +237,13 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   title: {
     fontFamily: 'Inter_700Bold',
@@ -240,6 +255,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#666',
+  },
+  analyticsButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   printButton: {
     backgroundColor: '#007AFF',

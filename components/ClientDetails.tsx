@@ -210,9 +210,16 @@ export default function ClientDetails({ clientId, clients, onClose }: ClientDeta
                     </View>
 
                     <View style={styles.deliveryInfo}>
+                      <Icon name="event" size={16} color="#666" />
+                      <Text style={styles.deliveryText}>
+                        {order.deliveryDate || 'N/A'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.deliveryInfo}>
                       <Icon name="schedule" size={16} color="#666" />
                       <Text style={styles.deliveryText}>
-                        Livraison à {order.deliveryTime || 'N/A'}
+                        à {order.deliveryTime || 'N/A'}
                       </Text>
                     </View>
                   </View>

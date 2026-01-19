@@ -336,6 +336,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   const [additionalIngredients, setAdditionalIngredients] = useState<OrderIngredient[]>(
     order?.additionalIngredients || []
   );
+  const [deliveryDate, setDeliveryDate] = useState(order?.deliveryDate || '');
   const [deliveryTime, setDeliveryTime] = useState(order?.deliveryTime || '');
   const [address, setAddress] = useState(order?.address || '');
   const [formError, setFormError] = useState<string | null>(null);
@@ -442,6 +443,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       return false;
     }
 
+    if (!deliveryDate) {
+      setFormError('Veuillez spécifier une date de livraison');
+      return false;
+    }
+
     if (!deliveryTime) {
       setFormError('Veuillez spécifier une heure de livraison');
       return false;
@@ -464,6 +470,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       status: order?.status || 'En cours',
       dishes: selectedDishes,
       additionalIngredients,
+      deliveryDate,
       deliveryTime,
       address,
       deliveryAddress: address,
@@ -716,13 +723,26 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                       </TouchableOpacity>
                     </View>
                   );
-                })}}
+                })}
               </View>
             )}
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Détails de livraison</Text>
+            <View style={styles.formField}>
+              <Text style={styles.label}>Date de livraison</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="event" size={20} color="#665" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="YYYY-MM-DD"
+                  value={deliveryDate}
+                  onChangeText={setDeliveryDate}
+                />
+              </View>
+            </View>
+
             <View style={styles.formField}>
               <Text style={styles.label}>Heure de livraison</Text>
               <View style={styles.inputContainer}>
