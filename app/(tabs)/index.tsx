@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, Platform, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  Platform,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { useOrders, useClients, useDishes } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
@@ -9,11 +17,12 @@ import { MaterialIcons as Icon } from '@expo/vector-icons';
 export default function DashboardScreen() {
   const router = useRouter();
 
-  const { data: orders = [], loading: loadingOrders, error: ordersError } = useOrders({
-    orderBy: ['createdAt', 'desc'],
-  });
-  const { data: clients = [], loading: loadingClients, error: clientsError } = useClients();
-  const { data: dishes = [], loading: loadingDishes, error: dishesError } = useDishes();
+  const { data: orders = [], loading: loadingOrders, error: ordersError } =
+    useOrders({ orderBy: ['createdAt', 'desc'] });
+  const { data: clients = [], loading: loadingClients, error: clientsError } =
+    useClients();
+  const { data: dishes = [], loading: loadingDishes, error: dishesError } =
+    useDishes();
 
   if (loadingOrders || loadingClients || loadingDishes) {
     return <LoadingSpinner />;
@@ -24,11 +33,12 @@ export default function DashboardScreen() {
   }
 
   /* =======================
-     Helpers dates
+     Helpers dates (Firestore safe)
   ======================= */
-  const isToday = (dateStr: string) => {
+  const isTodayDate = (date: any) => {
+    if (!date) return false;
+    const d = date.toDate ? date.toDate() : new Date(date);
     const today = new Date();
-    const d = new Date(dateStr);
     return (
       d.getFullYear() === today.getFullYear() &&
       d.getMonth() === today.getMonth() &&
@@ -36,9 +46,10 @@ export default function DashboardScreen() {
     );
   };
 
-  const isCurrentMonth = (dateStr: string) => {
+  const isCurrentMonthDate = (date: any) => {
+    if (!date) return false;
+    const d = date.toDate ? date.toDate() : new Date(date);
     const today = new Date();
-    const d = new Date(dateStr);
     return (
       d.getFullYear() === today.getFullYear() &&
       d.getMonth() === today.getMonth()
@@ -48,15 +59,14 @@ export default function DashboardScreen() {
   /* =======================
      KPI Calculations
   ======================= */
-  const activeOrders = orders.filter(order => order.status !== 'Livré');
+  const activeOrders = orders.filter(o => o.status !== 'Livré');
 
   const todaysRevenue = orders
     .filter(
       o =>
         o.status === 'Livré' &&
         o.billedAmount !== undefined &&
-        o.deliveryDate &&
-        isToday(o.deliveryDate)
+        isTodayDate(o.updatedAt)
     )
     .reduce((sum, o) => sum + (o.billedAmount || 0), 0);
 
@@ -65,17 +75,17 @@ export default function DashboardScreen() {
       o =>
         o.status === 'Livré' &&
         o.billedAmount !== undefined &&
-        o.deliveryDate &&
-        isCurrentMonth(o.deliveryDate)
+        isCurrentMonthDate(o.updatedAt)
     )
     .reduce((sum, o) => sum + (o.billedAmount || 0), 0);
 
   const todaysOrdersCount = orders.filter(
-    o => o.deliveryDate && isToday(o.deliveryDate)
+    o => o.status === 'Livré' && isTodayDate(o.updatedAt)
   ).length;
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Dashboard</Text>
@@ -90,21 +100,27 @@ export default function DashboardScreen() {
       </View>
 
       <ScrollView>
+        {/* KPIs */}
         <View style={styles.statsGrid}>
           {/* Revenue Card */}
           <View style={[styles.statCard, styles.revenueCard]}>
             <Text style={styles.statLabel}>Today's Revenue</Text>
             <View style={styles.revenueAmount}>
               <Icon name="attach-money" size={24} color="#007AFF" />
-              <Text style={styles.revenueText}>{todaysRevenue.toFixed(2)}</Text>
+              <Text style={styles.revenueText}>
+                {todaysRevenue.toFixed(2)}
+              </Text>
             </View>
 
             <View style={styles.divider} />
 
             <Text style={styles.statLabel}>Month Revenue</Text>
-            <Text style={[styles.revenueText, { fontSize: 20 }]}>
-              {monthRevenue.toFixed(2)}
-            </Text>
+            <View style={styles.revenueAmountSmall}>
+              <Icon name="attach-money" size={18} color="#007AFF" />
+              <Text style={[styles.revenueText, { fontSize: 20 }]}>
+                {monthRevenue.toFixed(2)}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.statCard}>
@@ -190,7 +206,11 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dishesContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dishesContainer}
+          >
             {dishes.slice(0, 5).map(dish => (
               <View key={dish.id} style={styles.dishCard}>
                 <Image source={{ uri: dish.image }} style={styles.dishImage} />
@@ -240,25 +260,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  title: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 24,
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#666',
-  },
+  title: { fontSize: 24, fontWeight: '700' },
+  subtitle: { fontSize: 14, color: '#666' },
   analyticsButton: {
     backgroundColor: '#007AFF',
     borderRadius: 8,
     padding: 10,
   },
-  statsGrid: {
-    padding: 20,
-    gap: 12,
-  },
+  statsGrid: { padding: 20, gap: 12 },
   statCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -266,55 +275,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 2,
   },
-  revenueCard: {
-    alignItems: 'stretch',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  revenueAmount: {
+  revenueCard: { alignItems: 'stretch' },
+  statLabel: { fontSize: 14, color: '#666' },
+  revenueAmount: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  revenueAmountSmall: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  revenueText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1a1a1a',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 8,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginVertical: 8,
-  },
-  section: {
-    marginTop: 12,
-    backgroundColor: '#fff',
-    paddingVertical: 20,
-  },
+  revenueText: { fontSize: 32, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: '#eee', marginVertical: 8 },
+  statNumber: { fontSize: 24, fontWeight: '700', marginVertical: 8 },
+  section: { marginTop: 12, backgroundColor: '#fff', paddingVertical: 20 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
-    color: '#007AFF',
-  },
+  sectionTitle: { fontSize: 18, fontWeight: '600' },
+  seeAllButton: { flexDirection: 'row', alignItems: 'center' },
+  seeAllText: { color: '#007AFF' },
   orderCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -328,49 +309,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 12,
   },
-  orderInfo: {
-    flex: 1,
-  },
-  clientName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  orderMeta: {
-    fontSize: 14,
-    color: '#666',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  dishesContainer: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
+  orderInfo: { flex: 1 },
+  clientName: { fontSize: 16, fontWeight: '500' },
+  orderMeta: { fontSize: 14, color: '#666' },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  statusText: { fontSize: 14, fontWeight: '500' },
+  dishesContainer: { paddingHorizontal: 20, gap: 12 },
   dishCard: {
     width: 200,
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
   },
-  dishImage: {
-    width: '100%',
-    height: 120,
-  },
-  dishInfo: {
-    padding: 12,
-  },
-  dishName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  dishMeta: {
-    fontSize: 14,
-    color: '#666',
-  },
+  dishImage: { width: '100%', height: 120 },
+  dishInfo: { padding: 12 },
+  dishName: { fontSize: 16, fontWeight: '500' },
+  dishMeta: { fontSize: 14, color: '#666' },
 });
