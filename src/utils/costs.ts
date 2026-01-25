@@ -74,8 +74,15 @@ export function calculateOrderProfit(order: Order, margin: number = 0.3): number
 }
 
 /**
- * Formate un montant en euros
+ * Formate un montant en dollars américains (USD)
  */
-export function formatCurrency(amount: number): string {
-  return `${amount.toFixed(2)} €`;
+export function formatCurrency(amount?: number): string {
+  const value = amount ?? 0;
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
