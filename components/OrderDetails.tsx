@@ -79,6 +79,39 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
         </View>
 
         <ScrollView style={styles.content}>
+          {/* Informations de facturation */}
+          {(order.designation || order.billedAmount || order.invoiceDate || order.paymentDate) && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MaterialIcons name="receipt" size={20} color="#1a1a1a" />
+                <Text style={styles.sectionTitle}>Facturation</Text>
+              </View>
+              {order.designation && (
+                <View style={styles.deliveryDetail}>
+                  <MaterialIcons name="description" size={16} color="#666" />
+                  <Text style={styles.deliveryText}>Désignation : {order.designation}</Text>
+                </View>
+              )}
+              {order.billedAmount !== undefined && (
+                <View style={styles.deliveryDetail}>
+                  <MaterialIcons name="euro" size={16} color="#666" />
+                  <Text style={styles.deliveryText}>Montant facturé : {formatCurrency(order.billedAmount)}</Text>
+                </View>
+              )}
+              {order.invoiceDate && (
+                <View style={styles.deliveryDetail}>
+                  <MaterialIcons name="event" size={16} color="#666" />
+                  <Text style={styles.deliveryText}>Date de facture : {order.invoiceDate}</Text>
+                </View>
+              )}
+              {order.paymentDate && (
+                <View style={styles.deliveryDetail}>
+                  <MaterialIcons name="payment" size={16} color="#666" />
+                  <Text style={styles.deliveryText}>Date de paiement : {order.paymentDate}</Text>
+                </View>
+              )}
+            </View>
+          )}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="inventory" size={20} color="#1a1a1a" />

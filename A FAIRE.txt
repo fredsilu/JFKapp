@@ -1,15 +1,31 @@
-A FAIRE
+PROCHAINE AMELIORATION
+
+Dans la présentation des commandes, il faudrait que désignation soit affichée en dessous du nombre d'articles et du montant total de la commande et avant la date.  Designation eut pas etre le meme bloc que le statut de la commande.
+Dans les details de la commande il faudrait mettre des séparateurs entre les champs pour avoir visuellement une bonne délimitation et ajouter des couleurs de fond pour chacun des blocs
+
+Tous les montants doivent etre en dollars
+
+Modifier la structuration des commandes : date de livraison, montant facturé et montant du cout des matières premieres
 
 
-Modifier un ingredient
-dans nouvelle commande : possibilite de chercher un plat et possibilie de chercher un ingredient supplementaire
+PROCHAINE VERSIONS
 
-Voici les prochaines fonctionnalités à mettre en place pour améliorer l'application :
+- Gestion des utilisateurs et rôles
 
-Gestion des stocks et inventaire
-Système d'alerte pour les stocks bas
-Historique des mouvements de stock
+
+PROCHAINE VERSIONS
+ 
+STOCK : 
+- Gestion des stocks et inventaire
+- Système d'alerte pour les stocks bas
+- Historique des mouvements de stock
+
+
+
+PROCHAINE VERSIONS
+
 Prévisions de consommation
+
 Gestion des commandes fournisseurs
 Scanner de codes-barres pour l'inventaire
 Gestion des commandes avancée
@@ -18,26 +34,25 @@ Notifications en temps réel
 Impression des bons de commande
 Système de paiement intégré
 Gestion des retours et remboursements
-Gestion des clients
+
+
 Programme de fidélité
 Notes et préférences clients
 Segmentation client
 Envoi automatique d'emails/SMS
 Système de feedback
-Gestion des plats et menus
+
+
 Gestion des allergènes
 Photos et descriptions détaillées
 Menus saisonniers
 Suggestions personnalisées
 Gestion des promotions
-Tableau de bord et analytics
-KPIs personnalisables
-Graphiques de performance
 Rapports exportables
 Prévisions de vente
 Analyse des tendances
 Administration et paramètres
-Gestion des utilisateurs et rôles
+
 Configuration des taxes
 Personnalisation de l'interface
 Sauvegarde automatique
@@ -65,7 +80,7 @@ Multi-langues
 Multi-devises
 Formats régionaux
 Fuseaux horaires
-Ces fonctionnalités permettront d'avoir une application complète et professionnelle pour la gestion d'un service traiteur.
+
 
 
 ---------------------------------------------------------------

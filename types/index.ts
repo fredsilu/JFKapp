@@ -87,6 +87,10 @@ export interface Order {
   address: string;
   createdAt: string;
   updatedAt?: Date;
+  designation?: string; // Désignation de la commande
+  billedAmount?: number; // Montant facturé
+  invoiceDate?: string; // Date de facture (YYYY-MM-DD)
+  paymentDate?: string; // Date de paiement (YYYY-MM-DD)
 }
 
 

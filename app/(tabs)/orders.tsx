@@ -130,6 +130,31 @@ export default function OrdersScreen() {
                 </View>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}15` }]}>
+                  {/* Facturation */}
+                  {order.designation && (
+                    <View style={styles.detailRow}>
+                      <Icon name="description" size={16} color="#666" />
+                      <Text style={styles.detailText}>Désignation : {order.designation}</Text>
+                    </View>
+                  )}
+                  {order.billedAmount !== undefined && (
+                    <View style={styles.detailRow}>
+                      <Icon name="euro" size={16} color="#666" />
+                      <Text style={styles.detailText}>Montant facturé : {order.billedAmount} €</Text>
+                    </View>
+                  )}
+                  {order.invoiceDate && (
+                    <View style={styles.detailRow}>
+                      <Icon name="receipt" size={16} color="#666" />
+                      <Text style={styles.detailText}>Date de facture : {order.invoiceDate}</Text>
+                    </View>
+                  )}
+                  {order.paymentDate && (
+                    <View style={styles.detailRow}>
+                      <Icon name="payment" size={16} color="#666" />
+                      <Text style={styles.detailText}>Date de paiement : {order.paymentDate}</Text>
+                    </View>
+                  )}
                 <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
                   {order.status}
                 </Text>

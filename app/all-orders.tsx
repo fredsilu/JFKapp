@@ -180,6 +180,19 @@ export default function AllOrdersScreen() {
                     • {quantity} {ingredient.unit} {ingredient.name}
                   </Text>
                 ))}
+                {/* Facturation */}
+                {order.designation && (
+                  <Text style={styles.itemText}>• Désignation : {order.designation}</Text>
+                )}
+                {order.billedAmount !== undefined && (
+                  <Text style={styles.itemText}>• Montant facturé : {formatCurrency(order.billedAmount)}</Text>
+                )}
+                {order.invoiceDate && (
+                  <Text style={styles.itemText}>• Date de facture : {order.invoiceDate}</Text>
+                )}
+                {order.paymentDate && (
+                  <Text style={styles.itemText}>• Date de paiement : {order.paymentDate}</Text>
+                )}
               </View>
 
               <View style={styles.orderMeta}>

@@ -339,6 +339,10 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   const [deliveryDate, setDeliveryDate] = useState(order?.deliveryDate || '');
   const [deliveryTime, setDeliveryTime] = useState(order?.deliveryTime || '');
   const [address, setAddress] = useState(order?.address || '');
+  const [designation, setDesignation] = useState(order?.designation || '');
+  const [billedAmount, setBilledAmount] = useState(order?.billedAmount ? String(order.billedAmount) : '');
+  const [invoiceDate, setInvoiceDate] = useState(order?.invoiceDate || '');
+  const [paymentDate, setPaymentDate] = useState(order?.paymentDate || '');
   const [formError, setFormError] = useState<string | null>(null);
 
   // États pour la recherche
@@ -437,27 +441,27 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       setFormError('Veuillez sélectionner un client');
       return false;
     }
-
     if (selectedDishes.length === 0) {
       setFormError('Veuillez ajouter au moins un plat');
       return false;
     }
-
     if (!deliveryDate) {
       setFormError('Veuillez spécifier une date de livraison');
       return false;
     }
-
     if (!deliveryTime) {
       setFormError('Veuillez spécifier une heure de livraison');
       return false;
     }
-
     if (!address) {
       setFormError('Veuillez spécifier une adresse de livraison');
       return false;
     }
-
+    // Optionnel : désignation, montant facturé, date de facture, date de paiement
+    if (billedAmount && isNaN(Number(billedAmount))) {
+      setFormError('Le montant facturé doit être un nombre');
+      return false;
+    }
     return true;
   };
 
@@ -474,8 +478,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       deliveryTime,
       address,
       deliveryAddress: address,
+      designation: designation || undefined,
+      billedAmount: billedAmount ? Number(billedAmount) : undefined,
+      invoiceDate: invoiceDate || undefined,
+      paymentDate: paymentDate || undefined,
       //createdAt: order?.createdAt || new Date().toISOString(),
-
     });
   };
   // const [loading, setLoading] = useState(true);
@@ -767,6 +774,56 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                   onChangeText={setAddress}
                   multiline
                   numberOfLines={3}
+                />
+              </View>
+            </View>
+            {/* Champs supplémentaires */}
+            <View style={styles.formField}>
+              <Text style={styles.label}>Désignation</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="description" size={20} color="#665" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Désignation de la commande"
+                  value={designation}
+                  onChangeText={setDesignation}
+                />
+              </View>
+            </View>
+            <View style={styles.formField}>
+              <Text style={styles.label}>Montant facturé</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="euro" size={20} color="#665" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Montant facturé (€)"
+                  value={billedAmount}
+                  onChangeText={setBilledAmount}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+            </View>
+            <View style={styles.formField}>
+              <Text style={styles.label}>Date de facture</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="receipt" size={20} color="#665" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="YYYY-MM-DD"
+                  value={invoiceDate}
+                  onChangeText={setInvoiceDate}
+                />
+              </View>
+            </View>
+            <View style={styles.formField}>
+              <Text style={styles.label}>Date de paiement</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="payment" size={20} color="#665" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="YYYY-MM-DD"
+                  value={paymentDate}
+                  onChangeText={setPaymentDate}
                 />
               </View>
             </View>
