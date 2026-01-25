@@ -86,7 +86,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
             <View style={styles.priceCard}>
               <View style={styles.priceHeader}>
                 <MaterialIcons name="attach-money" size={24} color="#007AFF" />
-                <Text style={styles.priceLabel}>Prix unitaire</Text>
+                <Text style={styles.priceLabel}>Coût unitaire</Text>
               </View>
              <View style={styles.priceContent}>
   <Text style={styles.priceValue}>

@@ -831,7 +831,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           </View>
 
           <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Total de la commande</Text>
+            <Text style={styles.totalLabel}>Coût de la commande</Text>
             <View style={styles.totalAmount}>
               <Icon name="attach-money" size={24} color="#007AFF" />
               <Text style={styles.totalValue}>
