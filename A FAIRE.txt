@@ -1,11 +1,30 @@
 PROCHAINE AMELIORATION
 
-Dans la présentation des commandes, il faudrait que désignation soit affichée en dessous du nombre d'articles et du montant total de la commande et avant la date.  Designation eut pas etre le meme bloc que le statut de la commande.
-Dans les details de la commande il faudrait mettre des séparateurs entre les champs pour avoir visuellement une bonne délimitation et ajouter des couleurs de fond pour chacun des blocs
 
-Tous les montants doivent etre en dollars
+1. Tableau de bord : 
+	- Today's revenue doit calculé la somme des montants facturés pour les livraisons réalisées de la journée
+	- Rajouter en dessous de Today's revenue; month revenue pour avoir la somme des montants facturés pour les livraisons réalisées du mois en cours 
 
-Modifier la structuration des commandes : date de livraison, montant facturé et montant du cout des matières premieres
+2. Tabs Clients :
+	- Le nombre de orders n'apparait pas.  Lorsque c'est 0, le 0 apparait mais lorsqu'il y a des commandes en cours, il y a juste un " orders
+
+3. Details du client
+	- Dans l'historique des commandes : le montant qui apparait à coté du statut, doit être le montant facturé de la commande et non le cout ou prix de la commande
+
+4. Commande
+	- Dans la présentation des commandes, il faudrait que désignation soit affichée en dessous du nombre d'articles et du montant total de la commande et avant la date.  Designation ne peut pas etre dans le meme bloc que le statut de la commande.
+
+5. Details de commande :
+	- Dans les details de la commande il faudrait mieux afficher les différents blocs visuellement et mettre par exemple des séparateurs entre les champs (client, informations de livraison, plats commandés, ingrédients supplémentaires, récapitulatif des ingredients) pour avoir visuellement une bonne délimitation et ajouter des couleurs de fond pour chacun des blocs
+
+6. Dans le champ de recherche du client, la recherche peut se faire sans tenir compte des accents car si je fais frederic au lieu de frédéric, la recherche ne trouve pas frédéric
+
+
+PROCHAINES VERSIONS
+
+6. Mettre le logo de crepolia quelque part car il n'est pas visible dans l'app
+
+7. y INCORPORER un breakdown des commandes en termes de cout matiere : comme un calculateur du service traiteur qui sera dans un premier temps indépendant du reste de l'app mais utile pour la CEO dans ses calculs.  Il faudra dans une prochaine version voir comment la mettre en lien avec le reste de l'application.
 
 
 PROCHAINE VERSIONS

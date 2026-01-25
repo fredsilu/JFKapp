@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
-//import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
-import { useClients } from '@/src/hooks/useFirestore';
+import { useClients, useOrders } from '@/src/hooks/useFirestore';
 import { addClient } from '@/src/services/firestore';
 import Modal from '@/components/Modal';
 import ClientForm from '@/components/ClientForm';
@@ -16,21 +23,35 @@ export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  
-  const { data: clients = [], loading, error } = useClients({
-    orderBy: ['name', 'asc']
+
+  const {
+    data: clients = [],
+    loading: loadingClients,
+    error: clientsError,
+  } = useClients({
+    orderBy: ['name', 'asc'],
   });
 
-  const filteredClients = clients.filter(client => 
-    (client.name && client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (typeof client.phone === 'string' && client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
+  const {
+    data: orders = [],
+    loading: loadingOrders,
+    error: ordersError,
+  } = useOrders();
+
+  const filteredClients = clients.filter(client =>
+    (client.name &&
+      client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (client.email &&
+      client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (typeof client.phone === 'string' &&
+      client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleCreateClient = async (values: Partial<Client>) => {
     try {
-      console.log('Creating client', values);
-      await addClient(values as Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>);
+      await addClient(
+        values as Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'totalOrders'>
+      );
       alert('Client added successfully');
       setIsFormModalVisible(false);
     } catch (err) {
@@ -38,16 +59,17 @@ export default function ClientsScreen() {
     }
   };
 
-  if (loading) {
+  if (loadingClients || loadingOrders) {
     return <LoadingSpinner />;
   }
 
-  if (error) {
+  if (clientsError || ordersError) {
     return <ErrorMessage message="Error loading clients" />;
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#665" style={styles.searchIcon} />
@@ -59,58 +81,91 @@ export default function ClientsScreen() {
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setIsFormModalVisible(true)}>
+          onPress={() => setIsFormModalVisible(true)}
+        >
           <Icon name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}
-        contentContainerStyle={styles.contentContainer}>
+      {/* Clients list */}
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+      >
         <View style={styles.grid}>
-          {filteredClients.map((client) => (
-            <TouchableOpacity 
-              key={client.id} 
-              style={styles.clientCard}
-              onPress={() => setSelectedClientId(client.id)}>
-              <Image 
-              source={client.profilePicture 
-                ? { uri: client.profilePicture } 
-                : require('@/assets/images/no_client_picture.jpg')} 
-              style={styles.clientImage} 
-              />
-              <View style={styles.clientInfo}>
-              <Text style={styles.clientName}>{client.name}</Text>
-              <View style={styles.contactInfo}>
-                <View style={styles.contactItem}>
-                <Icon name="email" size={14} color="#665" />
-                <Text style={styles.contactText}>{client.email}</Text>
+          {filteredClients.map(client => {
+            // ✅ CORRECTION CLÉ : toutes les commandes, tous statuts confondus
+            const clientOrdersCount = orders.filter(
+              o => o.client?.id === client.id
+            ).length;
+
+            return (
+              <TouchableOpacity
+                key={client.id}
+                style={styles.clientCard}
+                onPress={() => setSelectedClientId(client.id)}
+              >
+                <Image
+                  source={
+                    client.profilePicture
+                      ? { uri: client.profilePicture }
+                      : require('@/assets/images/no_client_picture.jpg')
+                  }
+                  style={styles.clientImage}
+                />
+
+                <View style={styles.clientInfo}>
+                  <Text style={styles.clientName}>{client.name}</Text>
+
+                  <View style={styles.contactInfo}>
+                    {client.email && (
+                      <View style={styles.contactItem}>
+                        <Icon name="email" size={14} color="#665" />
+                        <Text style={styles.contactText}>{client.email}</Text>
+                      </View>
+                    )}
+                    <View style={styles.contactItem}>
+                      <Icon name="phone" size={14} color="#665" />
+                      <Text style={styles.contactText}>
+                        {client.phone ? client.phone.toString() : 'N/A'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.statsContainer}>
+                    <View style={styles.stat}>
+                      <Icon
+                        name="shopping-bag"
+                        size={16}
+                        color="#007AFF"
+                      />
+                      <Text style={styles.statNumber}>
+                        {clientOrdersCount}
+                      </Text>
+                      <Text style={styles.statLabel}>
+                        {clientOrdersCount === 1 ? 'order' : 'orders'}
+                      </Text>
+                    </View>
+
+                    {client.lastOrderDate && (
+                      <Text style={styles.lastOrder}>
+                        Last order:{' '}
+                        {new Date(
+                          client.lastOrderDate
+                        ).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-                <View style={styles.contactItem}>
-                <Icon name="phone" size={14} color="#665" />
-                <Text style={styles.contactText}> 
-                {typeof client.phone === 'number' || typeof client.phone === 'string' ? client.phone.toString() : 'N/A'}</Text>
-                </View>
-              </View>
-              <View style={styles.statsContainer}>
-                <View style={styles.stat}>
-                <Icon name="shopping-bag" size={16} color="#007AFF" />
-                <Text style={styles.statNumber}>{client.totalOrders}</Text>
-                <Text style={styles.statLabel}>orders</Text>
-                </View>
-                {client.lastOrderDate && (
-                <Text style={styles.lastOrder}>
-                  Last order: {new Date(client.lastOrderDate).toLocaleDateString()}
-                </Text>
-                )}
-              </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
+      {/* Add client modal */}
       <Modal visible={isFormModalVisible}>
         <ClientForm
           onClose={() => setIsFormModalVisible(false)}
@@ -118,6 +173,7 @@ export default function ClientsScreen() {
         />
       </Modal>
 
+      {/* Client details modal */}
       <Modal visible={!!selectedClientId}>
         {selectedClientId && (
           <ClientDetails
@@ -160,7 +216,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
     color: '#1a1a1a',
   },
   addButton: {
@@ -185,10 +240,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 2,
   },
   clientImage: {
@@ -202,8 +253,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   clientName: {
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 18,
+    fontWeight: '600',
     color: '#1a1a1a',
   },
   contactInfo: {
@@ -215,7 +266,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   contactText: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#666',
   },
@@ -223,7 +273,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
   },
   stat: {
     flexDirection: 'row',
@@ -235,17 +284,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   statNumber: {
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
+    fontWeight: '600',
     color: '#007AFF',
   },
   statLabel: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#666',
   },
   lastOrder: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 12,
     color: '#666',
   },
