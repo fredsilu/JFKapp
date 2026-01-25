@@ -4,16 +4,13 @@ import { useOrders, useClients, useDishes } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { useRouter } from 'expo-router';
-import { getFirestore, collection, runTransaction, doc, serverTimestamp } from "firebase/firestore";
-import app from '@/lib/firebase'; // Assurez-vous d'importer votre configuration Firebase
-//import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-
 
 export default function DashboardScreen() {
   const router = useRouter();
+
   const { data: orders = [], loading: loadingOrders, error: ordersError } = useOrders({
-    orderBy: ['createdAt', 'desc']
+    orderBy: ['createdAt', 'desc'],
   });
   const { data: clients = [], loading: loadingClients, error: clientsError } = useClients();
   const { data: dishes = [], loading: loadingDishes, error: dishesError } = useDishes();
@@ -26,48 +23,56 @@ export default function DashboardScreen() {
     return <ErrorMessage message="Error loading dashboard data" />;
   }
 
-  const activeOrders = orders.filter(order => order.status !== 'Livré');
-  const todayOrders = orders.filter(order => {
-    const orderDate = new Date(order.createdAt);
+  /* =======================
+     Helpers dates
+  ======================= */
+  const isToday = (dateStr: string) => {
     const today = new Date();
-    return orderDate.toDateString() === today.toDateString();
-  });
-
-  const calculateDailyRevenue = () => {
-    return todayOrders.reduce((total, order) => {
-      let dishesTotal = 0;
-      if (order.dishes && Array.isArray(order.dishes)) {
-        dishesTotal = order.dishes.reduce((orderTotal, { dish, quantity }) => {
-          if (!dish || !dish.ingredients) {
-            return orderTotal;
-          }
-          const dishPrice = dish.ingredients.reduce((dishTotal, { ingredient, quantity: ingredientQty }) => {
-            if (!ingredient || !ingredient.price) {
-              return dishTotal;
-            }
-            return dishTotal + (ingredient.price * ingredientQty);
-          }, 0);
-          return orderTotal + (dishPrice * quantity);
-        }, 0);
-      }
-
-      let ingredientsTotal = 0;
-      if (order.additionalIngredients && Array.isArray(order.additionalIngredients)) {
-        ingredientsTotal = order.additionalIngredients.reduce((total, { ingredient, quantity }) => {
-          if (!ingredient || !ingredient.price) {
-            return total;
-          }
-          return total + (ingredient.price * quantity);
-        }, 0);
-      }
-
-      return total + dishesTotal + ingredientsTotal;
-    }, 0);
+    const d = new Date(dateStr);
+    return (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate()
+    );
   };
 
-  const dailyRevenue = calculateDailyRevenue();
-  const previousDayRevenue = dailyRevenue * 0.8; // Mock data for comparison
-  const revenueChange = ((dailyRevenue - previousDayRevenue) / previousDayRevenue) * 100;
+  const isCurrentMonth = (dateStr: string) => {
+    const today = new Date();
+    const d = new Date(dateStr);
+    return (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth()
+    );
+  };
+
+  /* =======================
+     KPI Calculations
+  ======================= */
+  const activeOrders = orders.filter(order => order.status !== 'Livré');
+
+  const todaysRevenue = orders
+    .filter(
+      o =>
+        o.status === 'Livré' &&
+        o.billedAmount !== undefined &&
+        o.deliveryDate &&
+        isToday(o.deliveryDate)
+    )
+    .reduce((sum, o) => sum + (o.billedAmount || 0), 0);
+
+  const monthRevenue = orders
+    .filter(
+      o =>
+        o.status === 'Livré' &&
+        o.billedAmount !== undefined &&
+        o.deliveryDate &&
+        isCurrentMonth(o.deliveryDate)
+    )
+    .reduce((sum, o) => sum + (o.billedAmount || 0), 0);
+
+  const todaysOrdersCount = orders.filter(
+    o => o.deliveryDate && isToday(o.deliveryDate)
+  ).length;
 
   return (
     <View style={styles.container}>
@@ -78,37 +83,28 @@ export default function DashboardScreen() {
         </View>
         <TouchableOpacity
           style={styles.analyticsButton}
-          onPress={() => router.push('/analytics')}>
+          onPress={() => router.push('/analytics')}
+        >
           <Icon name="analytics" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.container}>
+      <ScrollView>
         <View style={styles.statsGrid}>
+          {/* Revenue Card */}
           <View style={[styles.statCard, styles.revenueCard]}>
-            <View style={styles.statHeader}>
-              <Text style={styles.statLabel}>Today's Revenue</Text>
-              <View style={[
-                styles.changeBadge,
-                { backgroundColor: revenueChange >= 0 ? '#34C75915' : '#FF3B3015' }
-              ]}>
-                {revenueChange >= 0 ? (
-                  <Icon name="trending-up" size={16} color="#34C759" />
-                ) : (
-                  <Icon name="trending-down" size={16} color="#FF3B30" />
-                )}
-                <Text style={[
-                  styles.changeText,
-                  { color: revenueChange >= 0 ? '#34C759' : '#FF3B30' }
-                ]}>
-                  {Math.abs(revenueChange).toFixed(1)}%
-                </Text>
-              </View>
-            </View>
+            <Text style={styles.statLabel}>Today's Revenue</Text>
             <View style={styles.revenueAmount}>
               <Icon name="attach-money" size={24} color="#007AFF" />
-              <Text style={styles.revenueText}>{dailyRevenue.toFixed(2)}</Text>
+              <Text style={styles.revenueText}>{todaysRevenue.toFixed(2)}</Text>
             </View>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.statLabel}>Month Revenue</Text>
+            <Text style={[styles.revenueText, { fontSize: 20 }]}>
+              {monthRevenue.toFixed(2)}
+            </Text>
           </View>
 
           <View style={styles.statCard}>
@@ -125,43 +121,55 @@ export default function DashboardScreen() {
 
           <View style={styles.statCard}>
             <Icon name="schedule" size={24} color="#007AFF" />
-            <Text style={styles.statNumber}>{todayOrders.length}</Text>
+            <Text style={styles.statNumber}>{todaysOrdersCount}</Text>
             <Text style={styles.statLabel}>Today's Orders</Text>
           </View>
         </View>
 
+        {/* Recent Orders */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Orders</Text>
             <TouchableOpacity
               style={styles.seeAllButton}
-              onPress={() => router.push('/all-orders')}>
+              onPress={() => router.push('/all-orders')}
+            >
               <Text style={styles.seeAllText}>See All</Text>
               <Icon name="chevron-right" size={20} color="#007AFF" />
             </TouchableOpacity>
           </View>
 
-          {orders.slice(0, 5).map((order) => (
+          {orders.slice(0, 5).map(order => (
             <View key={order.id} style={styles.orderCard}>
               <Image
-                source={order.client.profilePicture
-                  ? { uri: order.client.profilePicture }
-                  : require('@/assets/images/no_client_picture.jpg')}
+                source={
+                  order.client.profilePicture
+                    ? { uri: order.client.profilePicture }
+                    : require('@/assets/images/no_client_picture.jpg')
+                }
                 style={styles.clientImage}
               />
 
               <View style={styles.orderInfo}>
                 <Text style={styles.clientName}>{order.client.name}</Text>
                 <Text style={styles.orderMeta}>
-                  {order.dishes.reduce((total, { quantity }) => total + quantity, 0)} items
-                  • {order.deliveryDate} at {order.deliveryTime}
+                  {order.dishes.reduce((t, d) => t + d.quantity, 0)} items •{' '}
+                  {order.deliveryDate} at {order.deliveryTime}
                 </Text>
               </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(order.status) + '15' }
-              ]}>
-                <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: getStatusColor(order.status) + '15' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    { color: getStatusColor(order.status) },
+                  ]}
+                >
                   {order.status}
                 </Text>
               </View>
@@ -169,27 +177,23 @@ export default function DashboardScreen() {
           ))}
         </View>
 
+        {/* Popular Dishes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Popular Dishes</Text>
             <TouchableOpacity
               style={styles.seeAllButton}
-              onPress={() => router.push('/all-dishes')}>
+              onPress={() => router.push('/all-dishes')}
+            >
               <Text style={styles.seeAllText}>See All</Text>
               <Icon name="chevron-right" size={20} color="#007AFF" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dishesContainer}>
-            {dishes.slice(0, 5).map((dish) => (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dishesContainer}>
+            {dishes.slice(0, 5).map(dish => (
               <View key={dish.id} style={styles.dishCard}>
-                <Image
-                  source={{ uri: dish.image }}
-                  style={styles.dishImage}
-                />
+                <Image source={{ uri: dish.image }} style={styles.dishImage} />
                 <View style={styles.dishInfo}>
                   <Text style={styles.dishName}>{dish.name}</Text>
                   <Text style={styles.dishMeta}>
@@ -205,6 +209,9 @@ export default function DashboardScreen() {
   );
 }
 
+/* =======================
+   Helpers UI
+======================= */
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'En cours':
@@ -222,19 +229,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    paddingTop: Platform.OS === 'android' ? 25 : 10, // Add top space for Android
-    marginTop: Platform.OS === 'android' ? 15 : 15, // Add top space for iOS
-  },
-  header_content: {
-    padding: 20,
-    backgroundColor: '#333',
-    alignItems: 'center',
-    color: '#FFFFFF',
-  },
-  printButtonText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: '#fff',
+    paddingTop: Platform.OS === 'android' ? 25 : 10,
   },
   header: {
     flexDirection: 'row',
@@ -249,7 +244,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     fontSize: 24,
     color: '#1a1a1a',
-    marginBottom: 4,
   },
   subtitle: {
     fontFamily: 'Inter_400Regular',
@@ -260,16 +254,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     borderRadius: 8,
     padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  printButton: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
   },
   statsGrid: {
     padding: 20,
@@ -280,33 +264,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 2,
   },
   revenueCard: {
     alignItems: 'stretch',
-    marginBottom: 4,
   },
-  statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  changeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  changeText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
   },
   revenueAmount: {
     flexDirection: 'row',
@@ -314,20 +279,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   revenueText: {
-    fontFamily: 'Inter_700Bold',
     fontSize: 32,
+    fontWeight: '700',
     color: '#1a1a1a',
   },
-  statNumber: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 24,
-    color: '#1a1a1a',
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
     marginVertical: 8,
   },
-  statLabel: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#666',
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginVertical: 8,
   },
   section: {
     marginTop: 12,
@@ -337,23 +301,18 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   sectionTitle: {
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 18,
-    color: '#1a1a1a',
+    fontWeight: '600',
   },
   seeAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
   seeAllText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
     color: '#007AFF',
   },
   orderCard: {
@@ -373,13 +332,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   clientName: {
-    fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: '#1a1a1a',
-    marginBottom: 4,
+    fontWeight: '500',
   },
   orderMeta: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#666',
   },
@@ -389,8 +345,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   statusText: {
-    fontFamily: 'Inter_500Medium',
     fontSize: 14,
+    fontWeight: '500',
   },
   dishesContainer: {
     paddingHorizontal: 20,
@@ -401,28 +357,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   dishImage: {
     width: '100%',
     height: 120,
-    resizeMode: 'cover',
   },
   dishInfo: {
     padding: 12,
   },
   dishName: {
-    fontFamily: 'Inter_500Medium',
     fontSize: 16,
-    color: '#1a1a1a',
-    marginBottom: 4,
+    fontWeight: '500',
   },
   dishMeta: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#666',
   },
