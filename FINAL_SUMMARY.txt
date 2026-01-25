@@ -106,13 +106,13 @@
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
   🔢 KPIs (8):
-    1. Daily Revenue          → €XXXX.XX with trend
-    2. Weekly Revenue         → €XXXXX.XX with trend
-    3. Monthly Revenue        → €XXXXXX.XX with trend
+    1. Daily Revenue          → $XXXX.XX with trend
+    2. Weekly Revenue         → $XXXXX.XX with trend
+    3. Monthly Revenue        → $XXXXXX.XX with trend
     4. Daily Orders           → XX with trend
     5. Weekly Orders          → XXX with trend
     6. Monthly Orders         → XXXX with trend
-    7. Average Order Value    → €XX.XX
+    7. Average Order Value    → $XX.XX
     8. Delivery Completion    → XX% with trend
 
   📈 Charts (3):

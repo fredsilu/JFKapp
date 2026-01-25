@@ -94,7 +94,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
               )}
               {order.billedAmount !== undefined && (
                 <View style={styles.deliveryDetail}>
-                  <MaterialIcons name="euro" size={16} color="#666" />
+                  <MaterialIcons name="attach-money" size={16} color="#666" />
                   <Text style={styles.deliveryText}>Montant facturé : {formatCurrency(order.billedAmount)}</Text>
                 </View>
               )}

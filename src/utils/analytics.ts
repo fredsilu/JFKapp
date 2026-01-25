@@ -112,18 +112,18 @@ export function calculateKPIs(orders: Order[]): KPI[] {
     {
       label: 'Revenus du jour',
       value: todayRevenue.toFixed(2),
-      unit: '€',
+      unit: '$',
     },
     {
       label: 'Revenus de la semaine',
       value: weekRevenue.toFixed(2),
-      unit: '€',
+      unit: '$',
       trend: weekTrend,
     },
     {
       label: 'Revenus du mois',
       value: monthRevenue.toFixed(2),
-      unit: '€',
+      unit: '$',
     },
     {
       label: 'Commandes du jour',
@@ -140,7 +140,7 @@ export function calculateKPIs(orders: Order[]): KPI[] {
     {
       label: 'Panier moyen',
       value: averageOrderValue.toFixed(2),
-      unit: '€',
+      unit: '$',
     },
     {
       label: 'Taux de livraison',

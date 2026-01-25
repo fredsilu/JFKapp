@@ -793,14 +793,15 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             <View style={styles.formField}>
               <Text style={styles.label}>Montant facturé</Text>
               <View style={styles.inputContainer}>
-                <Icon name="euro" size={20} color="#665" />
+                <Icon name="attach-money" size={20} color="#665" />
                 <TextInput
                   style={styles.input}
-                  placeholder="Montant facturé (€)"
+                  placeholder="Montant facturé (USD)"
                   value={billedAmount}
                   onChangeText={setBilledAmount}
                   keyboardType="decimal-pad"
                 />
+
               </View>
             </View>
             <View style={styles.formField}>

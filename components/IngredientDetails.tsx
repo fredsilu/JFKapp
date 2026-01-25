@@ -5,6 +5,7 @@ import { Ingredient } from '@/types';
 import { updateIngredient } from '@/src/services/firestore';
 import IngredientForm from '@/components/IngredientForm';
 import Modal from '@/components/Modal';
+import { formatCurrency } from '@/src/utils/costs';
 
 interface IngredientDetailsProps {
   ingredient: Ingredient;
@@ -87,10 +88,12 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
                 <MaterialIcons name="attach-money" size={24} color="#007AFF" />
                 <Text style={styles.priceLabel}>Prix unitaire</Text>
               </View>
-              <View style={styles.priceContent}>
-                <Text style={styles.priceValue}>{ingredient.price.toFixed(2)}</Text>
-                <Text style={styles.priceUnit}>€ / {ingredient.unit}</Text>
-              </View>
+             <View style={styles.priceContent}>
+  <Text style={styles.priceValue}>
+    {formatCurrency(ingredient.price)} / {ingredient.unit}
+  </Text>
+</View>
+
             </View>
           </View>
 

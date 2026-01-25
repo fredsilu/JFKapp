@@ -162,9 +162,9 @@ Monitor:
 
 | KPI | Daily Target | Weekly Target | Monthly Target |
 |-----|--------|---------|---------|
-| Revenue | €500-2000 | €3500-14000 | €15000-60000 |
+| Revenue | $500-2000 | $3500-14000 | $15000-60000 |
 | Orders | 10-50 | 70-350 | 300-1500 |
-| Avg Order Value | €50-100 | €50-100 | €50-100 |
+| Avg Order Value | $50-100 | $50-100 | $50-100 |
 | Delivery Rate | > 95% | > 95% | > 95% |
 
 *Note: Adjust based on your restaurant size and location*
@@ -350,8 +350,8 @@ Use this template for weekly planning:
 
 **Week of: ________**
 
-**Revenue Target: €________**
-**Actual: €________**
+**Revenue Target: $________**
+**Actual: $________**
 **Status: ☐ On Track ☐ Below ☐ Above**
 
 **Key Insights:**

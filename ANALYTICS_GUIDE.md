@@ -20,10 +20,10 @@ router.push('/analytics');
 ### 1️⃣ KPI Cards (Haut de la page)
 ```
 ┌─────────────────────────────────────────┐
-│ Revenus du jour: €2,450.50  📈 +12.5%   │
+│ Revenus du jour: $2,450.50  📈 +12.5%   │
 │ Commandes du jour: 8         📈 +5.2%   │
-│ Revenus de la semaine: €15,230.00       │
-│ Panier moyen: €189.50                   │
+│ Revenus de la semaine: $15,230.00       │
+│ Panier moyen: $189.50                   │
 └─────────────────────────────────────────┘
 ```
 - **Interprétation**: Flèche verte = tendance positive, rouge = négative
@@ -31,11 +31,11 @@ router.push('/analytics');
 
 ### 2️⃣ Revenue Chart (Graphique en courbe)
 ```
-€5000 ┤    ╱╲
-€4000 ┤   ╱  ╲
-€3000 ┤  ╱    ╲
-€2000 ┤─╱      ╲
-€1000 ┤        ╲
+$5000 ┤    ╱╲
+$4000 ┤   ╱  ╲
+$3000 ┤  ╱    ╲
+$2000 ┤─╱      ╲
+$1000 ┤        ╲
     L M M J V S D
 ```
 - **Montre**: Revenu sur les 7 derniers jours
@@ -43,9 +43,9 @@ router.push('/analytics');
 
 ### 3️⃣ Top Dishes Chart (Graphique en barres)
 ```
-Tajine Agneau    ████████████░ €2,340
-Couscous Merguez ████████░░░░░ €1,560
-Pastilla         ██████░░░░░░░ €1,120
+Tajine Agneau    ████████████░ $2,340
+Couscous Merguez ████████░░░░░ $1,560
+Pastilla         ██████░░░░░░░ $1,120
 ```
 - **Montre**: 5 plats les plus rentables
 - **Utilité**: Connaître ses best-sellers
@@ -64,20 +64,20 @@ Pastilla         ██████░░░░░░░ €1,120
 
 ### 5️⃣ Top Dishes List (Classement)
 ```
-🥇 Tajine Agneau     • 45 commandes • €2,340
-🥈 Couscous Merguez  • 38 commandes • €1,560
-🥉 Pastilla          • 28 commandes • €1,120
-4️⃣  Briouates       • 22 commandes • €880
-5️⃣  Harira          • 15 commandes • €630
+🥇 Tajine Agneau     • 45 commandes • $2,340
+🥈 Couscous Merguez  • 38 commandes • $1,560
+🥉 Pastilla          • 28 commandes • $1,120
+4️⃣  Briouates       • 22 commandes • $880
+5️⃣  Harira          • 15 commandes • $630
 ```
 - **Montre**: Classement des meilleurs plats par revenu
 - **Données**: Nombre de commandes et revenu total
 
 ### 6️⃣ Top Clients List (Classement)
 ```
-🥇 Mr. Ahmed Bouzoubaa  • 12 commandes • Hier • €2,450
-🥈 Mme. Fatima Chekir   • 8 commandes  • 2j    • €1,680
-🥉 Mr. Karim Bensaid    • 5 commandes  • 5j    • €950
+🥇 Mr. Ahmed Bouzoubaa  • 12 commandes • Hier • $2,450
+🥈 Mme. Fatima Chekir   • 8 commandes  • 2j    • $1,680
+🥉 Mr. Karim Bensaid    • 5 commandes  • 5j    • $950
 ```
 - **Montre**: Clients les plus généreux
 - **Données**: Nombre de commandes, dernière commande, total dépensé
@@ -103,7 +103,7 @@ Revenu d'une commande =
 ```
 
 **Exemple:**
-- Couscous avec: Semoule (€2.50 × 300g) + Merguez (€8 × 200g) = €10.50
+- Couscous avec: Semoule ($2.50 × 300g) + Merguez ($8 × 200g) = $10.50
 
 ### Panier Moyen
 ```
@@ -119,7 +119,7 @@ Taux = (Nombre de commandes livrées / Total commandes) × 100
 ```
 Tendance = ((Période actuelle - Période précédente) / Période précédente) × 100
 
-Exemple: Si hier = €1000, aujourd'hui = €1200
+Exemple: Si hier = $1000, aujourd'hui = $1200
   Tendance = ((1200 - 1000) / 1000) × 100 = +20%
 ```
 

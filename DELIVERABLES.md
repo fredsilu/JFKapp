@@ -215,7 +215,7 @@
 - Safe null-checking on all calculations
 
 ### Data Format
-- Currency in €uro
+- Currency in Dollars
 - Dates in ISO 8601 format
 - Quantities in units (kg, pieces, etc.)
 - Percentages as numbers (0-100)

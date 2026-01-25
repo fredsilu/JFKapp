@@ -12,6 +12,7 @@ import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Order } from '@/types';
 import { addOrder } from '@/src/services/firestore';
+import { formatCurrency } from '@/src/utils/costs';
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function OrdersScreen() {
   });
 
   // Get the current order from the updated list
-  const selectedOrder = selectedOrderId 
+  const selectedOrder = selectedOrderId
     ? orders.find(o => o.id === selectedOrderId) || null
     : null;
 
@@ -93,13 +94,13 @@ export default function OrdersScreen() {
         <View style={styles.headerContent}>
           <Text style={styles.title}>Commandes</Text>
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.preparationButton}
               onPress={() => router.push('/preparation-ingredients')}>
               <Icon name="list" size={20} color="#fff" />
               <Text style={styles.preparationButtonText}>Ingrédients</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.addButton}
               onPress={() => setShowOrderForm(true)}>
               <Icon name="add" size={24} color="#fff" />
@@ -110,8 +111,8 @@ export default function OrdersScreen() {
 
       <ScrollView style={styles.content}>
         {orders.map((order) => (
-          <TouchableOpacity 
-            key={order.id} 
+          <TouchableOpacity
+            key={order.id}
             style={styles.orderCard}
             onPress={() => setSelectedOrderId(order.id)}>
             <View style={styles.orderHeader}>
@@ -130,31 +131,34 @@ export default function OrdersScreen() {
                 </View>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}15` }]}>
-                  {/* Facturation */}
-                  {order.designation && (
-                    <View style={styles.detailRow}>
-                      <Icon name="description" size={16} color="#666" />
-                      <Text style={styles.detailText}>Désignation : {order.designation}</Text>
-                    </View>
-                  )}
-                  {order.billedAmount !== undefined && (
-                    <View style={styles.detailRow}>
-                      <Icon name="euro" size={16} color="#666" />
-                      <Text style={styles.detailText}>Montant facturé : {order.billedAmount} €</Text>
-                    </View>
-                  )}
-                  {order.invoiceDate && (
-                    <View style={styles.detailRow}>
-                      <Icon name="receipt" size={16} color="#666" />
-                      <Text style={styles.detailText}>Date de facture : {order.invoiceDate}</Text>
-                    </View>
-                  )}
-                  {order.paymentDate && (
-                    <View style={styles.detailRow}>
-                      <Icon name="payment" size={16} color="#666" />
-                      <Text style={styles.detailText}>Date de paiement : {order.paymentDate}</Text>
-                    </View>
-                  )}
+                {/* Facturation */}
+                {order.designation && (
+                  <View style={styles.detailRow}>
+                    <Icon name="description" size={16} color="#666" />
+                    <Text style={styles.detailText}>Désignation : {order.designation}</Text>
+                  </View>
+                )}
+                {order.billedAmount !== undefined && (
+                  <View style={styles.detailRow}>
+                    <Icon name="attach-money" size={16} color="#666" />
+                    <Text style={styles.detailText}>
+                      Montant facturé : {formatCurrency(order.billedAmount)}
+                    </Text>
+
+                  </View>
+                )}
+                {order.invoiceDate && (
+                  <View style={styles.detailRow}>
+                    <Icon name="receipt" size={16} color="#666" />
+                    <Text style={styles.detailText}>Date de facture : {order.invoiceDate}</Text>
+                  </View>
+                )}
+                {order.paymentDate && (
+                  <View style={styles.detailRow}>
+                    <Icon name="payment" size={16} color="#666" />
+                    <Text style={styles.detailText}>Date de paiement : {order.paymentDate}</Text>
+                  </View>
+                )}
                 <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
                   {order.status}
                 </Text>
@@ -194,8 +198,8 @@ export default function OrdersScreen() {
       </Modal>
 
       <Modal visible={showOrderForm}>
-        <OrderForm 
-          onClose={() => setShowOrderForm(false)} 
+        <OrderForm
+          onClose={() => setShowOrderForm(false)}
           onSubmit={handleCreateOrder}
         />
       </Modal>

@@ -9,6 +9,7 @@ import DishForm from '@/components/DishForm';
 import { useIngredients } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
+import { formatCurrency } from '@/src/utils/costs';
 
 interface DishDetailsProps {
   dish: Dish;
@@ -95,10 +96,12 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
               </View>
 
               <View style={styles.stat}>
-                <MaterialIcons name="attach-money" size={20} color="#007AFF" />
-                <Text style={styles.statValue}>{calculateTotalPrice().toFixed(2)}</Text>
-                <Text style={styles.statLabel}>€</Text>
-              </View>
+  <MaterialIcons name="attach-money" size={20} color="#007AFF" />
+  <Text style={styles.statValue}>
+    {formatCurrency(calculateTotalPrice())}
+  </Text>
+</View>
+
             </View>
           </View>
 

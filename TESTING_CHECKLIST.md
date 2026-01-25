@@ -209,17 +209,17 @@
 ## Calculation Accuracy Tests
 
 ### Revenue Calculations
-Order: 1x Dish (Ingredient1: €5 qty=2, Ingredient2: €3 qty=1) + Additional: €2 qty=1
+Order: 1x Dish (Ingredient1: $5 qty=2, Ingredient2: $3 qty=1) + Additional: $2 qty=1
 
-Expected: (5*2 + 3*1) * 1 + 2*1 = €15
+Expected: (5*2 + 3*1) * 1 + 2*1 = $15
 
-- [ ] Daily Revenue shows €15
+- [ ] Daily Revenue shows $15
 - [ ] Correct in all KPIs
 - [ ] Charts reflect correct value
 
 ### Trending
-1. Day 1: €100 revenue
-2. Day 2: €150 revenue
+1. Day 1: $100 revenue
+2. Day 2: $150 revenue
 
 Expected Trend: +50%
 
@@ -245,7 +245,7 @@ Multiple orders of same dish with different revenues
 
 - [ ] Orders with missing ingredients (null checks)
 - [ ] Clients with missing profile pictures (fallback)
-- [ ] Orders with €0 value
+- [ ] Orders with $0 value
 - [ ] Very large order values (formatting)
 - [ ] Very high quantities (progress bar handling)
 - [ ] Empty ingredient list in dish

@@ -131,22 +131,22 @@ export const SAMPLE_ORDERS: Order[] = [
  * Given the sample orders above, the analytics would produce:
  * 
  * KPIs:
- * - Daily Revenue: €47.50 (Couscous + Tajine ingredients)
- * - Weekly Revenue: €47.50 (only 2 orders in sample)
- * - Monthly Revenue: €47.50
+ * - Daily Revenue: $47.50 (Couscous + Tajine ingredients)
+ * - Weekly Revenue: $47.50 (only 2 orders in sample)
+ * - Monthly Revenue: $47.50
  * - Daily Orders: 0 (if today is not Jan 1 or 2)
  * - Weekly Orders: 2
  * - Monthly Orders: 2
- * - Average Order Value: €23.75
+ * - Average Order Value: $23.75
  * - Delivery Rate: 100% (both delivered)
  * 
  * Top Dishes:
- * 1. Tajine Agneau - 2 orders - €50.00 revenue
- * 2. Couscous Merguez - 1 order - €10.50 revenue
+ * 1. Tajine Agneau - 2 orders - $50.00 revenue
+ * 2. Couscous Merguez - 1 order - $10.50 revenue
  * 
  * Top Clients:
- * 1. Marie Martin - 2 orders - €50.00 spent
- * 2. Jean Dupont - 1 order - €10.50 spent
+ * 1. Marie Martin - 2 orders - $50.00 spent
+ * 2. Jean Dupont - 1 order - $10.50 spent
  * 
  * Ingredient Usage:
  * 1. Agneau - 500g used
