@@ -43,7 +43,9 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
     }
   };
 
-  const handleUpdateOrder = async (updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateOrder = async (
+    updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
     await updateOrder(order.id, updatedOrder);
     setShowEditForm(false);
   };
@@ -69,12 +71,18 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* FACTURATION */}
-          {(order.designation || order.billedAmount) && (
+          {(order.designation || order.billedAmount !== undefined) && (
             <View style={[styles.sectionCard, styles.bgBlue]}>
               <Text style={styles.sectionTitle}>Facturation</Text>
-              {order.designation && <Text style={styles.line}>• {order.designation}</Text>}
+
+              {order.designation && (
+                <Text style={styles.line}>• {order.designation}</Text>
+              )}
+
               {order.billedAmount !== undefined && (
-                <Text style={styles.line}>• Montant facturé : {formatCurrency(order.billedAmount)}</Text>
+                <Text style={styles.billedAmount}>
+                  • Montant facturé : {formatCurrency(order.billedAmount)}
+                </Text>
               )}
             </View>
           )}
@@ -83,14 +91,23 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
           <View style={[styles.sectionCard, styles.bgGray]}>
             <Text style={styles.sectionTitle}>Statut</Text>
             <View style={styles.statusRow}>
-              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(order.status)}20` }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: `${getStatusColor(order.status)}20` },
+                ]}
+              >
                 <Text style={{ color: getStatusColor(order.status), fontWeight: '600' }}>
                   {order.status}
                 </Text>
               </View>
+
               {order.status !== 'Livré' && (
                 <TouchableOpacity
-                  style={[styles.updateBtn, { backgroundColor: getStatusColor(STATUS_TRANSITIONS[order.status]) }]}
+                  style={[
+                    styles.updateBtn,
+                    { backgroundColor: getStatusColor(STATUS_TRANSITIONS[order.status]) },
+                  ]}
                   onPress={handleUpdateStatus}
                 >
                   <Text style={styles.updateBtnText}>
@@ -150,7 +167,11 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
       </View>
 
       <Modal visible={showEditForm}>
-        <OrderForm order={order} onClose={() => setShowEditForm(false)} onSubmit={handleUpdateOrder} />
+        <OrderForm
+          order={order}
+          onClose={() => setShowEditForm(false)}
+          onSubmit={handleUpdateOrder}
+        />
       </Modal>
 
       <OrderIngredientsModal
@@ -164,6 +185,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
+
   header: {
     padding: 16,
     backgroundColor: '#fff',
@@ -173,6 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   title: { fontSize: 18, fontWeight: '700' },
   headerActions: { flexDirection: 'row', gap: 16 },
   scrollContent: { padding: 16, gap: 16 },
@@ -181,6 +204,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
   },
+
   bgWhite: { backgroundColor: '#fff' },
   bgGray: { backgroundColor: '#f0f0f0' },
   bgBlue: { backgroundColor: '#e9f2ff' },
@@ -189,13 +213,48 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
   line: { fontSize: 14, color: '#333', marginBottom: 4 },
 
-  statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  updateBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  updateBtnText: { color: '#fff', fontWeight: '600' },
+  billedAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0b5ed7',
+    marginTop: 4,
+  },
 
-  clientRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  clientImage: { width: 56, height: 56, borderRadius: 28 },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+
+  updateBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+
+  updateBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  clientRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+
+  clientImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+
   clientName: { fontSize: 16, fontWeight: '600' },
   clientMeta: { fontSize: 14, color: '#666' },
 
