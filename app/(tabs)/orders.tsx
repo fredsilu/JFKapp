@@ -127,7 +127,7 @@ export default function OrdersScreen() {
                 <Text style={styles.metaText}>{totalItems} articles</Text>
 
                 <View style={styles.priceRow}>
-                  <Icon name="attach-money" size={16} color="#007AFF" />
+                  
                   <Text style={styles.priceText}>
                     {formatCurrency(totalAmount)}
                   </Text>

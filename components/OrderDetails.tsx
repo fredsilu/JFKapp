@@ -158,7 +158,7 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 
           {/* TOTAL */}
           <View style={[styles.sectionCard, styles.bgGreen]}>
-            <Text style={styles.totalLabel}>Total de la commande</Text>
+            <Text style={styles.totalLabel}>Coût de la commande</Text>
             <Text style={styles.totalValue}>
               {formatCurrency(calculateOrderTotalCost(order))}
             </Text>
