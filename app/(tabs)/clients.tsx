@@ -18,6 +18,8 @@ import ClientDetails from '@/components/ClientDetails';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Client } from '@/types';
+import { normalizeText } from '@/src/utils/search';
+
 
 export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,14 +40,17 @@ export default function ClientsScreen() {
     error: ordersError,
   } = useOrders();
 
-  const filteredClients = clients.filter(client =>
-    (client.name &&
-      client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (client.email &&
-      client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (typeof client.phone === 'string' &&
-      client.phone.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+const normalizedQuery = normalizeText(searchQuery);
+
+const filteredClients = clients.filter(client =>
+  (client.name &&
+    normalizeText(client.name).includes(normalizedQuery)) ||
+  (client.email &&
+    normalizeText(client.email).includes(normalizedQuery)) ||
+  (client.phone &&
+    normalizeText(client.phone.toString()).includes(normalizedQuery))
+);
+
 
   const handleCreateClient = async (values: Partial<Client>) => {
     try {
