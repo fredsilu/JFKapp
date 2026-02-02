@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native'
+import { router } from 'expo-router'
 
 import { getCateringSimulations } from '@/src/services/cateringSimulations'
 import { CateringSimulation } from '@/types/catering'
@@ -19,19 +20,18 @@ export default function CateringSimulationsScreen() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function loadSimulations() {
+    async function load() {
       try {
         const data = await getCateringSimulations()
         setSimulations(data)
-      } catch (err) {
-        console.error(err)
+      } catch (e) {
         setError('Erreur lors du chargement des simulations')
       } finally {
         setLoading(false)
       }
     }
 
-    loadSimulations()
+    load()
   }, [])
 
   if (loading) return <LoadingSpinner />
@@ -47,41 +47,35 @@ export default function CateringSimulationsScreen() {
 
       {simulations.map(sim => (
         <View key={sim.id} style={styles.card}>
-          {/* Nom simulation */}
           <Text style={styles.name}>
             {sim.name || 'Simulation sans nom'}
           </Text>
 
-          {/* Client */}
           <Text style={styles.client}>
             Client : {sim.clientName ?? '—'}
           </Text>
 
-          {/* Résultats */}
           <View style={styles.row}>
             <Text style={styles.amount}>
               CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
             </Text>
-
             <Text style={styles.amount}>
               Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
             </Text>
           </View>
 
-          {/* Actions */}
           <View style={styles.actions}>
-            <TouchableOpacity>
-              <Text style={styles.link}>Voir</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/catering-calculator',
+                  params: {
+                    reuseSimulation: JSON.stringify(sim),
+                  },
+                })
+              }
+            >
               <Text style={styles.link}>Réutiliser</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity>
-              <Text style={[styles.link, styles.delete]}>
-                Supprimer
-              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -96,58 +90,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
-
   title: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
   },
-
   empty: {
     textAlign: 'center',
     color: '#777',
     marginTop: 40,
   },
-
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 14,
     marginBottom: 14,
   },
-
   name: {
     fontSize: 16,
     fontWeight: '600',
   },
-
   client: {
     marginTop: 4,
     color: '#555',
   },
-
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-
   amount: {
     fontWeight: '500',
   },
-
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 12,
   },
-
   link: {
     color: '#007AFF',
     fontWeight: '500',
-  },
-
-  delete: {
-    color: '#d9534f',
   },
 })
