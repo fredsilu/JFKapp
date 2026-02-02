@@ -1,11 +1,6 @@
 PROCHAINE AMELIORATION
 
 
-
-
-6. Dans le champ de recherche du client, la recherche peut se faire sans tenir compte des accents car si je fais frederic au lieu de frédéric, la recherche ne trouve pas frédéric
-
-
 PROCHAINES VERSIONS
 
 1. y INCORPORER un breakdown des commandes en termes de cout matiere : comme un calculateur du service traiteur qui sera dans un premier temps indépendant du reste de l'app mais utile pour la CEO dans ses calculs.  Il faudra dans une prochaine version voir comment la mettre en lien avec le reste de l'application.
