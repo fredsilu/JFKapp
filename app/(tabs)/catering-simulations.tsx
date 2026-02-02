@@ -20,18 +20,19 @@ export default function CateringSimulationsScreen() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function load() {
+    async function loadSimulations() {
       try {
         const data = await getCateringSimulations()
         setSimulations(data)
-      } catch (e) {
+      } catch (err) {
+        console.error(err)
         setError('Erreur lors du chargement des simulations')
       } finally {
         setLoading(false)
       }
     }
 
-    load()
+    loadSimulations()
   }, [])
 
   if (loading) return <LoadingSpinner />
@@ -47,14 +48,17 @@ export default function CateringSimulationsScreen() {
 
       {simulations.map(sim => (
         <View key={sim.id} style={styles.card}>
+          {/* Nom de la simulation */}
           <Text style={styles.name}>
             {sim.name || 'Simulation sans nom'}
           </Text>
 
+          {/* Client (snapshot Firestore) */}
           <Text style={styles.client}>
             Client : {sim.clientName ?? '—'}
           </Text>
 
+          {/* Résultats financiers */}
           <View style={styles.row}>
             <Text style={styles.amount}>
               CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
@@ -64,7 +68,23 @@ export default function CateringSimulationsScreen() {
             </Text>
           </View>
 
+          {/* Actions */}
           <View style={styles.actions}>
+            {/* Voir (lecture seule) */}
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/catering-simulation-details',
+                  params: {
+                    simulation: JSON.stringify(sim),
+                  },
+                })
+              }
+            >
+              <Text style={styles.link}>Voir</Text>
+            </TouchableOpacity>
+
+            {/* Réutiliser */}
             <TouchableOpacity
               onPress={() =>
                 router.push({
@@ -90,41 +110,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
+
   title: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
   },
+
   empty: {
     textAlign: 'center',
     color: '#777',
     marginTop: 40,
   },
+
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 14,
     marginBottom: 14,
   },
+
   name: {
     fontSize: 16,
     fontWeight: '600',
   },
+
   client: {
     marginTop: 4,
     color: '#555',
   },
+
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
+
   amount: {
     fontWeight: '500',
   },
+
   actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 12,
   },
+
   link: {
     color: '#007AFF',
     fontWeight: '500',
