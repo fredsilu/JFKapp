@@ -8,10 +8,14 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 
-import { getCateringSimulations } from '@/src/services/cateringSimulations'
+import {
+  getCateringSimulations,
+  deleteCateringSimulation,
+} from '@/src/services/cateringSimulations'
 import { CateringSimulation } from '@/types/catering'
 import LoadingSpinner from '@/src/components/LoadingSpinner'
 import ErrorMessage from '@/src/components/ErrorMessage'
+import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal'
 import { formatCurrency } from '@/src/utils/costs'
 
 export default function CateringSimulationsScreen() {
@@ -19,88 +23,96 @@ export default function CateringSimulationsScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function loadSimulations() {
-      try {
-        const data = await getCateringSimulations()
-        setSimulations(data)
-      } catch (err) {
-        console.error(err)
-        setError('Erreur lors du chargement des simulations')
-      } finally {
-        setLoading(false)
-      }
-    }
+  const [toDelete, setToDelete] = useState<CateringSimulation | null>(null)
 
+  async function loadSimulations() {
+    try {
+      setLoading(true)
+      const data = await getCateringSimulations()
+      setSimulations(data)
+    } catch (err) {
+      setError('Erreur lors du chargement des simulations')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     loadSimulations()
   }, [])
+
+  async function confirmDelete() {
+    if (!toDelete) return
+
+    await deleteCateringSimulation(toDelete.id)
+    setToDelete(null)
+    loadSimulations()
+  }
 
   if (loading) return <LoadingSpinner />
   if (error) return <ErrorMessage message={error} />
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Simulations traiteur</Text>
+    <>
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>Simulations traiteur</Text>
 
-      {simulations.length === 0 && (
-        <Text style={styles.empty}>Aucune simulation enregistrée</Text>
-      )}
+        {simulations.map(sim => (
+          <View key={sim.id} style={styles.card}>
+            <Text style={styles.name}>{sim.name}</Text>
 
-      {simulations.map(sim => (
-        <View key={sim.id} style={styles.card}>
-          {/* Nom de la simulation */}
-          <Text style={styles.name}>
-            {sim.name || 'Simulation sans nom'}
-          </Text>
-
-          {/* Client (snapshot Firestore) */}
-          <Text style={styles.client}>
-            Client : {sim.clientName ?? '—'}
-          </Text>
-
-          {/* Résultats financiers */}
-          <View style={styles.row}>
-            <Text style={styles.amount}>
-              CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
+            <Text style={styles.client}>
+              Client : {sim.clientName ?? '—'}
             </Text>
-            <Text style={styles.amount}>
-              Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
-            </Text>
-          </View>
 
-          {/* Actions */}
-          <View style={styles.actions}>
-            {/* Voir (lecture seule) */}
-            <TouchableOpacity
-              onPress={() =>
-                router.push({
-                  pathname: '/catering-simulation-details',
-                  params: {
-                    simulation: JSON.stringify(sim),
-                  },
-                })
-              }
-            >
-              <Text style={styles.link}>Voir</Text>
-            </TouchableOpacity>
+            <View style={styles.row}>
+              <Text style={styles.amount}>
+                CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
+              </Text>
+              <Text style={styles.amount}>
+                Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
+              </Text>
+            </View>
 
-            {/* Réutiliser */}
-            <TouchableOpacity
-              onPress={() =>
-                router.push({
-                  pathname: '/catering-calculator',
-                  params: {
-                    reuseSimulation: JSON.stringify(sim),
-                  },
-                })
-              }
-            >
-              <Text style={styles.link}>Réutiliser</Text>
-            </TouchableOpacity>
+            <View style={styles.actions}>
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: '/catering-simulation-details',
+                    params: { simulation: JSON.stringify(sim) },
+                  })
+                }
+              >
+                <Text style={styles.link}>Voir</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: '/catering-calculator',
+                    params: { reuseSimulation: JSON.stringify(sim) },
+                  })
+                }
+              >
+                <Text style={styles.link}>Réutiliser</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setToDelete(sim)}>
+                <Text style={[styles.link, styles.delete]}>Supprimer</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      ))}
-    </ScrollView>
+        ))}
+      </ScrollView>
+
+      <ConfirmDeleteModal
+        visible={!!toDelete}
+        title="Supprimer la simulation"
+        message={`Supprimer la simulation "${toDelete?.name}" ?`}
+        onCancel={() => setToDelete(null)}
+        onConfirm={confirmDelete}
+      />
+    </>
   )
 }
 
@@ -110,54 +122,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
-
   title: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 16,
   },
-
-  empty: {
-    textAlign: 'center',
-    color: '#777',
-    marginTop: 40,
-  },
-
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 14,
     marginBottom: 14,
   },
-
   name: {
     fontSize: 16,
     fontWeight: '600',
   },
-
   client: {
     marginTop: 4,
     color: '#555',
   },
-
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-
   amount: {
     fontWeight: '500',
   },
-
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
   },
-
   link: {
     color: '#007AFF',
     fontWeight: '500',
+  },
+  delete: {
+    color: '#d9534f',
   },
 })

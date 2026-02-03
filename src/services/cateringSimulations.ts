@@ -3,6 +3,7 @@ import {
   addDoc,
   getDocs,
   getDoc,
+deleteDoc,  
   doc,
   updateDoc,
   query,
@@ -63,7 +64,12 @@ export async function getCateringSimulationsByClient(
   })) as CateringSimulation[];
 }
 
-
+/**
+ * Supprimer une simulation traiteur
+ */
+export async function deleteCateringSimulation(simulationId: string) {
+  await deleteDoc(doc(db, 'catering_simulations', simulationId))
+}
 
 export async function softDeleteCateringSimulation(id: string) {
   const ref = doc(db, 'catering_simulations', id);
