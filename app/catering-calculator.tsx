@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -12,29 +12,44 @@ import { useLocalSearchParams, router } from 'expo-router'
 export default function CateringCalculatorScreen() {
   const { reuseSimulation, clientName } = useLocalSearchParams()
 
-  /** 👤 Client */
-  const [client, setClient] = useState<string>('')
-
-  /** 🧾 Simulation */
+  /** =====================
+   * IDENTITÉ
+   ===================== */
+  const [client, setClient] = useState('')
   const [simulationName, setSimulationName] = useState('')
+  const [reference, setReference] = useState('')
   const [eventType, setEventType] = useState('Séminaire')
-  const [people, setPeople] = useState('30')
+
+  /** =====================
+   * PARAMÈTRES ÉVÉNEMENT
+   ===================== */
+  const [participants, setParticipants] = useState('50')
   const [days, setDays] = useState('1')
-  const [pricePerPerson, setPricePerPerson] = useState('50')
+  const [servicesPerDay, setServicesPerDay] = useState('2')
+  const [location, setLocation] = useState('')
+  const [startDate, setStartDate] = useState('')
 
-  /** 🔢 Calcul */
-  const totalRevenue =
-    Number(people || 0) * Number(days || 0) * Number(pricePerPerson || 0)
+  /** =====================
+   * TARIFICATION
+   ===================== */
+  const [pricePerPerson, setPricePerPerson] = useState('60')
+  const [costPerPerson, setCostPerPerson] = useState('40')
+  const [targetMargin, setTargetMargin] = useState('30')
 
-  /** 🔁 Hydratation */
+  /** =====================
+   * HYDRATATION
+   ===================== */
   useEffect(() => {
     if (reuseSimulation) {
       const sim = JSON.parse(reuseSimulation as string)
+
       setClient(sim.clientName)
       setSimulationName(`${sim.name} (copie)`)
-      setPeople(String(sim.people ?? 30))
+      setParticipants(String(sim.participants ?? 50))
       setDays(String(sim.days ?? 1))
-      setPricePerPerson(String(sim.pricePerPerson ?? 50))
+      setServicesPerDay(String(sim.servicesPerDay ?? 2))
+      setPricePerPerson(String(sim.pricePerPerson ?? 60))
+      setCostPerPerson(String(sim.costPerPerson ?? 40))
       return
     }
 
@@ -44,9 +59,34 @@ export default function CateringCalculatorScreen() {
     }
   }, [reuseSimulation, clientName])
 
-  /** 💾 Enregistrement */
+  /** =====================
+   * CALCULS
+   ===================== */
+  const revenue = useMemo(() => {
+    return (
+      Number(participants || 0) *
+      Number(days || 0) *
+      Number(pricePerPerson || 0)
+    )
+  }, [participants, days, pricePerPerson])
+
+  const totalCost = useMemo(() => {
+    return (
+      Number(participants || 0) *
+      Number(days || 0) *
+      Number(costPerPerson || 0)
+    )
+  }, [participants, days, costPerPerson])
+
+  const profit = revenue - totalCost
+  const marginPercent =
+    revenue > 0 ? (profit / revenue) * 100 : 0
+
+  /** =====================
+   * ACTIONS
+   ===================== */
   function handleSave() {
-    // 👉 ici tu appelleras saveSimulation(...)
+    // 👉 saveSimulation(...) à brancher ici
     router.back()
   }
 
@@ -55,57 +95,107 @@ export default function CateringCalculatorScreen() {
       <Text style={styles.title}>Calculateur traiteur</Text>
 
       {/* CLIENT */}
-      <Text style={styles.label}>Client</Text>
+      <Text style={styles.section}>Client</Text>
       <Text style={styles.value}>{client}</Text>
 
-      {/* NOM SIMULATION */}
-      <Text style={styles.label}>Nom de la simulation</Text>
+      {/* IDENTITÉ */}
+      <Text style={styles.section}>Simulation</Text>
+
       <TextInput
         style={styles.input}
+        placeholder="Nom de la simulation"
         value={simulationName}
         onChangeText={setSimulationName}
       />
 
-      {/* TYPE ÉVÉNEMENT */}
-      <Text style={styles.label}>Type d’événement</Text>
       <TextInput
         style={styles.input}
+        placeholder="Référence interne"
+        value={reference}
+        onChangeText={setReference}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Type d’événement (Séminaire, Cocktail…)"
         value={eventType}
         onChangeText={setEventType}
       />
 
-      {/* PERSONNES */}
-      <Text style={styles.label}>Nombre de personnes</Text>
+      {/* PARAMÈTRES */}
+      <Text style={styles.section}>Paramètres événement</Text>
+
       <TextInput
         style={styles.input}
+        placeholder="Nombre de participants"
         keyboardType="numeric"
-        value={people}
-        onChangeText={setPeople}
+        value={participants}
+        onChangeText={setParticipants}
       />
 
-      {/* JOURS */}
-      <Text style={styles.label}>Durée (jours)</Text>
       <TextInput
         style={styles.input}
+        placeholder="Nombre de jours"
         keyboardType="numeric"
         value={days}
         onChangeText={setDays}
       />
 
-      {/* PRIX */}
-      <Text style={styles.label}>Prix par personne ($)</Text>
       <TextInput
         style={styles.input}
+        placeholder="Services par jour"
+        keyboardType="numeric"
+        value={servicesPerDay}
+        onChangeText={setServicesPerDay}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Lieu"
+        value={location}
+        onChangeText={setLocation}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Date de début"
+        value={startDate}
+        onChangeText={setStartDate}
+      />
+
+      {/* TARIFICATION */}
+      <Text style={styles.section}>Tarification</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Prix par personne / jour ($)"
         keyboardType="numeric"
         value={pricePerPerson}
         onChangeText={setPricePerPerson}
       />
 
-      {/* RÉSULTAT */}
+      <TextInput
+        style={styles.input}
+        placeholder="Coût par personne / jour ($)"
+        keyboardType="numeric"
+        value={costPerPerson}
+        onChangeText={setCostPerPerson}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Marge cible (%)"
+        keyboardType="numeric"
+        value={targetMargin}
+        onChangeText={setTargetMargin}
+      />
+
+      {/* RÉSULTATS */}
       <View style={styles.result}>
-        <Text style={styles.resultLabel}>Chiffre d’affaires</Text>
-        <Text style={styles.resultValue}>
-          ${totalRevenue.toFixed(2)}
+        <Text>Chiffre d’affaires : ${revenue.toFixed(2)}</Text>
+        <Text>Coût total : ${totalCost.toFixed(2)}</Text>
+        <Text style={styles.profit}>
+          Bénéfice : ${profit.toFixed(2)} ({marginPercent.toFixed(1)}%)
         </Text>
       </View>
 
@@ -132,9 +222,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
   },
-  label: {
-    marginTop: 12,
-    fontWeight: '600',
+  section: {
+    marginTop: 18,
+    fontWeight: '700',
   },
   value: {
     marginTop: 4,
@@ -145,7 +235,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 10,
-    marginTop: 6,
+    marginTop: 8,
   },
   result: {
     marginTop: 24,
@@ -153,13 +243,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f4f8',
     borderRadius: 10,
   },
-  resultLabel: {
-    color: '#555',
-  },
-  resultValue: {
-    fontSize: 18,
-    fontWeight: '700',
+  profit: {
     marginTop: 6,
+    fontWeight: '700',
   },
   button: {
     backgroundColor: '#007AFF',
