@@ -1,19 +1,17 @@
-import { collection, getDocs, query, orderBy } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 export interface Client {
   id: string
   name: string
-  phone?: string
 }
 
 export async function fetchClients(): Promise<Client[]> {
   const q = query(collection(db, 'clients'), orderBy('name'))
   const snapshot = await getDocs(q)
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    name: doc.data().name,
-    phone: doc.data().phone,
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    name: d.data().name,
   }))
 }

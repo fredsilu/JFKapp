@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -13,40 +13,54 @@ import {
   deleteCateringSimulation,
 } from '@/src/services/cateringSimulations'
 import { CateringSimulation } from '@/types/catering'
+import { fetchClients, Client } from '@/src/services/clientService'
 import LoadingSpinner from '@/src/components/LoadingSpinner'
 import ErrorMessage from '@/src/components/ErrorMessage'
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal'
+import ClientFilter from '@/src/components/ClientFilter'
 import { formatCurrency } from '@/src/utils/costs'
 
 export default function CateringSimulationsScreen() {
   const [simulations, setSimulations] = useState<CateringSimulation[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [toDelete, setToDelete] = useState<CateringSimulation | null>(null)
 
-  async function loadSimulations() {
+  async function loadAll() {
     try {
       setLoading(true)
-      const data = await getCateringSimulations()
-      setSimulations(data)
-    } catch (err) {
-      setError('Erreur lors du chargement des simulations')
+      const [sims, cls] = await Promise.all([
+        getCateringSimulations(),
+        fetchClients(),
+      ])
+      setSimulations(sims)
+      setClients(cls)
+    } catch (e) {
+      setError('Erreur lors du chargement')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadSimulations()
+    loadAll()
   }, [])
+
+  const filteredSimulations = useMemo(() => {
+    if (!selectedClientId) return simulations
+    return simulations.filter(
+      s => s.clientId === selectedClientId
+    )
+  }, [simulations, selectedClientId])
 
   async function confirmDelete() {
     if (!toDelete) return
-
     await deleteCateringSimulation(toDelete.id)
     setToDelete(null)
-    loadSimulations()
+    loadAll()
   }
 
   if (loading) return <LoadingSpinner />
@@ -57,7 +71,20 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Simulations traiteur</Text>
 
-        {simulations.map(sim => (
+        {/* 🔍 FILTRE CLIENT */}
+        <ClientFilter
+          clients={clients}
+          selectedClientId={selectedClientId}
+          onSelect={setSelectedClientId}
+        />
+
+        {filteredSimulations.length === 0 && (
+          <Text style={styles.empty}>
+            Aucune simulation pour ce client
+          </Text>
+        )}
+
+        {filteredSimulations.map(sim => (
           <View key={sim.id} style={styles.card}>
             <Text style={styles.name}>{sim.name}</Text>
 
@@ -98,7 +125,9 @@ export default function CateringSimulationsScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setToDelete(sim)}>
-                <Text style={[styles.link, styles.delete]}>Supprimer</Text>
+                <Text style={[styles.link, styles.delete]}>
+                  Supprimer
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -125,7 +154,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  empty: {
+    textAlign: 'center',
+    color: '#777',
+    marginTop: 30,
   },
   card: {
     backgroundColor: '#f9f9f9',
