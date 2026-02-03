@@ -1,40 +1,46 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { Client } from '@/src/services/clientService'
+
+interface Client {
+  id: string
+  name: string
+}
 
 interface Props {
   clients: Client[]
-  selectedClientId: string | null
-  onSelect: (clientId: string | null) => void
+  selectedClientName: string | null
+  onSelect: (clientName: string | null) => void
 }
 
 export default function ClientFilter({
   clients,
-  selectedClientId,
+  selectedClientName,
   onSelect,
 }: Props) {
   return (
     <View style={styles.container}>
+      {/* Tous */}
       <TouchableOpacity onPress={() => onSelect(null)}>
         <Text
           style={[
             styles.item,
-            !selectedClientId && styles.active,
+            !selectedClientName && styles.active,
           ]}
         >
           Tous
         </Text>
       </TouchableOpacity>
 
+      {/* Liste des clients */}
       {clients.map(client => (
         <TouchableOpacity
           key={client.id}
-          onPress={() => onSelect(client.id)}
+          onPress={() => onSelect(client.name)}
         >
           <Text
             style={[
               styles.item,
-              selectedClientId === client.id && styles.active,
+              selectedClientName === client.name && styles.active,
             ]}
           >
             {client.name}

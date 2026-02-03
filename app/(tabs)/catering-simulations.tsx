@@ -13,17 +13,18 @@ import {
   deleteCateringSimulation,
 } from '@/src/services/cateringSimulations'
 import { CateringSimulation } from '@/types/catering'
-import { fetchClients, Client } from '@/src/services/clientService'
+import { fetchClients } from '@/src/services/clientService'
+
+import ClientDropdownFilter from '@/src/components/ClientDropdownFilter'
+import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal'
 import LoadingSpinner from '@/src/components/LoadingSpinner'
 import ErrorMessage from '@/src/components/ErrorMessage'
-import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal'
-import ClientFilter from '@/src/components/ClientFilter'
 import { formatCurrency } from '@/src/utils/costs'
 
 export default function CateringSimulationsScreen() {
   const [simulations, setSimulations] = useState<CateringSimulation[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
+  const [selectedClientName, setSelectedClientName] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +40,8 @@ export default function CateringSimulationsScreen() {
       setSimulations(sims)
       setClients(cls)
     } catch (e) {
-      setError('Erreur lors du chargement')
+      console.error(e)
+      setError('Erreur lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -49,12 +51,13 @@ export default function CateringSimulationsScreen() {
     loadAll()
   }, [])
 
+  /** 🔍 Filtrage par NOM de client (robuste) */
   const filteredSimulations = useMemo(() => {
-    if (!selectedClientId) return simulations
+    if (!selectedClientName) return simulations
     return simulations.filter(
-      s => s.clientId === selectedClientId
+      sim => sim.clientName === selectedClientName
     )
-  }, [simulations, selectedClientId])
+  }, [simulations, selectedClientName])
 
   async function confirmDelete() {
     if (!toDelete) return
@@ -71,69 +74,76 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Simulations traiteur</Text>
 
-        {/* 🔍 FILTRE CLIENT */}
-        <ClientFilter
+        {/* 🔽 FILTRE CLIENT (DROPDOWN UX PRO) */}
+        <ClientDropdownFilter
           clients={clients}
-          selectedClientId={selectedClientId}
-          onSelect={setSelectedClientId}
+          selectedClientName={selectedClientName}
+          onSelect={setSelectedClientName}
         />
 
-        {filteredSimulations.length === 0 && (
+        {/* 🧾 LISTE DES SIMULATIONS */}
+        {filteredSimulations.length === 0 ? (
           <Text style={styles.empty}>
             Aucune simulation pour ce client
           </Text>
-        )}
-
-        {filteredSimulations.map(sim => (
-          <View key={sim.id} style={styles.card}>
-            <Text style={styles.name}>{sim.name}</Text>
-
-            <Text style={styles.client}>
-              Client : {sim.clientName ?? '—'}
-            </Text>
-
-            <View style={styles.row}>
-              <Text style={styles.amount}>
-                CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
+        ) : (
+          filteredSimulations.map(sim => (
+            <View key={sim.id} style={styles.card}>
+              <Text style={styles.name}>
+                {sim.name || 'Simulation sans nom'}
               </Text>
-              <Text style={styles.amount}>
-                Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
+
+              <Text style={styles.client}>
+                Client : {sim.clientName}
               </Text>
-            </View>
 
-            <View style={styles.actions}>
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: '/catering-simulation-details',
-                    params: { simulation: JSON.stringify(sim) },
-                  })
-                }
-              >
-                <Text style={styles.link}>Voir</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: '/catering-calculator',
-                    params: { reuseSimulation: JSON.stringify(sim) },
-                  })
-                }
-              >
-                <Text style={styles.link}>Réutiliser</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => setToDelete(sim)}>
-                <Text style={[styles.link, styles.delete]}>
-                  Supprimer
+              <View style={styles.row}>
+                <Text style={styles.amount}>
+                  CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
                 </Text>
-              </TouchableOpacity>
+                <Text style={styles.amount}>
+                  Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
+                </Text>
+              </View>
+
+              <View style={styles.actions}>
+                {/* Voir */}
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/catering-simulation-details',
+                      params: { simulation: JSON.stringify(sim) },
+                    })
+                  }
+                >
+                  <Text style={styles.link}>Voir</Text>
+                </TouchableOpacity>
+
+                {/* Réutiliser */}
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/catering-calculator',
+                      params: { reuseSimulation: JSON.stringify(sim) },
+                    })
+                  }
+                >
+                  <Text style={styles.link}>Réutiliser</Text>
+                </TouchableOpacity>
+
+                {/* Supprimer */}
+                <TouchableOpacity onPress={() => setToDelete(sim)}>
+                  <Text style={[styles.link, styles.delete]}>
+                    Supprimer
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
       </ScrollView>
 
+      {/* 🗑️ MODAL CONFIRMATION SUPPRESSION */}
       <ConfirmDeleteModal
         visible={!!toDelete}
         title="Supprimer la simulation"
@@ -151,47 +161,57 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
+
   title: {
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 12,
   },
+
   empty: {
     textAlign: 'center',
     color: '#777',
     marginTop: 30,
   },
+
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 14,
     marginBottom: 14,
   },
+
   name: {
     fontSize: 16,
     fontWeight: '600',
   },
+
   client: {
     marginTop: 4,
     color: '#555',
   },
+
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
   },
+
   amount: {
     fontWeight: '500',
   },
+
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
   },
+
   link: {
     color: '#007AFF',
     fontWeight: '500',
   },
+
   delete: {
     color: '#d9534f',
   },
