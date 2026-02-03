@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from 'react-native'
 
 interface Client {
@@ -24,10 +25,18 @@ export default function ClientDropdownFilter({
   onSelect,
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const filteredClients = useMemo(() => {
+    if (!search) return clients
+    return clients.filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase())
+    )
+  }, [clients, search])
 
   return (
     <View style={styles.wrapper}>
-      {/* Champ sélectionné */}
+      {/* Sélecteur */}
       <TouchableOpacity
         style={styles.selector}
         onPress={() => setOpen(!open)}
@@ -38,27 +47,36 @@ export default function ClientDropdownFilter({
         <Text style={styles.arrow}>{open ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
-      {/* Liste déroulante */}
       {open && (
         <View style={styles.dropdown}>
-          <ScrollView style={{ maxHeight: 250 }}>
+          {/* Recherche */}
+          <TextInput
+            placeholder="Rechercher un client…"
+            value={search}
+            onChangeText={setSearch}
+            style={styles.search}
+          />
+
+          <ScrollView style={{ maxHeight: 260 }}>
             <TouchableOpacity
               style={styles.item}
               onPress={() => {
                 onSelect(null)
                 setOpen(false)
+                setSearch('')
               }}
             >
               <Text style={styles.itemText}>Tous les clients</Text>
             </TouchableOpacity>
 
-            {clients.map(client => (
+            {filteredClients.map(client => (
               <TouchableOpacity
                 key={client.id}
                 style={styles.item}
                 onPress={() => {
                   onSelect(client.name)
                   setOpen(false)
+                  setSearch('')
                 }}
               >
                 <Text style={styles.itemText}>{client.name}</Text>
@@ -98,10 +116,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
     backgroundColor: '#fff',
     borderRadius: 10,
-    elevation: 4, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    elevation: 4,
+    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 8,
+  },
+  search: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   item: {
     paddingVertical: 12,

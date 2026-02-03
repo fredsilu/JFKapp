@@ -1,47 +1,196 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native'
+import { useLocalSearchParams, router } from 'expo-router'
 
-import { Client } from '@/src/services/clientService'
+/**
+ * Types simples (alignés avec le reste du projet)
+ */
+interface Client {
+  id: string
+  name: string
+}
+
+interface Ingredient {
+  id: string
+  name: string
+  quantity: number
+  unit: string
+  cost?: number
+}
 
 export default function CateringCalculatorScreen() {
-  const { reuseSimulation } = useLocalSearchParams()
+  /** 🔗 Paramètres de navigation */
+  const { reuseSimulation, clientName } = useLocalSearchParams()
 
+  /** 🧠 États principaux */
   const [client, setClient] = useState<Client | null>(null)
-  const [ingredients, setIngredients] = useState<any[]>([])
-  const [simulationName, setSimulationName] = useState('')
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [simulationName, setSimulationName] = useState<string>('')
 
-  // 🔁 RECHARGEMENT DE LA SIMULATION
+  /** 🔁 HYDRATATION (NOUVELLE / RÉUTILISATION) */
   useEffect(() => {
-    if (!reuseSimulation) return
+    // 🔁 Réutiliser une simulation existante
+    if (reuseSimulation) {
+      try {
+        const sim = JSON.parse(reuseSimulation as string)
 
-    try {
-      const sim = JSON.parse(reuseSimulation as string)
+        setClient({
+          id: sim.clientId ?? '',
+          name: sim.clientName,
+        })
 
-      setClient({
-        id: sim.clientId,
-        name: sim.clientName,
-      })
+        setIngredients(sim.ingredients || [])
+        setSimulationName(`${sim.name ?? 'Simulation'} (copie)`)
 
-      setIngredients(sim.ingredients || [])
-      setSimulationName(`${sim.name} (copie)`)
-
-    } catch (e) {
-      console.error('Erreur rechargement simulation', e)
+        return
+      } catch (e) {
+        console.error('Erreur rechargement simulation', e)
+      }
     }
-  }, [reuseSimulation])
+
+    // ➕ Nouvelle simulation avec client présélectionné
+    if (clientName) {
+      setClient({
+        id: '',
+        name: clientName as string,
+      })
+      setSimulationName('Nouvelle simulation')
+    }
+  }, [reuseSimulation, clientName])
+
+  /** 💾 Sauvegarde (placeholder – tu brancheras ton service existant) */
+  function handleSaveSimulation() {
+    if (!client) return
+
+    // 👉 Ici tu appelles ton service saveSimulation(...)
+    // saveSimulation({ client, ingredients, simulationName, ... })
+
+    router.back()
+  }
 
   return (
-    <View>
-      <Text>Calculateur traiteur</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Calculateur traiteur</Text>
 
-      {/* 
-        👉 Le reste de ton calculateur EXISTANT reste IDENTIQUE :
-        - sélection plats
-        - calcul ingrédients
-        - calcul coûts
-        - bouton "Enregistrer la simulation"
-      */}
-    </View>
+      {/* 👤 CLIENT */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Client</Text>
+        <Text style={styles.value}>
+          {client?.name ?? 'Aucun client sélectionné'}
+        </Text>
+      </View>
+
+      {/* 🧾 NOM DE LA SIMULATION */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Nom de la simulation</Text>
+        <Text style={styles.value}>{simulationName}</Text>
+      </View>
+
+      {/* 🧺 INGRÉDIENTS (PLACEHOLDER) */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Ingrédients</Text>
+
+        {ingredients.length === 0 ? (
+          <Text style={styles.empty}>
+            Aucun ingrédient pour l’instant
+          </Text>
+        ) : (
+          ingredients.map((ing, index) => (
+            <View key={index} style={styles.row}>
+              <Text>{ing.name}</Text>
+              <Text>
+                {ing.quantity} {ing.unit}
+              </Text>
+            </View>
+          ))
+        )}
+      </View>
+
+      {/* 💾 ACTIONS */}
+      <TouchableOpacity
+        style={[styles.button, !client && styles.disabled]}
+        disabled={!client}
+        onPress={handleSaveSimulation}
+      >
+        <Text style={styles.buttonText}>Enregistrer la simulation</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.cancel}
+        onPress={() => router.back()}
+      >
+        <Text style={styles.cancelText}>Annuler</Text>
+      </TouchableOpacity>
+    </ScrollView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
+
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+
+  section: {
+    marginBottom: 18,
+  },
+
+  label: {
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+
+  value: {
+    color: '#333',
+  },
+
+  empty: {
+    color: '#777',
+    fontStyle: 'italic',
+  },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+
+  button: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+
+  disabled: {
+    backgroundColor: '#aaa',
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  cancel: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+
+  cancelText: {
+    color: '#555',
+  },
+})

@@ -74,6 +74,14 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Simulations traiteur</Text>
 
+        <TouchableOpacity
+  style={styles.newButton}
+  onPress={() => router.push('/catering-new-simulation')}
+>
+  <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
+</TouchableOpacity>
+
+
         {/* 🔽 FILTRE CLIENT (DROPDOWN UX PRO) */}
         <ClientDropdownFilter
           clients={clients}
@@ -200,6 +208,18 @@ const styles = StyleSheet.create({
   amount: {
     fontWeight: '500',
   },
+  newButton: {
+  backgroundColor: '#007AFF',
+  borderRadius: 10,
+  paddingVertical: 12,
+  alignItems: 'center',
+  marginBottom: 16,
+},
+newButtonText: {
+  color: '#fff',
+  fontWeight: '600',
+},
+
 
   actions: {
     flexDirection: 'row',
