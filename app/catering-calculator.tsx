@@ -4,73 +4,49 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TextInput,
   TouchableOpacity,
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 
-/**
- * Types simples (alignés avec le reste du projet)
- */
-interface Client {
-  id: string
-  name: string
-}
-
-interface Ingredient {
-  id: string
-  name: string
-  quantity: number
-  unit: string
-  cost?: number
-}
-
 export default function CateringCalculatorScreen() {
-  /** 🔗 Paramètres de navigation */
   const { reuseSimulation, clientName } = useLocalSearchParams()
 
-  /** 🧠 États principaux */
-  const [client, setClient] = useState<Client | null>(null)
-  const [ingredients, setIngredients] = useState<Ingredient[]>([])
-  const [simulationName, setSimulationName] = useState<string>('')
+  /** 👤 Client */
+  const [client, setClient] = useState<string>('')
 
-  /** 🔁 HYDRATATION (NOUVELLE / RÉUTILISATION) */
+  /** 🧾 Simulation */
+  const [simulationName, setSimulationName] = useState('')
+  const [eventType, setEventType] = useState('Séminaire')
+  const [people, setPeople] = useState('30')
+  const [days, setDays] = useState('1')
+  const [pricePerPerson, setPricePerPerson] = useState('50')
+
+  /** 🔢 Calcul */
+  const totalRevenue =
+    Number(people || 0) * Number(days || 0) * Number(pricePerPerson || 0)
+
+  /** 🔁 Hydratation */
   useEffect(() => {
-    // 🔁 Réutiliser une simulation existante
     if (reuseSimulation) {
-      try {
-        const sim = JSON.parse(reuseSimulation as string)
-
-        setClient({
-          id: sim.clientId ?? '',
-          name: sim.clientName,
-        })
-
-        setIngredients(sim.ingredients || [])
-        setSimulationName(`${sim.name ?? 'Simulation'} (copie)`)
-
-        return
-      } catch (e) {
-        console.error('Erreur rechargement simulation', e)
-      }
+      const sim = JSON.parse(reuseSimulation as string)
+      setClient(sim.clientName)
+      setSimulationName(`${sim.name} (copie)`)
+      setPeople(String(sim.people ?? 30))
+      setDays(String(sim.days ?? 1))
+      setPricePerPerson(String(sim.pricePerPerson ?? 50))
+      return
     }
 
-    // ➕ Nouvelle simulation avec client présélectionné
     if (clientName) {
-      setClient({
-        id: '',
-        name: clientName as string,
-      })
+      setClient(clientName as string)
       setSimulationName('Nouvelle simulation')
     }
   }, [reuseSimulation, clientName])
 
-  /** 💾 Sauvegarde (placeholder – tu brancheras ton service existant) */
-  function handleSaveSimulation() {
-    if (!client) return
-
-    // 👉 Ici tu appelles ton service saveSimulation(...)
-    // saveSimulation({ client, ingredients, simulationName, ... })
-
+  /** 💾 Enregistrement */
+  function handleSave() {
+    // 👉 ici tu appelleras saveSimulation(...)
     router.back()
   }
 
@@ -78,54 +54,68 @@ export default function CateringCalculatorScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Calculateur traiteur</Text>
 
-      {/* 👤 CLIENT */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Client</Text>
-        <Text style={styles.value}>
-          {client?.name ?? 'Aucun client sélectionné'}
+      {/* CLIENT */}
+      <Text style={styles.label}>Client</Text>
+      <Text style={styles.value}>{client}</Text>
+
+      {/* NOM SIMULATION */}
+      <Text style={styles.label}>Nom de la simulation</Text>
+      <TextInput
+        style={styles.input}
+        value={simulationName}
+        onChangeText={setSimulationName}
+      />
+
+      {/* TYPE ÉVÉNEMENT */}
+      <Text style={styles.label}>Type d’événement</Text>
+      <TextInput
+        style={styles.input}
+        value={eventType}
+        onChangeText={setEventType}
+      />
+
+      {/* PERSONNES */}
+      <Text style={styles.label}>Nombre de personnes</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={people}
+        onChangeText={setPeople}
+      />
+
+      {/* JOURS */}
+      <Text style={styles.label}>Durée (jours)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={days}
+        onChangeText={setDays}
+      />
+
+      {/* PRIX */}
+      <Text style={styles.label}>Prix par personne ($)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={pricePerPerson}
+        onChangeText={setPricePerPerson}
+      />
+
+      {/* RÉSULTAT */}
+      <View style={styles.result}>
+        <Text style={styles.resultLabel}>Chiffre d’affaires</Text>
+        <Text style={styles.resultValue}>
+          ${totalRevenue.toFixed(2)}
         </Text>
       </View>
 
-      {/* 🧾 NOM DE LA SIMULATION */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Nom de la simulation</Text>
-        <Text style={styles.value}>{simulationName}</Text>
-      </View>
-
-      {/* 🧺 INGRÉDIENTS (PLACEHOLDER) */}
-      <View style={styles.section}>
-        <Text style={styles.label}>Ingrédients</Text>
-
-        {ingredients.length === 0 ? (
-          <Text style={styles.empty}>
-            Aucun ingrédient pour l’instant
-          </Text>
-        ) : (
-          ingredients.map((ing, index) => (
-            <View key={index} style={styles.row}>
-              <Text>{ing.name}</Text>
-              <Text>
-                {ing.quantity} {ing.unit}
-              </Text>
-            </View>
-          ))
-        )}
-      </View>
-
-      {/* 💾 ACTIONS */}
-      <TouchableOpacity
-        style={[styles.button, !client && styles.disabled]}
-        disabled={!client}
-        onPress={handleSaveSimulation}
-      >
+      {/* ACTIONS */}
+      <TouchableOpacity style={styles.button} onPress={handleSave}>
         <Text style={styles.buttonText}>Enregistrer la simulation</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.cancel}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.cancelText}>Annuler</Text>
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text style={styles.cancel}>Annuler</Text>
       </TouchableOpacity>
     </ScrollView>
   )
@@ -137,60 +127,54 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
-
   title: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-
-  section: {
-    marginBottom: 18,
-  },
-
   label: {
+    marginTop: 12,
     fontWeight: '600',
-    marginBottom: 6,
   },
-
   value: {
+    marginTop: 4,
     color: '#333',
   },
-
-  empty: {
-    color: '#777',
-    fontStyle: 'italic',
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
   },
-
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
+  result: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#f1f4f8',
+    borderRadius: 10,
   },
-
+  resultLabel: {
+    color: '#555',
+  },
+  resultValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 6,
+  },
   button: {
     backgroundColor: '#007AFF',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
   },
-
-  disabled: {
-    backgroundColor: '#aaa',
-  },
-
   buttonText: {
     color: '#fff',
     fontWeight: '600',
   },
-
   cancel: {
+    textAlign: 'center',
     marginTop: 16,
-    alignItems: 'center',
-  },
-
-  cancelText: {
     color: '#555',
   },
 })
