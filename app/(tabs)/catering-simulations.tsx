@@ -25,7 +25,7 @@ export default function CateringSimulationsScreen() {
 
   const [simulations, setSimulations] = useState<CateringSimulation[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const [selectedClientName, setSelectedClientName] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -52,13 +52,13 @@ export default function CateringSimulationsScreen() {
     loadAll()
   }, [])
 
-  /** 🔍 Filtrage par client */
+  /** 🔍 Filtrage par NOM de client */
   const filteredSimulations = useMemo(() => {
-    if (!selectedClientId) return simulations
+    if (!selectedClientName) return simulations
     return simulations.filter(
-      sim => sim.clientId === selectedClientId
+      sim => sim.clientId === selectedClientName
     )
-  }, [simulations, selectedClientId])
+  }, [simulations, selectedClientName])
 
   async function confirmDelete() {
     if (!toDelete) return
@@ -88,8 +88,8 @@ export default function CateringSimulationsScreen() {
         {/* 🔽 FILTRE CLIENT */}
         <ClientDropdownFilter
           clients={clients}
-          selectedClientId={selectedClientId}
-          onSelect={setSelectedClientId}
+          selectedClientName={selectedClientName}
+          onSelect={setSelectedClientName}
         />
 
         {/* 🧾 LISTE DES SIMULATIONS */}
@@ -113,7 +113,6 @@ export default function CateringSimulationsScreen() {
               </Text>
 
               <View style={styles.actions}>
-                {/* Voir / Réutiliser */}
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
@@ -127,7 +126,6 @@ export default function CateringSimulationsScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                {/* Supprimer */}
                 <TouchableOpacity onPress={() => setToDelete(sim)}>
                   <Text style={[styles.link, styles.delete]}>
                     Supprimer
@@ -139,7 +137,6 @@ export default function CateringSimulationsScreen() {
         )}
       </ScrollView>
 
-      {/* 🗑️ MODAL CONFIRMATION SUPPRESSION */}
       <ConfirmDeleteModal
         visible={!!toDelete}
         title="Supprimer la simulation"
