@@ -1,14 +1,17 @@
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import {
   addDoc,
   collection,
-  Timestamp,
+  Timestamp,doc,
+  updateDoc,
+  
 } from 'firebase/firestore';
 
 import {
   CateringSimulationDraft,
   CateringSimulation,
-} from '../types/catering';
+} from '@/types/catering';
+
 
 /**
  * =========================
@@ -16,6 +19,22 @@ import {
  * =========================
  */
 const COLLECTION_NAME = 'catering_simulations';
+
+/**
+ * =========================
+ * VALIDATE SIMULATION
+ * =========================
+ */
+export async function validateCateringSimulation(
+  simulation: CateringSimulation
+): Promise<void> {
+  const ref = doc(db, 'catering_simulations', simulation.id);
+
+  await updateDoc(ref, {
+    status: 'validated',
+    updatedAt: Timestamp.now(),
+  });
+}
 
 /**
  * =========================

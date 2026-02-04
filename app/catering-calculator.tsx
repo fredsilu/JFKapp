@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { saveCateringSimulation } from '@/src/services/cateringSimulation.service';
-
+import { useState } from 'react';
 import {
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
   View,
   Text,
   TextInput,
@@ -14,10 +14,15 @@ import {
 import {
   CateringMealInput,
   CateringServiceInput,
+  CateringSimulation,
   CateringSimulationDraft,
 } from '../types/catering';
 
 import { calculateSimulation } from '@/src/utils/cateringCalculations';
+import {
+  saveCateringSimulation,
+  validateCateringSimulation,
+} from '@/src/services/cateringSimulation.service';
 
 /**
  * =========================
@@ -62,40 +67,75 @@ export default function CateringCalculator() {
         fuelDailyCost: 12,
       },
     });
-    const [saving, setSaving] = useState(false);
 
+  const [saving, setSaving] = useState(false);
+  const [savedSimulation, setSavedSimulation] =
+    useState<CateringSimulation | null>(null);
+
+  const isValidated = savedSimulation?.status === 'validated';
 
   const result = calculateSimulation(simulation);
+
+  /**
+   * =========================
+   * SAVE SIMULATION
+   * =========================
+   */
   const handleSaveSimulation = async () => {
-  try {
-    setSaving(true);
+    try {
+      setSaving(true);
 
-    // ⚠️ temporaire – plus tard ce sera un formulaire / sélection client
-    const simulationName = simulation.name || 'Simulation sans nom';
-    const clientId = simulation.clientId || 'unknown-client';
+      const simulationName = simulation.name || 'Simulation sans nom';
+      const clientId = simulation.clientId || 'unknown-client';
 
-    const savedSimulation = await saveCateringSimulation(simulation, {
-      name: simulationName,
-      clientId,
-    });
+      const saved = await saveCateringSimulation(simulation, {
+        name: simulationName,
+        clientId,
+      });
 
-    Alert.alert(
-      'Succès',
-      'La simulation a été enregistrée avec succès.'
-    );
+      setSavedSimulation(saved);
 
-    console.log('Simulation sauvegardée :', savedSimulation);
-  } catch (error) {
-    console.error(error);
-    Alert.alert(
-      'Erreur',
-      "Une erreur est survenue lors de l'enregistrement."
-    );
-  } finally {
-    setSaving(false);
-  }
-};
+      Alert.alert('Succès', 'Simulation enregistrée avec succès.');
+    } catch (error) {
+      console.error(error);
+      Alert.alert(
+        'Erreur',
+        "Une erreur est survenue lors de l'enregistrement."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
+  /**
+   * =========================
+   * VALIDATE SIMULATION
+   * =========================
+   */
+  const handleValidateSimulation = async () => {
+    if (!savedSimulation) return;
+
+    try {
+      setSaving(true);
+
+      await validateCateringSimulation(savedSimulation);
+
+      setSavedSimulation({
+        ...savedSimulation,
+        status: 'validated',
+      });
+
+      Alert.alert(
+        'Simulation validée',
+        'La simulation est maintenant verrouillée.'
+      );
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erreur', 'Impossible de valider la simulation.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   /**
    * =========================
@@ -106,6 +146,7 @@ export default function CateringCalculator() {
     key: 'breakfast' | 'lunch' | 'drinks',
     values: Partial<CateringMealInput>
   ) => {
+    if (isValidated) return;
     setSimulation({
       ...simulation,
       [key]: { ...simulation[key], ...values },
@@ -115,6 +156,7 @@ export default function CateringCalculator() {
   const updateService = (
     values: Partial<CateringServiceInput>
   ) => {
+    if (isValidated) return;
     setSimulation({
       ...simulation,
       service: { ...simulation.service, ...values },
@@ -134,6 +176,7 @@ export default function CateringCalculator() {
           <Text style={styles.blockTitle}>{title}</Text>
           <Switch
             value={meal.enabled}
+            disabled={isValidated}
             onValueChange={(v) =>
               updateMeal(keyName, { enabled: v })
             }
@@ -143,14 +186,19 @@ export default function CateringCalculator() {
         {meal.enabled && (
           <>
             <Input label="Nombre de personnes" value={meal.numberOfPeople}
+              disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { numberOfPeople: v })} />
             <Input label="Tarif ($ / pers / jour)" value={meal.unitPrice}
+              disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { unitPrice: v })} />
             <Input label="Nombre de jours" value={meal.numberOfDays}
+              disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { numberOfDays: v })} />
             <Input label="Remise ($)" value={meal.discount}
+              disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { discount: v })} />
             <Input label="Taux coût matière (%)" value={meal.foodCostRate}
+              disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { foodCostRate: v })} />
 
             {mealResult && (
@@ -182,6 +230,7 @@ export default function CateringCalculator() {
           <Text style={styles.blockTitle}>👨‍🍳 Service</Text>
           <Switch
             value={simulation.service.enabled}
+            disabled={isValidated}
             onValueChange={(v) =>
               updateService({ enabled: v })
             }
@@ -192,18 +241,23 @@ export default function CateringCalculator() {
           <>
             <Input label="Nombre de personnes"
               value={simulation.service.numberOfPeople}
+              disabled={isValidated}
               onChange={(v) => updateService({ numberOfPeople: v })} />
             <Input label="Nombre de jours"
               value={simulation.service.numberOfDays}
+              disabled={isValidated}
               onChange={(v) => updateService({ numberOfDays: v })} />
             <Input label="Taux serveur (1 / X)"
               value={simulation.service.serverRate}
+              disabled={isValidated}
               onChange={(v) => updateService({ serverRate: v })} />
             <Input label="Taux cuisinier (1 / X)"
               value={simulation.service.cookRate}
+              disabled={isValidated}
               onChange={(v) => updateService({ cookRate: v })} />
             <Input label="Remise ($)"
               value={simulation.service.discount}
+              disabled={isValidated}
               onChange={(v) => updateService({ discount: v })} />
 
             {result.service && (
@@ -219,22 +273,34 @@ export default function CateringCalculator() {
         )}
       </View>
 
+      {/* ACTIONS */}
       <View style={{ marginTop: 20 }}>
-  <TouchableOpacity
-    style={styles.saveButton}
-    onPress={handleSaveSimulation}
-    disabled={saving}
-  >
-    {saving ? (
-      <ActivityIndicator color="#fff" />
-    ) : (
-      <Text style={styles.saveButtonText}>
-        Enregistrer la simulation
-      </Text>
-    )}
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveSimulation}
+          disabled={saving || isValidated}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              Enregistrer la simulation
+            </Text>
+          )}
+        </TouchableOpacity>
 
+        {!isValidated && savedSimulation && (
+          <TouchableOpacity
+            style={[styles.validateButton, { marginTop: 10 }]}
+            onPress={handleValidateSimulation}
+            disabled={saving}
+          >
+            <Text style={styles.validateButtonText}>
+              Valider la simulation
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* GLOBAL */}
       <View style={styles.global}>
@@ -261,23 +327,27 @@ function Input({
   label,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, disabled && { opacity: 0.6 }]}
         keyboardType="numeric"
+        editable={!disabled}
         value={String(value)}
         onChangeText={(t) => onChange(Number(t) || 0)}
       />
     </View>
   );
 }
+
 
 function ResultBox({
   data,
@@ -337,12 +407,23 @@ const styles = StyleSheet.create({
   resultText: { fontSize: 14 },
 
   saveButton: {
-  backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+validateButton: {
+  backgroundColor: '#28a745',
   padding: 14,
   borderRadius: 10,
   alignItems: 'center',
 },
-saveButtonText: {
+validateButtonText: {
   color: '#fff',
   fontSize: 16,
   fontWeight: '600',
