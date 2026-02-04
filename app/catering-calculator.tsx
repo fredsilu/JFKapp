@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { saveCateringSimulation } from '@/src/services/cateringSimulation.service';
+
 import {
   View,
   Text,
@@ -59,8 +62,40 @@ export default function CateringCalculator() {
         fuelDailyCost: 12,
       },
     });
+    const [saving, setSaving] = useState(false);
+
 
   const result = calculateSimulation(simulation);
+  const handleSaveSimulation = async () => {
+  try {
+    setSaving(true);
+
+    // ⚠️ temporaire – plus tard ce sera un formulaire / sélection client
+    const simulationName = simulation.name || 'Simulation sans nom';
+    const clientId = simulation.clientId || 'unknown-client';
+
+    const savedSimulation = await saveCateringSimulation(simulation, {
+      name: simulationName,
+      clientId,
+    });
+
+    Alert.alert(
+      'Succès',
+      'La simulation a été enregistrée avec succès.'
+    );
+
+    console.log('Simulation sauvegardée :', savedSimulation);
+  } catch (error) {
+    console.error(error);
+    Alert.alert(
+      'Erreur',
+      "Une erreur est survenue lors de l'enregistrement."
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   /**
    * =========================
@@ -184,6 +219,23 @@ export default function CateringCalculator() {
         )}
       </View>
 
+      <View style={{ marginTop: 20 }}>
+  <TouchableOpacity
+    style={styles.saveButton}
+    onPress={handleSaveSimulation}
+    disabled={saving}
+  >
+    {saving ? (
+      <ActivityIndicator color="#fff" />
+    ) : (
+      <Text style={styles.saveButtonText}>
+        Enregistrer la simulation
+      </Text>
+    )}
+  </TouchableOpacity>
+</View>
+
+
       {/* GLOBAL */}
       <View style={styles.global}>
         <Text style={styles.globalText}>
@@ -283,6 +335,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   resultText: { fontSize: 14 },
+
+  saveButton: {
+  backgroundColor: '#007AFF',
+  padding: 14,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+saveButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
+
 
   global: {
     marginTop: 20,
