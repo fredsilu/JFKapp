@@ -3,7 +3,7 @@ import {
   addDoc,
   collection,
   Timestamp,doc,
-  updateDoc,
+  updateDoc,getDoc,
   
 } from 'firebase/firestore';
 
@@ -34,6 +34,20 @@ export async function validateCateringSimulation(
     status: 'validated',
     updatedAt: Timestamp.now(),
   });
+}
+
+export async function getCateringSimulationById(
+  id: string
+): Promise<CateringSimulation | null> {
+  const ref = doc(db, 'catering_simulations', id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringSimulation, 'id'>),
+  };
 }
 
 /**

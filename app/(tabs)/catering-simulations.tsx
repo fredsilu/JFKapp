@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native'
-import { router } from 'expo-router'
+import { useRouter } from 'expo-router'
 
 import {
   getCateringSimulations,
   deleteCateringSimulation,
-} from '@/src/services/cateringSimulations'
+} from '@/src/services/cateringSimulation.service'
 import { CateringSimulation } from '@/types/catering'
 import { fetchClients } from '@/src/services/clientService'
 
@@ -19,12 +19,13 @@ import ClientDropdownFilter from '@/src/components/ClientDropdownFilter'
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal'
 import LoadingSpinner from '@/src/components/LoadingSpinner'
 import ErrorMessage from '@/src/components/ErrorMessage'
-import { formatCurrency } from '@/src/utils/costs'
 
 export default function CateringSimulationsScreen() {
+  const router = useRouter()
+
   const [simulations, setSimulations] = useState<CateringSimulation[]>([])
   const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [selectedClientName, setSelectedClientName] = useState<string | null>(null)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -51,13 +52,13 @@ export default function CateringSimulationsScreen() {
     loadAll()
   }, [])
 
-  /** 🔍 Filtrage par NOM de client (robuste) */
+  /** 🔍 Filtrage par client */
   const filteredSimulations = useMemo(() => {
-    if (!selectedClientName) return simulations
+    if (!selectedClientId) return simulations
     return simulations.filter(
-      sim => sim.clientName === selectedClientName
+      sim => sim.clientId === selectedClientId
     )
-  }, [simulations, selectedClientName])
+  }, [simulations, selectedClientId])
 
   async function confirmDelete() {
     if (!toDelete) return
@@ -74,19 +75,21 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Simulations traiteur</Text>
 
+        {/* ➕ NOUVELLE SIMULATION */}
         <TouchableOpacity
-  style={styles.newButton}
-  onPress={() => router.push('/catering-new-simulation')}
->
-  <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
-</TouchableOpacity>
+          style={styles.newButton}
+          onPress={() => router.push('/catering-calculator')}
+        >
+          <Text style={styles.newButtonText}>
+            ➕ Nouvelle simulation
+          </Text>
+        </TouchableOpacity>
 
-
-        {/* 🔽 FILTRE CLIENT (DROPDOWN UX PRO) */}
+        {/* 🔽 FILTRE CLIENT */}
         <ClientDropdownFilter
           clients={clients}
-          selectedClientName={selectedClientName}
-          onSelect={setSelectedClientName}
+          selectedClientId={selectedClientId}
+          onSelect={setSelectedClientId}
         />
 
         {/* 🧾 LISTE DES SIMULATIONS */}
@@ -102,41 +105,26 @@ export default function CateringSimulationsScreen() {
               </Text>
 
               <Text style={styles.client}>
-                Client : {sim.clientName}
+                Client : {sim.clientId}
               </Text>
 
-              <View style={styles.row}>
-                <Text style={styles.amount}>
-                  CA : {formatCurrency(sim.results?.totals?.totalRevenue ?? 0)}
-                </Text>
-                <Text style={styles.amount}>
-                  Bénéfice : {formatCurrency(sim.results?.totals?.totalProfit ?? 0)}
-                </Text>
-              </View>
+              <Text style={styles.meta}>
+                Statut : {sim.status}
+              </Text>
 
               <View style={styles.actions}>
-                {/* Voir */}
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: '/catering-simulation-details',
-                      params: { simulation: JSON.stringify(sim) },
-                    })
-                  }
-                >
-                  <Text style={styles.link}>Voir</Text>
-                </TouchableOpacity>
-
-                {/* Réutiliser */}
+                {/* Voir / Réutiliser */}
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
                       pathname: '/catering-calculator',
-                      params: { reuseSimulation: JSON.stringify(sim) },
+                      params: { simulationId: sim.id },
                     })
                   }
                 >
-                  <Text style={styles.link}>Réutiliser</Text>
+                  <Text style={styles.link}>
+                    Ouvrir / Réutiliser
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Supprimer */}
@@ -182,6 +170,19 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
+  newButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
+  newButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
   card: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
@@ -199,27 +200,11 @@ const styles = StyleSheet.create({
     color: '#555',
   },
 
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+  meta: {
+    marginTop: 4,
+    color: '#777',
+    fontSize: 13,
   },
-
-  amount: {
-    fontWeight: '500',
-  },
-  newButton: {
-  backgroundColor: '#007AFF',
-  borderRadius: 10,
-  paddingVertical: 12,
-  alignItems: 'center',
-  marginBottom: 16,
-},
-newButtonText: {
-  color: '#fff',
-  fontWeight: '600',
-},
-
 
   actions: {
     flexDirection: 'row',

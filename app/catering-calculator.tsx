@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Alert,
   TouchableOpacity,
@@ -10,6 +10,7 @@ import {
   Switch,
   StyleSheet,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import {
   CateringMealInput,
@@ -22,7 +23,9 @@ import { calculateSimulation } from '@/src/utils/cateringCalculations';
 import {
   saveCateringSimulation,
   validateCateringSimulation,
+  getCateringSimulationById,
 } from '@/src/services/cateringSimulation.service';
+import { simulationToDraft } from '@/src/utils/cateringSimulation.mapper';
 
 /**
  * =========================
@@ -53,6 +56,9 @@ const emptyService = (): CateringServiceInput => ({
  * =========================
  */
 export default function CateringCalculator() {
+  const { simulationId } =
+    useLocalSearchParams<{ simulationId?: string }>();
+
   const [simulation, setSimulation] =
     useState<CateringSimulationDraft>({
       breakfast: emptyMeal(),
@@ -71,10 +77,41 @@ export default function CateringCalculator() {
     });
 
   const [saving, setSaving] = useState(false);
+  const [loadingSimulation, setLoadingSimulation] = useState(false);
   const [savedSimulation, setSavedSimulation] =
     useState<CateringSimulation | null>(null);
 
   const isValidated = savedSimulation?.status === 'validated';
+
+  /**
+   * =========================
+   * LOAD EXISTING SIMULATION
+   * =========================
+   */
+  useEffect(() => {
+    if (!simulationId) return;
+
+    const loadSimulation = async () => {
+      try {
+        setLoadingSimulation(true);
+        const sim = await getCateringSimulationById(simulationId);
+        if (!sim) return;
+
+        setSimulation(simulationToDraft(sim));
+        setSavedSimulation(sim);
+      } catch (error) {
+        console.error(error);
+        Alert.alert(
+          'Erreur',
+          'Impossible de charger la simulation.'
+        );
+      } finally {
+        setLoadingSimulation(false);
+      }
+    };
+
+    loadSimulation();
+  }, [simulationId]);
 
   const result = calculateSimulation(simulation);
 
@@ -144,20 +181,20 @@ export default function CateringCalculator() {
     values: Partial<CateringMealInput>
   ) => {
     if (isValidated) return;
-    setSimulation({
-      ...simulation,
-      [key]: { ...simulation[key], ...values },
-    });
+    setSimulation(prev => ({
+      ...prev,
+      [key]: { ...prev[key], ...values },
+    }));
   };
 
   const updateService = (
     values: Partial<CateringServiceInput>
   ) => {
     if (isValidated) return;
-    setSimulation({
-      ...simulation,
-      service: { ...simulation.service, ...values },
-    });
+    setSimulation(prev => ({
+      ...prev,
+      service: { ...prev.service, ...values },
+    }));
   };
 
   const renderMealBlock = (
@@ -213,6 +250,14 @@ export default function CateringCalculator() {
     );
   };
 
+  if (loadingSimulation) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Simulation Catering</Text>
@@ -226,7 +271,7 @@ export default function CateringCalculator() {
           value={simulation.name || ''}
           disabled={isValidated}
           onChangeText={(v) =>
-            setSimulation({ ...simulation, name: v })
+            setSimulation(prev => ({ ...prev, name: v }))
           }
         />
 
@@ -235,7 +280,7 @@ export default function CateringCalculator() {
           value={simulation.clientId || ''}
           disabled={isValidated}
           onChangeText={(v) =>
-            setSimulation({ ...simulation, clientId: v })
+            setSimulation(prev => ({ ...prev, clientId: v }))
           }
         />
       </View>
@@ -549,4 +594,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   globalText: { color: '#fff', fontSize: 16 },
+
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
