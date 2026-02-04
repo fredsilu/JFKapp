@@ -1,266 +1,294 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
   TextInput,
-  TouchableOpacity,
-} from 'react-native'
-import { useLocalSearchParams, router } from 'expo-router'
+  ScrollView,
+  Switch,
+  StyleSheet,
+} from 'react-native';
 
-export default function CateringCalculatorScreen() {
-  const { reuseSimulation, clientName } = useLocalSearchParams()
+import {
+  CateringMealInput,
+  CateringServiceInput,
+  CateringSimulationDraft,
+} from '../types/catering';
 
-  /** =====================
-   * IDENTITÉ
-   ===================== */
-  const [client, setClient] = useState('')
-  const [simulationName, setSimulationName] = useState('')
-  const [reference, setReference] = useState('')
-  const [eventType, setEventType] = useState('Séminaire')
+import { calculateSimulation } from '@/src/utils/cateringCalculations';
 
-  /** =====================
-   * PARAMÈTRES ÉVÉNEMENT
-   ===================== */
-  const [participants, setParticipants] = useState('50')
-  const [days, setDays] = useState('1')
-  const [servicesPerDay, setServicesPerDay] = useState('2')
-  const [location, setLocation] = useState('')
-  const [startDate, setStartDate] = useState('')
+/**
+ * =========================
+ * DEFAULT BUILDERS
+ * =========================
+ */
+const emptyMeal = (): CateringMealInput => ({
+  enabled: false,
+  numberOfPeople: 0,
+  unitPrice: 0,
+  numberOfDays: 1,
+  discount: 0,
+  foodCostRate: 0,
+});
 
-  /** =====================
-   * TARIFICATION
-   ===================== */
-  const [pricePerPerson, setPricePerPerson] = useState('60')
-  const [costPerPerson, setCostPerPerson] = useState('40')
-  const [targetMargin, setTargetMargin] = useState('30')
+const emptyService = (): CateringServiceInput => ({
+  enabled: false,
+  numberOfPeople: 0,
+  numberOfDays: 1,
+  discount: 0,
+  serverRate: 25,
+  cookRate: 50,
+});
 
-  /** =====================
-   * HYDRATATION
-   ===================== */
-  useEffect(() => {
-    if (reuseSimulation) {
-      const sim = JSON.parse(reuseSimulation as string)
+/**
+ * =========================
+ * SCREEN
+ * =========================
+ */
+export default function CateringCalculator() {
+  const [simulation, setSimulation] =
+    useState<CateringSimulationDraft>({
+      breakfast: emptyMeal(),
+      lunch: emptyMeal(),
+      drinks: emptyMeal(),
+      service: emptyService(),
+      serviceCosts: {
+        serverDailyCost: 15,
+        cookDailyCost: 20,
+        electricityDailyCost: 10,
+        gasDailyCost: 8,
+        fuelDailyCost: 12,
+      },
+    });
 
-      setClient(sim.clientName)
-      setSimulationName(`${sim.name} (copie)`)
-      setParticipants(String(sim.participants ?? 50))
-      setDays(String(sim.days ?? 1))
-      setServicesPerDay(String(sim.servicesPerDay ?? 2))
-      setPricePerPerson(String(sim.pricePerPerson ?? 60))
-      setCostPerPerson(String(sim.costPerPerson ?? 40))
-      return
-    }
+  const result = calculateSimulation(simulation);
 
-    if (clientName) {
-      setClient(clientName as string)
-      setSimulationName('Nouvelle simulation')
-    }
-  }, [reuseSimulation, clientName])
+  /**
+   * =========================
+   * HELPERS
+   * =========================
+   */
+  const updateMeal = (
+    key: 'breakfast' | 'lunch' | 'drinks',
+    values: Partial<CateringMealInput>
+  ) => {
+    setSimulation({
+      ...simulation,
+      [key]: { ...simulation[key], ...values },
+    });
+  };
 
-  /** =====================
-   * CALCULS
-   ===================== */
-  const revenue = useMemo(() => {
+  const updateService = (
+    values: Partial<CateringServiceInput>
+  ) => {
+    setSimulation({
+      ...simulation,
+      service: { ...simulation.service, ...values },
+    });
+  };
+
+  const renderMealBlock = (
+    title: string,
+    keyName: 'breakfast' | 'lunch' | 'drinks'
+  ) => {
+    const meal = simulation[keyName];
+    const mealResult = result[keyName];
+
     return (
-      Number(participants || 0) *
-      Number(days || 0) *
-      Number(pricePerPerson || 0)
-    )
-  }, [participants, days, pricePerPerson])
+      <View style={styles.block}>
+        <View style={styles.blockHeader}>
+          <Text style={styles.blockTitle}>{title}</Text>
+          <Switch
+            value={meal.enabled}
+            onValueChange={(v) =>
+              updateMeal(keyName, { enabled: v })
+            }
+          />
+        </View>
 
-  const totalCost = useMemo(() => {
-    return (
-      Number(participants || 0) *
-      Number(days || 0) *
-      Number(costPerPerson || 0)
-    )
-  }, [participants, days, costPerPerson])
+        {meal.enabled && (
+          <>
+            <Input label="Nombre de personnes" value={meal.numberOfPeople}
+              onChange={(v) => updateMeal(keyName, { numberOfPeople: v })} />
+            <Input label="Tarif ($ / pers / jour)" value={meal.unitPrice}
+              onChange={(v) => updateMeal(keyName, { unitPrice: v })} />
+            <Input label="Nombre de jours" value={meal.numberOfDays}
+              onChange={(v) => updateMeal(keyName, { numberOfDays: v })} />
+            <Input label="Remise ($)" value={meal.discount}
+              onChange={(v) => updateMeal(keyName, { discount: v })} />
+            <Input label="Taux coût matière (%)" value={meal.foodCostRate}
+              onChange={(v) => updateMeal(keyName, { foodCostRate: v })} />
 
-  const profit = revenue - totalCost
-  const marginPercent =
-    revenue > 0 ? (profit / revenue) * 100 : 0
-
-  /** =====================
-   * ACTIONS
-   ===================== */
-  function handleSave() {
-    // 👉 saveSimulation(...) à brancher ici
-    router.back()
-  }
+            {mealResult && (
+              <ResultBox
+                data={[
+                  ['Chiffre d’affaires', mealResult.turnover],
+                  ['Coût matière journalier', mealResult.dailyFoodCost],
+                  ['Coût matière total', mealResult.totalFoodCost],
+                ]}
+              />
+            )}
+          </>
+        )}
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Calculateur traiteur</Text>
+      <Text style={styles.title}>Simulation Catering</Text>
 
-      {/* CLIENT */}
-      <Text style={styles.section}>Client</Text>
-      <Text style={styles.value}>{client}</Text>
+      {renderMealBlock('🥐 Petit-déjeuner', 'breakfast')}
+      {renderMealBlock('🍽️ Déjeuner', 'lunch')}
+      {renderMealBlock('🥤 Boissons', 'drinks')}
 
-      {/* IDENTITÉ */}
-      <Text style={styles.section}>Simulation</Text>
+      {/* SERVICE */}
+      <View style={styles.block}>
+        <View style={styles.blockHeader}>
+          <Text style={styles.blockTitle}>👨‍🍳 Service</Text>
+          <Switch
+            value={simulation.service.enabled}
+            onValueChange={(v) =>
+              updateService({ enabled: v })
+            }
+          />
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nom de la simulation"
-        value={simulationName}
-        onChangeText={setSimulationName}
-      />
+        {simulation.service.enabled && (
+          <>
+            <Input label="Nombre de personnes"
+              value={simulation.service.numberOfPeople}
+              onChange={(v) => updateService({ numberOfPeople: v })} />
+            <Input label="Nombre de jours"
+              value={simulation.service.numberOfDays}
+              onChange={(v) => updateService({ numberOfDays: v })} />
+            <Input label="Taux serveur (1 / X)"
+              value={simulation.service.serverRate}
+              onChange={(v) => updateService({ serverRate: v })} />
+            <Input label="Taux cuisinier (1 / X)"
+              value={simulation.service.cookRate}
+              onChange={(v) => updateService({ cookRate: v })} />
+            <Input label="Remise ($)"
+              value={simulation.service.discount}
+              onChange={(v) => updateService({ discount: v })} />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Référence interne"
-        value={reference}
-        onChangeText={setReference}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Type d’événement (Séminaire, Cocktail…)"
-        value={eventType}
-        onChangeText={setEventType}
-      />
-
-      {/* PARAMÈTRES */}
-      <Text style={styles.section}>Paramètres événement</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de participants"
-        keyboardType="numeric"
-        value={participants}
-        onChangeText={setParticipants}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de jours"
-        keyboardType="numeric"
-        value={days}
-        onChangeText={setDays}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Services par jour"
-        keyboardType="numeric"
-        value={servicesPerDay}
-        onChangeText={setServicesPerDay}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Lieu"
-        value={location}
-        onChangeText={setLocation}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Date de début"
-        value={startDate}
-        onChangeText={setStartDate}
-      />
-
-      {/* TARIFICATION */}
-      <Text style={styles.section}>Tarification</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Prix par personne / jour ($)"
-        keyboardType="numeric"
-        value={pricePerPerson}
-        onChangeText={setPricePerPerson}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Coût par personne / jour ($)"
-        keyboardType="numeric"
-        value={costPerPerson}
-        onChangeText={setCostPerPerson}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Marge cible (%)"
-        keyboardType="numeric"
-        value={targetMargin}
-        onChangeText={setTargetMargin}
-      />
-
-      {/* RÉSULTATS */}
-      <View style={styles.result}>
-        <Text>Chiffre d’affaires : ${revenue.toFixed(2)}</Text>
-        <Text>Coût total : ${totalCost.toFixed(2)}</Text>
-        <Text style={styles.profit}>
-          Bénéfice : ${profit.toFixed(2)} ({marginPercent.toFixed(1)}%)
-        </Text>
+            {result.service && (
+              <ResultBox
+                data={[
+                  ['Serveurs', result.service.numberOfServers],
+                  ['Cuisiniers', result.service.numberOfCooks],
+                  ['Coût service total', result.service.totalServiceCost],
+                ]}
+              />
+            )}
+          </>
+        )}
       </View>
 
-      {/* ACTIONS */}
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Enregistrer la simulation</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.cancel}>Annuler</Text>
-      </TouchableOpacity>
+      {/* GLOBAL */}
+      <View style={styles.global}>
+        <Text style={styles.globalText}>
+          CA Global : {result.globalTurnover.toFixed(2)} $
+        </Text>
+        <Text style={styles.globalText}>
+          Coût Global : {result.globalCost.toFixed(2)} $
+        </Text>
+        <Text style={styles.globalText}>
+          Marge : {result.globalMargin.toFixed(2)} $
+        </Text>
+      </View>
     </ScrollView>
-  )
+  );
 }
 
+/**
+ * =========================
+ * UI COMPONENTS
+ * =========================
+ */
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={String(value)}
+        onChangeText={(t) => onChange(Number(t) || 0)}
+      />
+    </View>
+  );
+}
+
+function ResultBox({
+  data,
+}: {
+  data: [string, number][];
+}) {
+  return (
+    <View style={styles.resultBox}>
+      {data.map(([label, value]) => (
+        <Text key={label} style={styles.resultText}>
+          {label} : {value.toFixed(2)}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * =========================
+ * STYLES
+ * =========================
+ */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
+  container: { padding: 16 },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+
+  block: {
+    backgroundColor: '#f9f9f9',
+    padding: 14,
+    borderRadius: 10,
     marginBottom: 16,
   },
-  section: {
-    marginTop: 18,
-    fontWeight: '700',
-  },
-  value: {
-    marginTop: 4,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 8,
-  },
-  result: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#f1f4f8',
-    borderRadius: 10,
-  },
-  profit: {
-    marginTop: 6,
-    fontWeight: '700',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    paddingVertical: 14,
+  blockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 24,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+  blockTitle: { fontSize: 18, fontWeight: '600' },
+
+  inputGroup: { marginTop: 10 },
+  label: { fontSize: 13, color: '#555' },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginTop: 4,
   },
-  cancel: {
-    textAlign: 'center',
-    marginTop: 16,
-    color: '#555',
+
+  resultBox: {
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: '#eef6ff',
+    borderRadius: 8,
   },
-})
+  resultText: { fontSize: 14 },
+
+  global: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#0a2540',
+    borderRadius: 10,
+  },
+  globalText: { color: '#fff', fontSize: 16 },
+});

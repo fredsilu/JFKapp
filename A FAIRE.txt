@@ -1,3 +1,20 @@
+ok. maintenant je voudrais rajouter une page qui va permettre de calculer une sorte breakdown  du service traiteur.  Cette option est demandée par la CEO.  Je vais un peu t'expliquer tout ce que cette page doit faire : 
+C'est une page 'calculateur service traiteur'
+L'utilisateur doit remplir un formmulaire qui a 4 bloc : Petit-déjeuner, Déjeuner, Boissons et Service.
+1. Le bloc petit-déjeuner doit demander ceci à l'utilisateur : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
+2. Le bloc déjeuner : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
+3. le bloc boissons : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
+4. le bloc service : Nombre de personnes, nombre de jour, Remise, taux serveur(c'est le taux qui va appliquer le nombre de serveur par nombre de personnes), taux cuisiniers
+
+Une fois que l'utilisateur a rempli ces informations, le calculateur va faire des calculs pour après fournir un affichage d'informations suivantes : 
+1. Bloc petit dejeuner : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journalier, Coût matière total  et Chiffre d'affaire 
+2. Bloc déjeuner : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journalier, Coût matière total et Chiffre d'affaire 
+3. Bloc boissons : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journaler, Coût matière total et Chiffre d'affaire 
+4. Bloc service : récapitulatif des informations encodées du client et Nombre de serveur, nombre de cuisiniers, Coût des charges de courant, gaz, serveurs, cuisiniers, carburant, cout total du service journalier et cout total du service
+
+
+
+
 PROCHAINE AMELIORATION
 
 
