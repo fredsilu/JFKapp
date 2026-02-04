@@ -66,6 +66,8 @@ export default function CateringCalculator() {
         gasDailyCost: 8,
         fuelDailyCost: 12,
       },
+      name: '',
+      clientId: '',
     });
 
   const [saving, setSaving] = useState(false);
@@ -85,16 +87,12 @@ export default function CateringCalculator() {
     try {
       setSaving(true);
 
-      const simulationName = simulation.name || 'Simulation sans nom';
-      const clientId = simulation.clientId || 'unknown-client';
-
       const saved = await saveCateringSimulation(simulation, {
-        name: simulationName,
-        clientId,
+        name: simulation.name || 'Simulation sans nom',
+        clientId: simulation.clientId || 'unknown-client',
       });
 
       setSavedSimulation(saved);
-
       Alert.alert('Succès', 'Simulation enregistrée avec succès.');
     } catch (error) {
       console.error(error);
@@ -117,7 +115,6 @@ export default function CateringCalculator() {
 
     try {
       setSaving(true);
-
       await validateCateringSimulation(savedSimulation);
 
       setSavedSimulation({
@@ -185,19 +182,19 @@ export default function CateringCalculator() {
 
         {meal.enabled && (
           <>
-            <Input label="Nombre de personnes" value={meal.numberOfPeople}
+            <NumberInputField label="Nombre de personnes" value={meal.numberOfPeople}
               disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { numberOfPeople: v })} />
-            <Input label="Tarif ($ / pers / jour)" value={meal.unitPrice}
+            <NumberInputField label="Tarif ($ / pers / jour)" value={meal.unitPrice}
               disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { unitPrice: v })} />
-            <Input label="Nombre de jours" value={meal.numberOfDays}
+            <NumberInputField label="Nombre de jours" value={meal.numberOfDays}
               disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { numberOfDays: v })} />
-            <Input label="Remise ($)" value={meal.discount}
+            <NumberInputField label="Remise ($)" value={meal.discount}
               disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { discount: v })} />
-            <Input label="Taux coût matière (%)" value={meal.foodCostRate}
+            <NumberInputField label="Taux coût matière (%)" value={meal.foodCostRate}
               disabled={isValidated}
               onChange={(v) => updateMeal(keyName, { foodCostRate: v })} />
 
@@ -220,6 +217,29 @@ export default function CateringCalculator() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Simulation Catering</Text>
 
+      {/* INFORMATIONS GÉNÉRALES */}
+      <View style={styles.block}>
+        <Text style={styles.blockTitle}>🧾 Informations générales</Text>
+
+        <TextInputField
+          label="Nom de la simulation"
+          value={simulation.name || ''}
+          disabled={isValidated}
+          onChangeText={(v) =>
+            setSimulation({ ...simulation, name: v })
+          }
+        />
+
+        <TextInputField
+          label="Client"
+          value={simulation.clientId || ''}
+          disabled={isValidated}
+          onChangeText={(v) =>
+            setSimulation({ ...simulation, clientId: v })
+          }
+        />
+      </View>
+
       {renderMealBlock('🥐 Petit-déjeuner', 'breakfast')}
       {renderMealBlock('🍽️ Déjeuner', 'lunch')}
       {renderMealBlock('🥤 Boissons', 'drinks')}
@@ -239,23 +259,23 @@ export default function CateringCalculator() {
 
         {simulation.service.enabled && (
           <>
-            <Input label="Nombre de personnes"
+            <NumberInputField label="Nombre de personnes"
               value={simulation.service.numberOfPeople}
               disabled={isValidated}
               onChange={(v) => updateService({ numberOfPeople: v })} />
-            <Input label="Nombre de jours"
+            <NumberInputField label="Nombre de jours"
               value={simulation.service.numberOfDays}
               disabled={isValidated}
               onChange={(v) => updateService({ numberOfDays: v })} />
-            <Input label="Taux serveur (1 / X)"
+            <NumberInputField label="Taux serveur (1 / X)"
               value={simulation.service.serverRate}
               disabled={isValidated}
               onChange={(v) => updateService({ serverRate: v })} />
-            <Input label="Taux cuisinier (1 / X)"
+            <NumberInputField label="Taux cuisinier (1 / X)"
               value={simulation.service.cookRate}
               disabled={isValidated}
               onChange={(v) => updateService({ cookRate: v })} />
-            <Input label="Remise ($)"
+            <NumberInputField label="Remise ($)"
               value={simulation.service.discount}
               disabled={isValidated}
               onChange={(v) => updateService({ discount: v })} />
@@ -302,17 +322,41 @@ export default function CateringCalculator() {
         )}
       </View>
 
+      {/* SYNTHÈSE FINANCIÈRE */}
+      <View style={styles.block}>
+        <Text style={styles.blockTitle}>📊 Synthèse financière</Text>
+
+        <View style={styles.tableRowHeader}>
+          <Text style={styles.tableCell}>Catégorie</Text>
+          <Text style={styles.tableCell}>CM ($)</Text>
+          <Text style={styles.tableCell}>CA ($)</Text>
+        </View>
+
+        {result.breakfast && (
+          <TableRow label="PDJ" cost={result.breakfast.totalFoodCost} revenue={result.breakfast.turnover} />
+        )}
+        {result.lunch && (
+          <TableRow label="DJ" cost={result.lunch.totalFoodCost} revenue={result.lunch.turnover} />
+        )}
+        {result.drinks && (
+          <TableRow label="Boissons" cost={result.drinks.totalFoodCost} revenue={result.drinks.turnover} />
+        )}
+        {result.service && (
+          <TableRow label="Service" cost={result.service.totalServiceCost} revenue={0} />
+        )}
+
+        <View style={styles.tableRowTotal}>
+          <Text style={styles.tableCellTotal}>TOTAL</Text>
+          <Text style={styles.tableCellTotal}>{result.globalCost.toFixed(2)}</Text>
+          <Text style={styles.tableCellTotal}>{result.globalTurnover.toFixed(2)}</Text>
+        </View>
+      </View>
+
       {/* GLOBAL */}
       <View style={styles.global}>
-        <Text style={styles.globalText}>
-          CA Global : {result.globalTurnover.toFixed(2)} $
-        </Text>
-        <Text style={styles.globalText}>
-          Coût Global : {result.globalCost.toFixed(2)} $
-        </Text>
-        <Text style={styles.globalText}>
-          Marge : {result.globalMargin.toFixed(2)} $
-        </Text>
+        <Text style={styles.globalText}>CA Global : {result.globalTurnover.toFixed(2)} $</Text>
+        <Text style={styles.globalText}>Coût Global : {result.globalCost.toFixed(2)} $</Text>
+        <Text style={styles.globalText}>Marge : {result.globalMargin.toFixed(2)} $</Text>
       </View>
     </ScrollView>
   );
@@ -323,7 +367,31 @@ export default function CateringCalculator() {
  * UI COMPONENTS
  * =========================
  */
-function Input({
+function TextInputField({
+  label,
+  value,
+  onChangeText,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (v: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={[styles.input, disabled && { opacity: 0.6 }]}
+        editable={!disabled}
+        value={value}
+        onChangeText={onChangeText}
+      />
+    </View>
+  );
+}
+
+function NumberInputField({
   label,
   value,
   onChange,
@@ -339,8 +407,8 @@ function Input({
       <Text style={styles.label}>{label}</Text>
       <TextInput
         style={[styles.input, disabled && { opacity: 0.6 }]}
-        keyboardType="numeric"
         editable={!disabled}
+        keyboardType="numeric"
         value={String(value)}
         onChangeText={(t) => onChange(Number(t) || 0)}
       />
@@ -348,6 +416,25 @@ function Input({
   );
 }
 
+function TableRow({
+  label,
+  cost,
+  revenue,
+}: {
+  label: string;
+  cost: number;
+  revenue: number;
+}) {
+  return (
+    <View style={styles.tableRow}>
+      <Text style={styles.tableCell}>{label}</Text>
+      <Text style={styles.tableCell}>{cost.toFixed(2)}</Text>
+      <Text style={[styles.tableCell, { color: '#2e7d32' }]}>
+        {revenue ? revenue.toFixed(2) : '-'}
+      </Text>
+    </View>
+  );
+}
 
 function ResultBox({
   data,
@@ -417,18 +504,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-validateButton: {
-  backgroundColor: '#28a745',
-  padding: 14,
-  borderRadius: 10,
-  alignItems: 'center',
-},
-validateButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: '600',
-},
+  validateButton: {
+    backgroundColor: '#28a745',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  validateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
+  tableRowHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    paddingBottom: 6,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+  },
+  tableRowTotal: {
+    flexDirection: 'row',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderColor: '#000',
+  },
+  tableCell: {
+    flex: 1,
+    fontSize: 14,
+  },
+  tableCellTotal: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
 
   global: {
     marginTop: 20,
