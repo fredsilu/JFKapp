@@ -1,3 +1,16 @@
+ERREURS CALCULATORS : 
+Ecran simulation : 
+- click sur reutiliser et click sur voir (d'une simulation pour aller sur les détails de cette simulation) : on arrive sur la page de calculator de simulation mais la page est vide. C'est une page avec toutes les options, les blocs mais vide. Meme le nom et le client sont vides
+- le dropdown des clients : il n'y a pas le champ de recherhe et il n'y a pas tous les clients
+
+Ecran nouvelle simulation / reutiliser / voir: 
+- le bloc service ne s'ouvre pas du tout (il est là mais les champs ne s'ouvrent pas et ne s'affichent pas lorsque je click sur le bouton pour ouvrir)
+- le récapitulatif financier de tous les blocs qui doit apparaitre aussi avant le récap global n'apparait pas (pour l'instant on pourra essayer de le régler après)
+
+
+
+
+
 ok. maintenant je voudrais rajouter une page qui va permettre de calculer une sorte breakdown  du service traiteur.  Cette option est demandée par la CEO.  Je vais un peu t'expliquer tout ce que cette page doit faire : 
 C'est une page 'calculateur service traiteur'
 L'utilisateur doit remplir un formmulaire qui a 4 bloc : Petit-déjeuner, Déjeuner, Boissons et Service.
