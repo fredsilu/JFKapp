@@ -205,50 +205,63 @@ export default function CateringCalculator() {
       {renderMeal('🥤 Boissons', 'drinks')}
 
       {/* SERVICE */}
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <Text style={styles.cardTitle}>👨‍🍳 Service</Text>
-          <Switch
-            value={simulation.service.enabled}
-            onValueChange={(v) => updateService({ enabled: v })}
-          />
-        </View>
+      {/* SERVICE */}
+<View style={styles.card}>
+  <View style={styles.header}>
+    <Text style={styles.cardTitle}>👨‍🍳 Service</Text>
+    <Switch
+      value={simulation.service.enabled}
+      onValueChange={(v) => updateService({ enabled: v })}
+    />
+  </View>
 
-        {simulation.service.enabled && result.service && (
-          <>
-            <NumberField label="Nombre de personnes"
-              value={simulation.service.numberOfPeople}
-              onChange={(v) => updateService({ numberOfPeople: v })} />
-            <NumberField label="Nombre de jours"
-              value={simulation.service.numberOfDays}
-              onChange={(v) => updateService({ numberOfDays: v })} />
-            <NumberField label="Taux serveur (pers / serveur)"
-              value={simulation.service.serverRate}
-              onChange={(v) => updateService({ serverRate: v })} />
-            <NumberField label="Taux cuisinier (pers / cuisinier)"
-              value={simulation.service.cookRate}
-              onChange={(v) => updateService({ cookRate: v })} />
-            <NumberField label="Remise ($ / jour)"
-              value={simulation.service.discount}
-              onChange={(v) => updateService({ discount: v })} />
+  {simulation.service.enabled && (
+    <>
+      <NumberField
+        label="Nombre de personnes"
+        value={simulation.service.numberOfPeople}
+        onChange={(v) => updateService({ numberOfPeople: v })}
+      />
+      <NumberField
+        label="Nombre de jours"
+        value={simulation.service.numberOfDays}
+        onChange={(v) => updateService({ numberOfDays: v })}
+      />
+      <NumberField
+        label="Taux serveur (pers / serveur)"
+        value={simulation.service.serverRate}
+        onChange={(v) => updateService({ serverRate: v })}
+      />
+      <NumberField
+        label="Taux cuisinier (pers / cuisinier)"
+        value={simulation.service.cookRate}
+        onChange={(v) => updateService({ cookRate: v })}
+      />
+      <NumberField
+        label="Remise ($ / jour)"
+        value={simulation.service.discount}
+        onChange={(v) => updateService({ discount: v })}
+      />
 
-            <ResultBox
-              title="Détails service"
-              rows={[
-                ['Serveurs', result.service.numberOfServers],
-                ['Cuisiniers', result.service.numberOfCooks],
-                ['Coût serveurs / jour', result.service.serversCost],
-                ['Coût cuisiniers / jour', result.service.cooksCost],
-                ['Courant / jour', result.service.electricityCost],
-                ['Gaz / jour', result.service.gasCost],
-                ['Carburant / jour', result.service.fuelCost],
-                ['Coût service journalier', result.service.dailyServiceCost],
-                ['Coût service total', result.service.totalServiceCost],
-              ]}
-            />
-          </>
-        )}
-      </View>
+      {result.service && (
+        <ResultBox
+          title="Détails service"
+          rows={[
+            ['Serveurs', result.service.numberOfServers],
+            ['Cuisiniers', result.service.numberOfCooks],
+            ['Coût serveurs / jour', result.service.serversCost],
+            ['Coût cuisiniers / jour', result.service.cooksCost],
+            ['Courant / jour', result.service.electricityCost],
+            ['Gaz / jour', result.service.gasCost],
+            ['Carburant / jour', result.service.fuelCost],
+            ['Coût service journalier', result.service.dailyServiceCost],
+            ['Coût service total', result.service.totalServiceCost],
+          ]}
+        />
+      )}
+    </>
+  )}
+</View>
 
       {/* GLOBAL */}
       <View style={styles.card}>
