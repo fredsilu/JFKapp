@@ -1,140 +1,119 @@
-import React, { useMemo, useState } from 'react'
+import { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  TextInput,
-} from 'react-native'
+  Platform,
+} from 'react-native';
 
-interface Client {
-  id: string
-  name: string
-}
+type Client = {
+  id: string;
+  name: string;
+};
 
-interface Props {
-  clients: Client[]
-  selectedClientName: string | null
-  onSelect: (clientName: string | null) => void
-}
+type Props = {
+  clients: Client[];
+  selectedClientName: string | null;
+  onSelect: (name: string) => void;
+};
 
 export default function ClientDropdownFilter({
   clients,
   selectedClientName,
   onSelect,
 }: Props) {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
-
-  const filteredClients = useMemo(() => {
-    if (!search) return clients
-    return clients.filter(c =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [clients, search])
+  const [open, setOpen] = useState(false);
 
   return (
     <View style={styles.wrapper}>
-      {/* Sélecteur */}
+      {/* Selector */}
       <TouchableOpacity
         style={styles.selector}
-        onPress={() => setOpen(!open)}
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
       >
         <Text style={styles.selectorText}>
-          {selectedClientName ?? 'Tous les clients'}
+          {selectedClientName ?? 'Sélectionner un client'}
         </Text>
-        <Text style={styles.arrow}>{open ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
+      {/* Dropdown */}
       {open && (
-        <View style={styles.dropdown}>
-          {/* Recherche */}
-          <TextInput
-            placeholder="Rechercher un client…"
-            value={search}
-            onChangeText={setSearch}
-            style={styles.search}
-          />
-
-          <ScrollView style={{ maxHeight: 260 }}>
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => {
-                onSelect(null)
-                setOpen(false)
-                setSearch('')
-              }}
-            >
-              <Text style={styles.itemText}>Tous les clients</Text>
-            </TouchableOpacity>
-
-            {filteredClients.map(client => (
+        <View
+          style={styles.dropdown}
+          // ⚠️ clé : empêche le aria-hidden de casser le focus
+          {...(Platform.OS === 'web'
+            ? { tabIndex: -1 }
+            : {})}
+        >
+          <ScrollView>
+            {clients.map((client) => (
               <TouchableOpacity
                 key={client.id}
                 style={styles.item}
                 onPress={() => {
-                  onSelect(client.name)
-                  setOpen(false)
-                  setSearch('')
+                  onSelect(client.name);
+                  setOpen(false);
                 }}
               >
-                <Text style={styles.itemText}>{client.name}</Text>
+                <Text>{client.name}</Text>
               </TouchableOpacity>
             ))}
+
+            {clients.length === 0 && (
+              <Text style={styles.empty}>Aucun client</Text>
+            )}
           </ScrollView>
         </View>
       )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 16,
-    zIndex: 10,
+    position: 'relative',
+    zIndex: 1000, // 🔥 essentiel
   },
+
   selector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f1f4f8',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
   },
+
   selectorText: {
     fontSize: 15,
-    fontWeight: '500',
     color: '#333',
   },
-  arrow: {
-    fontSize: 12,
-    color: '#555',
-  },
+
   dropdown: {
-    marginTop: 6,
+    position: 'absolute',
+    top: 52,
+    left: 0,
+    right: 0,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    maxHeight: 240,
+    zIndex: 2000, // 🔥 passe au-dessus d’Expo Router
+    elevation: 10, // Android
   },
-  search: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
+
   item: {
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  itemText: {
-    fontSize: 14,
-    color: '#333',
+
+  empty: {
+    padding: 12,
+    textAlign: 'center',
+    color: '#999',
   },
-})
+});

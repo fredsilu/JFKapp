@@ -1,144 +1,171 @@
 import {
+  CateringSimulationDraft,
   CateringMealInput,
-  CateringMealResult,
   CateringServiceInput,
-  CateringServiceCosts,
-  CateringServiceResult,
-  CateringSimulationDraft ,
-  CateringSimulationResult,
 } from '@/types/catering';
 
-/**
- * =========================
- * CALCUL COMMUN
- * Petit-déjeuner / Déjeuner / Boissons
- * =========================
- */
-export function calculateMeal(
-  input: CateringMealInput
-): CateringMealResult {
-  const dailyFoodCost =
-    input.numberOfPeople *
-    input.unitPrice *
-    (input.foodCostRate / 100);
+/* =========================
+   TYPES RESULTATS
+========================= */
 
-  const totalDailyFoodCost = dailyFoodCost;
+type MealResult = {
+  recap: CateringMealInput;
+  dailyTurnover: number;
+  totalTurnover: number;
+  dailyFoodCost: number;
+  totalFoodCost: number;
+};
+
+type ServiceResult = {
+  recap: CateringServiceInput;
+  numberOfServers: number;
+  numberOfCooks: number;
+
+  electricityCost: number;
+  gasCost: number;
+  fuelCost: number;
+  serversCost: number;
+  cooksCost: number;
+
+  dailyServiceCost: number;
+  totalServiceCost: number;
+};
+
+export type CateringSimulationResult = {
+  breakfast: MealResult | null;
+  lunch: MealResult | null;
+  drinks: MealResult | null;
+  service: ServiceResult | null;
+
+  globalTurnover: number;
+  globalCost: number;
+  globalMargin: number;
+};
+
+/* =========================
+   HELPERS
+========================= */
+
+function calculateMeal(meal: CateringMealInput): MealResult | null {
+  if (!meal.enabled || meal.numberOfPeople <= 0 || meal.unitPrice <= 0) {
+    return null;
+  }
+
+  const dailyTurnover =
+    meal.numberOfPeople * meal.unitPrice - meal.discount;
+
+  const totalTurnover = dailyTurnover * meal.numberOfDays;
+
+  const dailyFoodCost =
+    dailyTurnover * (meal.foodCostRate / 100);
 
   const totalFoodCost =
-    dailyFoodCost * input.numberOfDays;
-
-  const turnover =
-    input.numberOfPeople *
-    input.unitPrice *
-    input.numberOfDays -
-    input.discount;
+    dailyFoodCost * meal.numberOfDays;
 
   return {
+    recap: meal,
+    dailyTurnover,
+    totalTurnover,
     dailyFoodCost,
-    totalDailyFoodCost,
     totalFoodCost,
-    turnover,
   };
 }
 
-/**
- * =========================
- * CALCUL SERVICE
- * =========================
- */
-export function calculateService(
-  input: CateringServiceInput,
-  costs: CateringServiceCosts
-): CateringServiceResult {
+function calculateService(
+  service: CateringServiceInput,
+  costs: {
+    serverDailyCost: number;
+    cookDailyCost: number;
+    electricityDailyCost: number;
+    gasDailyCost: number;
+    fuelDailyCost: number;
+  }
+): ServiceResult | null {
+  if (!service.enabled || service.numberOfPeople <= 0) {
+    return null;
+  }
+
   const numberOfServers = Math.ceil(
-    input.numberOfPeople / input.serverRate
+    service.numberOfPeople / service.serverRate
   );
 
   const numberOfCooks = Math.ceil(
-    input.numberOfPeople / input.cookRate
+    service.numberOfPeople / service.cookRate
   );
 
-  const serverCost = numberOfServers * costs.serverDailyCost;
-  const cookCost = numberOfCooks * costs.cookDailyCost;
+  const serversCost =
+    numberOfServers * costs.serverDailyCost;
+
+  const cooksCost =
+    numberOfCooks * costs.cookDailyCost;
 
   const electricityCost = costs.electricityDailyCost;
   const gasCost = costs.gasDailyCost;
   const fuelCost = costs.fuelDailyCost;
 
   const dailyServiceCost =
-    serverCost +
-    cookCost +
+    serversCost +
+    cooksCost +
     electricityCost +
     gasCost +
-    fuelCost;
+    fuelCost -
+    service.discount;
 
   const totalServiceCost =
-    dailyServiceCost * input.numberOfDays -
-    input.discount;
+    dailyServiceCost * service.numberOfDays;
 
   return {
+    recap: service,
     numberOfServers,
     numberOfCooks,
-    serverCost,
-    cookCost,
+
     electricityCost,
     gasCost,
     fuelCost,
+    serversCost,
+    cooksCost,
+
     dailyServiceCost,
     totalServiceCost,
   };
 }
 
-/**
- * =========================
- * CALCUL GLOBAL DE SIMULATION
- * =========================
- */
+/* =========================
+   MAIN CALCULATOR
+========================= */
+
 export function calculateSimulation(
   simulation: CateringSimulationDraft
 ): CateringSimulationResult {
-  let globalTurnover = 0;
-  let globalCost = 0;
+  const breakfast = calculateMeal(simulation.breakfast);
+  const lunch = calculateMeal(simulation.lunch);
+  const drinks = calculateMeal(simulation.drinks);
 
-  const result: CateringSimulationResult = {
-    globalTurnover: 0,
-    globalCost: 0,
-    globalMargin: 0,
+  const service = calculateService(
+    simulation.service,
+    simulation.serviceCosts
+  );
+
+  const globalTurnover =
+    (breakfast?.totalTurnover || 0) +
+    (lunch?.totalTurnover || 0) +
+    (drinks?.totalTurnover || 0);
+
+  const globalCost =
+    (breakfast?.totalFoodCost || 0) +
+    (lunch?.totalFoodCost || 0) +
+    (drinks?.totalFoodCost || 0) +
+    (service?.totalServiceCost || 0);
+
+  const globalMargin = globalTurnover - globalCost;
+
+  return {
+    breakfast,
+    lunch,
+    drinks,
+    service,
+    globalTurnover,
+    globalCost,
+    globalMargin,
   };
-
-  if (simulation.breakfast.enabled) {
-    const breakfast = calculateMeal(simulation.breakfast);
-    result.breakfast = breakfast;
-    globalTurnover += breakfast.turnover;
-    globalCost += breakfast.totalFoodCost;
-  }
-
-  if (simulation.lunch.enabled) {
-    const lunch = calculateMeal(simulation.lunch);
-    result.lunch = lunch;
-    globalTurnover += lunch.turnover;
-    globalCost += lunch.totalFoodCost;
-  }
-
-  if (simulation.drinks.enabled) {
-    const drinks = calculateMeal(simulation.drinks);
-    result.drinks = drinks;
-    globalTurnover += drinks.turnover;
-    globalCost += drinks.totalFoodCost;
-  }
-
-  if (simulation.service.enabled) {
-    const service = calculateService(
-      simulation.service,
-      simulation.serviceCosts
-    );
-    result.service = service;
-    globalCost += service.totalServiceCost;
-  }
-
-  result.globalTurnover = globalTurnover;
-  result.globalCost = globalCost;
-  result.globalMargin = globalTurnover - globalCost;
-
-  return result;
 }

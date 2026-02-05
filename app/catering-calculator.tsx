@@ -1,31 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  TouchableOpacity,
   ActivityIndicator,
-  View,
+  ScrollView,
+  StyleSheet,
+  Switch,
   Text,
   TextInput,
-  ScrollView,
-  Switch,
-  StyleSheet,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import {
   CateringMealInput,
   CateringServiceInput,
-  CateringSimulation,
   CateringSimulationDraft,
-} from '../types/catering';
+} from '@/types/catering';
 
-import { calculateSimulation } from '@/src/utils/cateringCalculations';
 import {
-  saveCateringSimulation,
-  validateCateringSimulation,
-} from '@/src/services/cateringSimulation.service';
+  calculateSimulation,
+  CateringSimulationResult,
+} from '@/src/utils/cateringCalculations';
 
-/* ========= DEFAULT BUILDERS ========= */
+import { saveCateringSimulation } from '@/src/services/cateringSimulation.service';
+
+/* =========================
+   DEFAULT BUILDERS
+========================= */
+
 const emptyMeal = (): CateringMealInput => ({
   enabled: false,
   numberOfPeople: 0,
@@ -45,11 +48,13 @@ const emptyService = (): CateringServiceInput => ({
 });
 
 export default function CateringCalculator() {
-  const { clientId } =
-    useLocalSearchParams<{ clientId?: string }>();
+  const { clientId, clientName } =
+    useLocalSearchParams<{ clientId?: string; clientName?: string }>();
 
   const [simulation, setSimulation] =
     useState<CateringSimulationDraft>({
+      name: '',
+      clientId: '',
       breakfast: emptyMeal(),
       lunch: emptyMeal(),
       drinks: emptyMeal(),
@@ -61,199 +66,321 @@ export default function CateringCalculator() {
         gasDailyCost: 8,
         fuelDailyCost: 12,
       },
-      name: '',
-      clientId: '',
     });
 
   const [saving, setSaving] = useState(false);
-  const [savedSimulation, setSavedSimulation] =
-    useState<CateringSimulation | null>(null);
 
-  const isValidated = savedSimulation?.status === 'validated';
-
-  /* 🔁 init client from previous screen */
   useEffect(() => {
     if (clientId) {
-      setSimulation(prev => ({
+      setSimulation((prev) => ({
         ...prev,
         clientId: String(clientId),
       }));
     }
   }, [clientId]);
 
-  const result = calculateSimulation(simulation);
+  const result: CateringSimulationResult = useMemo(
+    () => calculateSimulation(simulation),
+    [simulation]
+  );
 
-  /* ========= SAVE ========= */
-const handleSaveSimulation = async () => {
-  if (!simulation.clientId) {
-    Alert.alert(
-      'Client manquant',
-      'Veuillez sélectionner un client avant de sauvegarder la simulation.'
-    );
-    return;
-  }
-
-  try {
-    setSaving(true);
-
-    const saved = await saveCateringSimulation(simulation, {
-      name: simulation.name?.trim() || 'Simulation sans nom',
-      clientId: simulation.clientId, // ✅ maintenant garanti string
-    });
-
-    setSavedSimulation(saved);
-    Alert.alert('Succès', 'Simulation enregistrée avec succès.');
-  } catch (error) {
-    console.error(error);
-    Alert.alert(
-      'Erreur',
-      "Une erreur est survenue lors de l'enregistrement."
-    );
-  } finally {
-    setSaving(false);
-  }
-};
-
-
-
-  /* ========= VALIDATE ========= */
-  const handleValidateSimulation = async () => {
-    if (!savedSimulation) return;
+  /* =========================
+     SAVE
+  ========================= */
+  const handleSave = async () => {
+    if (!simulation.clientId) {
+      Alert.alert('Client requis', 'Veuillez sélectionner un client.');
+      return;
+    }
 
     try {
       setSaving(true);
-      await validateCateringSimulation(savedSimulation);
-      setSavedSimulation({
-        ...savedSimulation,
-        status: 'validated',
+      await saveCateringSimulation(simulation, {
+        name: simulation.name || 'Simulation traiteur',
+        clientId: simulation.clientId,
       });
-      Alert.alert('Simulation validée');
+      Alert.alert('Succès', 'Simulation enregistrée.');
+    } catch {
+      Alert.alert('Erreur', 'Échec de la sauvegarde.');
     } finally {
       setSaving(false);
     }
   };
 
-  /* ========= HELPERS ========= */
+  /* =========================
+     HELPERS
+  ========================= */
   const updateMeal = (
     key: 'breakfast' | 'lunch' | 'drinks',
     values: Partial<CateringMealInput>
   ) => {
-    if (isValidated) return;
-    setSimulation({
-      ...simulation,
-      [key]: { ...simulation[key], ...values },
-    });
+    setSimulation((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], ...values },
+    }));
   };
 
+  const updateService = (values: Partial<CateringServiceInput>) => {
+    setSimulation((prev) => ({
+      ...prev,
+      service: { ...prev.service, ...values },
+    }));
+  };
+
+  /* =========================
+     RENDER MEAL BLOCK
+  ========================= */
+  const renderMeal = (
+    title: string,
+    key: 'breakfast' | 'lunch' | 'drinks'
+  ) => {
+    const meal = simulation[key];
+    const r = result[key];
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Switch
+            value={meal.enabled}
+            onValueChange={(v) => updateMeal(key, { enabled: v })}
+          />
+        </View>
+
+        {meal.enabled && (
+          <>
+            <NumberField label="Nombre de personnes" value={meal.numberOfPeople}
+              onChange={(v) => updateMeal(key, { numberOfPeople: v })} />
+            <NumberField label="Tarif ($ / pers / jour)" value={meal.unitPrice}
+              onChange={(v) => updateMeal(key, { unitPrice: v })} />
+            <NumberField label="Nombre de jours" value={meal.numberOfDays}
+              onChange={(v) => updateMeal(key, { numberOfDays: v })} />
+            <NumberField label="Remise ($ / jour)" value={meal.discount}
+              onChange={(v) => updateMeal(key, { discount: v })} />
+            <NumberField label="Taux coût matière (%)" value={meal.foodCostRate}
+              onChange={(v) => updateMeal(key, { foodCostRate: v })} />
+
+            {r && (
+              <ResultBox
+                title="Résultats"
+                rows={[
+                  ['CA journalier', r.dailyTurnover],
+                  ['CA total', r.totalTurnover],
+                  ['Coût matière journalier', r.dailyFoodCost],
+                  ['Coût matière total', r.totalFoodCost],
+                ]}
+              />
+            )}
+          </>
+        )}
+      </View>
+    );
+  };
+
+  /* =========================
+     RENDER
+  ========================= */
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Simulation Catering</Text>
+      <Text style={styles.title}>Simulation service traiteur</Text>
 
-      {/* CLIENT (READ ONLY) */}
-      <View style={styles.block}>
+      <View style={styles.card}>
         <Text style={styles.label}>Client</Text>
-        <Text style={styles.readonly}>
-          {simulation.clientId}
-        </Text>
-      </View>
+        <Text style={styles.value}>{clientName || simulation.clientId}</Text>
 
-      {/* NAME */}
-      <View style={styles.block}>
-        <Text style={styles.label}>Nom de la simulation</Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>
+          Nom de la simulation
+        </Text>
         <TextInput
           style={styles.input}
-          editable={!isValidated}
           value={simulation.name}
           onChangeText={(v) =>
-            setSimulation({ ...simulation, name: v })
+            setSimulation((p) => ({ ...p, name: v }))
           }
         />
       </View>
 
-      {/* MEALS */}
-      {(['breakfast', 'lunch', 'drinks'] as const).map(k => (
-        <View key={k} style={styles.block}>
-          <View style={styles.row}>
-            <Text style={styles.blockTitle}>{k}</Text>
-            <Switch
-              value={simulation[k].enabled}
-              onValueChange={v =>
-                updateMeal(k, { enabled: v })
-              }
-            />
-          </View>
-        </View>
-      ))}
+      {renderMeal('🥐 Petit-déjeuner', 'breakfast')}
+      {renderMeal('🍽️ Déjeuner', 'lunch')}
+      {renderMeal('🥤 Boissons', 'drinks')}
 
-      {/* ACTIONS */}
+      {/* SERVICE */}
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.cardTitle}>👨‍🍳 Service</Text>
+          <Switch
+            value={simulation.service.enabled}
+            onValueChange={(v) => updateService({ enabled: v })}
+          />
+        </View>
+
+        {simulation.service.enabled && result.service && (
+          <>
+            <NumberField label="Nombre de personnes"
+              value={simulation.service.numberOfPeople}
+              onChange={(v) => updateService({ numberOfPeople: v })} />
+            <NumberField label="Nombre de jours"
+              value={simulation.service.numberOfDays}
+              onChange={(v) => updateService({ numberOfDays: v })} />
+            <NumberField label="Taux serveur (pers / serveur)"
+              value={simulation.service.serverRate}
+              onChange={(v) => updateService({ serverRate: v })} />
+            <NumberField label="Taux cuisinier (pers / cuisinier)"
+              value={simulation.service.cookRate}
+              onChange={(v) => updateService({ cookRate: v })} />
+            <NumberField label="Remise ($ / jour)"
+              value={simulation.service.discount}
+              onChange={(v) => updateService({ discount: v })} />
+
+            <ResultBox
+              title="Détails service"
+              rows={[
+                ['Serveurs', result.service.numberOfServers],
+                ['Cuisiniers', result.service.numberOfCooks],
+                ['Coût serveurs / jour', result.service.serversCost],
+                ['Coût cuisiniers / jour', result.service.cooksCost],
+                ['Courant / jour', result.service.electricityCost],
+                ['Gaz / jour', result.service.gasCost],
+                ['Carburant / jour', result.service.fuelCost],
+                ['Coût service journalier', result.service.dailyServiceCost],
+                ['Coût service total', result.service.totalServiceCost],
+              ]}
+            />
+          </>
+        )}
+      </View>
+
+      {/* GLOBAL */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
+        <Text>CA total : {result.globalTurnover.toFixed(2)} $</Text>
+        <Text>Coût total : {result.globalCost.toFixed(2)} $</Text>
+        <Text>Marge : {result.globalMargin.toFixed(2)} $</Text>
+      </View>
+
       <TouchableOpacity
-        style={styles.saveButton}
-        disabled={saving || isValidated}
-        onPress={handleSaveSimulation}
+        style={[styles.saveButton, saving && { opacity: 0.6 }]}
+        disabled={saving}
+        onPress={handleSave}
       >
         {saving ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.saveText}>
-            Enregistrer la simulation
-          </Text>
+          <Text style={styles.saveButtonText}>Enregistrer</Text>
         )}
       </TouchableOpacity>
 
-      {!isValidated && savedSimulation && (
-        <TouchableOpacity
-          style={styles.validateButton}
-          onPress={handleValidateSimulation}
-        >
-          <Text style={styles.saveText}>
-            Valider la simulation
-          </Text>
-        </TouchableOpacity>
-      )}
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 }
 
-/* ========= STYLES ========= */
+/* =========================
+   SMALL COMPONENTS
+========================= */
+
+function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={String(value)}
+        onChangeText={(t) => onChange(Number(t) || 0)}
+      />
+    </View>
+  );
+}
+
+function ResultBox({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: [string, number][];
+}) {
+  return (
+    <View style={styles.resultBox}>
+      <Text style={styles.resultTitle}>{title}</Text>
+      {rows.map(([k, v]) => (
+        <Text key={k} style={styles.resultText}>
+          {k} : {v.toFixed(2)}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+/* =========================
+   STYLES
+========================= */
+
 const styles = StyleSheet.create({
-  container: { padding: 16 },
+  container: { padding: 16, backgroundColor: '#F4F6F8' },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-  block: {
-    backgroundColor: '#f9f9f9',
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
     padding: 14,
-    borderRadius: 10,
     marginBottom: 14,
   },
-  blockTitle: { fontSize: 16, fontWeight: '600' },
-  label: { color: '#555', marginBottom: 6 },
-  readonly: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 8,
-  },
-  row: {
+
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
+
+  cardTitle: { fontSize: 16, fontWeight: '700' },
+  label: { fontSize: 12, color: '#6B7280' },
+  value: { fontSize: 16, fontWeight: '700' },
+
+  input: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 4,
+  },
+
+  resultBox: {
+    marginTop: 12,
+    backgroundColor: '#EEF6FF',
+    padding: 12,
+    borderRadius: 8,
+  },
+
+  resultTitle: {
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+
+  resultText: {
+    fontWeight: '600',
+  },
+
   saveButton: {
     backgroundColor: '#007AFF',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
-  },
-  validateButton: {
-    backgroundColor: '#28a745',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
     marginTop: 10,
   },
-  saveText: { color: '#fff', fontWeight: '600' },
+
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
 });
