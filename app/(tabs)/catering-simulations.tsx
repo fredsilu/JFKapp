@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import {
   deleteCateringSimulation,
@@ -15,7 +15,9 @@ import {
 import { CateringSimulation } from '@/types/catering';
 import { fetchClients } from '@/src/services/clientService';
 
-import ClientDropdownFilter from '@/src/components/ClientDropdownFilter';
+import ClientDropdownFilter, {
+  ClientFilterValue,
+} from '@/src/components/ClientDropdownFilter';
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
@@ -25,22 +27,27 @@ export default function CateringSimulationsScreen() {
 
   const [simulations, setSimulations] = useState<CateringSimulation[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-  const [selectedClientName, setSelectedClientName] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] =
+    useState<ClientFilterValue>('ALL');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<CateringSimulation | null>(null);
 
-  async function loadAll() {
+  const clientsById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of clients) map[c.id] = c.name;
+    return map;
+  }, [clients]);
+
+  const loadAll = useCallback(async () => {
     try {
       setError(null);
       setLoading(true);
-
       const [sims, cls] = await Promise.all([
         getCateringSimulations(),
         fetchClients(),
       ]);
-
       setSimulations(sims);
       setClients(cls);
     } catch (e) {
@@ -49,16 +56,25 @@ export default function CateringSimulationsScreen() {
     } finally {
       setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    loadAll();
   }, []);
 
+  // 1ère charge
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  // ✅ BUG 2 FIX : recharge quand on revient sur l’écran
+  useFocusEffect(
+    useCallback(() => {
+      loadAll();
+    }, [loadAll])
+  );
+
+  // ✅ BUG 1 FIX : ALL = pas de filtre
   const filteredSimulations = useMemo(() => {
-    if (!selectedClientName) return simulations;
-    return simulations.filter((sim) => sim.clientName === selectedClientName);
-  }, [simulations, selectedClientName]);
+    if (!selectedClientId || selectedClientId === 'ALL') return simulations;
+    return simulations.filter((sim) => sim.clientId === selectedClientId);
+  }, [simulations, selectedClientId]);
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -79,7 +95,6 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Simulations traiteur</Text>
 
-        {/* ✅ NOUVELLE SIMULATION -> on va sur l'écran de choix du client */}
         <TouchableOpacity
           style={styles.newButton}
           onPress={() => router.push('/catering-new-simulation')}
@@ -87,52 +102,62 @@ export default function CateringSimulationsScreen() {
           <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
         </TouchableOpacity>
 
-        {/* FILTRE CLIENT */}
         <ClientDropdownFilter
           clients={clients}
-          selectedClientName={selectedClientName}
-          onSelect={setSelectedClientName}
+          selectedClientId={selectedClientId}
+          onSelect={setSelectedClientId}
+          labelAll="Tous les clients"
         />
 
-        {/* LISTE */}
         {filteredSimulations.length === 0 ? (
           <Text style={styles.empty}>Aucune simulation</Text>
         ) : (
-          filteredSimulations.map((sim) => (
-            <View key={sim.id} style={styles.card}>
-              <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
-              <Text style={styles.client}>Client : {sim.clientName || sim.clientId || '-'}</Text>
+          filteredSimulations.map((sim) => {
+            // ✅ BUG 3 FIX : afficher le NOM du client
+            const clientLabel =
+              sim.clientName ||
+              clientsById[sim.clientId] ||
+              sim.clientId ||
+              '-';
 
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: '/catering-calculator',
-                      params: { simulationId: sim.id },
-                    })
-                  }
-                >
-                  <Text style={styles.link}>Voir</Text>
-                </TouchableOpacity>
+            return (
+              <View key={sim.id} style={styles.card}>
+                <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
+                <Text style={styles.client}>Client : {clientLabel}</Text>
 
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: '/catering-calculator',
-                      params: { reuseSimulationId: sim.id },
-                    })
-                  }
-                >
-                  <Text style={styles.link}>Réutiliser</Text>
-                </TouchableOpacity>
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: '/catering-calculator',
+                        params: { simulationId: sim.id },
+                      })
+                    }
+                  >
+                    <Text style={styles.link}>Voir</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => setToDelete(sim)}>
-                  <Text style={[styles.link, styles.delete]}>Supprimer</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: '/catering-calculator',
+                        params: { reuseSimulationId: sim.id },
+                      })
+                    }
+                  >
+                    <Text style={styles.link}>Réutiliser</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => setToDelete(sim)}>
+                    <Text style={[styles.link, styles.delete]}>Supprimer</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))
+            );
+          })
         )}
+
+        <View style={{ height: 30 }} />
       </ScrollView>
 
       <ConfirmDeleteModal
@@ -157,15 +182,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  newButtonText: { color: '#fff', fontWeight: '600' },
+  newButtonText: { color: '#fff', fontWeight: '700' },
 
   empty: { textAlign: 'center', color: '#777', marginTop: 30 },
 
   card: { backgroundColor: '#f9f9f9', borderRadius: 10, padding: 14, marginBottom: 14 },
-  name: { fontSize: 16, fontWeight: '600' },
+  name: { fontSize: 16, fontWeight: '700' },
   client: { marginTop: 4, color: '#555' },
 
   actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-  link: { color: '#007AFF', fontWeight: '500' },
+  link: { color: '#007AFF', fontWeight: '600' },
   delete: { color: '#d9534f' },
 });

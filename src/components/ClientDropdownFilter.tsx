@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  TextInput,
   Platform,
 } from 'react-native';
 
@@ -14,77 +13,97 @@ type Client = {
   name: string;
 };
 
+export type ClientFilterValue = 'ALL' | string;
+
 type Props = {
   clients: Client[];
-  selectedClientName: string | null;
-  onSelect: (name: string) => void;
+
+  // ✅ on travaille avec l’ID (plus robuste)
+  selectedClientId: ClientFilterValue | null;
+
+  // ✅ retourne 'ALL' ou l'id du client
+  onSelect: (clientId: ClientFilterValue) => void;
+
+  // ✅ optionnel : permet à l’écran parent de savoir si la liste est ouverte
+  onOpenChange?: (open: boolean) => void;
+
+  // ✅ label optionnel
+  labelAll?: string;
 };
 
 export default function ClientDropdownFilter({
   clients,
-  selectedClientName,
+  selectedClientId,
   onSelect,
+  onOpenChange,
+  labelAll = 'Tous les clients',
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
 
-  const filteredClients = useMemo(() => {
-    if (!search.trim()) return clients;
-    return clients.filter((c) =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [clients, search]);
+  const selectedLabel = useMemo(() => {
+    if (!selectedClientId) return 'Sélectionner un client';
+    if (selectedClientId === 'ALL') return labelAll;
+    const found = clients.find((c) => c.id === selectedClientId);
+    return found?.name ?? 'Client inconnu';
+  }, [selectedClientId, clients, labelAll]);
+
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    onOpenChange?.(next);
+  };
+
+  const close = () => {
+    setOpen(false);
+    onOpenChange?.(false);
+  };
 
   return (
     <View style={styles.wrapper}>
-      {/* SELECTOR */}
       <TouchableOpacity
         style={styles.selector}
-        onPress={() => setOpen((o) => !o)}
+        onPress={toggle}
         accessibilityRole="button"
       >
-        <Text style={styles.selectorText}>
-          {selectedClientName ?? 'Sélectionner un client'}
-        </Text>
+        <Text style={styles.selectorText}>{selectedLabel}</Text>
       </TouchableOpacity>
 
-      {/* DROPDOWN */}
       {open && (
         <View
           style={styles.dropdown}
           {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
         >
-          {/* SEARCH */}
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Rechercher un client…"
-            value={search}
-            onChangeText={setSearch}
-            autoFocus
-          />
-
           <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={{ paddingVertical: 6 }}
             keyboardShouldPersistTaps="handled"
-            style={{ maxHeight: 240 }}
           >
-            {filteredClients.map((client) => (
+            {/* ✅ OPTION ALL */}
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => {
+                onSelect('ALL');
+                close();
+              }}
+            >
+              <Text style={styles.itemText}>{labelAll}</Text>
+            </TouchableOpacity>
+
+            {clients.map((client) => (
               <TouchableOpacity
                 key={client.id}
                 style={styles.item}
                 onPress={() => {
-                  onSelect(client.name);
-                  setOpen(false);
-                  setSearch('');
+                  onSelect(client.id);
+                  close();
                 }}
               >
                 <Text style={styles.itemText}>{client.name}</Text>
               </TouchableOpacity>
             ))}
 
-            {filteredClients.length === 0 && (
-              <Text style={styles.empty}>
-                Aucun client trouvé
-              </Text>
+            {clients.length === 0 && (
+              <Text style={styles.empty}>Aucun client</Text>
             )}
           </ScrollView>
         </View>
@@ -92,10 +111,6 @@ export default function ClientDropdownFilter({
     </View>
   );
 }
-
-/* =========================
-   STYLES
-========================= */
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -106,41 +121,38 @@ const styles = StyleSheet.create({
   selector: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
   },
 
   selectorText: {
     fontSize: 15,
     color: '#111827',
+    fontWeight: '600',
   },
 
   dropdown: {
     position: 'absolute',
-    top: 52,
+    top: 56,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 10,
+    borderRadius: 12,
     zIndex: 2000,
-    elevation: 10,
-    paddingBottom: 6,
+    elevation: 12,
+    overflow: 'hidden',
   },
 
-  searchInput: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    fontSize: 14,
+  scroll: {
+    maxHeight: 260, // ✅ scroll OK sur Android
   },
 
   item: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -151,9 +163,8 @@ const styles = StyleSheet.create({
   },
 
   empty: {
-    padding: 14,
+    padding: 12,
     textAlign: 'center',
-    color: '#6B7280',
-    fontStyle: 'italic',
+    color: '#9CA3AF',
   },
 });

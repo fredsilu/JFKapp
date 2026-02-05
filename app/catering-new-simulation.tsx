@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,67 +9,47 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import ClientDropdownFilter from '@/src/components/ClientDropdownFilter';
+import ClientDropdownFilter, { ClientFilterValue } from '@/src/components/ClientDropdownFilter';
 import { fetchClients } from '@/src/services/clientService';
 
-type Client = {
-  id: string;
-  name: string;
-};
+type Client = { id: string; name: string };
 
 export default function CateringNewSimulation() {
   const router = useRouter();
 
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<ClientFilterValue | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
-  /**
-   * =========================
-   * LOAD CLIENTS
-   * =========================
-   */
+  const selectedClient = useMemo(() => {
+    if (!selectedClientId || selectedClientId === 'ALL') return null;
+    return clients.find(c => c.id === selectedClientId) || null;
+  }, [selectedClientId, clients]);
+
   useEffect(() => {
     const loadClients = async () => {
       try {
         setLoading(true);
         const data = await fetchClients();
-
-        // Sécurité : on vérifie la structure
-        if (!Array.isArray(data)) {
-          throw new Error('Clients invalides');
-        }
-
         setClients(data);
-      } catch (error) {
-        console.error('❌ fetchClients error:', error);
-        Alert.alert(
-          'Erreur',
-          'Impossible de charger la liste des clients.'
-        );
+      } catch (e) {
+        console.error('❌ fetchClients:', e);
+        Alert.alert('Erreur', 'Impossible de charger les clients');
       } finally {
         setLoading(false);
       }
     };
-
     loadClients();
   }, []);
 
-  /**
-   * =========================
-   * START SIMULATION
-   * =========================
-   */
-  const handleStartSimulation = () => {
+  const handleStart = () => {
     if (!selectedClient) {
-      Alert.alert(
-        'Client requis',
-        'Veuillez sélectionner un client.'
-      );
+      Alert.alert('Client requis', 'Veuillez sélectionner un client.');
       return;
     }
 
-    // On passe UNIQUEMENT les infos nécessaires
     router.push({
       pathname: '/catering-calculator',
       params: {
@@ -83,7 +63,6 @@ export default function CateringNewSimulation() {
     <View style={styles.container}>
       <Text style={styles.title}>Nouvelle simulation</Text>
 
-      {/* CLIENT SELECTION */}
       <View style={styles.card}>
         <Text style={styles.label}>Client</Text>
 
@@ -95,89 +74,55 @@ export default function CateringNewSimulation() {
         ) : (
           <ClientDropdownFilter
             clients={clients}
-            selectedClientName={selectedClient?.name ?? null}
-            onSelect={(clientName) => {
-              const found =
-                clients.find((c) => c.name === clientName) ||
-                null;
-              setSelectedClient(found);
+            selectedClientId={selectedClientId}
+            onSelect={(id) => {
+              // On interdit ALL sur cet écran
+              if (id === 'ALL') return;
+              setSelectedClientId(id);
             }}
+            onOpenChange={setDropdownOpen}
+            labelAll="Tous les clients"
           />
         )}
       </View>
 
-      {/* ACTION */}
-      <TouchableOpacity
-        style={[
-          styles.primaryButton,
-          (!selectedClient || loading) && { opacity: 0.5 },
-        ]}
-        disabled={!selectedClient || loading}
-        onPress={handleStartSimulation}
-      >
-        <Text style={styles.primaryButtonText}>
-          Commencer la simulation
-        </Text>
-      </TouchableOpacity>
+      {/* ✅ BUG 4 FIX : si dropdown ouvert, on masque le bouton */}
+      {!dropdownOpen && (
+        <TouchableOpacity
+          style={[styles.button, !selectedClient && { opacity: 0.5 }]}
+          disabled={!selectedClient}
+          onPress={handleStart}
+        >
+          <Text style={styles.buttonText}>Commencer la simulation</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
-/**
- * =========================
- * STYLES
- * =========================
- */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F4F6F8',
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: '#F4F6F8' },
+  title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
     elevation: 2,
   },
 
-  label: {
-    fontSize: 13,
-    color: '#555',
-    marginBottom: 8,
-  },
+  label: { fontSize: 13, color: '#555', marginBottom: 8 },
 
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  loadingText: { color: '#666' },
 
-  loadingText: {
-    color: '#666',
-  },
-
-  primaryButton: {
+  button: {
     backgroundColor: '#007AFF',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  buttonText: { color: '#fff', fontWeight: '800', fontSize: 16 },
 });
