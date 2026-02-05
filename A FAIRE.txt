@@ -1,185 +1,267 @@
-ERREURS CALCULATORS : 
-
-- après enregistrement de la simulation, il faudrait que la liste des simulations se rafraichissent
-- la seule difference entre 2 simulations identiques c'set la date d'enregistrement ou de creatrion de la simulation (donc il faudrait quand meme afficher la date d'enregistrement de cette simulation)
-
-- mais dans la page liste de toutes les simulations, le champ de recherche doit aussi avoir l'option "tous les clients' afin de fournir toutes les simulations de tous les clients 
-1️⃣ Validations métier (bloquer valeurs incohérentes)
-2️⃣ Amélioration UX (replier/déplier récap)
-3️⃣ Export devis / PDF
-4️⃣ Nettoyage technique final
 
 
+On va organiser ça en :
 
---------------------------------------------------------------
+* 🔧 Correctifs urgents
+* 🚀 Versions courtes (1.x)
+* 🧠 Versions métier (2.x)
+* 🏢 Versions entreprise (3.x)
+* 🌍 Plateforme complète (4.x)
 
+---
 
+# 🧭 ROADMAP OFFICIELLE JFKApp / CREPOLIA
 
-ok. maintenant je voudrais rajouter une page qui va permettre de calculer une sorte breakdown  du service traiteur.  Cette option est demandée par la CEO.  Je vais un peu t'expliquer tout ce que cette page doit faire : 
-C'est une page 'calculateur service traiteur'
-L'utilisateur doit remplir un formmulaire qui a 4 bloc : Petit-déjeuner, Déjeuner, Boissons et Service.
-1. Le bloc petit-déjeuner doit demander ceci à l'utilisateur : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
-2. Le bloc déjeuner : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
-3. le bloc boissons : Nombre de personnes, Tarif ($), Nombre de jour, Remise($) et taux du cout matiere (%)
-4. le bloc service : Nombre de personnes, nombre de jour, Remise, taux serveur(c'est le taux qui va appliquer le nombre de serveur par nombre de personnes), taux cuisiniers
+# 🔴 VERSION 1.1.1 — HOTFIX STABILITÉ (immédiat)
 
-Une fois que l'utilisateur a rempli ces informations, le calculateur va faire des calculs pour après fournir un affichage d'informations suivantes : 
-1. Bloc petit dejeuner : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journalier, Coût matière total  et Chiffre d'affaire 
-2. Bloc déjeuner : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journalier, Coût matière total et Chiffre d'affaire 
-3. Bloc boissons : récapitulatif des informations encodées du client et Coût matière journalier, Coût matière total journaler, Coût matière total et Chiffre d'affaire 
-4. Bloc service : récapitulatif des informations encodées du client et Nombre de serveur, nombre de cuisiniers, Coût des charges de courant, gaz, serveurs, cuisiniers, carburant, cout total du service journalier et cout total du service
+Objectif : corriger les bugs actuels sans ajouter de nouvelles features.
 
+## Calculator
 
+* Fix scroll dans dropdown clients
+* Afficher la date de création de simulation
+* Bloquer valeurs incohérentes :
 
+  * prix négatif
+  * nombre de personnes = 0
+  * jours = 0
+* Recherche client insensible aux accents
+  (frederic = frédéric)
 
-PROCHAINE AMELIORATION
+## UX
 
+* Récapitulatif repliable/dépliable
+* Rafraîchissement auto après sauvegarde
 
-1. Tableau de bord : 
-	- Today's revenue doit calculé la somme des montants facturés pour les livraisons réalisées de la journée
-	- Rajouter en dessous de Today's revenue; month revenue pour avoir la somme des montants facturés pour les livraisons réalisées du mois en cours 
+---
 
-2. Tabs Clients :
-	- Le nombre de orders n'apparait pas.  Lorsque c'est 0, le 0 apparait mais lorsqu'il y a des commandes en cours, il y a juste un " orders
+# 🟡 VERSION 1.2.0 — PRODUCT READY
 
-3. Details du client
-	- Dans l'historique des commandes : le montant qui apparait à coté du statut, doit être le montant facturé de la commande et non le cout ou prix de la commande
+Objectif : rendre l’app utilisable en production chez Crepolia.
 
-4. Commande
-	- Dans la présentation des commandes, il faudrait que désignation soit affichée en dessous du nombre d'articles et du montant total de la commande et avant la date.  Designation ne peut pas etre dans le meme bloc que le statut de la commande.
+## Calculator
 
-5. Details de commande :
-	- Dans les details de la commande il faudrait mieux afficher les différents blocs visuellement et mettre par exemple des séparateurs entre les champs (client, informations de livraison, plats commandés, ingrédients supplémentaires, récapitulatif des ingredients) pour avoir visuellement une bonne délimitation et ajouter des couleurs de fond pour chacun des blocs
+* Export PDF devis client
+* Nettoyage technique final
 
-6. Dans le champ de recherche du client, la recherche peut se faire sans tenir compte des accents car si je fais frederic au lieu de frédéric, la recherche ne trouve pas frédéric
+## Dashboard
 
+* Today’s revenue (commandes livrées aujourd’hui)
+* Month revenue (commandes livrées mois courant)
 
-PROCHAINES VERSIONS
+## Clients
 
-6. Mettre le logo de crepolia quelque part car il n'est pas visible dans l'app
+* Fix affichage :
 
-7. y INCORPORER un breakdown des commandes en termes de cout matiere : comme un calculateur du service traiteur qui sera dans un premier temps indépendant du reste de l'app mais utile pour la CEO dans ses calculs.  Il faudra dans une prochaine version voir comment la mettre en lien avec le reste de l'application.
+  * “0 orders”
+  * “5 orders” (actuellement bug)
 
+## Client Details
 
-PROCHAINE VERSIONS
+* Montant affiché = montant facturé (et non coût)
 
-- Gestion des utilisateurs et rôles
+## Commande
 
+* Réorganiser design :
 
-PROCHAINE VERSIONS
- 
-STOCK : 
-- Gestion des stocks et inventaire
-- Système d'alerte pour les stocks bas
-- Historique des mouvements de stock
+  * Articles
+  * Montant
+  * Désignation (en dessous)
+  * Date
 
+## Order Details
 
+* Séparateurs visuels :
 
-PROCHAINE VERSIONS
+  * Client
+  * Livraison
+  * Plats
+  * Ingrédients
+  * Récap
 
-Prévisions de consommation
+* Fonds colorés par section
 
-Gestion des commandes fournisseurs
-Scanner de codes-barres pour l'inventaire
-Gestion des commandes avancée
-Système de statuts personnalisables
-Notifications en temps réel
-Impression des bons de commande
-Système de paiement intégré
-Gestion des retours et remboursements
+## Branding
 
+* Ajouter logo Crepolia
 
-Programme de fidélité
-Notes et préférences clients
-Segmentation client
-Envoi automatique d'emails/SMS
-Système de feedback
+---
 
+# 🟢 VERSION 1.3.0 — OUTIL DIRECTEUR (CEO TOOL)
 
-Gestion des allergènes
-Photos et descriptions détaillées
-Menus saisonniers
-Suggestions personnalisées
-Gestion des promotions
-Rapports exportables
-Prévisions de vente
-Analyse des tendances
-Administration et paramètres
+Objectif : aider Kady dans la prise de décision.
 
-Configuration des taxes
-Personnalisation de l'interface
-Sauvegarde automatique
-Journal d'activité
-Optimisation mobile
-Mode hors ligne
-Performance optimisée
-Interface adaptative
-Gestes et animations
-Push notifications
-Intégrations
-Comptabilité (export)
-Services de livraison
-Agenda/calendrier
-Fournisseurs
-Marketing automation
-Sécurité et conformité
-Authentification forte
-Chiffrement des données
-Conformité RGPD
-Audit trail
-Sauvegardes automatiques
-Internationalisation
-Multi-langues
-Multi-devises
-Formats régionaux
-Fuseaux horaires
+## Nouveau module
 
+Breakdown matière indépendant :
 
+* Calcul coût matière par commande
+* Analyse marge par prestation
+* Simulation rapide
 
----------------------------------------------------------------
+Puis plus tard :
 
+* Connecté au reste de l'app
 
+---
 
-J'ai créé un module utilitaire costs.ts qui contient toutes les fonctions nécessaires pour :
+# 🔵 VERSION 1.4.0 — EXPÉRIENCE UTILISATEUR
 
-Calculer le coût des ingrédients d'un plat
-Calculer le coût total d'un plat avec marge
-Calculer le coût des ingrédients supplémentaires
-Calculer le coût total d'une commande
-Calculer la marge bénéficiaire
-Formater les montants en euros
-Ces fonctions peuvent maintenant être utilisées dans les composants DishDetails, OrderDetails et partout où nous avons besoin de calculer des coûts.
+Objectif : rendre l’app agréable.
 
-Pour utiliser ces fonctions, il suffit de les importer :
+* Animations
+* UI premium
+* Gestes tactiles
+* Interface adaptative
 
+---
 
-import { 
-  calculateDishTotalCost, 
-  calculateOrderTotalCost,
-  formatCurrency 
-} from '@/src/utils/costs';
-Par exemple dans OrderDetails :
+# 🟣 VERSION 1.5.0 — DONNÉES & ANALYTICS
 
+Objectif : donner du pilotage stratégique.
 
-const totalCost = calculateOrderTotalCost(order);
-const profit = calculateOrderProfit(order);
+* Rapports exportables
+* Analyse tendances
+* Prévisions de vente
+* Segmentation clients
+* Programme fidélité
+* Feedback clients
+* Notes & préférences clients
 
-// Affichage
-<Text>Total : {formatCurrency(totalCost)}</Text>
-<Text>Marge : {formatCurrency(profit)}</Text>
-Les avantages de cette approche sont :
+---
 
-Centralisation des calculs
-Cohérence des calculs dans toute l'application
-Facilité de maintenance
-Possibilité d'ajuster la marge globalement
-Format monétaire uniforme
+# 🟤 VERSION 2.0.0 — GESTION MÉTIER COMPLÈTE
 
+## 👥 Utilisateurs
 
------------------------------------------------
+* Comptes
+* Rôles
 
-The error is clear: Firebase Firestore requires a composite index when you combine a where clause (clientId) with an orderBy clause (createdAt).
-Option 1: Create the Firebase Index (Recommended)
-Click the link provided in the error message to create the composite index automatically:
+  * DG
+  * Cuisine
+  * Commercial
+  * Admin
 
-Firebase will create the index and it should take a few minutes to be ready.
+---
+
+## 📦 STOCK (gros module)
+
+* Inventaire
+* Alertes stock bas
+* Historique mouvements
+* Scanner code-barres
+
+---
+
+## 🛒 Fournisseurs
+
+* Commandes fournisseurs
+* Suivi livraisons
+
+---
+
+# 🟠 VERSION 2.5.0 — COMMANDES AVANCÉES
+
+* Statuts personnalisables
+* Retours / remboursements
+* Paiement intégré
+* Impression bons de commande
+* Notifications temps réel
+
+---
+
+# 🟢 VERSION 3.0.0 — AUTOMATISATION BUSINESS
+
+* Envoi automatique SMS
+* Emails clients
+* Marketing automation
+* Suggestions personnalisées
+* Menus saisonniers
+* Promotions
+
+---
+
+# 🏢 VERSION 4.0.0 — ERP CREPOLIA COMPLET
+
+## Finance
+
+* Export comptable
+* Intégration OHADA
+
+## Sécurité
+
+* Authentification forte
+* Audit trail
+* Chiffrement
+
+## International
+
+* Multi-langues
+* Multi-devises
+* Fuseaux horaires
+
+## Technique
+
+* Mode offline
+* Sauvegardes auto
+* Performance optimisée
+
+---
+
+# 🧠 Priorités stratégiques (mon conseil)
+
+Voici l’ordre optimal :
+
+### Phase 1 (2–3 semaines)
+
+* 1.1.1
+* 1.2.0
+
+👉 App stable pour usage réel
+
+---
+
+### Phase 2 (1 mois)
+
+* 1.3.0
+* 1.4.0
+
+👉 App premium & utile DG
+
+---
+
+### Phase 3 (2–4 mois)
+
+* 2.0.0
+* 2.5.0
+
+👉 App devient cœur de Crepolia
+
+---
+
+### Phase 4 (6–12 mois)
+
+* 3.0.0
+* 4.0.0
+
+👉 JFKApp devient une vraie solution SaaS vendable
+
+---
+
+# 💎 Vision long terme (très important)
+
+Tu es en train de créer :
+
+> Le futur ERP traiteur africain.
+
+Avec :
+
+* commandes
+* stock
+* clients
+* calculs
+* analytics
+* finance
+
+C’est très puissant.
+

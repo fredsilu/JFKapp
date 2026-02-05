@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  TextInput,
   Platform,
 } from 'react-native';
 
@@ -17,18 +18,11 @@ export type ClientFilterValue = 'ALL' | string;
 
 type Props = {
   clients: Client[];
-
-  // ✅ on travaille avec l’ID (plus robuste)
   selectedClientId: ClientFilterValue | null;
-
-  // ✅ retourne 'ALL' ou l'id du client
   onSelect: (clientId: ClientFilterValue) => void;
-
-  // ✅ optionnel : permet à l’écran parent de savoir si la liste est ouverte
   onOpenChange?: (open: boolean) => void;
-
-  // ✅ label optionnel
   labelAll?: string;
+  placeholder?: string;
 };
 
 export default function ClientDropdownFilter({
@@ -37,15 +31,10 @@ export default function ClientDropdownFilter({
   onSelect,
   onOpenChange,
   labelAll = 'Tous les clients',
+  placeholder = 'Sélectionner un client',
 }: Props) {
   const [open, setOpen] = useState(false);
-
-  const selectedLabel = useMemo(() => {
-    if (!selectedClientId) return 'Sélectionner un client';
-    if (selectedClientId === 'ALL') return labelAll;
-    const found = clients.find((c) => c.id === selectedClientId);
-    return found?.name ?? 'Client inconnu';
-  }, [selectedClientId, clients, labelAll]);
+  const [query, setQuery] = useState('');
 
   const toggle = () => {
     const next = !open;
@@ -56,56 +45,94 @@ export default function ClientDropdownFilter({
   const close = () => {
     setOpen(false);
     onOpenChange?.(false);
+    setQuery('');
   };
+
+  const selectedLabel = useMemo(() => {
+    if (!selectedClientId) return placeholder;
+    if (selectedClientId === 'ALL') return labelAll;
+    const found = clients.find(c => c.id === selectedClientId);
+    return found?.name ?? 'Client inconnu';
+  }, [selectedClientId, clients, labelAll, placeholder]);
+
+  const filteredClients = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter(c =>
+      c.name.toLowerCase().includes(q)
+    );
+  }, [clients, query]);
 
   return (
     <View style={styles.wrapper}>
+      {/* SELECTOR */}
       <TouchableOpacity
         style={styles.selector}
         onPress={toggle}
         accessibilityRole="button"
       >
-        <Text style={styles.selectorText}>{selectedLabel}</Text>
+        <Text
+          style={[
+            styles.selectorText,
+            !selectedClientId && styles.placeholderText,
+          ]}
+        >
+          {selectedLabel}
+        </Text>
       </TouchableOpacity>
 
+      {/* DROPDOWN */}
       {open && (
         <View
           style={styles.dropdown}
           {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
         >
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={{ paddingVertical: 6 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* ✅ OPTION ALL */}
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => {
-                onSelect('ALL');
-                close();
-              }}
-            >
-              <Text style={styles.itemText}>{labelAll}</Text>
-            </TouchableOpacity>
+          {/* SEARCH */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher un client…"
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+          />
 
-            {clients.map((client) => (
-              <TouchableOpacity
-                key={client.id}
-                style={styles.item}
-                onPress={() => {
-                  onSelect(client.id);
-                  close();
-                }}
-              >
-                <Text style={styles.itemText}>{client.name}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* LIST */}
+          <View style={styles.listWrapper}>
+  <ScrollView
+    nestedScrollEnabled
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator
+  >
+    {/* ALL */}
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => {
+        onSelect('ALL');
+        close();
+      }}
+    >
+      <Text style={styles.itemText}>{labelAll}</Text>
+    </TouchableOpacity>
 
-            {clients.length === 0 && (
-              <Text style={styles.empty}>Aucun client</Text>
-            )}
-          </ScrollView>
+    {filteredClients.map(client => (
+      <TouchableOpacity
+        key={client.id}
+        style={styles.item}
+        onPress={() => {
+          onSelect(client.id);
+          close();
+        }}
+      >
+        <Text style={styles.itemText}>{client.name}</Text>
+      </TouchableOpacity>
+    ))}
+
+    {filteredClients.length === 0 && (
+      <Text style={styles.empty}>Aucun client trouvé</Text>
+    )}
+  </ScrollView>
+</View>
+
         </View>
       )}
     </View>
@@ -128,8 +155,12 @@ const styles = StyleSheet.create({
 
   selectorText: {
     fontSize: 15,
-    color: '#111827',
     fontWeight: '600',
+    color: '#111827',
+  },
+
+  placeholderText: {
+    color: '#9CA3AF',
   },
 
   dropdown: {
@@ -138,16 +169,25 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#fff',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 12,
     zIndex: 2000,
     elevation: 12,
     overflow: 'hidden',
   },
 
+  searchInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    fontSize: 14,
+    backgroundColor: '#F9FAFB',
+  },
+
   scroll: {
-    maxHeight: 260, // ✅ scroll OK sur Android
+    maxHeight: 260, // ✅ SCROLL GARANTI
   },
 
   item: {
@@ -167,4 +207,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#9CA3AF',
   },
+  listWrapper: {
+  maxHeight: 300,
+  overflow: 'hidden',
+},
+
 });

@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { fetchClients } from '@/src/services/clientService';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
 import {
   Alert,
   ActivityIndicator,
@@ -10,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
 
 import {
   CateringMealInput,
@@ -69,11 +71,13 @@ export default function CateringCalculator() {
   const mode: Mode = simulationId
     ? 'view'
     : reuseSimulationId
-    ? 'reuse'
-    : 'new';
+      ? 'reuse'
+      : 'new';
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
+  const [clientsById, setClientsById] = useState<Record<string, string>>({});
 
   const [simulation, setSimulation] =
     useState<CateringSimulationDraft>({
@@ -91,6 +95,25 @@ export default function CateringCalculator() {
         fuelDailyCost: 12,
       },
     });
+
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const clients = await fetchClients();
+        const map: Record<string, string> = {};
+        clients.forEach((c) => {
+          map[c.id] = c.name;
+        });
+        setClientsById(map);
+      } catch (e) {
+        console.error('❌ Erreur chargement clients', e);
+      }
+    };
+
+    loadClients();
+  }, []);
+
+
 
   /* =========================
      LOAD SIMULATION (VIEW / REUSE)
@@ -140,7 +163,8 @@ export default function CateringCalculator() {
     };
 
     load();
-  }, [simulationId, reuseSimulationId, clientId]);
+  }, [simulationId, reuseSimulationId, clientId, mode]);
+
 
   const result: CateringSimulationResult = useMemo(
     () => calculateSimulation(simulation),
@@ -154,7 +178,7 @@ export default function CateringCalculator() {
   ========================= */
 
   const handleSave = async () => {
-    if (readOnly) return;
+    if (readOnly || saving) return;
 
     if (!simulation.clientId) {
       Alert.alert('Client requis', 'Veuillez sélectionner un client.');
@@ -167,7 +191,17 @@ export default function CateringCalculator() {
         name: simulation.name || 'Simulation traiteur',
         clientId: simulation.clientId,
       });
-      Alert.alert('Succès', 'Simulation enregistrée.');
+      Alert.alert(
+        'Succès',
+        'Simulation enregistrée avec succès.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(), // 👈 retour liste
+          },
+        ]
+      );
+
     } catch {
       Alert.alert('Erreur', 'Échec de la sauvegarde.');
     } finally {
@@ -217,16 +251,22 @@ export default function CateringCalculator() {
         {mode === 'view'
           ? 'Détails de la simulation'
           : mode === 'reuse'
-          ? 'Réutiliser une simulation'
-          : 'Nouvelle simulation'}
+            ? 'Réutiliser une simulation'
+            : 'Nouvelle simulation'}
       </Text>
 
       {/* CLIENT */}
       <View style={styles.card}>
         <Text style={styles.label}>Client</Text>
         <Text style={styles.value}>
-          {clientName || simulation.clientId}
+          {clientName
+            ? decodeURIComponent(clientName)
+            : simulation.clientId && clientsById[simulation.clientId]
+              ? clientsById[simulation.clientId]
+              : 'Client inconnu'}
         </Text>
+
+
 
         <Text style={[styles.label, { marginTop: 10 }]}>
           Nom de la simulation
@@ -267,58 +307,58 @@ export default function CateringCalculator() {
       {/* =========================
     RÉCAP FINANCIER PAR BLOC
 ========================= */}
-<View style={styles.card}>
-  <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
 
-  {/* PETIT-DEJEUNER */}
-  {result.breakfast && (
-    <View style={styles.recapRow}>
-      <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
-      <Text style={styles.recapValue}>
-        CA : {result.breakfast.totalTurnover.toFixed(2)} $
-      </Text>
-      <Text style={styles.recapSub}>
-        Coût matière : {result.breakfast.totalFoodCost.toFixed(2)} $
-      </Text>
-    </View>
-  )}
+        {/* PETIT-DEJEUNER */}
+        {result.breakfast && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
+            <Text style={styles.recapValue}>
+              CA : {result.breakfast.totalTurnover.toFixed(2)} $
+            </Text>
+            <Text style={styles.recapSub}>
+              Coût matière : {result.breakfast.totalFoodCost.toFixed(2)} $
+            </Text>
+          </View>
+        )}
 
-  {/* DEJEUNER */}
-  {result.lunch && (
-    <View style={styles.recapRow}>
-      <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
-      <Text style={styles.recapValue}>
-        CA : {result.lunch.totalTurnover.toFixed(2)} $
-      </Text>
-      <Text style={styles.recapSub}>
-        Coût matière : {result.lunch.totalFoodCost.toFixed(2)} $
-      </Text>
-    </View>
-  )}
+        {/* DEJEUNER */}
+        {result.lunch && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
+            <Text style={styles.recapValue}>
+              CA : {result.lunch.totalTurnover.toFixed(2)} $
+            </Text>
+            <Text style={styles.recapSub}>
+              Coût matière : {result.lunch.totalFoodCost.toFixed(2)} $
+            </Text>
+          </View>
+        )}
 
-  {/* BOISSONS */}
-  {result.drinks && (
-    <View style={styles.recapRow}>
-      <Text style={styles.recapLabel}>🥤 Boissons</Text>
-      <Text style={styles.recapValue}>
-        CA : {result.drinks.totalTurnover.toFixed(2)} $
-      </Text>
-      <Text style={styles.recapSub}>
-        Coût matière : {result.drinks.totalFoodCost.toFixed(2)} $
-      </Text>
-    </View>
-  )}
+        {/* BOISSONS */}
+        {result.drinks && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>🥤 Boissons</Text>
+            <Text style={styles.recapValue}>
+              CA : {result.drinks.totalTurnover.toFixed(2)} $
+            </Text>
+            <Text style={styles.recapSub}>
+              Coût matière : {result.drinks.totalFoodCost.toFixed(2)} $
+            </Text>
+          </View>
+        )}
 
-  {/* SERVICE */}
-  {result.service && (
-    <View style={styles.recapRow}>
-      <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
-      <Text style={styles.recapValue}>
-        Coût total service : {result.service.totalServiceCost.toFixed(2)} $
-      </Text>
-    </View>
-  )}
-</View>
+        {/* SERVICE */}
+        {result.service && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
+            <Text style={styles.recapValue}>
+              Coût total service : {result.service.totalServiceCost.toFixed(2)} $
+            </Text>
+          </View>
+        )}
+      </View>
 
 
       {/* GLOBAL */}
@@ -470,27 +510,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   recapRow: {
-  marginTop: 10,
-  paddingTop: 10,
-  borderTopWidth: 1,
-  borderTopColor: '#E5E7EB',
-},
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
 
-recapLabel: {
-  fontSize: 14,
-  fontWeight: '700',
-  marginBottom: 4,
-},
+  recapLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
 
-recapValue: {
-  fontSize: 14,
-  fontWeight: '600',
-},
+  recapValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 
-recapSub: {
-  fontSize: 13,
-  color: '#6B7280',
-},
+  recapSub: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
 
 });
 
