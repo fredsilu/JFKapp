@@ -264,6 +264,63 @@ export default function CateringCalculator() {
         readOnly,
       })}
 
+      {/* =========================
+    RÉCAP FINANCIER PAR BLOC
+========================= */}
+<View style={styles.card}>
+  <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
+
+  {/* PETIT-DEJEUNER */}
+  {result.breakfast && (
+    <View style={styles.recapRow}>
+      <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
+      <Text style={styles.recapValue}>
+        CA : {result.breakfast.totalTurnover.toFixed(2)} $
+      </Text>
+      <Text style={styles.recapSub}>
+        Coût matière : {result.breakfast.totalFoodCost.toFixed(2)} $
+      </Text>
+    </View>
+  )}
+
+  {/* DEJEUNER */}
+  {result.lunch && (
+    <View style={styles.recapRow}>
+      <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
+      <Text style={styles.recapValue}>
+        CA : {result.lunch.totalTurnover.toFixed(2)} $
+      </Text>
+      <Text style={styles.recapSub}>
+        Coût matière : {result.lunch.totalFoodCost.toFixed(2)} $
+      </Text>
+    </View>
+  )}
+
+  {/* BOISSONS */}
+  {result.drinks && (
+    <View style={styles.recapRow}>
+      <Text style={styles.recapLabel}>🥤 Boissons</Text>
+      <Text style={styles.recapValue}>
+        CA : {result.drinks.totalTurnover.toFixed(2)} $
+      </Text>
+      <Text style={styles.recapSub}>
+        Coût matière : {result.drinks.totalFoodCost.toFixed(2)} $
+      </Text>
+    </View>
+  )}
+
+  {/* SERVICE */}
+  {result.service && (
+    <View style={styles.recapRow}>
+      <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
+      <Text style={styles.recapValue}>
+        Coût total service : {result.service.totalServiceCost.toFixed(2)} $
+      </Text>
+    </View>
+  )}
+</View>
+
+
       {/* GLOBAL */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
@@ -412,6 +469,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  recapRow: {
+  marginTop: 10,
+  paddingTop: 10,
+  borderTopWidth: 1,
+  borderTopColor: '#E5E7EB',
+},
+
+recapLabel: {
+  fontSize: 14,
+  fontWeight: '700',
+  marginBottom: 4,
+},
+
+recapValue: {
+  fontSize: 14,
+  fontWeight: '600',
+},
+
+recapSub: {
+  fontSize: 13,
+  color: '#6B7280',
+},
+
 });
 
 /* =========================

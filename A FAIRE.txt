@@ -1,6 +1,6 @@
 ERREURS CALCULATORS : 
 Ecran simulation : 
-- Correction 2 click sur reutiliser et click sur voir (d'une simulation pour aller sur les détails de cette simulation) : on arrive sur la page de calculator de simulation mais la page est vide. C'est une page avec toutes les options, les blocs mais vide. Meme le nom et le client sont vides
+- Correction 2 : OK : click sur reutiliser et click sur voir (d'une simulation pour aller sur les détails de cette simulation) : on arrive sur la page de calculator de simulation mais la page est vide. C'est une page avec toutes les options, les blocs mais vide. Meme le nom et le client sont vides
 - le dropdown des clients : il n'y a pas le champ de recherhe et il n'y a pas tous les clients
 
 Ecran nouvelle simulation / reutiliser / voir: 
@@ -9,6 +9,9 @@ Ecran nouvelle simulation / reutiliser / voir:
 
 - après enregistrement de la simulation, il faudrait que la liste des simulations se rafraichissent
 - la seule difference entre 2 simulations identiques c'set la date d'enregistrement ou de creatrion de la simulation (donc il faudrait quand meme afficher la date d'enregistrement de cette simulation)
+
+- mais dans la page liste de toutes les simulations, le champ de recherche doit aussi avoir l'option "tous les clients' afin de fournir toutes les simulations de tous les clients 
+--------------------------------------------------------------
 
 
 

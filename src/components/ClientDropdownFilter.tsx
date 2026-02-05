@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  TextInput,
   Platform,
 } from 'react-native';
 
@@ -25,10 +26,18 @@ export default function ClientDropdownFilter({
   onSelect,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filteredClients = useMemo(() => {
+    if (!search.trim()) return clients;
+    return clients.filter((c) =>
+      c.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [clients, search]);
 
   return (
     <View style={styles.wrapper}>
-      {/* Selector */}
+      {/* SELECTOR */}
       <TouchableOpacity
         style={styles.selector}
         onPress={() => setOpen((o) => !o)}
@@ -39,31 +48,43 @@ export default function ClientDropdownFilter({
         </Text>
       </TouchableOpacity>
 
-      {/* Dropdown */}
+      {/* DROPDOWN */}
       {open && (
         <View
           style={styles.dropdown}
-          // ⚠️ clé : empêche le aria-hidden de casser le focus
-          {...(Platform.OS === 'web'
-            ? { tabIndex: -1 }
-            : {})}
+          {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
         >
-          <ScrollView>
-            {clients.map((client) => (
+          {/* SEARCH */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher un client…"
+            value={search}
+            onChangeText={setSearch}
+            autoFocus
+          />
+
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            style={{ maxHeight: 240 }}
+          >
+            {filteredClients.map((client) => (
               <TouchableOpacity
                 key={client.id}
                 style={styles.item}
                 onPress={() => {
                   onSelect(client.name);
                   setOpen(false);
+                  setSearch('');
                 }}
               >
-                <Text>{client.name}</Text>
+                <Text style={styles.itemText}>{client.name}</Text>
               </TouchableOpacity>
             ))}
 
-            {clients.length === 0 && (
-              <Text style={styles.empty}>Aucun client</Text>
+            {filteredClients.length === 0 && (
+              <Text style={styles.empty}>
+                Aucun client trouvé
+              </Text>
             )}
           </ScrollView>
         </View>
@@ -72,23 +93,27 @@ export default function ClientDropdownFilter({
   );
 }
 
+/* =========================
+   STYLES
+========================= */
+
 const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
-    zIndex: 1000, // 🔥 essentiel
+    zIndex: 1000,
   },
 
   selector: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
 
   selectorText: {
     fontSize: 15,
-    color: '#333',
+    color: '#111827',
   },
 
   dropdown: {
@@ -96,24 +121,39 @@ const styles = StyleSheet.create({
     top: 52,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    maxHeight: 240,
-    zIndex: 2000, // 🔥 passe au-dessus d’Expo Router
-    elevation: 10, // Android
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    zIndex: 2000,
+    elevation: 10,
+    paddingBottom: 6,
+  },
+
+  searchInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    fontSize: 14,
   },
 
   item: {
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F3F4F6',
+  },
+
+  itemText: {
+    fontSize: 14,
+    color: '#111827',
   },
 
   empty: {
-    padding: 12,
+    padding: 14,
     textAlign: 'center',
-    color: '#999',
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
 });
