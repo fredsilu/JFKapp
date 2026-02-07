@@ -17,7 +17,7 @@ On va organiser ça en :
 Objectif : corriger les bugs actuels sans ajouter de nouvelles features.
 
 ## Calculator
-* Afficher la date de création de simulation
+* Afficher la date de livraison de evenement
 
 * Recherche client insensible aux accents
   (frederic = frédéric)
