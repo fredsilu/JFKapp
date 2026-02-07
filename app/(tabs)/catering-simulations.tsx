@@ -73,8 +73,20 @@ export default function CateringSimulationsScreen() {
   // ✅ BUG 1 FIX : ALL = pas de filtre
   const filteredSimulations = useMemo(() => {
     if (!selectedClientId || selectedClientId === 'ALL') return simulations;
-    return simulations.filter((sim) => sim.clientId === selectedClientId);
+    return simulations
+      .filter((sim) => sim.clientId === selectedClientId)
+      .sort((a, b) =>
+        (a.dateLivraison || "").localeCompare(b.dateLivraison || "")
+      );
+
   }, [simulations, selectedClientId]);
+
+  function formatDate(date?: string) {
+    if (!date) return "Non définie";
+    const d = new Date(date);
+    return d.toLocaleDateString("fr-FR");
+  }
+
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -124,6 +136,11 @@ export default function CateringSimulationsScreen() {
               <View key={sim.id} style={styles.card}>
                 <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
                 <Text style={styles.client}>Client : {clientLabel}</Text>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    📅 {formatDate(sim.dateLivraison)}
+                  </Text>
+                </View>
 
                 <View style={styles.actions}>
                   <TouchableOpacity
@@ -193,4 +210,19 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   link: { color: '#007AFF', fontWeight: '600' },
   delete: { color: '#d9534f' },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E8F0FE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+
+  badgeText: {
+    color: '#1A73E8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
 });

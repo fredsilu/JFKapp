@@ -17,21 +17,10 @@ On va organiser ça en :
 Objectif : corriger les bugs actuels sans ajouter de nouvelles features.
 
 ## Calculator
-
-* Fix scroll dans dropdown clients
 * Afficher la date de création de simulation
-* Bloquer valeurs incohérentes :
 
-  * prix négatif
-  * nombre de personnes = 0
-  * jours = 0
 * Recherche client insensible aux accents
   (frederic = frédéric)
-
-## UX
-
-* Récapitulatif repliable/dépliable
-* Rafraîchissement auto après sauvegarde
 
 ---
 
@@ -40,52 +29,28 @@ Objectif : corriger les bugs actuels sans ajouter de nouvelles features.
 Objectif : rendre l’app utilisable en production chez Crepolia.
 
 ## Calculator
-
+* Fix scroll dans dropdown clients
 * Export PDF devis client
 * Nettoyage technique final
 
-## Dashboard
-
-* Today’s revenue (commandes livrées aujourd’hui)
-* Month revenue (commandes livrées mois courant)
-
-## Clients
-
-* Fix affichage :
-
-  * “0 orders”
-  * “5 orders” (actuellement bug)
 
 ## Client Details
 
 * Montant affiché = montant facturé (et non coût)
 
-## Commande
-
-* Réorganiser design :
-
-  * Articles
-  * Montant
-  * Désignation (en dessous)
-  * Date
-
-## Order Details
-
-* Séparateurs visuels :
-
-  * Client
-  * Livraison
-  * Plats
-  * Ingrédients
-  * Récap
-
-* Fonds colorés par section
 
 ## Branding
 
 * Ajouter logo Crepolia
 
 ---
+## UX
+* Récapitulatif repliable/dépliable
+* Bloquer valeurs incohérentes :
+
+  * prix négatif
+  * nombre de personnes = 0
+  * jours = 0
 
 # 🟢 VERSION 1.3.0 — OUTIL DIRECTEUR (CEO TOOL)
 

@@ -69,6 +69,9 @@ export interface CateringSimulationDraft {
   // infos optionnelles côté UI
   name?: string;
   clientId?: string;
+
+  // ✅ AJOUT IMPORTANT
+  dateLivraison: string;
 }
 
 /**
@@ -103,6 +106,8 @@ export type CateringSimulation =
     createdAt: Timestamp;
     updatedAt: Timestamp;
     isDeleted: boolean;
+
+    dateLivraison: string;  // OK ici aussi
 
     status: 'draft' | 'validated';
   };

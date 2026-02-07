@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { fetchClients } from '@/src/services/clientService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
@@ -55,46 +55,53 @@ const emptyService = (): CateringServiceInput => ({
 
 type Mode = 'new' | 'view' | 'reuse';
 
+function paramToString(p?: string | string[]) {
+  if (!p) return undefined;
+  return Array.isArray(p) ? p[0] : p;
+}
+
 export default function CateringCalculator() {
-  const {
-    clientId,
-    clientName,
-    simulationId,
-    reuseSimulationId,
-  } = useLocalSearchParams<{
-    clientId?: string;
-    clientName?: string;
-    simulationId?: string;
-    reuseSimulationId?: string;
+  const params = useLocalSearchParams<{
+    clientId?: string | string[];
+    clientName?: string | string[];
+    simulationId?: string | string[];
+    reuseSimulationId?: string | string[];
   }>();
 
-  const mode: Mode = simulationId
-    ? 'view'
-    : reuseSimulationId
-      ? 'reuse'
-      : 'new';
+  const clientId = paramToString(params.clientId);
+  const clientName = paramToString(params.clientName);
+  const simulationId = paramToString(params.simulationId);
+  const reuseSimulationId = paramToString(params.reuseSimulationId);
+
+  const mode: Mode = simulationId ? 'view' : reuseSimulationId ? 'reuse' : 'new';
+  const readOnly = mode === 'view';
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const [clientsById, setClientsById] = useState<Record<string, string>>({});
 
-  const [simulation, setSimulation] =
-    useState<CateringSimulationDraft>({
-      name: '',
-      clientId: '',
-      breakfast: emptyMeal(),
-      lunch: emptyMeal(),
-      drinks: emptyMeal(),
-      service: emptyService(),
-      serviceCosts: {
-        serverDailyCost: 15,
-        cookDailyCost: 20,
-        electricityDailyCost: 10,
-        gasDailyCost: 8,
-        fuelDailyCost: 12,
-      },
-    });
+  const [clientsById, setClientsById] = useState<Record<string, string>>({});
+  const [dateLivraison, setDateLivraison] = useState('');
+
+  const [simulation, setSimulation] = useState<CateringSimulationDraft>({
+    name: '',
+    clientId: '',
+    breakfast: emptyMeal(),
+    lunch: emptyMeal(),
+    drinks: emptyMeal(),
+    service: emptyService(),
+    serviceCosts: {
+      serverDailyCost: 15,
+      cookDailyCost: 20,
+      electricityDailyCost: 10,
+      gasDailyCost: 8,
+      fuelDailyCost: 12,
+    },
+  });
+
+  /* =========================
+     LOAD CLIENTS
+  ========================= */
 
   useEffect(() => {
     const loadClients = async () => {
@@ -113,14 +120,14 @@ export default function CateringCalculator() {
     loadClients();
   }, []);
 
-
-
   /* =========================
      LOAD SIMULATION (VIEW / REUSE)
   ========================= */
 
   useEffect(() => {
     const idToLoad = simulationId || reuseSimulationId;
+
+    // NEW: on pré-remplit le clientId si fourni
     if (!idToLoad) {
       if (clientId) {
         setSimulation((p) => ({ ...p, clientId: String(clientId) }));
@@ -132,19 +139,14 @@ export default function CateringCalculator() {
       try {
         setLoading(true);
         const data = await getCateringSimulationById(String(idToLoad));
+
         if (!data) {
           Alert.alert('Erreur', 'Simulation introuvable');
           return;
         }
 
-        const {
-          id,
-          createdAt,
-          updatedAt,
-          isDeleted,
-          status,
-          ...draft
-        } = data as CateringSimulation;
+        const { id, createdAt, updatedAt, isDeleted, status, ...draft } =
+          data as CateringSimulation;
 
         setSimulation({
           ...(draft as CateringSimulationDraft),
@@ -154,6 +156,9 @@ export default function CateringCalculator() {
               : draft.name || '',
           clientId: draft.clientId,
         });
+
+        // ✅ IMPORTANT: charger la date depuis Firebase
+        setDateLivraison((data as any).dateLivraison || '');
       } catch (e) {
         console.error(e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -165,13 +170,10 @@ export default function CateringCalculator() {
     load();
   }, [simulationId, reuseSimulationId, clientId, mode]);
 
-
   const result: CateringSimulationResult = useMemo(
     () => calculateSimulation(simulation),
     [simulation]
   );
-
-  const readOnly = mode === 'view';
 
   /* =========================
      SAVE
@@ -184,25 +186,33 @@ export default function CateringCalculator() {
       Alert.alert('Client requis', 'Veuillez sélectionner un client.');
       return;
     }
+    if (!dateLivraison) {
+    Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
+    return;
 
     try {
       setSaving(true);
-      await saveCateringSimulation(simulation, {
-        name: simulation.name || 'Simulation traiteur',
-        clientId: simulation.clientId,
-      });
-      Alert.alert(
-        'Succès',
-        'Simulation enregistrée avec succès.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(), // 👈 retour liste
-          },
-        ]
+
+      // ✅ IMPORTANT: inclure dateLivraison dans l’objet sauvegardé
+      await saveCateringSimulation(
+        {
+          ...(simulation as any),
+          dateLivraison,
+        },
+        {
+          name: simulation.name || 'Simulation traiteur',
+          clientId: simulation.clientId,
+        }
       );
 
-    } catch {
+      Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (e) {
+      console.error('❌ save error:', e);
       Alert.alert('Erreur', 'Échec de la sauvegarde.');
     } finally {
       setSaving(false);
@@ -245,43 +255,58 @@ export default function CateringCalculator() {
     );
   }
 
+  const displayedClientLabel =
+    clientName
+      ? decodeURIComponent(String(clientName))
+      : simulation.clientId && clientsById[simulation.clientId]
+      ? clientsById[simulation.clientId]
+      : simulation.clientId
+      ? simulation.clientId
+      : 'Client inconnu';
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>
         {mode === 'view'
           ? 'Détails de la simulation'
           : mode === 'reuse'
-            ? 'Réutiliser une simulation'
-            : 'Nouvelle simulation'}
+          ? 'Réutiliser une simulation'
+          : 'Nouvelle simulation'}
       </Text>
 
-      {/* CLIENT */}
+      {/* CLIENT + META */}
       <View style={styles.card}>
         <Text style={styles.label}>Client</Text>
-        <Text style={styles.value}>
-          {clientName
-            ? decodeURIComponent(clientName)
-            : simulation.clientId && clientsById[simulation.clientId]
-              ? clientsById[simulation.clientId]
-              : 'Client inconnu'}
-        </Text>
-
-
+        <Text style={styles.value}>{displayedClientLabel}</Text>
 
         <Text style={[styles.label, { marginTop: 10 }]}>
           Nom de la simulation
         </Text>
         <TextInput
-          style={[
-            styles.input,
-            readOnly && { backgroundColor: '#eee' },
-          ]}
+          style={[styles.input, readOnly && { backgroundColor: '#eee' }]}
           editable={!readOnly}
           value={simulation.name}
-          onChangeText={(v) =>
-            setSimulation((p) => ({ ...p, name: v }))
-          }
+          onChangeText={(v) => setSimulation((p) => ({ ...p, name: v }))}
+          placeholder="Ex: Buffet séminaire Equity"
         />
+
+        {/* ✅ DATE LIVRAISON (READONLY EN VIEW) */}
+        <Text style={[styles.label, { marginTop: 12 }]}>Date de livraison</Text>
+
+        {readOnly ? (
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>
+              📅 {dateLivraison || 'Non définie'}
+            </Text>
+          </View>
+        ) : (
+          <TextInput
+            style={styles.input}
+            placeholder="YYYY-MM-DD"
+            value={dateLivraison}
+            onChangeText={setDateLivraison}
+          />
+        )}
       </View>
 
       {/* BLOCS REPAS */}
@@ -305,12 +330,11 @@ export default function CateringCalculator() {
       })}
 
       {/* =========================
-    RÉCAP FINANCIER PAR BLOC
-========================= */}
+          RÉCAP FINANCIER PAR BLOC
+      ========================= */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
 
-        {/* PETIT-DEJEUNER */}
         {result.breakfast && (
           <View style={styles.recapRow}>
             <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
@@ -323,7 +347,6 @@ export default function CateringCalculator() {
           </View>
         )}
 
-        {/* DEJEUNER */}
         {result.lunch && (
           <View style={styles.recapRow}>
             <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
@@ -336,7 +359,6 @@ export default function CateringCalculator() {
           </View>
         )}
 
-        {/* BOISSONS */}
         {result.drinks && (
           <View style={styles.recapRow}>
             <Text style={styles.recapLabel}>🥤 Boissons</Text>
@@ -349,7 +371,6 @@ export default function CateringCalculator() {
           </View>
         )}
 
-        {/* SERVICE */}
         {result.service && (
           <View style={styles.recapRow}>
             <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
@@ -359,7 +380,6 @@ export default function CateringCalculator() {
           </View>
         )}
       </View>
-
 
       {/* GLOBAL */}
       <View style={styles.card}>
@@ -407,10 +427,7 @@ function NumberField({
     <View style={{ marginTop: 10 }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[
-          styles.input,
-          disabled && { backgroundColor: '#eee' },
-        ]}
+        style={[styles.input, disabled && { backgroundColor: '#eee' }]}
         editable={!disabled}
         keyboardType="numeric"
         value={String(value)}
@@ -480,6 +497,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  // ✅ Read-only (View mode) for date
+  readOnlyField: {
+    backgroundColor: '#f1f1f1',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  readOnlyText: {
+    color: '#333',
+    fontWeight: '700',
+  },
+
   resultBox: {
     marginTop: 12,
     backgroundColor: '#EEF6FF',
@@ -509,6 +538,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+
   recapRow: {
     marginTop: 10,
     paddingTop: 10,
@@ -531,7 +561,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
   },
-
 });
 
 /* =========================
@@ -555,9 +584,7 @@ function renderMealBlock({
         <Text style={styles.cardTitle}>{title}</Text>
         <Switch
           value={meal.enabled}
-          onValueChange={(v) =>
-            !readOnly && updateMeal(key, { enabled: v })
-          }
+          onValueChange={(v) => !readOnly && updateMeal(key, { enabled: v })}
         />
       </View>
 
@@ -626,9 +653,7 @@ function renderServiceBlock({
         <Text style={styles.cardTitle}>👨‍🍳 Service</Text>
         <Switch
           value={service.enabled}
-          onValueChange={(v) =>
-            !readOnly && updateService({ enabled: v })
-          }
+          onValueChange={(v) => !readOnly && updateService({ enabled: v })}
         />
       </View>
 
@@ -637,41 +662,31 @@ function renderServiceBlock({
           <NumberField
             label="Nombre de personnes"
             value={service.numberOfPeople}
-            onChange={(v) =>
-              updateService({ numberOfPeople: v })
-            }
+            onChange={(v) => updateService({ numberOfPeople: v })}
             disabled={readOnly}
           />
           <NumberField
             label="Nombre de jours"
             value={service.numberOfDays}
-            onChange={(v) =>
-              updateService({ numberOfDays: v })
-            }
+            onChange={(v) => updateService({ numberOfDays: v })}
             disabled={readOnly}
           />
           <NumberField
             label="Taux serveur (pers / serveur)"
             value={service.serverRate}
-            onChange={(v) =>
-              updateService({ serverRate: v })
-            }
+            onChange={(v) => updateService({ serverRate: v })}
             disabled={readOnly}
           />
           <NumberField
             label="Taux cuisinier (pers / cuisinier)"
             value={service.cookRate}
-            onChange={(v) =>
-              updateService({ cookRate: v })
-            }
+            onChange={(v) => updateService({ cookRate: v })}
             disabled={readOnly}
           />
           <NumberField
             label="Remise ($ / jour)"
             value={service.discount}
-            onChange={(v) =>
-              updateService({ discount: v })
-            }
+            onChange={(v) => updateService({ discount: v })}
             disabled={readOnly}
           />
 
