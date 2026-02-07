@@ -86,6 +86,7 @@ export default function CateringCalculator() {
   const [simulation, setSimulation] = useState<CateringSimulationDraft>({
     name: '',
     clientId: '',
+    dateLivraison: '',
     breakfast: emptyMeal(),
     lunch: emptyMeal(),
     drinks: emptyMeal(),
@@ -154,11 +155,15 @@ export default function CateringCalculator() {
             mode === 'reuse'
               ? `${draft.name || 'Simulation'} (copie)`
               : draft.name || '',
-          clientId: draft.clientId,
+          clientId: draft.clientId || '',
         });
 
-        // ✅ IMPORTANT: charger la date depuis Firebase
-        setDateLivraison((data as any).dateLivraison || '');
+        // ✅ IMPORTANT: charger la date depuis Firebase (robuste anciennes datas)
+        const loadedDate = (data as any).dateLivraison ?? '';
+        setDateLivraison(loadedDate);
+
+        // ✅ OPTION: si ancien doc sans date et mode VIEW, on affiche "Non définie"
+        // (pas de crash, juste UX)
       } catch (e) {
         console.error(e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -186,9 +191,11 @@ export default function CateringCalculator() {
       Alert.alert('Client requis', 'Veuillez sélectionner un client.');
       return;
     }
+
     if (!dateLivraison) {
-    Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
-    return;
+      Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -196,9 +203,9 @@ export default function CateringCalculator() {
       // ✅ IMPORTANT: inclure dateLivraison dans l’objet sauvegardé
       await saveCateringSimulation(
         {
-          ...(simulation as any),
+          ...simulation,
           dateLivraison,
-        },
+        } as any,
         {
           name: simulation.name || 'Simulation traiteur',
           clientId: simulation.clientId,
@@ -230,7 +237,7 @@ export default function CateringCalculator() {
     if (readOnly) return;
     setSimulation((p) => ({
       ...p,
-      [key]: { ...p[key], ...values },
+      [key]: { ...(p as any)[key], ...values },
     }));
   };
 
@@ -279,9 +286,7 @@ export default function CateringCalculator() {
         <Text style={styles.label}>Client</Text>
         <Text style={styles.value}>{displayedClientLabel}</Text>
 
-        <Text style={[styles.label, { marginTop: 10 }]}>
-          Nom de la simulation
-        </Text>
+        <Text style={[styles.label, { marginTop: 10 }]}>Nom de la simulation</Text>
         <TextInput
           style={[styles.input, readOnly && { backgroundColor: '#eee' }]}
           editable={!readOnly}
@@ -290,7 +295,7 @@ export default function CateringCalculator() {
           placeholder="Ex: Buffet séminaire Equity"
         />
 
-        {/* ✅ DATE LIVRAISON (READONLY EN VIEW) */}
+        {/* DATE LIVRAISON */}
         <Text style={[styles.label, { marginTop: 12 }]}>Date de livraison</Text>
 
         {readOnly ? (
@@ -329,9 +334,7 @@ export default function CateringCalculator() {
         readOnly,
       })}
 
-      {/* =========================
-          RÉCAP FINANCIER PAR BLOC
-      ========================= */}
+      {/* RÉCAP FINANCIER */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
 
@@ -455,113 +458,6 @@ function ResultBox({
     </View>
   );
 }
-
-/* =========================
-   STYLES
-========================= */
-
-const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: '#F4F6F8' },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 14,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  cardTitle: { fontSize: 16, fontWeight: '700' },
-  label: { fontSize: 12, color: '#6B7280' },
-  value: { fontSize: 16, fontWeight: '700' },
-
-  input: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginTop: 4,
-  },
-
-  // ✅ Read-only (View mode) for date
-  readOnlyField: {
-    backgroundColor: '#f1f1f1',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 4,
-  },
-  readOnlyText: {
-    color: '#333',
-    fontWeight: '700',
-  },
-
-  resultBox: {
-    marginTop: 12,
-    backgroundColor: '#EEF6FF',
-    padding: 12,
-    borderRadius: 8,
-  },
-
-  resultTitle: {
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-
-  resultText: {
-    fontWeight: '600',
-  },
-
-  saveButton: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-
-  recapRow: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-
-  recapLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-
-  recapValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  recapSub: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
-});
 
 /* =========================
    RENDER BLOCK HELPERS
@@ -711,3 +607,109 @@ function renderServiceBlock({
     </View>
   );
 }
+
+/* =========================
+   STYLES
+========================= */
+
+const styles = StyleSheet.create({
+  container: { padding: 16, backgroundColor: '#F4F6F8' },
+  title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
+
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  cardTitle: { fontSize: 16, fontWeight: '700' },
+  label: { fontSize: 12, color: '#6B7280' },
+  value: { fontSize: 16, fontWeight: '700' },
+
+  input: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 4,
+  },
+
+  readOnlyField: {
+    backgroundColor: '#f1f1f1',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  readOnlyText: {
+    color: '#333',
+    fontWeight: '700',
+  },
+
+  resultBox: {
+    marginTop: 12,
+    backgroundColor: '#EEF6FF',
+    padding: 12,
+    borderRadius: 8,
+  },
+
+  resultTitle: {
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+
+  resultText: {
+    fontWeight: '600',
+  },
+
+  saveButton: {
+    backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+
+  recapRow: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+
+  recapLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+
+  recapValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  recapSub: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+});
