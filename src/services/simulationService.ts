@@ -1,6 +1,7 @@
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Client } from './clientService'
+import { Client } from '@/types'
+
 
 export interface SimulationInput {
   client: Client

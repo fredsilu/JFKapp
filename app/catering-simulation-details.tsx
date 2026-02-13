@@ -64,6 +64,18 @@ export default function CateringSimulationDetailsScreen() {
       </View>
 
       <View style={styles.actions}>
+        {/* 🔵 BOUTON CRÉER COMMANDE */}
+        {sim?.id && (
+          <TouchableOpacity
+            style={styles.createOrderBtn}
+            onPress={() =>
+              router.push(`/all-orders?fromSimulation=${sim.id}`)
+            }
+          >
+            <Text style={styles.createOrderText}>Créer commande</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -118,6 +130,17 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 20,
+  },
+  createOrderBtn: {
+    backgroundColor: '#28a745',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 14,
+    alignItems: 'center',
+  },
+  createOrderText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   link: {
     color: '#007AFF',

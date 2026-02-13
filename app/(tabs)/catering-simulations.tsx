@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -44,10 +44,12 @@ export default function CateringSimulationsScreen() {
     try {
       setError(null);
       setLoading(true);
+
       const [sims, cls] = await Promise.all([
         getCateringSimulations(),
         fetchClients(),
       ]);
+
       setSimulations(sims);
       setClients(cls);
     } catch (e) {
@@ -58,35 +60,30 @@ export default function CateringSimulationsScreen() {
     }
   }, []);
 
-  // 1ère charge
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
-
-  // ✅ BUG 2 FIX : recharge quand on revient sur l’écran
+  // 🔥 Recharge automatique à chaque retour sur l’écran
   useFocusEffect(
     useCallback(() => {
       loadAll();
     }, [loadAll])
   );
 
-  // ✅ BUG 1 FIX : ALL = pas de filtre
+  // 🔥 Filtrage + tri toujours appliqué
   const filteredSimulations = useMemo(() => {
-    if (!selectedClientId || selectedClientId === 'ALL') return simulations;
-    return simulations
-      .filter((sim) => sim.clientId === selectedClientId)
-      .sort((a, b) =>
-        (a.dateLivraison || "").localeCompare(b.dateLivraison || "")
-      );
+    const list =
+      !selectedClientId || selectedClientId === 'ALL'
+        ? simulations
+        : simulations.filter((sim) => sim.clientId === selectedClientId);
 
+    return list.sort((a, b) =>
+      (a.dateLivraison || '').localeCompare(b.dateLivraison || '')
+    );
   }, [simulations, selectedClientId]);
 
   function formatDate(date?: string) {
-    if (!date) return "Non définie";
+    if (!date) return 'Non définie';
     const d = new Date(date);
-    return d.toLocaleDateString("fr-FR");
+    return d.toLocaleDateString('fr-FR');
   }
-
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -125,22 +122,39 @@ export default function CateringSimulationsScreen() {
           <Text style={styles.empty}>Aucune simulation</Text>
         ) : (
           filteredSimulations.map((sim) => {
-            // ✅ BUG 3 FIX : afficher le NOM du client
             const clientLabel =
-              sim.clientName ||
               clientsById[sim.clientId] ||
               sim.clientId ||
               '-';
 
             return (
               <View key={sim.id} style={styles.card}>
-                <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
+                <Text style={styles.name}>
+                  {sim.name || 'Simulation sans nom'}
+                </Text>
+
                 <Text style={styles.client}>Client : {clientLabel}</Text>
+
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
                     📅 {formatDate(sim.dateLivraison)}
                   </Text>
                 </View>
+
+                {/* 🔥 BOUTON PRINCIPAL */}
+                <TouchableOpacity
+                  style={styles.createOrderBtn}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/catering-new-order',
+                      params: { fromSimulationId: sim.id },
+                    })
+                  }
+                >
+                  <Text style={styles.createOrderText}>
+                    Créer commande
+                  </Text>
+                </TouchableOpacity>
 
                 <View style={styles.actions}>
                   <TouchableOpacity
@@ -166,7 +180,9 @@ export default function CateringSimulationsScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setToDelete(sim)}>
-                    <Text style={[styles.link, styles.delete]}>Supprimer</Text>
+                    <Text style={[styles.link, styles.delete]}>
+                      Supprimer
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -190,7 +206,12 @@ export default function CateringSimulationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  title: { fontSize: 20, fontWeight: '600', marginBottom: 12 },
+
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
 
   newButton: {
     backgroundColor: '#007AFF',
@@ -199,17 +220,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  newButtonText: { color: '#fff', fontWeight: '700' },
 
-  empty: { textAlign: 'center', color: '#777', marginTop: 30 },
+  newButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
 
-  card: { backgroundColor: '#f9f9f9', borderRadius: 10, padding: 14, marginBottom: 14 },
-  name: { fontSize: 16, fontWeight: '700' },
-  client: { marginTop: 4, color: '#555' },
+  empty: {
+    textAlign: 'center',
+    color: '#777',
+    marginTop: 30,
+  },
 
-  actions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-  link: { color: '#007AFF', fontWeight: '600' },
-  delete: { color: '#d9534f' },
+  card: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  name: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  client: {
+    marginTop: 4,
+    color: '#555',
+  },
+
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: '#E8F0FE',
@@ -225,4 +264,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  createOrderBtn: {
+    marginTop: 10,
+    backgroundColor: '#28a745',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  createOrderText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+
+  link: {
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+
+  delete: {
+    color: '#d9534f',
+  },
 });

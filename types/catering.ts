@@ -110,4 +110,62 @@ export type CateringSimulation =
     dateLivraison: string;  // OK ici aussi
 
     status: 'draft' | 'validated';
+    convertedToOrder?: boolean;
+    orderId?: string;
+    convertedAt?: string;
+
+  }
+export type CateringOrder = {
+  id: string;
+  simulationId: string;
+
+  name: string;
+  clientId: string;
+  dateLivraison: string;
+
+  breakfast?: CateringMealInput;
+  lunch?: CateringMealInput;
+  drinks?: CateringMealInput;
+  service?: CateringServiceInput;
+
+  // 🔵 Prix final (modifiable)
+  totals?: {
+    totalHT: number;
+    totalCost: number;
+    margin: number;
   };
+
+  // 🆕 Prix d'origine de la simulation (référence)
+  pricingReference?: {
+    totalHT: number;
+    totalCost: number;
+    margin: number;
+  };
+
+  lieu?: string;
+  heureLivraison?: string;
+  contactSurSite?: string;
+  telephoneContact?: string;
+  instructions?: string;
+
+  status: 'draft' | 'confirmed' | 'in-production' | 'delivered';
+
+  createdAt: string;
+};
+
+export type CateringOrderStatus =
+  | 'draft'
+  | 'confirmed'
+  | 'in-production'
+  | 'delivered';
+
+export type MoneyTotals = {
+  totalHT: number;
+  totalCost: number;
+  margin: number;
+};
+
+
+
+
+

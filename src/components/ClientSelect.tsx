@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { fetchClients, Client } from '@/src/services/clientService'
+import { fetchClients } from '@/src/services/clientService'
+import { Client } from '@/types'
+
 
 interface Props {
   value?: Client | null

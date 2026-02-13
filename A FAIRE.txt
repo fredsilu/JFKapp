@@ -1,4 +1,8 @@
+“On reprend l’app”
 
+“On continue simulation → commande”
+
+ou même juste “on continue”
 
 On va organiser ça en :
 
@@ -12,21 +16,14 @@ On va organiser ça en :
 
 # 🧭 ROADMAP OFFICIELLE JFKApp / CREPOLIA
 
-# 🔴 VERSION 1.1.1 — HOTFIX STABILITÉ (immédiat)
-
-Objectif : corriger les bugs actuels sans ajouter de nouvelles features.
-
-## Calculator
-* Afficher la date de livraison de evenement
-
-* Recherche client insensible aux accents
-  (frederic = frédéric)
 
 ---
 
 # 🟡 VERSION 1.2.0 — PRODUCT READY
 
 Objectif : rendre l’app utilisable en production chez Crepolia.
+
+* A partir de la simulation, nous devons pouvoir créer une commande.
 
 ## Calculator
 * Fix scroll dans dropdown clients

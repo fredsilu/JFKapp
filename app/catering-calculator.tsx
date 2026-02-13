@@ -27,8 +27,8 @@ import {
 } from '@/src/utils/cateringCalculations';
 
 import {
-  saveCateringSimulation,
-  getCateringSimulationById,
+  createCateringSimulation,
+  getSimulationById,
 } from '@/src/services/cateringSimulation.service';
 
 /* =========================
@@ -128,7 +128,6 @@ export default function CateringCalculator() {
   useEffect(() => {
     const idToLoad = simulationId || reuseSimulationId;
 
-    // NEW: on pré-remplit le clientId si fourni
     if (!idToLoad) {
       if (clientId) {
         setSimulation((p) => ({ ...p, clientId: String(clientId) }));
@@ -139,7 +138,7 @@ export default function CateringCalculator() {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await getCateringSimulationById(String(idToLoad));
+        const data = await getSimulationById(String(idToLoad));
 
         if (!data) {
           Alert.alert('Erreur', 'Simulation introuvable');
@@ -158,12 +157,8 @@ export default function CateringCalculator() {
           clientId: draft.clientId || '',
         });
 
-        // ✅ IMPORTANT: charger la date depuis Firebase (robuste anciennes datas)
         const loadedDate = (data as any).dateLivraison ?? '';
         setDateLivraison(loadedDate);
-
-        // ✅ OPTION: si ancien doc sans date et mode VIEW, on affiche "Non définie"
-        // (pas de crash, juste UX)
       } catch (e) {
         console.error(e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -181,7 +176,7 @@ export default function CateringCalculator() {
   );
 
   /* =========================
-     SAVE
+     SAVE (CREATE ONLY)
   ========================= */
 
   const handleSave = async () => {
@@ -200,17 +195,13 @@ export default function CateringCalculator() {
     try {
       setSaving(true);
 
-      // ✅ IMPORTANT: inclure dateLivraison dans l’objet sauvegardé
-      await saveCateringSimulation(
-        {
-          ...simulation,
-          dateLivraison,
-        } as any,
-        {
-          name: simulation.name || 'Simulation traiteur',
-          clientId: simulation.clientId,
-        }
-      );
+      const payload = {
+        ...simulation,
+        dateLivraison,
+        name: simulation.name || 'Simulation traiteur',
+      };
+
+      await createCateringSimulation(payload);
 
       Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
         {

@@ -1,87 +1,38 @@
-import { db } from '@/lib/firebase';
 import {
-  addDoc,
   collection,
+  getDocs,
+  addDoc,
   doc,
   getDoc,
-  getDocs,
-  query,
-  orderBy,
-  where,
   updateDoc,
-  Timestamp,
+  deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 
-import {
-  CateringSimulationDraft,
-  CateringSimulation,
-} from '@/types/catering';
+import { db } from '@/lib/firebase';
+import { CateringSimulation } from '@/types/catering';
 
-const COLLECTION_NAME = 'catering_simulations';
+const COLLECTION = 'cateringSimulations';
 
-/**
- * =========================
- * SAVE SIMULATION (DRAFT ➜ FIRESTORE)
- * =========================
- */
-export async function saveCateringSimulation(
-  draft: CateringSimulationDraft,
-  params: { name: string; clientId: string }
-): Promise<CateringSimulation> {
-  const now = Timestamp.now();
-
-  const simulationToSave: Omit<CateringSimulation, 'id'> = {
-    ...draft,
-
-    name: params.name,
-    clientId: params.clientId,
-
-    createdAt: now,
-    updatedAt: now,
-    isDeleted: false,
-    status: 'draft',
-  };
-
-  const docRef = await addDoc(
-    collection(db, COLLECTION_NAME),
-    simulationToSave
-  );
-
-  return {
-    id: docRef.id,
-    ...simulationToSave,
-  };
-}
-
-/**
- * =========================
- * GET ALL SIMULATIONS (NOT DELETED)
- * =========================
- */
+/* ================================
+   GET ALL SIMULATIONS
+================================ */
 export async function getCateringSimulations(): Promise<CateringSimulation[]> {
-  const q = query(
-    collection(db, COLLECTION_NAME),
-    where('isDeleted', '==', false),
-    orderBy('createdAt', 'desc')
-  );
+  const snapshot = await getDocs(collection(db, COLLECTION));
 
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as Omit<CateringSimulation, 'id'>),
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<CateringSimulation, 'id'>),
   }));
 }
 
-/**
- * =========================
- * GET ONE SIMULATION BY ID
- * =========================
- */
-export async function getCateringSimulationById(
+/* ================================
+   GET ONE SIMULATION BY ID
+================================ */
+export async function getSimulationById(
   id: string
 ): Promise<CateringSimulation | null> {
-  const ref = doc(db, COLLECTION_NAME, id);
+  const ref = doc(db, COLLECTION, id);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) return null;
@@ -92,34 +43,35 @@ export async function getCateringSimulationById(
   };
 }
 
-/**
- * =========================
- * VALIDATE SIMULATION
- * =========================
- */
-export async function validateCateringSimulation(
-  simulation: CateringSimulation
-): Promise<void> {
-  const ref = doc(db, COLLECTION_NAME, simulation.id);
-
-  await updateDoc(ref, {
-    status: 'validated',
-    updatedAt: Timestamp.now(),
+/* ================================
+   CREATE SIMULATION
+================================ */
+export async function createCateringSimulation(
+  simulation: Partial<CateringSimulation>
+) {
+  const ref = await addDoc(collection(db, COLLECTION), {
+    ...simulation,
+    createdAt: serverTimestamp(),
   });
+
+  return ref.id;
 }
 
-/**
- * =========================
- * SOFT DELETE SIMULATION
- * =========================
- */
-export async function deleteCateringSimulation(
-  id: string
-): Promise<void> {
-  const ref = doc(db, COLLECTION_NAME, id);
+/* ================================
+   UPDATE SIMULATION
+================================ */
+export async function updateCateringSimulation(
+  id: string,
+  simulation: Partial<CateringSimulation>
+) {
+  const ref = doc(db, COLLECTION, id);
+  await updateDoc(ref, simulation);
+}
 
-  await updateDoc(ref, {
-    isDeleted: true,
-    updatedAt: Timestamp.now(),
-  });
+/* ================================
+   DELETE SIMULATION
+================================ */
+export async function deleteCateringSimulation(id: string) {
+  const ref = doc(db, COLLECTION, id);
+  await deleteDoc(ref);
 }

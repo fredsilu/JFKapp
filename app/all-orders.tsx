@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-//import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 
 import { useOrders } from '@/src/hooks/useFirestore';
 import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
@@ -16,26 +16,30 @@ type FilterStatus = 'all' | 'En cours' | 'En préparation' | 'Livré';
 
 export default function AllOrdersScreen() {
   const router = useRouter();
+
+  // ✅ AJOUT : évite "fromSimulation is not defined"
+  const { fromSimulation } = useLocalSearchParams();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  
+
   const { data: orders = [], loading, error } = useOrders({
     orderBy: ['createdAt', 'desc']
   });
 
   // Get the current order from the updated list
-  const selectedOrder = selectedOrderId 
+  const selectedOrder = selectedOrderId
     ? orders.find(o => o.id === selectedOrderId) || null
     : null;
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       (order.client?.name && order.client.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (order.address && order.address.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -68,6 +72,16 @@ export default function AllOrdersScreen() {
 
   const stats = calculateStats();
 
+  // ✅ IMPORTANT :
+  // Ce screen = historique des commandes.
+  // Il ne doit pas tenter de créer une commande (setOrderDraft n'existe pas ici).
+  // On garde fromSimulation uniquement pour éviter crash et permettre la suite (écran new order).
+  useEffect(() => {
+    // On ne fait rien ici volontairement.
+    // (On utilisera fromSimulation dans l'écran "nouvelle commande")
+    void fromSimulation;
+  }, [fromSimulation]);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -80,7 +94,7 @@ export default function AllOrdersScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}>
             <Icon name="arrow-back" size={24} color="#1a1a1a" />
@@ -99,8 +113,8 @@ export default function AllOrdersScreen() {
           />
         </View>
 
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filtersContainer}
           contentContainerStyle={styles.filters}>
@@ -122,102 +136,102 @@ export default function AllOrdersScreen() {
           ))}
         </ScrollView>
       </View>
-      <ScrollView >
-      <View style={styles.statsContainer}>
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{formatCurrency(stats.total)}</Text>
-            <Text style={styles.statLabel}>Total des commandes</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{formatCurrency(stats.averagePerOrder)}</Text>
-            <Text style={styles.statLabel}>Moyenne par commande</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.delivered}</Text>
-            <Text style={styles.statLabel}>Commandes livrées</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.inProgress}</Text>
-            <Text style={styles.statLabel}>Commandes en cours</Text>
+
+      <ScrollView>
+        <View style={styles.statsContainer}>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{formatCurrency(stats.total)}</Text>
+              <Text style={styles.statLabel}>Total des commandes</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{formatCurrency(stats.averagePerOrder)}</Text>
+              <Text style={styles.statLabel}>Moyenne par commande</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.delivered}</Text>
+              <Text style={styles.statLabel}>Commandes livrées</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.inProgress}</Text>
+              <Text style={styles.statLabel}>Commandes en cours</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.content}>
-      
-        {filteredOrders.map((order) => (
-          <TouchableOpacity
-            key={order.id}
-            style={styles.orderCard}
-            onPress={() => setSelectedOrderId(order.id)}>
-            <View style={styles.orderHeader}>
-              <View>
-                <Text style={styles.clientName}>{order.client.name}</Text>
-                <Text style={styles.orderDate}>
-                  {new Date(order.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: `${getStatusColor(order.status)}15` }
-              ]}>
-                <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                  {order.status}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.orderContent}>
-              <View style={styles.orderItems}>
-                {order.dishes.map(({ dish, quantity }) => (
-                  <Text key={dish.id} style={styles.itemText}>
-                    • {quantity}x {dish.name}
+        <View style={styles.content}>
+          {filteredOrders.map((order) => (
+            <TouchableOpacity
+              key={order.id}
+              style={styles.orderCard}
+              onPress={() => setSelectedOrderId(order.id)}>
+              <View style={styles.orderHeader}>
+                <View>
+                  <Text style={styles.clientName}>{order.client.name}</Text>
+                  <Text style={styles.orderDate}>
+                    {new Date(order.createdAt).toLocaleDateString()}
                   </Text>
-                ))}
-                {order.additionalIngredients.map(({ ingredient, quantity }) => (
-                  <Text key={ingredient.id} style={styles.itemText}>
-                    • {quantity} {ingredient.unit} {ingredient.name}
-                  </Text>
-                ))}
-                {/* Facturation */}
-                {order.designation && (
-                  <Text style={styles.itemText}>• Désignation : {order.designation}</Text>
-                )}
-                {order.billedAmount !== undefined && (
-                  <Text style={styles.itemText}>• Montant facturé : {formatCurrency(order.billedAmount)}</Text>
-                )}
-                {order.invoiceDate && (
-                  <Text style={styles.itemText}>• Date de facture : {order.invoiceDate}</Text>
-                )}
-                {order.paymentDate && (
-                  <Text style={styles.itemText}>• Date de paiement : {order.paymentDate}</Text>
-                )}
-              </View>
-
-              <View style={styles.orderMeta}>
-                <View style={styles.metaItem}>
-                  <Icon name="event" size={16} color="#666" />
-                  <Text style={styles.metaText}>{order.deliveryDate}</Text>
                 </View>
-                <View style={styles.metaItem}>
-                  <Icon name="access-time" size={16} color="#666" />
-                  <Text style={styles.metaText}>à {order.deliveryTime}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Icon name="location-on" size={16} color="#666" />
-                  <Text style={styles.metaText}>{order.address}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <Icon name="attach-money" size={16} color="#007AFF" />
-                  <Text style={[styles.metaText, styles.priceText]}>
-                    {formatCurrency(calculateOrderTotalCost(order))}
+                <View style={[
+                  styles.statusBadge,
+                  { backgroundColor: `${getStatusColor(order.status)}15` }
+                ]}>
+                  <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                    {order.status}
                   </Text>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+
+              <View style={styles.orderContent}>
+                <View style={styles.orderItems}>
+                  {order.dishes.map(({ dish, quantity }) => (
+                    <Text key={dish.id} style={styles.itemText}>
+                      • {quantity}x {dish.name}
+                    </Text>
+                  ))}
+                  {order.additionalIngredients.map(({ ingredient, quantity }) => (
+                    <Text key={ingredient.id} style={styles.itemText}>
+                      • {quantity} {ingredient.unit} {ingredient.name}
+                    </Text>
+                  ))}
+                  {/* Facturation */}
+                  {order.designation && (
+                    <Text style={styles.itemText}>• Désignation : {order.designation}</Text>
+                  )}
+                  {order.billedAmount !== undefined && (
+                    <Text style={styles.itemText}>• Montant facturé : {formatCurrency(order.billedAmount)}</Text>
+                  )}
+                  {order.invoiceDate && (
+                    <Text style={styles.itemText}>• Date de facture : {order.invoiceDate}</Text>
+                  )}
+                  {order.paymentDate && (
+                    <Text style={styles.itemText}>• Date de paiement : {order.paymentDate}</Text>
+                  )}
+                </View>
+
+                <View style={styles.orderMeta}>
+                  <View style={styles.metaItem}>
+                    <Icon name="event" size={16} color="#666" />
+                    <Text style={styles.metaText}>{order.deliveryDate}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Icon name="access-time" size={16} color="#666" />
+                    <Text style={styles.metaText}>à {order.deliveryTime}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Icon name="location-on" size={16} color="#666" />
+                    <Text style={styles.metaText}>{order.address}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Icon name="attach-money" size={16} color="#007AFF" />
+                    <Text style={[styles.metaText, styles.priceText]}>
+                      {formatCurrency(calculateOrderTotalCost(order))}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
 
