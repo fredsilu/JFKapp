@@ -16,7 +16,6 @@
 
 Objectif : rendre l’app utilisable en production chez Crepolia.
 
-* A partir de la simulation, nous devons pouvoir créer une commande.
 
 ## Calculator
 * Fix scroll dans dropdown clients
@@ -39,23 +38,6 @@ Objectif : rendre l’app utilisable en production chez Crepolia.
 
 # 🟢 VERSION 1.3.0 — OUTIL DIRECTEUR (CEO TOOL)
 
-Objectif : aider Kady dans la prise de décision.
-
-## Nouveau module
-
-Breakdown matière indépendant :
-
-* Calcul coût matière par commande
-* Analyse marge par prestation
-* Simulation rapide
-
-Puis plus tard :
-
-* Connecté au reste de l'app
-
----
-
-# 🔵 VERSION 1.4.0 — EXPÉRIENCE UTILISATEUR
 
 Objectif : rendre l’app agréable.
 
@@ -215,3 +197,638 @@ Avec :
 
 C’est très puissant.
 
+----------------------------------------------------------------------------
+
+
+J"aimerais ajouter une option finance dans notre app JFKApp.  En fait je souhaite au démarrage de l'app, avoir la possibilité de choisir soit l'option traiteur pour aller dans ce que nous faisons maintenant ou l'option finances pour aller sur le module finances que nous allons implémenter maintenant étape par étape.  Pour ce module, il faudrait que tu mettes en place un cahier des charges et les étapes d'avolution de notre app JFKApp JFKApp version 2.0.0 : 
+- 2 onglets : Traiteur et Home
+- Traiteur et home auront les mêmes fonctionnement : il me faut 1. liste des dépenses et entrées prévisionnelles, 
+2. ces dépenses et entrées prévisionnelles doivent etre datées  - donc pouvoir les encoder 
+3. avoir un journal pour entrée les dépenses et les entrées réelles en fonction de la date evidemment 
+4. pouvoir avoir un tableau de bord permettant d'afficher les dividendes journalières ou en fonction d'une période, etc., 
+avoir aussi un affichage des datas suivant un calendrier choisi sous forme de période, pouvoir calculer les dividendes et 
+la trésorerie restante et aussi ajuster cette trésorerie si pas correct.  Pouvoir voir les écarts entre le prévisionnel et 
+la réalité eventuellement avoir les options des CDF et USD, avoir la possibilité de voir la trésorerie en espèces et en com0pte 
+bancaires et aussi en mobile money
+
+Parfait 👌🏾 Frederic.
+On est clairement en train de faire évoluer **JFKApp** d’un outil opérationnel traiteur vers un **outil stratégique de pilotage financier Maison–Crepolia**. Ça devient cohérent avec ton Plan Maison–Crepolia et ta logique dividendes / trésorerie / séparation des flux.
+
+Je te fais un **cahier des charges structuré + roadmap version 2.0.0**, adapté à ton environnement Expo + Firebase + TypeScript.
+
+---
+
+# 📱 JFKApp – Version 2.0.0
+
+## 🎯 Objectif stratégique
+
+Transformer JFKApp en :
+
+* ✅ Outil opérationnel (Traiteur)
+* ✅ Outil de pilotage financier (Finance)
+* ✅ Outil de séparation claire des flux (Traiteur vs Home)
+* ✅ Outil de calcul de dividendes et trésorerie réelle
+
+---
+
+# 🏗 1️⃣ STRUCTURE GÉNÉRALE DE L’APP (V2.0.0)
+
+## 🔹 Écran de démarrage (Module Selector)
+
+Au lancement :
+
+```
+Choisissez un module :
+[ 🍽 Traiteur ]
+[ 💰 Finance ]
+```
+
+👉 Navigation vers deux univers distincts mais avec la même logique interne.
+
+---
+
+# 🧱 2️⃣ STRUCTURE DES MODULES
+
+## 🟢 Module TRAITEUR (existant + amélioré)
+
+## 🔵 Module FINANCE (nouveau)
+
+Les deux auront :
+
+* 📊 Prévisionnel
+* 📖 Journal réel
+* 📈 Dashboard
+* ⚙ Paramètres
+
+---
+
+# 📘 3️⃣ CAHIER DES CHARGES FONCTIONNEL
+
+---
+
+# MODULE FINANCE (NOUVEAU)
+
+## 1️⃣ Onglet : Prévisionnel
+
+### Objectif
+
+Encoder les flux prévisionnels datés.
+
+### Fonctionnalités
+
+* Ajouter :
+
+  * Type : Entrée / Dépense
+  * Catégorie
+  * Montant
+  * Devise (USD / CDF)
+  * Date prévue
+  * Compte prévu (Espèces / Banque / Mobile Money)
+  * Commentaire
+
+### Affichage
+
+Liste filtrable par :
+
+* Mois
+* Période personnalisée
+* Devise
+* Type
+
+---
+
+## 2️⃣ Onglet : Journal (Réel)
+
+### Objectif
+
+Enregistrer les flux réellement réalisés.
+
+### Champs
+
+* Type : Entrée / Dépense
+* Montant
+* Devise
+* Date réelle
+* Catégorie
+* Compte impacté :
+
+  * Espèces
+  * Banque
+  * Mobile Money
+* Référence
+* Lien éventuel vers prévisionnel
+
+---
+
+## 3️⃣ Onglet : Dashboard
+
+### Indicateurs clés
+
+* 📌 Trésorerie actuelle totale
+* 💵 Trésorerie par support :
+
+  * Espèces
+  * Banque
+  * Mobile Money
+* 📊 Dividende journalier
+* 📊 Dividende période
+* 📊 Cash-flow net
+* 📊 Écart Prévisionnel vs Réel
+* 📅 Vue calendrier par période
+
+### Filtres
+
+* Date début / fin
+* Devise
+* Module (Traiteur / Home)
+* Compte
+
+---
+
+## 4️⃣ Calculs à implémenter
+
+### 🔹 Trésorerie actuelle
+
+```
+Trésorerie = Solde initial
++ Entrées réelles
+- Dépenses réelles
+```
+
+---
+
+### 🔹 Dividende
+
+Option 1 :
+
+```
+Dividende = Résultat net * %
+```
+
+Option 2 (avancé plus tard) :
+
+* Règle automatique paramétrable
+
+---
+
+### 🔹 Écart prévisionnel
+
+```
+Écart = Réel - Prévisionnel
+```
+
+---
+
+### 🔹 Ajustement manuel de trésorerie
+
+Fonction :
+
+```
+Ajuster solde → corriger solde réel
+```
+
+Historique des ajustements conservé.
+
+---
+
+# 💱 Gestion multi-devises (USD / CDF)
+
+### Option 1 (simple v2)
+
+Stocker séparément.
+
+### Option 2 (v3)
+
+Ajouter :
+
+* Taux de conversion manuel
+* Affichage consolidé en devise principale
+
+---
+
+# 🏦 Gestion des supports de trésorerie
+
+Structure :
+
+```
+accounts:
+- id
+- name
+- type (cash | bank | mobile)
+- currency
+- balance
+```
+
+---
+
+# 🗄 4️⃣ STRUCTURE FIREBASE PROPOSÉE
+
+```
+modules/
+   traiteur/
+   finance/
+
+finance_previsionnel/
+finance_journal/
+finance_accounts/
+finance_settings/
+```
+
+Chaque document :
+
+```
+{
+  type: "income" | "expense",
+  amount: number,
+  currency: "USD" | "CDF",
+  date: timestamp,
+  category: string,
+  accountId: string,
+  module: "traiteur" | "home"
+}
+```
+
+---
+
+# 🧠 5️⃣ ROADMAP D’ÉVOLUTION
+
+---
+
+## 🚀 Phase 1 – V2.0.0 Minimal Viable Finance (2 semaines)
+
+* Écran de sélection module
+* CRUD Prévisionnel
+* CRUD Journal
+* Calcul trésorerie simple
+* Dashboard simple
+* Gestion USD/CDF
+* Gestion comptes
+
+---
+
+## 🚀 Phase 2 – V2.1.0
+
+* Graphiques avancés (courbe cash-flow)
+* Calendrier interactif
+* Comparaison prévisionnel vs réel graphique
+* Export Excel
+
+---
+
+## 🚀 Phase 3 – V2.2.0
+
+* Règles automatiques dividendes
+* Alertes dépassement budget
+* Notifications flux attendus
+* Historique d’audit
+
+---
+
+## 🚀 Phase 4 – V3.0.0
+
+* Multi-entreprise
+* Rôles utilisateurs
+* Intégration bancaire
+* API externe
+
+---
+
+# 🧮 6️⃣ IMPACT STRATÉGIQUE POUR TOI
+
+Ce module va te permettre :
+
+* Séparer Maison / Crepolia
+* Suivre les dividendes
+* Voir les tensions de trésorerie
+* Simuler les paiements Equity
+* Préparer les décisions stratégiques
+* Remplacer partiellement Excel
+
+C’est totalement aligné avec ton Plan Maison–Crepolia.
+
+---
+
+# 🎯 QUESTION STRATÉGIQUE IMPORTANTE
+
+Veux-tu :
+
+A) Module Finance uniquement pour Crepolia
+B) Module Finance pour Maison + Crepolia
+C) Module Finance multi-structure dès le départ
+
+---
+
+Si tu veux, prochaine étape :
+
+👉 Je te propose maintenant :
+
+* L’architecture technique React Native complète
+* Les interfaces TypeScript
+* Le plan des écrans
+* Le Git commit structuré v2.0.0
+
+On construit ça proprement.
+Là on passe d’une app traiteur à une app de pilotage financier stratégique.
+
+
+Parfait 👌🏾
+On va faire ça proprement, structuré, version “document produit”.
+
+Je te redonne d’abord **le cahier des charges complet JFKApp v2.0.0 – Module Finance Maison + Crepolia + Dashboard Groupe**, puis on passe au build technique.
+
+---
+
+# 📘 CAHIER DES CHARGES COMPLET
+
+# 📱 JFKApp v2.0.0
+
+## Module Finance – Maison & Crepolia + Dashboard Groupe
+
+---
+
+# 1️⃣ OBJECTIF STRATÉGIQUE
+
+Transformer JFKApp :
+
+* D’une app opérationnelle Traiteur
+* Vers un **outil de pilotage financier stratégique**
+
+Objectifs :
+
+* Séparer Maison et Crepolia
+* Suivre trésorerie réelle
+* Suivre prévisionnel
+* Mesurer écarts
+* Gérer dividendes
+* Consolider les flux
+* Neutraliser les transferts internes
+
+---
+
+# 2️⃣ ARCHITECTURE FONCTIONNELLE GLOBALE
+
+## Écran de démarrage
+
+```
+[ 🍽 Traiteur ]
+[ 💰 Finance ]
+```
+
+---
+
+## Module Finance → Sélecteur entité
+
+```
+[ 🏠 Maison ]
+[ 🏢 Crepolia ]
+[ 📊 Groupe ]
+```
+
+---
+
+# 3️⃣ STRUCTURE PAR ENTITÉ (Maison / Crepolia)
+
+Chaque entité possède :
+
+1. Prévisionnel
+2. Journal (réel)
+3. Comptes
+4. Dashboard
+5. Paramètres
+
+---
+
+# 4️⃣ MODULE PRÉVISIONNEL
+
+## Objectif
+
+Planifier les flux futurs.
+
+## Fonctionnalités
+
+Créer / Modifier / Supprimer :
+
+* Type : Entrée / Dépense
+* Montant
+* Devise : USD / CDF
+* Date prévue
+* Catégorie
+* Compte prévu
+* Commentaire
+
+## Filtres
+
+* Mois
+* Période personnalisée
+* Devise
+* Catégorie
+
+---
+
+# 5️⃣ MODULE JOURNAL (RÉEL)
+
+## Objectif
+
+Enregistrer les flux réalisés.
+
+## Champs
+
+* Type : Entrée / Dépense
+* Montant
+* Devise
+* Date réelle
+* Catégorie
+* Compte impacté
+* Référence
+* Lien prévisionnel (optionnel)
+
+---
+
+# 6️⃣ TRANSFERTS INTERNES AUTOMATIQUES
+
+## Principe
+
+Une seule action crée 2 écritures synchronisées.
+
+Exemple :
+
+Crepolia → Maison (2 500 USD)
+
+Création automatique :
+
+* Dépense Crepolia
+* Entrée Maison
+
+## Règles
+
+* Génération d’un transferId unique
+* isInternalTransfer = true
+* Suppression synchronisée
+* Modification centralisée
+* Neutralisation dans Dashboard Groupe
+
+---
+
+# 7️⃣ MODULE COMPTES
+
+Chaque entité a :
+
+* Espèces
+* Banque
+* Mobile Money
+
+Chaque compte contient :
+
+* Nom
+* Type
+* Devise
+* Solde initial
+* Solde calculé
+
+---
+
+# 8️⃣ DASHBOARD ENTITÉ
+
+## Indicateurs
+
+### Trésorerie actuelle
+
+```
+Solde initial
++ Entrées réelles
+- Dépenses réelles
+```
+
+Affichage :
+
+* Par compte
+* Par devise
+* Total global
+
+---
+
+### Résultat période
+
+```
+Entrées - Dépenses
+```
+
+---
+
+### Écart prévisionnel
+
+```
+Réel - Prévu
+```
+
+---
+
+### Dividende (Crepolia)
+
+```
+Résultat net * % paramétrable
+```
+
+---
+
+# 9️⃣ DASHBOARD GROUPE (CONSOLIDÉ)
+
+## Principe
+
+Consolider Maison + Crepolia
+
+En excluant :
+
+```
+isInternalTransfer === true
+```
+
+---
+
+## Indicateurs Groupe
+
+* Trésorerie consolidée
+* Résultat consolidé
+* Cash-flow net
+* Capacité d’autofinancement
+* Écart global prévisionnel
+* Flux internes visibles séparément
+
+---
+
+# 🔟 MULTI-DEVISES
+
+Phase v2 :
+
+* USD et CDF séparés
+
+Phase future :
+
+* Taux manuel
+* Consolidation automatique
+
+---
+
+# 11️⃣ AJUSTEMENT MANUEL DE TRÉSORERIE
+
+Fonction :
+
+* Correction de solde
+* Historique conservé
+* Motif obligatoire
+
+---
+
+# 12️⃣ SÉCURITÉ & COHÉRENCE
+
+* Interdiction modification partielle transfert
+* Historique complet
+* Séparation entités stricte
+* Groupe en lecture seule (v2)
+
+---
+
+# 13️⃣ ROADMAP PRODUIT
+
+## v2.0.0
+
+* Module Finance
+* Entités Maison / Crepolia
+* Dashboard Groupe
+* Transferts automatiques
+* Multi-devises simple
+
+## v2.1.0
+
+* Graphiques
+* Calendrier
+* Projection 90 jours
+* Export Excel
+
+## v2.2.0
+
+* Alertes tension
+* Budgets plafonds
+* Simulation dividendes
+
+---
+
+# ✅ VALIDATION
+
+Si tu valides ce cahier des charges, on passe à la construction technique.
+
+---
+
+# 🚀 PROCHAINE ÉTAPE – BUILD TECHNIQUE
+
+Je vais maintenant te livrer :
+
+1️⃣ 📁 Structure complète des dossiers React Native
+2️⃣ 🧾 Interfaces TypeScript prêtes à copier-coller
+3️⃣ 🔥 Service Firebase prêt à coder
+4️⃣ 📊 Logique complète du Dashboard consolidé
+5️⃣ 🧠 Plan d’implémentation sprint par sprint
+
+On va le faire proprement, scalable et cohérent avec ton architecture actuelle Expo + Firebase.
+
+Je commence par la **structure des dossiers React Native**.

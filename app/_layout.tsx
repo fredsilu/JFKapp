@@ -5,16 +5,14 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-useEffect(() => {
-  SplashScreen.preventAutoHideAsync();
-}, []);
+// Prevent splash auto hide
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -31,12 +29,29 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="preparation-ingredients" options={{ title: 'Ingrédients en préparation' }} />
-        <Stack.Screen name="analytics" options={{ title: 'Analytics', headerShown: false }} />
+      <Stack
+        initialRouteName="modules"
+        screenOptions={{
+          headerShown: false, // IMPORTANT : pas de header ici
+        }}
+      >
+        {/* Sélecteur Modules */}
+        <Stack.Screen name="modules" />
+
+        {/* Routes isolées hors Tabs */}
+        <Stack.Screen
+          name="preparation-ingredients"
+          options={{ title: 'Ingrédients en préparation', headerShown: true }}
+        />
+
+        <Stack.Screen
+          name="analytics"
+          options={{ title: 'Analytics', headerShown: true }}
+        />
+
         <Stack.Screen name="+not-found" />
       </Stack>
+
       <StatusBar style="auto" />
     </ThemeProvider>
   );
