@@ -3,7 +3,7 @@ import {
   addDoc,
   getDocs,
   getDoc,
-deleteDoc,  
+  deleteDoc,
   doc,
   updateDoc,
   query,
@@ -26,7 +26,15 @@ export async function createCateringSimulation(
 
   return await addDoc(ref, {
     ...simulation,
+
+    // 🔥 Sécurisation totaux
+    globalTurnover: simulation.globalTurnover ?? 0,
+    globalCost: simulation.globalCost ?? 0,
+    globalMargin: simulation.globalMargin ?? 0,
+
     isDeleted: false,
+    convertedToOrder: false,
+
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

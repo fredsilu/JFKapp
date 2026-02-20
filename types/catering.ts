@@ -95,26 +95,30 @@ export interface CateringSimulationResult {
  * SIMULATION PERSISTÉE (FIRESTORE)
  * =========================
  */
-export type CateringSimulation =
+
+  export type CateringSimulation =
   CateringSimulationDraft & {
     id: string;
 
-    // Champs obligatoires en base
     name: string;
     clientId: string;
+
+    // 🔥 TOTAUX PERSISTÉS
+    globalTurnover?: number;
+    globalCost?: number;
+    globalMargin?: number;
 
     createdAt: Timestamp;
     updatedAt: Timestamp;
     isDeleted: boolean;
 
-    dateLivraison: string;  // OK ici aussi
+    dateLivraison: string;
 
     status: 'draft' | 'validated';
     convertedToOrder?: boolean;
     orderId?: string;
     convertedAt?: string;
-
-  }
+  };
 export type CateringOrder = {
   id: string;
   simulationId: string;

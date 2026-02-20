@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
@@ -330,6 +340,11 @@ const styles = StyleSheet.create({
 });
 
 export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) {
+  // Récupération des données
+  const { data: clients = [], loading: loadingClients } = useClients();
+  const { data: dishes = [], loading: loadingDishes } = useDishes();
+  const { data: ingredients = [], loading: loadingIngredients } = useIngredients();
+
   // États pour le formulaire
   const [selectedClient, setSelectedClient] = useState<Client | null>(order?.client || null);
   const [selectedDishes, setSelectedDishes] = useState<OrderDish[]>(order?.dishes || []);
@@ -348,89 +363,135 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   // États pour la recherche
   const [clientSearchQuery, setClientSearchQuery] = useState('');
   const [dishSearchQuery, setDishSearchQuery] = useState('');
-  const [showClientSearch, setShowClientSearch] = useState(!order);
   const [ingredientSearchQuery, setIngredientSearchQuery] = useState('');
 
-  // Récupération des données
-  const { data: clients = [], loading: loadingClients } = useClients();
-  const { data: dishes = [], loading: loadingDishes } = useDishes();
-  const { data: ingredients = [], loading: loadingIngredients } = useIngredients();
+  // ✅ important : si order contient déjà un clientId, on masque la recherche par défaut
+  const [showClientSearch, setShowClientSearch] = useState(!order?.clientId);
+
+  /* =========================================================
+     ✅ FIX PRINCIPAL : auto-sélection du client via clientId
+     (ordre créé depuis simulation = order.client undefined)
+  ========================================================= */
+  useEffect(() => {
+    if (!order?.clientId) return;
+    if (!clients || clients.length === 0) return;
+
+    // si déjà sélectionné et correspond, on ne touche pas
+    if (selectedClient?.id === order.clientId) return;
+
+    const found = clients.find((c) => c.id === order.clientId) || null;
+    if (found) {
+      setSelectedClient(found);
+      setShowClientSearch(false);
+
+      // optionnel : pré-remplir l'adresse si vide
+      setAddress((prev) => (prev ? prev : found.address || ''));
+    }
+  }, [order?.clientId, clients]);
+
+  /* =========================================================
+     ✅ BONUS : si la prop "order" change (async), on resync
+     (utile si le form est monté avant que orderDraft arrive)
+  ========================================================= */
+  useEffect(() => {
+    if (!order) return;
+
+    // On resync les champs simples si jamais order arrive après
+    setSelectedDishes(order.dishes || []);
+    setAdditionalIngredients(order.additionalIngredients || []);
+    setDeliveryDate(order.deliveryDate || '');
+    setDeliveryTime(order.deliveryTime || '');
+    setAddress(order.address || '');
+    setDesignation(order.designation || '');
+    setBilledAmount(order.billedAmount ? String(order.billedAmount) : '');
+    setInvoiceDate(order.invoiceDate || '');
+    setPaymentDate(order.paymentDate || '');
+
+    // Si on a un client complet sur order.client, on le prend
+    if (order.client) {
+      setSelectedClient(order.client);
+      setShowClientSearch(false);
+    }
+  }, [order?.id]); // on se base sur un changement d'identité (draft différent)
 
   // Filtrage des clients et plats
-  const filteredClients = clients.filter(client =>
+  const filteredClients = clients.filter((client) =>
     (client.name && client.name.toLowerCase().includes(clientSearchQuery.toLowerCase())) ||
     (client.email && client.email.toLowerCase().includes(clientSearchQuery.toLowerCase()))
   );
 
-  const filteredDishes = dishes.filter(dish =>
+  const filteredDishes = dishes.filter((dish) =>
     dish.name && dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())
   );
-  const filteredIngredients = ingredients.filter(ingredient =>
+
+  const filteredIngredients = ingredients.filter((ingredient) =>
     (ingredient.name && ingredient.name.toLowerCase().includes(ingredientSearchQuery.toLowerCase())) ||
     (ingredient.category && ingredient.category.toLowerCase().includes(ingredientSearchQuery.toLowerCase()))
   );
 
   const handleAddIngredient = (ingredient: Ingredient) => {
-    // Vérifier si l'ingrédient existe déjà
     const existingIngredient = additionalIngredients.find(
-      item => item.ingredient.id === ingredient.id
+      (item) => item.ingredient.id === ingredient.id
     );
 
     if (existingIngredient) {
-      // Si l'ingrédient existe, augmenter sa quantité
       handleUpdateIngredientQuantity(ingredient.id, existingIngredient.quantity + 1);
     } else {
-      // Sinon, ajouter le nouvel ingrédient avec une quantité de 1
       setAdditionalIngredients([
         ...additionalIngredients,
-        { ingredient, quantity: 1 }
+        { ingredient, quantity: 1 },
       ]);
     }
   };
+
   const handleUpdateIngredientQuantity = (ingredientId: string, quantity: number) => {
     if (quantity <= 0) {
       handleRemoveIngredient(ingredientId);
       return;
     }
 
-    setAdditionalIngredients(prev =>
-      prev.map(item =>
-        item.ingredient.id === ingredientId
-          ? { ...item, quantity }
-          : item
+    setAdditionalIngredients((prev) =>
+      prev.map((item) =>
+        item.ingredient.id === ingredientId ? { ...item, quantity } : item
       )
     );
   };
+
   const handleRemoveIngredient = (ingredientId: string) => {
-    setAdditionalIngredients(prev =>
-      prev.filter(item => item.ingredient.id !== ingredientId)
+    setAdditionalIngredients((prev) =>
+      prev.filter((item) => item.ingredient.id !== ingredientId)
     );
   };
 
   const handleAddDish = (dish: Dish) => {
-    const existingDish = selectedDishes.find(d => d.dish.id === dish.id);
+    const existingDish = selectedDishes.find((d) => d.dish.id === dish.id);
     if (existingDish) {
-      setSelectedDishes(prev =>
-        prev.map(d =>
-          d.dish.id === dish.id
-            ? { ...d, quantity: d.quantity + 1 }
-            : d
+      setSelectedDishes((prev) =>
+        prev.map((d) =>
+          d.dish.id === dish.id ? { ...d, quantity: d.quantity + 1 } : d
         )
       );
     } else {
-      setSelectedDishes(prev => [...prev, { dish, quantity: 1, name: dish.name, ingredients: dish.ingredients, additionalIngredients: [] }]);
+      setSelectedDishes((prev) => [
+        ...prev,
+        {
+          dish,
+          quantity: 1,
+          name: dish.name,
+          ingredients: dish.ingredients,
+          additionalIngredients: [],
+        },
+      ]);
     }
   };
 
   const handleUpdateDishQuantity = (dishId: string, quantity: number) => {
     if (quantity <= 0) {
-      setSelectedDishes(prev => prev.filter(d => d.dish.id !== dishId));
+      setSelectedDishes((prev) => prev.filter((d) => d.dish.id !== dishId));
     } else {
-      setSelectedDishes(prev =>
-        prev.map(d =>
-          d.dish.id === dishId
-            ? { ...d, quantity }
-            : d
+      setSelectedDishes((prev) =>
+        prev.map((d) =>
+          d.dish.id === dishId ? { ...d, quantity } : d
         )
       );
     }
@@ -457,7 +518,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       setFormError('Veuillez spécifier une adresse de livraison');
       return false;
     }
-    // Optionnel : désignation, montant facturé, date de facture, date de paiement
     if (billedAmount && isNaN(Number(billedAmount))) {
       setFormError('Le montant facturé doit être un nombre');
       return false;
@@ -482,22 +542,18 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       billedAmount: billedAmount ? Number(billedAmount) : undefined,
       invoiceDate: invoiceDate || undefined,
       paymentDate: paymentDate || undefined,
-      //createdAt: order?.createdAt || new Date().toISOString(),
     });
   };
-  // const [loading, setLoading] = useState(true);
 
   if (loadingClients || loadingDishes || loadingIngredients) {
     return <LoadingSpinner />;
   }
 
-
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-
+      style={styles.container}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>
           {order ? 'Modifier la commande' : 'Nouvelle commande'}
@@ -514,16 +570,19 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           </View>
         )}
 
-
+        {/* ======================
+            CLIENT
+        ====================== */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Client</Text>
           {selectedClient && !showClientSearch ? (
             <View style={styles.selectedClient}>
-
               <Image
-                source={selectedClient.profilePicture
-                  ? { uri: selectedClient.profilePicture }
-                  : require('@/assets/images/no_client_picture_small.jpg')}
+                source={
+                  selectedClient.profilePicture
+                    ? { uri: selectedClient.profilePicture }
+                    : require('@/assets/images/no_client_picture_small.jpg')
+                }
                 style={styles.clientImage}
               />
               <View style={styles.clientInfo}>
@@ -531,10 +590,14 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 <Text style={styles.clientMeta}>{selectedClient.email}</Text>
                 <Text style={styles.clientMeta}>{selectedClient.phone}</Text>
               </View>
+
+              {/* Ici tu avais {!order && ...}. On garde ta logique mais on permet aussi de changer si tu veux.
+                 Si tu veux empêcher la modification quand la commande vient d’une simulation, laisse comme ça. */}
               {!order && (
                 <TouchableOpacity
                   style={styles.changeButton}
-                  onPress={() => setShowClientSearch(true)}>
+                  onPress={() => setShowClientSearch(true)}
+                >
                   <Text style={styles.changeButtonText}>Modifier</Text>
                 </TouchableOpacity>
               )}
@@ -550,8 +613,9 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                   onChangeText={setClientSearchQuery}
                 />
               </View>
+
               <ScrollView style={styles.searchResults}>
-                {filteredClients.map(client => (
+                {filteredClients.map((client) => (
                   <TouchableOpacity
                     key={client.id}
                     style={styles.clientResult}
@@ -559,12 +623,14 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                       setSelectedClient(client);
                       setShowClientSearch(false);
                       setAddress(client.address);
-                    }}>
-
+                    }}
+                  >
                     <Image
-                      source={client.profilePicture
-                        ? { uri: client.profilePicture }
-                        : require('@/assets/images/no_client_picture_small.jpg')}
+                      source={
+                        client.profilePicture
+                          ? { uri: client.profilePicture }
+                          : require('@/assets/images/no_client_picture_small.jpg')
+                      }
                       style={styles.resultImage}
                     />
                     <View style={styles.resultInfo}>
@@ -578,8 +644,12 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           )}
         </View>
 
+        {/* ======================
+            PLATS
+        ====================== */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Plats</Text>
+
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#666" />
             <TextInput
@@ -594,16 +664,15 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.dishesScroll}
-            contentContainerStyle={styles.dishesContainer}>
-            {filteredDishes.map(dish => (
+            contentContainerStyle={styles.dishesContainer}
+          >
+            {filteredDishes.map((dish) => (
               <TouchableOpacity
                 key={dish.id}
                 style={styles.dishCard}
-                onPress={() => handleAddDish(dish)}>
-                <Image
-                  source={{ uri: dish.image }}
-                  style={styles.dishImage}
-                />
+                onPress={() => handleAddDish(dish)}
+              >
+                <Image source={{ uri: dish.image }} style={styles.dishImage} />
                 <View style={styles.dishInfo}>
                   <Text style={styles.dishName}>{dish.name}</Text>
                   <Text style={styles.dishMeta}>
@@ -617,249 +686,315 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           {selectedDishes.length > 0 && (
             <View style={styles.selectedDishes}>
               <Text style={styles.subsectionTitle}>Plats sélectionnés</Text>
-              {selectedDishes && Array.isArray(selectedDishes) && selectedDishes.map(({ dish, quantity }) => {
-                if (!dish || !dish.id) return null;
-                return (
-                  <View key={dish.id} style={styles.selectedDishItem}>
-                    <Image
-                      source={{ uri: dish.image || 'https://via.placeholder.com/100' }}
-                      style={styles.selectedDishImage}
-                    />
-                    <View style={styles.selectedDishInfo}>
-                      <Text style={styles.selectedDishName}>{dish.name}</Text>
-                      <View style={styles.quantityContainer}>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() => handleUpdateDishQuantity(dish.id, quantity - 1)}>
-                          <Text style={styles.quantityButtonText}>-</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.quantityText}>{quantity}</Text>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() => handleUpdateDishQuantity(dish.id, quantity + 1)}>
-                          <Text style={styles.quantityButtonText}>+</Text>
-                        </TouchableOpacity>
+
+              {selectedDishes &&
+                Array.isArray(selectedDishes) &&
+                selectedDishes.map(({ dish, quantity }) => {
+                  if (!dish || !dish.id) return null;
+                  return (
+                    <View key={dish.id} style={styles.selectedDishItem}>
+                      <Image
+                        source={{
+                          uri: dish.image || 'https://via.placeholder.com/100',
+                        }}
+                        style={styles.selectedDishImage}
+                      />
+                      <View style={styles.selectedDishInfo}>
+                        <Text style={styles.selectedDishName}>{dish.name}</Text>
+                        <View style={styles.quantityContainer}>
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() =>
+                              handleUpdateDishQuantity(dish.id, quantity - 1)
+                            }
+                          >
+                            <Text style={styles.quantityButtonText}>-</Text>
+                          </TouchableOpacity>
+                          <Text style={styles.quantityText}>{quantity}</Text>
+                          <TouchableOpacity
+                            style={styles.quantityButton}
+                            onPress={() =>
+                              handleUpdateDishQuantity(dish.id, quantity + 1)
+                            }
+                          >
+                            <Text style={styles.quantityButtonText}>+</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
             </View>
           )}
         </View>
 
-        <ScrollView style={styles.content}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ingrédients supplémentaires</Text>
-            <View style={styles.searchContainer}>
-              <Icon name="search" size={20} color="#665" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Rechercher un ingrédient..."
-                value={ingredientSearchQuery}
-                onChangeText={setIngredientSearchQuery}
-              />
-            </View>
+        {/* ======================
+            INGRÉDIENTS SUPPLÉMENTAIRES
+        ====================== */}
+        {/* ⚠️ NOTE: tu avais un ScrollView imbriqué dans un ScrollView.
+            Je garde ta structure pour ne pas “casser”, mais idéalement on évite un ScrollView vertical dans un autre.
+        */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ingrédients supplémentaires</Text>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.ingredientsScroll}
-              contentContainerStyle={styles.ingredientsContainer}>
-              {filteredIngredients && Array.isArray(filteredIngredients) && filteredIngredients.map(ingredient => {
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#665" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher un ingrédient..."
+              value={ingredientSearchQuery}
+              onChangeText={setIngredientSearchQuery}
+            />
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.ingredientsScroll}
+            contentContainerStyle={styles.ingredientsContainer}
+          >
+            {filteredIngredients &&
+              Array.isArray(filteredIngredients) &&
+              filteredIngredients.map((ingredient) => {
                 if (!ingredient || !ingredient.id) return null;
                 return (
                   <TouchableOpacity
                     key={ingredient.id}
                     style={styles.ingredientCard}
-                    onPress={() => handleAddIngredient(ingredient)}>
+                    onPress={() => handleAddIngredient(ingredient)}
+                  >
                     <View style={styles.ingredientCardContent}>
-                      <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                      <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
+                      <Text style={styles.ingredientName}>
+                        {ingredient.name}
+                      </Text>
+                      <Text style={styles.ingredientCategory}>
+                        {ingredient.category}
+                      </Text>
                       <View style={styles.ingredientPrice}>
                         <Icon name="attach-money" size={14} color="#007AFF" />
                         <Text style={styles.priceText}>
-                          {formatCurrency(ingredient.price || 0)} / {ingredient.unit}
+                          {formatCurrency(ingredient.price || 0)} /{' '}
+                          {ingredient.unit}
                         </Text>
                       </View>
                     </View>
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+          </ScrollView>
 
-            {additionalIngredients.length > 0 && (
-              <View style={styles.selectedIngredients}>
-                <Text style={styles.subsectionTitle}>Ingrédients sélectionnés</Text>
-                {additionalIngredients && Array.isArray(additionalIngredients) && additionalIngredients.map(({ ingredient, quantity }) => {
+          {additionalIngredients.length > 0 && (
+            <View style={styles.selectedIngredients}>
+              <Text style={styles.subsectionTitle}>
+                Ingrédients sélectionnés
+              </Text>
+
+              {additionalIngredients &&
+                Array.isArray(additionalIngredients) &&
+                additionalIngredients.map(({ ingredient, quantity }) => {
                   if (!ingredient || !ingredient.id) return null;
                   return (
-                    <View key={ingredient.id} style={styles.selectedIngredientItem}>
+                    <View
+                      key={ingredient.id}
+                      style={styles.selectedIngredientItem}
+                    >
                       <View style={styles.selectedIngredientInfo}>
-                        <Text style={styles.selectedIngredientName}>{ingredient.name}</Text>
-                        <Text style={styles.selectedIngredientCategory}>{ingredient.category}</Text>
+                        <Text style={styles.selectedIngredientName}>
+                          {ingredient.name}
+                        </Text>
+                        <Text style={styles.selectedIngredientCategory}>
+                          {ingredient.category}
+                        </Text>
                       </View>
+
                       <View style={styles.quantityContainer}>
                         <TouchableOpacity
                           style={styles.quantityButton}
-                          onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity - 1)}>
+                          onPress={() =>
+                            handleUpdateIngredientQuantity(
+                              ingredient.id,
+                              quantity - 1
+                            )
+                          }
+                        >
                           <Text style={styles.quantityButtonText}>-</Text>
                         </TouchableOpacity>
+
                         <View style={styles.quantityInputContainer}>
                           <TextInput
                             style={styles.quantityInput}
                             value={quantity.toString()}
-                            onChangeText={(value) => handleUpdateIngredientQuantity(
-                              ingredient.id,
-                              parseFloat(value) || 0
-                            )}
+                            onChangeText={(value) =>
+                              handleUpdateIngredientQuantity(
+                                ingredient.id,
+                                parseFloat(value) || 0
+                              )
+                            }
                             keyboardType="decimal-pad"
                           />
                           <Text style={styles.unitText}>{ingredient.unit}</Text>
                         </View>
+
                         <TouchableOpacity
                           style={styles.quantityButton}
-                          onPress={() => handleUpdateIngredientQuantity(ingredient.id, quantity + 1)}>
+                          onPress={() =>
+                            handleUpdateIngredientQuantity(
+                              ingredient.id,
+                              quantity + 1
+                            )
+                          }
+                        >
                           <Text style={styles.quantityButtonText}>+</Text>
                         </TouchableOpacity>
                       </View>
+
                       <TouchableOpacity
                         style={styles.removeButton}
-                        onPress={() => handleRemoveIngredient(ingredient.id)}>
+                        onPress={() => handleRemoveIngredient(ingredient.id)}
+                      >
                         <Icon name="close" size={20} color="#FF3B30" />
                       </TouchableOpacity>
                     </View>
                   );
                 })}
-              </View>
-            )}
-          </View>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Détails de livraison</Text>
-            <View style={styles.formField}>
-              <Text style={styles.label}>Date de livraison</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="event" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  value={deliveryDate}
-                  onChangeText={setDeliveryDate}
-                />
-              </View>
-            </View>
+        {/* ======================
+            DÉTAILS LIVRAISON + CHAMPS
+        ====================== */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Détails de livraison</Text>
 
-            <View style={styles.formField}>
-              <Text style={styles.label}>Heure de livraison</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="access-time" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="14:30"
-                  value={deliveryTime}
-                  onChangeText={setDeliveryTime}
-                />
-              </View>
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.label}>Adresse de livraison</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="location-on" size={20} color="#665" />
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Adresse complète"
-                  value={address}
-                  onChangeText={setAddress}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-            </View>
-            {/* Champs supplémentaires */}
-            <View style={styles.formField}>
-              <Text style={styles.label}>Désignation</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="description" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Désignation de la commande"
-                  value={designation}
-                  onChangeText={setDesignation}
-                />
-              </View>
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.label}>Montant facturé</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="attach-money" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Montant facturé (USD)"
-                  value={billedAmount}
-                  onChangeText={setBilledAmount}
-                  keyboardType="decimal-pad"
-                />
-
-              </View>
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.label}>Date de facture</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="receipt" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  value={invoiceDate}
-                  onChangeText={setInvoiceDate}
-                />
-              </View>
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.label}>Date de paiement</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="payment" size={20} color="#665" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="YYYY-MM-DD"
-                  value={paymentDate}
-                  onChangeText={setPaymentDate}
-                />
-              </View>
+          <View style={styles.formField}>
+            <Text style={styles.label}>Date de livraison</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="event" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={deliveryDate}
+                onChangeText={setDeliveryDate}
+              />
             </View>
           </View>
 
-          <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Coût de la commande</Text>
-            <View style={styles.totalAmount}>
-              <Icon name="attach-money" size={24} color="#007AFF" />
-              <Text style={styles.totalValue}>
-                {formatCurrency(calculateOrderTotalCost({
-                  ...order,
+          <View style={styles.formField}>
+            <Text style={styles.label}>Heure de livraison</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="access-time" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="14:30"
+                value={deliveryTime}
+                onChangeText={setDeliveryTime}
+              />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>Adresse de livraison</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="location-on" size={20} color="#665" />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Adresse complète"
+                value={address}
+                onChangeText={setAddress}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          </View>
+
+          {/* Champs supplémentaires */}
+          <View style={styles.formField}>
+            <Text style={styles.label}>Désignation</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="description" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="Désignation de la commande"
+                value={designation}
+                onChangeText={setDesignation}
+              />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>Montant facturé</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="attach-money" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="Montant facturé (USD)"
+                value={billedAmount}
+                onChangeText={setBilledAmount}
+                keyboardType="decimal-pad"
+              />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>Date de facture</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="receipt" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={invoiceDate}
+                onChangeText={setInvoiceDate}
+              />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>Date de paiement</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="payment" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={paymentDate}
+                onChangeText={setPaymentDate}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* ======================
+            TOTAL
+        ====================== */}
+        <View style={styles.totalSection}>
+          <Text style={styles.totalLabel}>Coût de la commande</Text>
+          <View style={styles.totalAmount}>
+            <Icon name="attach-money" size={24} color="#007AFF" />
+            <Text style={styles.totalValue}>
+              {formatCurrency(
+                calculateOrderTotalCost({
+                  ...(order as any),
                   dishes: selectedDishes,
                   additionalIngredients,
-                } as Order))}
-              </Text>
-            </View>
+                } as Order)
+              )}
+            </Text>
           </View>
-        </ScrollView>
+        </View>
 
+        {/* ======================
+            FOOTER ACTIONS
+        ====================== */}
         <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={onClose}>
+          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>Annuler</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmit}>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>
               {order ? 'Modifier la commande' : 'Créer la commande'}
             </Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );

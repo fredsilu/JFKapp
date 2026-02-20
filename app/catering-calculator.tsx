@@ -179,43 +179,50 @@ export default function CateringCalculator() {
      SAVE (CREATE ONLY)
   ========================= */
 
-  const handleSave = async () => {
-    if (readOnly || saving) return;
+ const handleSave = async () => {
+  if (readOnly || saving) return;
 
-    if (!simulation.clientId) {
-      Alert.alert('Client requis', 'Veuillez sélectionner un client.');
-      return;
-    }
+  if (!simulation.clientId) {
+    Alert.alert('Client requis', 'Veuillez sélectionner un client.');
+    return;
+  }
 
-    if (!dateLivraison) {
-      Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
-      return;
-    }
+  if (!dateLivraison) {
+    Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
+    return;
+  }
 
-    try {
-      setSaving(true);
+  try {
+    setSaving(true);
 
-      const payload = {
-        ...simulation,
-        dateLivraison,
-        name: simulation.name || 'Simulation traiteur',
-      };
+    const payload = {
+      ...simulation,
+      dateLivraison,
+      name: simulation.name || 'Simulation traiteur',
 
-      await createCateringSimulation(payload);
+      // 🔥 AJOUT CRUCIAL
+      globalTurnover: result.globalTurnover,
+      globalCost: result.globalCost,
+      globalMargin: result.globalMargin,
 
-      Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
-    } catch (e) {
-      console.error('❌ save error:', e);
-      Alert.alert('Erreur', 'Échec de la sauvegarde.');
-    } finally {
-      setSaving(false);
-    }
-  };
+      status: 'validated',
+    };
+
+    await createCateringSimulation(payload as any);
+
+    Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
+      {
+        text: 'OK',
+        onPress: () => router.back(),
+      },
+    ]);
+  } catch (e) {
+    console.error('❌ save error:', e);
+    Alert.alert('Erreur', 'Échec de la sauvegarde.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   /* =========================
      HELPERS

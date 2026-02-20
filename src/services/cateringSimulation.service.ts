@@ -7,6 +7,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  where,
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
@@ -15,10 +17,15 @@ import { CateringSimulation } from '@/types/catering';
 const COLLECTION = 'catering_simulations';
 
 /* ================================
-   GET ALL SIMULATIONS
+   GET ALL SIMULATIONS (non supprimées)
 ================================ */
 export async function getCateringSimulations(): Promise<CateringSimulation[]> {
-  const snapshot = await getDocs(collection(db, COLLECTION));
+  const q = query(
+    collection(db, COLLECTION),
+    where('isDeleted', '==', false)
+  );
+
+  const snapshot = await getDocs(q);
 
   return snapshot.docs.map((docSnap) => ({
     id: docSnap.id,
@@ -47,11 +54,20 @@ export async function getSimulationById(
    CREATE SIMULATION
 ================================ */
 export async function createCateringSimulation(
-  simulation: Partial<CateringSimulation>
+  simulation: Omit<
+    CateringSimulation,
+    'id' | 'createdAt' | 'updatedAt'
+  >
 ) {
   const ref = await addDoc(collection(db, COLLECTION), {
     ...simulation,
+
+    // 🔥 Sécurisation champs système
+    isDeleted: false,
+    convertedToOrder: false,
+
     createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 
   return ref.id;
@@ -65,13 +81,46 @@ export async function updateCateringSimulation(
   simulation: Partial<CateringSimulation>
 ) {
   const ref = doc(db, COLLECTION, id);
-  await updateDoc(ref, simulation);
+
+  await updateDoc(ref, {
+    ...simulation,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 /* ================================
-   DELETE SIMULATION
+   SOFT DELETE SIMULATION
+================================ */
+export async function softDeleteCateringSimulation(id: string) {
+  const ref = doc(db, COLLECTION, id);
+
+  await updateDoc(ref, {
+    isDeleted: true,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/* ================================
+   HARD DELETE (optionnel)
 ================================ */
 export async function deleteCateringSimulation(id: string) {
   const ref = doc(db, COLLECTION, id);
   await deleteDoc(ref);
+}
+
+/* ================================
+   MARK AS CONVERTED
+================================ */
+export async function markSimulationAsConverted(
+  id: string,
+  orderId?: string
+) {
+  const ref = doc(db, COLLECTION, id);
+
+  await updateDoc(ref, {
+    convertedToOrder: true,
+    orderId: orderId ?? null,
+    convertedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }

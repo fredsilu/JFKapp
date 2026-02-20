@@ -14,7 +14,11 @@ import { CateringSimulation } from '@/types/catering';
 
 export default function CateringNewOrderScreen() {
   const router = useRouter();
-  const { fromSimulationId } = useLocalSearchParams();
+  const params = useLocalSearchParams<{ fromSimulationId?: string | string[] }>();
+
+  const fromSimulationId = Array.isArray(params.fromSimulationId)
+    ? params.fromSimulationId[0]
+    : params.fromSimulationId;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +27,7 @@ export default function CateringNewOrderScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        if (!fromSimulationId || typeof fromSimulationId !== 'string') {
+        if (!fromSimulationId) {
           setLoading(false);
           return;
         }
@@ -37,11 +41,11 @@ export default function CateringNewOrderScreen() {
           return;
         }
 
-        // 🎯 MODE A : Pré-remplissage minimal
+        // 🔥 PRÉ-REMPLISSAGE PROPRE
         const draft: Order = {
           id: '',
           clientId: sim.clientId,
-          client: undefined as any, // sera choisi dans le form
+          client: undefined as any, // sera sélectionné via dropdown dans OrderForm
           dishes: [],
           additionalIngredients: [],
           deliveryDate: sim.dateLivraison || '',
@@ -51,11 +55,16 @@ export default function CateringNewOrderScreen() {
           designation: sim.name || '',
           status: 'En cours',
           createdAt: new Date().toISOString(),
+
+          // 🔥 Traçabilité simulation
+          fromSimulationId: sim.id,
+          simulatedAmount: sim.globalTurnover ?? 0,
+          billedAmount: sim.globalTurnover ?? 0,
         };
 
         setOrderDraft(draft);
       } catch (e) {
-        console.error(e);
+        console.error('❌ load simulation error:', e);
         setError('Erreur lors du chargement de la simulation');
       } finally {
         setLoading(false);
@@ -72,7 +81,7 @@ export default function CateringNewOrderScreen() {
       await addOrder(values);
       router.replace('/all-orders');
     } catch (e) {
-      console.error(e);
+      console.error('❌ create order error:', e);
       setError('Erreur lors de la création de la commande');
     }
   };
@@ -83,6 +92,11 @@ export default function CateringNewOrderScreen() {
   return (
     <View style={{ flex: 1 }}>
       <OrderForm
+        key={
+          orderDraft?.fromSimulationId ||
+          orderDraft?.clientId ||
+          'new-order'
+        }
         order={orderDraft}
         onClose={() => router.back()}
         onSubmit={handleSubmit}

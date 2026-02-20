@@ -74,6 +74,7 @@ export interface OrderIngredient {
   quantity: number;
 }
 
+
 export interface Order {
   id: string;
   clientId: string;
@@ -81,16 +82,20 @@ export interface Order {
   status: 'En cours' | 'En préparation' | 'Livré';
   dishes: OrderDish[];
   additionalIngredients: OrderIngredient[];
-  deliveryAddress: string; // Added deliveryAddress property
-  deliveryDate: string; // Date de livraison (YYYY-MM-DD)
-  deliveryTime: string; // Heure de livraison (HH:MM)
+  deliveryAddress: string;
+  deliveryDate: string;
+  deliveryTime: string;
   address: string;
   createdAt: string;
   updatedAt?: Date;
-  designation?: string; // Désignation de la commande
-  billedAmount?: number; // Montant facturé
-  invoiceDate?: string; // Date de facture (YYYY-MM-DD)
-  paymentDate?: string; // Date de paiement (YYYY-MM-DD)
+  designation?: string;
+  billedAmount?: number;
+  invoiceDate?: string;
+  paymentDate?: string;
+
+  // 🔥 AJOUTS
+  fromSimulationId?: string;
+  simulatedAmount?: number;
 }
 
 
