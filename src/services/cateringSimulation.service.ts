@@ -12,7 +12,7 @@ import {
 import { db } from '@/lib/firebase';
 import { CateringSimulation } from '@/types/catering';
 
-const COLLECTION = 'cateringSimulations';
+const COLLECTION = 'catering_simulations';
 
 /* ================================
    GET ALL SIMULATIONS
