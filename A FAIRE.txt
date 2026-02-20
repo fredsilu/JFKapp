@@ -1,10 +1,3 @@
-“On reprend l’app”
-
-“On continue simulation → commande”
-
-ou même juste “on continue”
-
-On va organiser ça en :
 
 * 🔧 Correctifs urgents
 * 🚀 Versions courtes (1.x)
@@ -29,11 +22,6 @@ Objectif : rendre l’app utilisable en production chez Crepolia.
 * Fix scroll dans dropdown clients
 * Export PDF devis client
 * Nettoyage technique final
-
-
-## Client Details
-
-* Montant affiché = montant facturé (et non coût)
 
 
 ## Branding

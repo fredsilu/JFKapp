@@ -93,7 +93,8 @@ export default function OrdersScreen() {
       <ScrollView style={styles.content}>
         {orders.map(order => {
           const totalItems = order.dishes.reduce((t, d) => t + d.quantity, 0);
-          const totalAmount = calculateOrderTotal(order);
+          const costAmount = calculateOrderTotal(order);
+          const billedAmount = order.billedAmount ?? 0;
 
           return (
             <TouchableOpacity
@@ -126,15 +127,26 @@ export default function OrdersScreen() {
               <View style={styles.metaRow}>
                 <Text style={styles.metaText}>{totalItems} articles</Text>
 
-                <View style={styles.priceRow}>
-                  
-                  <Text style={styles.priceText}>
-                    {formatCurrency(totalAmount)}
+                <View style={styles.amountContainer}>
+                  {/* Coût */}
+                  <Text style={styles.costText}>
+                    Coût : {formatCurrency(costAmount)}
                   </Text>
+
+                  {/* Facturé */}
+                  {billedAmount > 0 ? (
+                    <Text style={styles.billedText}>
+                      Facturé : {formatCurrency(billedAmount)}
+                    </Text>
+                  ) : (
+                    <Text style={styles.notBilledText}>
+                      Non facturé
+                    </Text>
+                  )}
                 </View>
               </View>
 
-              {/* ✅ DESIGNATION (BON ENDROIT) */}
+              {/* DESIGNATION */}
               {order.designation && (
                 <Text style={styles.designation}>
                   {order.designation}
@@ -254,14 +266,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  amountContainer: {
+    alignItems: 'flex-end',
   },
-  priceText: {
-    fontWeight: '600',
+  costText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  billedText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#007AFF',
+  },
+  notBilledText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '600',
   },
   designation: {
     marginTop: 8,
