@@ -56,7 +56,7 @@ export interface Transaction {
   category: string;
   description?: string;
 
-  // Lien prévisionnel (optionnel)
+  // Lien prévisionnel
   forecastId?: string;
 
   // Gestion transfert interne
@@ -69,7 +69,7 @@ export interface Transaction {
 }
 
 /* ============================= */
-/*         FORECAST (PREV)       */
+/*         FORECAST              */
 /* ============================= */
 
 export interface Forecast {
@@ -87,6 +87,10 @@ export interface Forecast {
   category: string;
   description?: string;
 
+  // 🔥 NOUVEAU
+  isExecuted: boolean;
+  linkedTransactionId?: string;
+
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -102,6 +106,10 @@ export interface PeriodFilter {
   entity?: EntityType;
 }
 
+/* ============================= */
+/*     ENTITY DASHBOARD          */
+/* ============================= */
+
 export interface EntityDashboardSummary {
   totalIncome: number;
   totalExpense: number;
@@ -112,13 +120,28 @@ export interface EntityDashboardSummary {
   totalMobile: number;
   totalTreasury: number;
 
+  /* ===== Forecast ===== */
+
   forecastIncome: number;
   forecastExpense: number;
+
+  executedForecastIncome: number;
+  executedForecastExpense: number;
+
+  plannedNet: number;
   forecastGap: number;
+
+  executionRate: number;
+
+  /* ===== Optional future use ===== */
 
   dividend?: number;
   dividendRate?: number;
 }
+
+/* ============================= */
+/*       GROUP DASHBOARD         */
+/* ============================= */
 
 export interface GroupDashboardSummary {
   totalIncome: number;
