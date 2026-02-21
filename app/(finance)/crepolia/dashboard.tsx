@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
 import { distributeDividend } from "@/src/finance/services/dividendService";
+import { useProjection } from "@/src/finance/hooks/useProjection";
 
 /* ============================= */
 /*         MAIN SCREEN           */
@@ -21,6 +22,7 @@ export default function CrepoliaDashboard() {
   const router = useRouter();
   const { data, loading, reload } = useFinanceDashboard("crepolia");
   const [processing, setProcessing] = useState(false);
+  const { data: projection } = useProjection("crepolia");
 
   if (loading) {
     return (
@@ -105,7 +107,7 @@ export default function CrepoliaDashboard() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        
+
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>🏢 Crepolia</Text>
@@ -139,6 +141,24 @@ export default function CrepoliaDashboard() {
             <Card title="Dépenses" value={totalExpense} color="#dc2626" />
           </View>
         </View>
+
+        {projection && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Projection 90 jours</Text>
+
+            <View style={styles.resultCard}>
+              <Text style={styles.resultLabel}>Trésorerie projetée</Text>
+              <Text style={[styles.resultValue, { color: "#0ea5e9" }]}>
+                {formatNumber(projection.projectedTreasury)} USD
+              </Text>
+            </View>
+
+            <View style={styles.grid}>
+              <Card title="Entrées prévues" value={projection.projectedIncome} color="#16a34a" />
+              <Card title="Dépenses prévues" value={projection.projectedExpense} color="#dc2626" />
+            </View>
+          </View>
+        )}
 
         {/* DIVIDEND */}
         <View style={styles.section}>
