@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getGroupDashboard } from "@/src/finance/services/financeDashboardService";
 import { GroupDashboardSummary } from "@/types/finance.types";
 
 export function useGroupDashboard() {
   const [data, setData] = useState<GroupDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
+  const load = useCallback(async () => {
+    try {
       setLoading(true);
+      setError(null);
 
       const startDate = new Date();
       startDate.setDate(1);
@@ -22,11 +24,17 @@ export function useGroupDashboard() {
       });
 
       setData(result);
+    } catch (err) {
+      console.error("Erreur dashboard groupe:", err);
+      setError("Impossible de charger le dashboard groupe");
+    } finally {
       setLoading(false);
     }
-
-    load();
   }, []);
 
-  return { data, loading };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { data, loading, error, reload: load };
 }

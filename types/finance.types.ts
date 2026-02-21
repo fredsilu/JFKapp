@@ -115,6 +115,9 @@ export interface EntityDashboardSummary {
   forecastIncome: number;
   forecastExpense: number;
   forecastGap: number;
+
+  dividend?: number;
+  dividendRate?: number;
 }
 
 export interface GroupDashboardSummary {

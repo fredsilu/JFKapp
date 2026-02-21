@@ -19,19 +19,21 @@ import {
 } from "@/types/finance.types";
 
 /* ============================= */
-/*       COLLECTION NAME         */
+/*       COLLECTION REF          */
 /* ============================= */
 
-const COLLECTION_NAME = "finance_transactions";
+const getTransactionsCollection = (entity: string) =>
+  collection(db, "finance", entity, "transactions");
 
 /* ============================= */
 /*       CREATE TRANSACTION      */
 /* ============================= */
 
 export async function createTransaction(
-  transaction: Omit<Transaction, "id" | "createdAt">
+  entity: "maison" | "crepolia",
+  transaction: Omit<Transaction, "id" | "createdAt" | "entity">
 ) {
-  const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+  const docRef = await addDoc(getTransactionsCollection(entity), {
     ...transaction,
     date: Timestamp.fromDate(transaction.date),
     createdAt: Timestamp.now(),
@@ -46,9 +48,8 @@ export async function createTransaction(
 
 export async function getTransactionsByEntity(entity: string) {
   const q = query(
-    collection(db, COLLECTION_NAME),
-    where("entity", "==", entity),
-    orderBy("date", "desc") // nécessite index composite
+    getTransactionsCollection(entity),
+    orderBy("date", "desc")
   );
 
   const snapshot = await getDocs(q);
@@ -75,12 +76,10 @@ export async function createInternalTransfer(
   const batch = writeBatch(db);
   const transferId = uuidv4();
 
-  const sourceRef = doc(collection(db, COLLECTION_NAME));
-  const targetRef = doc(collection(db, COLLECTION_NAME));
+  const sourceRef = doc(getTransactionsCollection(input.sourceEntity));
+  const targetRef = doc(getTransactionsCollection(input.targetEntity));
 
-  // Dépense côté source
   batch.set(sourceRef, {
-    entity: input.sourceEntity,
     type: "expense",
     amount: input.amount,
     currency: input.currency,
@@ -90,13 +89,10 @@ export async function createInternalTransfer(
     description: input.description || "Transfert interne",
     isInternalTransfer: true,
     transferId,
-    internalTargetEntity: input.targetEntity,
     createdAt: Timestamp.now(),
   });
 
-  // Entrée côté destination
   batch.set(targetRef, {
-    entity: input.targetEntity,
     type: "income",
     amount: input.amount,
     currency: input.currency,
@@ -106,7 +102,6 @@ export async function createInternalTransfer(
     description: input.description || "Transfert interne",
     isInternalTransfer: true,
     transferId,
-    internalTargetEntity: input.sourceEntity,
     createdAt: Timestamp.now(),
   });
 
@@ -117,9 +112,12 @@ export async function createInternalTransfer(
 /*    DELETE INTERNAL TRANSFER   */
 /* ============================= */
 
-export async function deleteInternalTransfer(transferId: string) {
+export async function deleteInternalTransfer(
+  entity: string,
+  transferId: string
+) {
   const q = query(
-    collection(db, COLLECTION_NAME),
+    getTransactionsCollection(entity),
     where("transferId", "==", transferId)
   );
 
@@ -127,7 +125,7 @@ export async function deleteInternalTransfer(transferId: string) {
   const batch = writeBatch(db);
 
   snapshot.forEach((docSnap) => {
-    batch.delete(doc(db, COLLECTION_NAME, docSnap.id));
+    batch.delete(doc(getTransactionsCollection(entity), docSnap.id));
   });
 
   await batch.commit();
@@ -137,6 +135,9 @@ export async function deleteInternalTransfer(transferId: string) {
 /*        DELETE SINGLE          */
 /* ============================= */
 
-export async function deleteTransaction(id: string) {
-  await deleteDoc(doc(db, COLLECTION_NAME, id));
+export async function deleteTransaction(
+  entity: string,
+  id: string
+) {
+  await deleteDoc(doc(db, "finance", entity, "transactions", id));
 }

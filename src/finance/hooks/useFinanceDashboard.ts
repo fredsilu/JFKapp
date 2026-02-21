@@ -1,31 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEntityDashboard } from "@/src/finance/services/financeDashboardService";
-import { EntityDashboardSummary } from "@/types/finance.types";
+import {
+  EntityDashboardSummary,
+  EntityType,
+  PeriodFilter,
+} from "@/types/finance.types";
 
-export function useFinanceDashboard(entity: "maison" | "crepolia") {
+export function useFinanceDashboard(entity: EntityType) {
   const [data, setData] = useState<EntityDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
+  const load = useCallback(async () => {
+    try {
       setLoading(true);
 
       const startDate = new Date();
-      startDate.setDate(1); // début du mois
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
 
       const endDate = new Date();
 
-      const result = await getEntityDashboard(entity, {
+      const filter: PeriodFilter = {
         startDate,
         endDate,
-      });
+      };
 
+      const result = await getEntityDashboard(entity, filter);
       setData(result);
+    } catch (error) {
+      console.error("Dashboard error:", error);
+    } finally {
       setLoading(false);
     }
-
-    load();
   }, [entity]);
 
-  return { data, loading };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return {
+    data,
+    loading,
+    reload: load, // 🔥 maintenant reload existe
+  };
 }

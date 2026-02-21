@@ -10,25 +10,51 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
 
+/* ============================= */
+/*         MAIN SCREEN           */
+/* ============================= */
+
 export default function MaisonDashboard() {
   const router = useRouter();
   const { data, loading } = useFinanceDashboard("maison");
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator style={{ marginTop: 60 }} />
+        <ActivityIndicator style={{ marginTop: 60 }} size="large" />
       </SafeAreaView>
     );
   }
+
+  if (!data) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text>Aucune donnée disponible</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const {
+    totalIncome = 0,
+    totalExpense = 0,
+    netResult = 0,
+    totalTreasury = 0,
+    totalCash = 0,
+    totalBank = 0,
+    totalMobile = 0,
+    forecastGap = 0,
+  } = data;
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
         
-        {/* HEADER SECTION */}
+        {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>🏠 Maison</Text>
+
           <TouchableOpacity
             style={styles.journalButton}
             onPress={() => router.push("/(finance)/maison/journal")}
@@ -37,7 +63,7 @@ export default function MaisonDashboard() {
           </TouchableOpacity>
         </View>
 
-        {/* RESULT SECTION */}
+        {/* ================= RESULT ================= */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Résultat du mois</Text>
 
@@ -46,37 +72,45 @@ export default function MaisonDashboard() {
             <Text
               style={[
                 styles.resultValue,
-                { color: data.netResult >= 0 ? "#16a34a" : "#dc2626" },
+                { color: netResult >= 0 ? "#16a34a" : "#dc2626" },
               ]}
             >
-              {data.netResult.toLocaleString()} USD
+              {formatNumber(netResult)} USD
             </Text>
           </View>
 
           <View style={styles.grid}>
-            <Card title="Revenus" value={data.totalIncome} color="#16a34a" />
-            <Card title="Dépenses" value={data.totalExpense} color="#dc2626" />
+            <Card
+              title="Revenus"
+              value={totalIncome}
+              color="#16a34a"
+            />
+            <Card
+              title="Dépenses"
+              value={totalExpense}
+              color="#dc2626"
+            />
           </View>
         </View>
 
-        {/* TREASURY SECTION */}
+        {/* ================= TREASURY ================= */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Trésorerie</Text>
 
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Total disponible</Text>
             <Text style={[styles.resultValue, { color: "#2563eb" }]}>
-              {data.totalTreasury.toLocaleString()} USD
+              {formatNumber(totalTreasury)} USD
             </Text>
           </View>
 
           <View style={styles.grid}>
-            <Card title="Espèces" value={data.totalCash} />
-            <Card title="Banque" value={data.totalBank} />
-            <Card title="Mobile" value={data.totalMobile} />
+            <Card title="Espèces" value={totalCash} />
+            <Card title="Banque" value={totalBank} />
+            <Card title="Mobile" value={totalMobile} />
             <Card
               title="Écart prévisionnel"
-              value={data.forecastGap}
+              value={forecastGap}
               color="#f59e0b"
             />
           </View>
@@ -87,7 +121,7 @@ export default function MaisonDashboard() {
 }
 
 /* ============================= */
-/*        CARD COMPONENT         */
+/*         CARD COMPONENT        */
 /* ============================= */
 
 function Card({
@@ -103,10 +137,18 @@ function Card({
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
       <Text style={[styles.cardValue, { color }]}>
-        {value.toLocaleString()}
+        {formatNumber(value)}
       </Text>
     </View>
   );
+}
+
+/* ============================= */
+/*        FORMATTER UTIL         */
+/* ============================= */
+
+function formatNumber(value: number) {
+  return Number(value || 0).toLocaleString();
 }
 
 /* ============================= */
@@ -120,6 +162,11 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
