@@ -48,6 +48,7 @@
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
     "svg.js": "^2.7.1",
+    "uuid": "^13.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
