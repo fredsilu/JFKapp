@@ -1,44 +1,43 @@
-import { initializeApp } from 'firebase/app';
-//import { getAuth } from 'firebase/auth';
-import { getFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import {
+  initializeFirestore,
+  getFirestore,
+  memoryLocalCache,
+  Firestore,
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+// import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAX36VChlxdx6DltY5mPAnK9qYxyIif9g4",
   authDomain: "tokeyproject.firebaseapp.com",
   projectId: "tokeyproject",
-  storageBucket: "tokeyproject.appspot.com", // Fixed storage bucket URL
+  storageBucket: "tokeyproject.appspot.com",
   messagingSenderId: "212272618971",
   appId: "1:212272618971:web:8495015b2c115cf8895bfe",
-  measurementId: "G-YYV92PXNMQ"
+  measurementId: "G-YYV92PXNMQ",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// ✅ Empêche double initialisation Firebase
+const app =
+  getApps().length === 0
+    ? initializeApp(firebaseConfig)
+    : getApp();
 
-// Get Firebase services
-//export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// ✅ On type explicitement Firestore
+let db: Firestore;
 
-// Enable Firestore offline persistence
 try {
-  const { enableIndexedDbPersistence } = require('firebase/firestore');
-  interface FirestoreError extends Error {
-    code: string;
-  }
-
-  enableIndexedDbPersistence(db).catch((err: FirestoreError) => {
-    if (err.code === 'failed-precondition') {
-      // Multiple tabs open, persistence can only be enabled in one tab at a time
-      console.warn('Firebase persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      // The current browser doesn't support persistence
-      console.warn('Firebase persistence not supported in this environment');
-    }
+  db = initializeFirestore(app, {
+    localCache: memoryLocalCache(),
   });
-} catch (error) {
-  // Ignore error in environments where IndexedDB is not available
+} catch (e) {
+  db = getFirestore(app);
 }
 
+// Other services
+// export const auth = getAuth(app);
+export const storage = getStorage(app);
+
+export { db };
 export default app;

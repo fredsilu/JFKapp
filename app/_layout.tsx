@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent splash auto hide
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -30,23 +29,29 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack
-        initialRouteName="modules"
+        initialRouteName="index"
         screenOptions={{
-          headerShown: false, // IMPORTANT : pas de header ici
+          headerShown: false,
         }}
       >
-        {/* Sélecteur Modules */}
-        <Stack.Screen name="modules" />
+        {/* Route racine */}
+        <Stack.Screen name="index" />
 
-        {/* Routes isolées hors Tabs */}
+        {/* Écrans indépendants */}
         <Stack.Screen
           name="preparation-ingredients"
-          options={{ title: 'Ingrédients en préparation', headerShown: true }}
+          options={{
+            title: 'Ingrédients en préparation',
+            headerShown: true,
+          }}
         />
 
         <Stack.Screen
           name="analytics"
-          options={{ title: 'Analytics', headerShown: true }}
+          options={{
+            title: 'Analytics',
+            headerShown: true,
+          }}
         />
 
         <Stack.Screen name="+not-found" />

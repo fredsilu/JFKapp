@@ -10,14 +10,14 @@ export default function ModuleSelector() {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.replace("/(traiteur)")}
+        onPress={() => router.push("/(traiteur)")}
       >
         <Text style={styles.buttonText}>🍽 Traiteur</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, styles.financeButton]}
-        onPress={() => router.replace("/(finance)")}
+        onPress={() => router.push("/(finance)")}
       >
         <Text style={styles.buttonText}>💰 Finance</Text>
       </TouchableOpacity>
