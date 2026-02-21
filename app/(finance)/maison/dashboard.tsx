@@ -10,7 +10,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
 
-
 /* ============================= */
 /*         MAIN SCREEN           */
 /* ============================= */
@@ -46,12 +45,24 @@ export default function MaisonDashboard() {
     totalBank = 0,
     totalMobile = 0,
     forecastGap = 0,
+    totalBudget = 0,
+    budgetGap = 0,
+    budgetByCategory = {},
   } = data;
+
+  const budgetAlerts = Object.entries(budgetByCategory).reduce(
+    (acc, [_, values]) => {
+      if (values.usageRate > 100) acc.over += 1;
+      else if (values.usageRate >= 85) acc.warning += 1;
+      return acc;
+    },
+    { over: 0, warning: 0 }
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        
+
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>🏠 Maison</Text>
@@ -64,7 +75,7 @@ export default function MaisonDashboard() {
           </TouchableOpacity>
         </View>
 
-        {/* ================= RESULT ================= */}
+        {/* RESULT */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Résultat du mois</Text>
 
@@ -81,20 +92,12 @@ export default function MaisonDashboard() {
           </View>
 
           <View style={styles.grid}>
-            <Card
-              title="Revenus"
-              value={totalIncome}
-              color="#16a34a"
-            />
-            <Card
-              title="Dépenses"
-              value={totalExpense}
-              color="#dc2626"
-            />
+            <Card title="Revenus" value={totalIncome} color="#16a34a" />
+            <Card title="Dépenses" value={totalExpense} color="#dc2626" />
           </View>
         </View>
 
-        {/* ================= TREASURY ================= */}
+        {/* TREASURY */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Trésorerie</Text>
 
@@ -116,13 +119,96 @@ export default function MaisonDashboard() {
             />
           </View>
         </View>
+
+        {(budgetAlerts.over > 0 || budgetAlerts.warning > 0) && (
+          <View style={styles.alertCard}>
+            {budgetAlerts.over > 0 && (
+              <Text style={styles.alertRed}>
+                🔴 {budgetAlerts.over} catégorie(s) en dépassement
+              </Text>
+            )}
+
+            {budgetAlerts.warning > 0 && (
+              <Text style={styles.alertOrange}>
+                🟠 {budgetAlerts.warning} catégorie(s) proche du dépassement
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* BUDGET GLOBAL */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Budget mensuel</Text>
+
+          <View style={styles.grid}>
+            <Card title="Budget total" value={totalBudget} color="#111827" />
+            <Card
+              title="Écart budget"
+              value={budgetGap}
+              color={budgetGap >= 0 ? "#16a34a" : "#dc2626"}
+            />
+          </View>
+        </View>
+
+        {/* BUDGET PAR CATÉGORIE */}
+        {Object.keys(budgetByCategory).length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Budget par catégorie</Text>
+
+            {Object.entries(budgetByCategory).map(
+              ([category, values]) => (
+                <View key={category} style={styles.categoryCard}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+
+                  <View style={styles.categoryRow}>
+                    <Text style={styles.categoryText}>
+                      Budget: {formatNumber(values.budget)}
+                    </Text>
+                    <Text style={styles.categoryText}>
+                      Réel: {formatNumber(values.actual)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.categoryRow}>
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        {
+                          color:
+                            values.gap >= 0 ? "#16a34a" : "#dc2626",
+                        },
+                      ]}
+                    >
+                      Écart: {formatNumber(values.gap)}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        {
+                          color:
+                            values.usageRate > 100
+                              ? "#dc2626"
+                              : "#16a34a",
+                        },
+                      ]}
+                    >
+                      {values.usageRate.toFixed(0)}%
+                    </Text>
+                  </View>
+                </View>
+              )
+            )}
+          </View>
+        )}
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 /* ============================= */
-/*         CARD COMPONENT        */
+/* COMPONENTS & UTILS           */
 /* ============================= */
 
 function Card({
@@ -144,10 +230,6 @@ function Card({
   );
 }
 
-/* ============================= */
-/*        FORMATTER UTIL         */
-/* ============================= */
-
 function formatNumber(value: number) {
   return Number(value || 0).toLocaleString();
 }
@@ -157,41 +239,24 @@ function formatNumber(value: number) {
 /* ============================= */
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#f3f4f6",
-  },
-  container: {
-    padding: 16,
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  safe: { flex: 1, backgroundColor: "#f3f4f6" },
+  container: { padding: 16 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-  },
+  title: { fontSize: 22, fontWeight: "bold" },
   journalButton: {
     backgroundColor: "#2563eb",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  journalText: {
-    color: "white",
-    fontWeight: "600",
-  },
-  section: {
-    marginBottom: 30,
-  },
+  journalText: { color: "white", fontWeight: "600" },
+  section: { marginBottom: 30 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -205,15 +270,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
-  resultLabel: {
-    fontSize: 14,
-    color: "#6b7280",
-  },
-  resultValue: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 6,
-  },
+  resultLabel: { fontSize: 14, color: "#6b7280" },
+  resultValue: { fontSize: 22, fontWeight: "bold", marginTop: 6 },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -227,13 +285,40 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     elevation: 2,
   },
-  cardTitle: {
-    fontSize: 13,
-    color: "#6b7280",
+  cardTitle: { fontSize: 13, color: "#6b7280" },
+  cardValue: { fontSize: 18, fontWeight: "bold", marginTop: 6 },
+
+  categoryCard: {
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 1,
   },
-  cardValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 6,
+  categoryTitle: { fontWeight: "bold", marginBottom: 6 },
+  categoryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
+  categoryText: { fontSize: 13 },
+
+  alertCard: {
+  backgroundColor: "#fff7ed",
+  padding: 14,
+  borderRadius: 12,
+  marginBottom: 20,
+  borderWidth: 1,
+  borderColor: "#fed7aa",
+},
+
+alertRed: {
+  color: "#dc2626",
+  fontWeight: "600",
+  marginBottom: 4,
+},
+
+alertOrange: {
+  color: "#ea580c",
+  fontWeight: "600",
+},
 });

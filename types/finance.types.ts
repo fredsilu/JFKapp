@@ -56,10 +56,8 @@ export interface Transaction {
   category: string;
   description?: string;
 
-  // Lien prévisionnel
   forecastId?: string;
 
-  // Gestion transfert interne
   isInternalTransfer?: boolean;
   transferId?: string;
   internalTargetEntity?: EntityType;
@@ -87,9 +85,29 @@ export interface Forecast {
   category: string;
   description?: string;
 
-  // 🔥 NOUVEAU
   isExecuted: boolean;
   linkedTransactionId?: string;
+
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/* ============================= */
+/*         BUDGET                */
+/* ============================= */
+
+export interface Budget {
+  id: string;
+
+  entity: EntityType;
+
+  category: string;
+
+  month: number; // 0-11
+  year: number;
+
+  amount: number;
+  currency: CurrencyType;
 
   createdAt: Date;
   updatedAt?: Date;
@@ -106,10 +124,6 @@ export interface PeriodFilter {
   entity?: EntityType;
 }
 
-/* ============================= */
-/*     ENTITY DASHBOARD          */
-/* ============================= */
-
 export interface EntityDashboardSummary {
   totalIncome: number;
   totalExpense: number;
@@ -119,8 +133,6 @@ export interface EntityDashboardSummary {
   totalBank: number;
   totalMobile: number;
   totalTreasury: number;
-
-  /* ===== Forecast ===== */
 
   forecastIncome: number;
   forecastExpense: number;
@@ -133,15 +145,22 @@ export interface EntityDashboardSummary {
 
   executionRate: number;
 
-  /* ===== Optional future use ===== */
+  /* 🔥 Budget fields ajoutés */
+  totalBudget?: number;
+  budgetGap?: number;
 
   dividend?: number;
   dividendRate?: number;
+  budgetByCategory?: Record<
+    string,
+    {
+      budget: number;
+      actual: number;
+      gap: number;
+      usageRate: number;
+    }
+  >;
 }
-
-/* ============================= */
-/*       GROUP DASHBOARD         */
-/* ============================= */
 
 export interface GroupDashboardSummary {
   totalIncome: number;

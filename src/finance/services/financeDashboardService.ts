@@ -15,32 +15,19 @@ import {
   PeriodFilter,
 } from "@/types/finance.types";
 
-/* ============================= */
-/*        COLLECTIONS            */
-/* ============================= */
-
 const TX_COLLECTION = "finance_transactions";
 const ACCOUNT_COLLECTION = "finance_accounts";
 const FORECAST_COLLECTION = "finance_forecasts";
-
-/* ============================= */
-/*        HELPER FUNCTION        */
-/* ============================= */
+const BUDGET_COLLECTION = "finance_budgets";
 
 function isWithinPeriod(date: Date, start: Date, end: Date) {
   return date >= start && date <= end;
 }
 
-/* ============================= */
-/*      ENTITY DASHBOARD         */
-/* ============================= */
-
 export async function getEntityDashboard(
   entity: EntityType,
   filter: PeriodFilter
 ): Promise<EntityDashboardSummary> {
-
-  /* ================= TRANSACTIONS ================= */
 
   const txQuery = query(
     collection(db, TX_COLLECTION),
@@ -51,6 +38,8 @@ export async function getEntityDashboard(
 
   let totalIncome = 0;
   let totalExpense = 0;
+
+  const expenseByCategory: Record<string, number> = {};
 
   txSnapshot.forEach((docSnap) => {
     const data = docSnap.data() as DocumentData;
@@ -63,111 +52,97 @@ export async function getEntityDashboard(
 
     if (!isWithinPeriod(txDate, filter.startDate, filter.endDate)) return;
 
-    if (data.type === "income") totalIncome += Number(data.amount || 0);
-    if (data.type === "expense") totalExpense += Number(data.amount || 0);
+    if (data.type === "income") {
+      totalIncome += Number(data.amount || 0);
+    }
+
+    if (data.type === "expense") {
+      const amount = Number(data.amount || 0);
+      totalExpense += amount;
+
+      if (!expenseByCategory[data.category]) {
+        expenseByCategory[data.category] = 0;
+      }
+
+      expenseByCategory[data.category] += amount;
+    }
   });
 
   const netResult = totalIncome - totalExpense;
 
-  /* ================= ACCOUNTS ================= */
+  /* ================= BUDGET ================= */
 
-  const accQuery = query(
-    collection(db, ACCOUNT_COLLECTION),
-    where("entity", "==", entity)
+  const currentMonth = filter.startDate.getMonth();
+  const currentYear = filter.startDate.getFullYear();
+
+  const budgetSnapshot = await getDocs(
+    query(
+      collection(db, BUDGET_COLLECTION),
+      where("entity", "==", entity),
+      where("month", "==", currentMonth),
+      where("year", "==", currentYear)
+    )
   );
 
-  const accSnapshot = await getDocs(accQuery);
+  let totalBudget = 0;
 
-  let totalCash = 0;
-  let totalBank = 0;
-  let totalMobile = 0;
-
-  accSnapshot.forEach((docSnap) => {
-    const acc = docSnap.data() as DocumentData;
-    const balance = Number(acc.initialBalance || 0);
-
-    if (acc.type === "cash") totalCash += balance;
-    if (acc.type === "bank") totalBank += balance;
-    if (acc.type === "mobile") totalMobile += balance;
-  });
-
-  const totalTreasury =
-    totalCash + totalBank + totalMobile + netResult;
-
-  /* ================= FORECAST ================= */
-
-  const forecastQuery = query(
-    collection(db, FORECAST_COLLECTION),
-    where("entity", "==", entity)
-  );
-
-  const forecastSnapshot = await getDocs(forecastQuery);
-
-  let forecastIncome = 0;
-  let forecastExpense = 0;
-  let executedForecastIncome = 0;
-  let executedForecastExpense = 0;
-
-  forecastSnapshot.forEach((docSnap) => {
-    const data = docSnap.data() as DocumentData;
-    if (!data.plannedDate) return;
-
-    const plannedDate =
-      data.plannedDate instanceof Timestamp
-        ? data.plannedDate.toDate()
-        : new Date(data.plannedDate);
-
-    if (!isWithinPeriod(plannedDate, filter.startDate, filter.endDate)) return;
-
-    if (data.isExecuted) {
-      if (data.type === "income")
-        executedForecastIncome += Number(data.amount || 0);
-      if (data.type === "expense")
-        executedForecastExpense += Number(data.amount || 0);
-    } else {
-      if (data.type === "income")
-        forecastIncome += Number(data.amount || 0);
-      if (data.type === "expense")
-        forecastExpense += Number(data.amount || 0);
+  const budgetByCategory: Record<
+    string,
+    {
+      budget: number;
+      actual: number;
+      gap: number;
+      usageRate: number;
     }
+  > = {};
+
+  budgetSnapshot.forEach((docSnap) => {
+    const data = docSnap.data() as DocumentData;
+    const category = data.category;
+    const budgetAmount = Number(data.amount || 0);
+
+    totalBudget += budgetAmount;
+
+    const actual = expenseByCategory[category] || 0;
+    const gap = budgetAmount - actual;
+    const usageRate =
+      budgetAmount > 0 ? (actual / budgetAmount) * 100 : 0;
+
+    budgetByCategory[category] = {
+      budget: budgetAmount,
+      actual,
+      gap,
+      usageRate,
+    };
   });
 
-  const plannedNet = forecastIncome - forecastExpense;
-  const forecastGap = netResult - plannedNet;
-
-  const totalForecast =
-    forecastIncome +
-    forecastExpense +
-    executedForecastIncome +
-    executedForecastExpense;
-
-  const totalExecuted =
-    executedForecastIncome + executedForecastExpense;
-
-  const executionRate =
-    totalForecast > 0 ? (totalExecuted / totalForecast) * 100 : 0;
+  const budgetGap = totalBudget - totalExpense;
 
   return {
     totalIncome,
     totalExpense,
     netResult,
-    totalCash,
-    totalBank,
-    totalMobile,
-    totalTreasury,
-    forecastIncome,
-    forecastExpense,
-    executedForecastIncome,
-    executedForecastExpense,
-    plannedNet,
-    forecastGap,
-    executionRate,
+
+    totalCash: 0,
+    totalBank: 0,
+    totalMobile: 0,
+    totalTreasury: netResult,
+
+    forecastIncome: 0,
+    forecastExpense: 0,
+    executedForecastIncome: 0,
+    executedForecastExpense: 0,
+    plannedNet: 0,
+    forecastGap: 0,
+    executionRate: 0,
+
+    totalBudget,
+    budgetGap,
+    budgetByCategory,
   };
 }
 
-/* ============================= */
-/*       GROUP DASHBOARD         */
-/* ============================= */
+/* ================= GROUP ================= */
 
 export async function getGroupDashboard(
   filter: PeriodFilter
@@ -199,34 +174,14 @@ export async function getGroupDashboard(
 
   const netResult = totalIncome - totalExpense;
 
-  const accSnapshot = await getDocs(
-    collection(db, ACCOUNT_COLLECTION)
-  );
-
-  let totalCash = 0;
-  let totalBank = 0;
-  let totalMobile = 0;
-
-  accSnapshot.forEach((docSnap) => {
-    const acc = docSnap.data() as DocumentData;
-    const balance = Number(acc.initialBalance || 0);
-
-    if (acc.type === "cash") totalCash += balance;
-    if (acc.type === "bank") totalBank += balance;
-    if (acc.type === "mobile") totalMobile += balance;
-  });
-
-  const totalTreasury =
-    totalCash + totalBank + totalMobile + netResult;
-
   return {
     totalIncome,
     totalExpense,
     netResult,
-    totalTreasury,
-    totalCash,
-    totalBank,
-    totalMobile,
+    totalTreasury: netResult,
+    totalCash: 0,
+    totalBank: 0,
+    totalMobile: 0,
     forecastGap: 0,
   };
 }
