@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchClients } from '@/src/services/clientService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import {
   Alert,
@@ -81,7 +82,10 @@ export default function CateringCalculator() {
   const router = useRouter();
 
   const [clientsById, setClientsById] = useState<Record<string, string>>({});
+  const [dateObject, setDateObject] = useState<Date | null>(null);
   const [dateLivraison, setDateLivraison] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
 
   const [simulation, setSimulation] = useState<CateringSimulationDraft>({
     name: '',
@@ -158,7 +162,11 @@ export default function CateringCalculator() {
         });
 
         const loadedDate = (data as any).dateLivraison ?? '';
-        setDateLivraison(loadedDate);
+
+        if (loadedDate) {
+          setDateLivraison(loadedDate);
+          setDateObject(new Date(loadedDate));
+        }
       } catch (e) {
         console.error(e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -179,50 +187,50 @@ export default function CateringCalculator() {
      SAVE (CREATE ONLY)
   ========================= */
 
- const handleSave = async () => {
-  if (readOnly || saving) return;
+  const handleSave = async () => {
+    if (readOnly || saving) return;
 
-  if (!simulation.clientId) {
-    Alert.alert('Client requis', 'Veuillez sélectionner un client.');
-    return;
-  }
+    if (!simulation.clientId) {
+      Alert.alert('Client requis', 'Veuillez sélectionner un client.');
+      return;
+    }
 
-  if (!dateLivraison) {
-    Alert.alert('Date requise', 'Veuillez saisir la date de livraison.');
-    return;
-  }
+    if (!dateObject) {
+      Alert.alert('Date requise', 'Veuillez sélectionner une date.');
+      return;
+    }
 
-  try {
-    setSaving(true);
+    try {
+      setSaving(true);
 
-    const payload = {
-      ...simulation,
-      dateLivraison,
-      name: simulation.name || 'Simulation traiteur',
+      const payload = {
+        ...simulation,
+        dateLivraison,
+        name: simulation.name || 'Simulation traiteur',
 
-      // 🔥 AJOUT CRUCIAL
-      globalTurnover: result.globalTurnover,
-      globalCost: result.globalCost,
-      globalMargin: result.globalMargin,
+        // 🔥 AJOUT CRUCIAL
+        globalTurnover: result.globalTurnover,
+        globalCost: result.globalCost,
+        globalMargin: result.globalMargin,
 
-      status: 'validated',
-    };
+        status: 'validated',
+      };
 
-    await createCateringSimulation(payload as any);
+      await createCateringSimulation(payload as any);
 
-    Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
-  } catch (e) {
-    console.error('❌ save error:', e);
-    Alert.alert('Erreur', 'Échec de la sauvegarde.');
-  } finally {
-    setSaving(false);
-  }
-};
+      Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (e) {
+      console.error('❌ save error:', e);
+      Alert.alert('Erreur', 'Échec de la sauvegarde.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   /* =========================
      HELPERS
@@ -264,10 +272,10 @@ export default function CateringCalculator() {
     clientName
       ? decodeURIComponent(String(clientName))
       : simulation.clientId && clientsById[simulation.clientId]
-      ? clientsById[simulation.clientId]
-      : simulation.clientId
-      ? simulation.clientId
-      : 'Client inconnu';
+        ? clientsById[simulation.clientId]
+        : simulation.clientId
+          ? simulation.clientId
+          : 'Client inconnu';
 
   return (
     <ScrollView style={styles.container}>
@@ -275,8 +283,8 @@ export default function CateringCalculator() {
         {mode === 'view'
           ? 'Détails de la simulation'
           : mode === 'reuse'
-          ? 'Réutiliser une simulation'
-          : 'Nouvelle simulation'}
+            ? 'Réutiliser une simulation'
+            : 'Nouvelle simulation'}
       </Text>
 
       {/* CLIENT + META */}
@@ -294,7 +302,9 @@ export default function CateringCalculator() {
         />
 
         {/* DATE LIVRAISON */}
-        <Text style={[styles.label, { marginTop: 12 }]}>Date de livraison</Text>
+        <Text style={[styles.label, { marginTop: 12 }]}>
+          Date de livraison
+        </Text>
 
         {readOnly ? (
           <View style={styles.readOnlyField}>
@@ -303,108 +313,139 @@ export default function CateringCalculator() {
             </Text>
           </View>
         ) : (
-          <TextInput
-            style={styles.input}
-            placeholder="YYYY-MM-DD"
-            value={dateLivraison}
-            onChangeText={setDateLivraison}
-          />
-        )}
-      </View>
+          <>
+            <TouchableOpacity
+              style={styles.input}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={{ color: dateLivraison ? '#000' : '#9CA3AF' }}>
+                {dateLivraison || 'Sélectionner une date'}
+              </Text>
+            </TouchableOpacity>
 
-      {/* BLOCS REPAS */}
-      {(['breakfast', 'lunch', 'drinks'] as const).map((k, i) =>
-        renderMealBlock({
-          key: k,
-          title: ['🥐 Petit-déjeuner', '🍽️ Déjeuner', '🥤 Boissons'][i],
-          simulation,
-          result,
-          updateMeal,
-          readOnly,
-        })
-      )}
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateObject || new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
 
-      {/* SERVICE */}
-      {renderServiceBlock({
-        simulation,
-        result,
-        updateService,
-        readOnly,
-      })}
+                  if (selectedDate) {
+                    setDateObject(selectedDate);
 
-      {/* RÉCAP FINANCIER */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
+                    const iso = selectedDate
+                      .toISOString()
+                      .split('T')[0];
 
-        {result.breakfast && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
-            <Text style={styles.recapValue}>
-              CA : {result.breakfast.totalTurnover.toFixed(2)} $
-            </Text>
-            <Text style={styles.recapSub}>
-              Coût matière : {result.breakfast.totalFoodCost.toFixed(2)} $
-            </Text>
-          </View>
+                    setDateLivraison(iso);
+                  }
+                }}
+              />
+            )}
+          </>
         )}
 
-        {result.lunch && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
-            <Text style={styles.recapValue}>
-              CA : {result.lunch.totalTurnover.toFixed(2)} $
-            </Text>
-            <Text style={styles.recapSub}>
-              Coût matière : {result.lunch.totalFoodCost.toFixed(2)} $
-            </Text>
-          </View>
-        )}
+        {/* BLOCS REPAS */}
+        {
+          (['breakfast', 'lunch', 'drinks'] as const).map((k, i) =>
+            renderMealBlock({
+              key: k,
+              title: ['🥐 Petit-déjeuner', '🍽️ Déjeuner', '🥤 Boissons'][i],
+              simulation,
+              result,
+              updateMeal,
+              readOnly,
+            })
+          )
+        }
 
-        {result.drinks && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>🥤 Boissons</Text>
-            <Text style={styles.recapValue}>
-              CA : {result.drinks.totalTurnover.toFixed(2)} $
-            </Text>
-            <Text style={styles.recapSub}>
-              Coût matière : {result.drinks.totalFoodCost.toFixed(2)} $
-            </Text>
-          </View>
-        )}
+        {/* SERVICE */}
+        {
+          renderServiceBlock({
+            simulation,
+            result,
+            updateService,
+            readOnly,
+          })
+        }
 
-        {result.service && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
-            <Text style={styles.recapValue}>
-              Coût total service : {result.service.totalServiceCost.toFixed(2)} $
-            </Text>
-          </View>
-        )}
-      </View>
+        {/* RÉCAP FINANCIER */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
 
-      {/* GLOBAL */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
-        <Text>CA total : {result.globalTurnover.toFixed(2)} $</Text>
-        <Text>Coût total : {result.globalCost.toFixed(2)} $</Text>
-        <Text>Marge : {result.globalMargin.toFixed(2)} $</Text>
-      </View>
-
-      {!readOnly && (
-        <TouchableOpacity
-          style={[styles.saveButton, saving && { opacity: 0.6 }]}
-          disabled={saving}
-          onPress={handleSave}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Enregistrer</Text>
+          {result.breakfast && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>🥐 Petit-déjeuner</Text>
+              <Text style={styles.recapValue}>
+                CA : {result.breakfast.totalTurnover.toFixed(2)} $
+              </Text>
+              <Text style={styles.recapSub}>
+                Coût matière : {result.breakfast.totalFoodCost.toFixed(2)} $
+              </Text>
+            </View>
           )}
-        </TouchableOpacity>
-      )}
 
-      <View style={{ height: 40 }} />
+          {result.lunch && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>🍽️ Déjeuner</Text>
+              <Text style={styles.recapValue}>
+                CA : {result.lunch.totalTurnover.toFixed(2)} $
+              </Text>
+              <Text style={styles.recapSub}>
+                Coût matière : {result.lunch.totalFoodCost.toFixed(2)} $
+              </Text>
+            </View>
+          )}
+
+          {result.drinks && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>🥤 Boissons</Text>
+              <Text style={styles.recapValue}>
+                CA : {result.drinks.totalTurnover.toFixed(2)} $
+              </Text>
+              <Text style={styles.recapSub}>
+                Coût matière : {result.drinks.totalFoodCost.toFixed(2)} $
+              </Text>
+            </View>
+          )}
+
+          {result.service && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
+              <Text style={styles.recapValue}>
+                Coût total service : {result.service.totalServiceCost.toFixed(2)} $
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* GLOBAL */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
+          <Text>CA total : {result.globalTurnover.toFixed(2)} $</Text>
+          <Text>Coût total : {result.globalCost.toFixed(2)} $</Text>
+          <Text>Marge : {result.globalMargin.toFixed(2)} $</Text>
+        </View>
+
+        {
+          !readOnly && (
+            <TouchableOpacity
+              style={[styles.saveButton, saving && { opacity: 0.6 }]}
+              disabled={saving}
+              onPress={handleSave}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Enregistrer</Text>
+              )}
+            </TouchableOpacity>
+          )
+        }
+
+        <View style={{ height: 40 }} />
+      </View>
     </ScrollView>
   );
 }
