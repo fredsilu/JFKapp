@@ -9,13 +9,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import { useRouter } from "expo-router";
-import { createTransaction } from "@/src/finance/services/financeTransactionService";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { createTransaction, Entity } from "@/src/finance/services/financeTransactionService";
 import { useAccounts } from "@/src/finance/hooks/useAccounts";
 
 export default function NewTransaction() {
   const router = useRouter();
-  const { accounts } = useAccounts("maison");
+  const { entity } = useLocalSearchParams<{ entity: Entity }>();
+
+  const currentEntity = entity as Entity;
+
+  const { accounts } = useAccounts(currentEntity);
 
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -23,32 +27,47 @@ export default function NewTransaction() {
   const [description, setDescription] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
 
+  if (!currentEntity) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={{ padding: 20 }}>Entity invalide</Text>
+      </SafeAreaView>
+    );
+  }
+
   async function handleSave() {
     if (!amount || !category || !accountId) {
       Alert.alert("Erreur", "Tous les champs sont obligatoires");
       return;
     }
 
-    await createTransaction({
-      entity: "maison",
-      type,
-      amount: parseFloat(amount),
-      currency: "USD",
-      date: new Date(),
-      accountId,
-      category,
-      description,
-      isInternalTransfer: false,
-    });
+    try {
+      await createTransaction(currentEntity, {
+        type,
+        amount: parseFloat(amount),
+        currency: "USD",
+        date: new Date(),
+        accountId,
+        category,
+        description,
+        isInternalTransfer: false,
+      });
 
-    router.back();
+      router.back();
+    } catch (error) {
+      Alert.alert("Erreur", "Impossible d'enregistrer la transaction");
+    }
   }
+
+  const title =
+    currentEntity === "maison"
+      ? "Nouvelle transaction Maison"
+      : "Nouvelle transaction Crepolia";
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        
-        <Text style={styles.title}>Nouvelle transaction</Text>
+        <Text style={styles.title}>{title}</Text>
 
         {/* Type */}
         <View style={styles.typeContainer}>
