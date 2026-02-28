@@ -8,23 +8,41 @@ export default function FinanceHome() {
     <View style={styles.container}>
       <Text style={styles.title}>Module Finance</Text>
 
+      {/* Maison */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/(finance)/maison/dashboard")}
+        onPress={() =>
+          router.push({
+            pathname: "/(finance)/[entity]/dashboard",
+            params: { entity: "maison" },
+          })
+        }
       >
         <Text style={styles.buttonText}>🏠 Maison</Text>
       </TouchableOpacity>
 
+      {/* Crepolia */}
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/(finance)/crepolia/dashboard")}
+        onPress={() =>
+          router.push({
+            pathname: "/(finance)/[entity]/dashboard",
+            params: { entity: "crepolia" },
+          })
+        }
       >
         <Text style={styles.buttonText}>🏢 Crepolia</Text>
       </TouchableOpacity>
 
+      {/* Groupe (si tu le gardes dynamique aussi plus tard) */}
       <TouchableOpacity
         style={[styles.button, styles.groupButton]}
-        onPress={() => router.push("/(finance)/groupe/dashboard")}
+        onPress={() =>
+          router.push({
+            pathname: "/(finance)/[entity]/dashboard",
+            params: { entity: "groupe" },
+          })
+        }
       >
         <Text style={styles.buttonText}>📊 Groupe</Text>
       </TouchableOpacity>

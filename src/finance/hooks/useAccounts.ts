@@ -2,6 +2,44 @@ import { useEffect, useState, useCallback } from "react";
 import { getAccountsByEntity } from "@/src/finance/services/financeAccountService";
 import { Account } from "@/types/finance.types";
 
+/* ============================= */
+/* SYSTEM DEFAULT ACCOUNTS      */
+/* ============================= */
+
+function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
+  return [
+    {
+      id: `${entity}-cash`,
+      name: "💵 Espèces",
+      entity,
+      type: "cash",
+      currency: "USD",
+      initialBalance: 0,
+      createdAt: new Date(),
+    },
+    {
+      id: `${entity}-bank`,
+      name: "🏦 Banque",
+      entity,
+      type: "bank",
+      currency: "USD",
+      initialBalance: 0,
+      createdAt: new Date(),
+    },
+    {
+      id: `${entity}-mobile`,
+      name: "📱 Mobile",
+      entity,
+      type: "mobile",
+      currency: "USD",
+      initialBalance: 0,
+      createdAt: new Date(),
+    },
+  ];
+}
+
+/* ============================= */
+
 export function useAccounts(entity: "maison" | "crepolia") {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,29 +50,37 @@ export function useAccounts(entity: "maison" | "crepolia") {
       setLoading(true);
       setError(null);
 
-      const data = await getAccountsByEntity(entity);
-      setAccounts(data);
+      const firestoreAccounts = await getAccountsByEntity(entity);
+
+      const systemAccounts = getSystemAccounts(entity);
+
+      if (!firestoreAccounts || firestoreAccounts.length === 0) {
+        setAccounts(systemAccounts);
+      } else {
+        // 🔥 Fusion système + Firestore
+        const merged = [...systemAccounts, ...firestoreAccounts];
+
+        // Supprimer doublons
+        const unique = merged.filter(
+          (acc, index, self) =>
+            index === self.findIndex((a) => a.id === acc.id)
+        );
+
+        setAccounts(unique);
+      }
     } catch (err: any) {
       console.error("Erreur chargement comptes :", err);
       setError("Impossible de charger les comptes");
+
+      // 🔥 Fallback complet
+      setAccounts(getSystemAccounts(entity));
     } finally {
       setLoading(false);
     }
   }, [entity]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const init = async () => {
-      if (!isMounted) return;
-      await loadAccounts();
-    };
-
-    init();
-
-    return () => {
-      isMounted = false;
-    };
+    loadAccounts();
   }, [loadAccounts]);
 
   return {

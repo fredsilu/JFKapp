@@ -7,13 +7,27 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useFinanceTransactions } from "@/src/finance/hooks/useFinanceTransactions";
 import TransactionItem from "@/src/components/TransactionItem";
+import { Entity } from "@/src/finance/services/financeTransactionService";
 
-export default function MaisonJournal() {
+export default function JournalScreen() {
   const router = useRouter();
-  const { transactions, loading } = useFinanceTransactions("maison");
+  const params = useLocalSearchParams();
+  const currentEntity = params.entity as Entity;
+
+  if (!currentEntity) {
+    return null;
+  }
+
+  const { transactions, loading } =
+    useFinanceTransactions(currentEntity);
+
+  const title =
+    currentEntity === "maison"
+      ? "📄 Journal Maison"
+      : "📄 Journal Crepolia";
 
   if (loading) {
     return (
@@ -27,21 +41,22 @@ export default function MaisonJournal() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
 
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>📄 Journal</Text>
+          <Text style={styles.title}>{title}</Text>
 
           <TouchableOpacity
             style={styles.newButton}
             onPress={() =>
-              router.push("/(finance)/maison/new-transaction")
+              router.push({
+                pathname: "/(finance)/[entity]/new-transaction",
+                params: { entity: currentEntity },
+              })
             }
           >
             <Text style={styles.newButtonText}>+ Nouvelle</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Liste */}
         <FlatList
           data={transactions}
           keyExtractor={(item) => item.id}

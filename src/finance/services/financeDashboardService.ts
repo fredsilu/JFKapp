@@ -15,23 +15,36 @@ import {
   PeriodFilter,
 } from "@/types/finance.types";
 
-const TX_COLLECTION = "finance_transactions";
-const ACCOUNT_COLLECTION = "finance_accounts";
-const FORECAST_COLLECTION = "finance_forecasts";
-const BUDGET_COLLECTION = "finance_budgets";
+/* ===================================================== */
+/*                    HELPERS                            */
+/* ===================================================== */
 
 function isWithinPeriod(date: Date, start: Date, end: Date) {
   return date >= start && date <= end;
 }
 
+function parseDate(value: any): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Timestamp) {
+    return value.toDate();
+  }
+
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/* ===================================================== */
+/*              ENTITY DASHBOARD                         */
+/* ===================================================== */
+
 export async function getEntityDashboard(
   entity: EntityType,
   filter: PeriodFilter
 ): Promise<EntityDashboardSummary> {
-
+  // ✅ IMPORTANT : nouvelle structure Firestore
   const txQuery = query(
-    collection(db, TX_COLLECTION),
-    where("entity", "==", entity)
+    collection(db, "finance", entity, "transactions")
   );
 
   const txSnapshot = await getDocs(txQuery);
@@ -43,12 +56,9 @@ export async function getEntityDashboard(
 
   txSnapshot.forEach((docSnap) => {
     const data = docSnap.data() as DocumentData;
-    if (!data.date) return;
+    const txDate = parseDate(data.date);
 
-    const txDate =
-      data.date instanceof Timestamp
-        ? data.date.toDate()
-        : new Date(data.date);
+    if (!txDate) return;
 
     if (!isWithinPeriod(txDate, filter.startDate, filter.endDate)) return;
 
@@ -77,7 +87,7 @@ export async function getEntityDashboard(
 
   const budgetSnapshot = await getDocs(
     query(
-      collection(db, BUDGET_COLLECTION),
+      collection(db, "finance_budgets"),
       where("entity", "==", entity),
       where("month", "==", currentMonth),
       where("year", "==", currentYear)
@@ -118,16 +128,20 @@ export async function getEntityDashboard(
 
   const budgetGap = totalBudget - totalExpense;
 
+  /* ================= RETURN ================= */
+
   return {
     totalIncome,
     totalExpense,
     netResult,
 
+    // 🔥 Pour l’instant trésorerie = résultat net
     totalCash: 0,
     totalBank: 0,
     totalMobile: 0,
     totalTreasury: netResult,
 
+    // Forecast (non implémenté encore)
     forecastIncome: 0,
     forecastExpense: 0,
     executedForecastIncome: 0,
@@ -142,35 +156,46 @@ export async function getEntityDashboard(
   };
 }
 
-/* ================= GROUP ================= */
+/* ===================================================== */
+/*                GROUP DASHBOARD                        */
+/* ===================================================== */
 
 export async function getGroupDashboard(
   filter: PeriodFilter
 ): Promise<GroupDashboardSummary> {
 
-  const snapshot = await getDocs(
-    collection(db, TX_COLLECTION)
-  );
+  const entities: EntityType[] = ["maison", "crepolia"];
 
   let totalIncome = 0;
   let totalExpense = 0;
 
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data() as DocumentData;
-    if (!data.date) return;
+  for (const entity of entities) {
+    const txQuery = query(
+      collection(db, "finance", entity, "transactions")
+    );
 
-    const txDate =
-      data.date instanceof Timestamp
-        ? data.date.toDate()
-        : new Date(data.date);
+    const snapshot = await getDocs(txQuery);
 
-    if (!isWithinPeriod(txDate, filter.startDate, filter.endDate)) return;
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as DocumentData;
+      const txDate = parseDate(data.date);
 
-    if (data.isInternalTransfer) return;
+      if (!txDate) return;
 
-    if (data.type === "income") totalIncome += Number(data.amount || 0);
-    if (data.type === "expense") totalExpense += Number(data.amount || 0);
-  });
+      if (!isWithinPeriod(txDate, filter.startDate, filter.endDate)) return;
+
+      // 🔥 On exclut les transferts internes
+      if (data.isInternalTransfer) return;
+
+      if (data.type === "income") {
+        totalIncome += Number(data.amount || 0);
+      }
+
+      if (data.type === "expense") {
+        totalExpense += Number(data.amount || 0);
+      }
+    });
+  }
 
   const netResult = totalIncome - totalExpense;
 

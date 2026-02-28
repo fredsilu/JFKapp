@@ -7,16 +7,24 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
+import { Entity } from "@/src/finance/services/financeTransactionService";
 
 /* ============================= */
 /*         MAIN SCREEN           */
 /* ============================= */
 
-export default function MaisonDashboard() {
+export default function DashboardScreen() {
   const router = useRouter();
-  const { data, loading } = useFinanceDashboard("maison");
+  const params = useLocalSearchParams();
+  const currentEntity = params.entity as Entity;
+
+  if (!currentEntity) {
+    return null;
+  }
+
+  const { data, loading } = useFinanceDashboard(currentEntity);
 
   if (loading) {
     return (
@@ -51,7 +59,7 @@ export default function MaisonDashboard() {
   } = data;
 
   const budgetAlerts = Object.entries(budgetByCategory).reduce(
-    (acc, [_, values]) => {
+    (acc, [_, values]: any) => {
       if (values.usageRate > 100) acc.over += 1;
       else if (values.usageRate >= 85) acc.warning += 1;
       return acc;
@@ -59,17 +67,27 @@ export default function MaisonDashboard() {
     { over: 0, warning: 0 }
   );
 
+  const title =
+    currentEntity === "maison"
+      ? "🏠 Maison"
+      : "🏢 Crepolia";
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
 
         {/* HEADER */}
         <View style={styles.header}>
-          <Text style={styles.title}>🏠 Maison</Text>
+          <Text style={styles.title}>{title}</Text>
 
           <TouchableOpacity
             style={styles.journalButton}
-            onPress={() => router.push("/(finance)/maison/journal")}
+            onPress={() =>
+              router.push({
+                pathname: "/(finance)/[entity]/journal",
+                params: { entity: currentEntity },
+              })
+            }
           >
             <Text style={styles.journalText}>Journal</Text>
           </TouchableOpacity>
@@ -119,88 +137,6 @@ export default function MaisonDashboard() {
             />
           </View>
         </View>
-
-        {(budgetAlerts.over > 0 || budgetAlerts.warning > 0) && (
-          <View style={styles.alertCard}>
-            {budgetAlerts.over > 0 && (
-              <Text style={styles.alertRed}>
-                🔴 {budgetAlerts.over} catégorie(s) en dépassement
-              </Text>
-            )}
-
-            {budgetAlerts.warning > 0 && (
-              <Text style={styles.alertOrange}>
-                🟠 {budgetAlerts.warning} catégorie(s) proche du dépassement
-              </Text>
-            )}
-          </View>
-        )}
-
-        {/* BUDGET GLOBAL */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Budget mensuel</Text>
-
-          <View style={styles.grid}>
-            <Card title="Budget total" value={totalBudget} color="#111827" />
-            <Card
-              title="Écart budget"
-              value={budgetGap}
-              color={budgetGap >= 0 ? "#16a34a" : "#dc2626"}
-            />
-          </View>
-        </View>
-
-        {/* BUDGET PAR CATÉGORIE */}
-        {Object.keys(budgetByCategory).length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Budget par catégorie</Text>
-
-            {Object.entries(budgetByCategory).map(
-              ([category, values]) => (
-                <View key={category} style={styles.categoryCard}>
-                  <Text style={styles.categoryTitle}>{category}</Text>
-
-                  <View style={styles.categoryRow}>
-                    <Text style={styles.categoryText}>
-                      Budget: {formatNumber(values.budget)}
-                    </Text>
-                    <Text style={styles.categoryText}>
-                      Réel: {formatNumber(values.actual)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.categoryRow}>
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        {
-                          color:
-                            values.gap >= 0 ? "#16a34a" : "#dc2626",
-                        },
-                      ]}
-                    >
-                      Écart: {formatNumber(values.gap)}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        {
-                          color:
-                            values.usageRate > 100
-                              ? "#dc2626"
-                              : "#16a34a",
-                        },
-                      ]}
-                    >
-                      {values.usageRate.toFixed(0)}%
-                    </Text>
-                  </View>
-                </View>
-              )
-            )}
-          </View>
-        )}
 
       </ScrollView>
     </SafeAreaView>
@@ -287,38 +223,4 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 13, color: "#6b7280" },
   cardValue: { fontSize: 18, fontWeight: "bold", marginTop: 6 },
-
-  categoryCard: {
-    backgroundColor: "white",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 1,
-  },
-  categoryTitle: { fontWeight: "bold", marginBottom: 6 },
-  categoryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  categoryText: { fontSize: 13 },
-
-  alertCard: {
-  backgroundColor: "#fff7ed",
-  padding: 14,
-  borderRadius: 12,
-  marginBottom: 20,
-  borderWidth: 1,
-  borderColor: "#fed7aa",
-},
-
-alertRed: {
-  color: "#dc2626",
-  fontWeight: "600",
-  marginBottom: 4,
-},
-
-alertOrange: {
-  color: "#ea580c",
-  fontWeight: "600",
-},
 });

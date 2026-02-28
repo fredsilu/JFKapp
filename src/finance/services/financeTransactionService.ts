@@ -47,13 +47,15 @@ export async function createTransaction(
   entity: Entity,
   transaction: Omit<Transaction, "id" | "createdAt" | "entity">
 ) {
+   console.log("CREATE TRANSACTION FOR ENTITY:", entity);
+
   const docRef = await addDoc(getTransactionsCollection(entity), {
     ...transaction,
     date: Timestamp.fromDate(transaction.date),
     createdAt: Timestamp.now(),
     entity,
   });
-
+ 
   return docRef.id;
 }
 
