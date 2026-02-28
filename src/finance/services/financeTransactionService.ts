@@ -13,30 +13,41 @@ import {
 import { db } from "@/lib/firebase";
 import { v4 as uuidv4 } from "uuid";
 
-import {
-  Transaction,
-  InternalTransferInput,
-} from "@/types/finance.types";
+import { Transaction, InternalTransferInput } from "@/types/finance.types";
 
 /* ============================= */
 /*       COLLECTION REF          */
 /* ============================= */
 
-const getTransactionsCollection = (entity: string) =>
+type Entity = "maison" | "crepolia";
+
+const getTransactionsCollection = (entity: Entity) =>
   collection(db, "finance", entity, "transactions");
+
+/* ============================= */
+/*     FIRESTORE DATA SHAPE      */
+/* ============================= */
+
+type FirestoreTransaction = Omit<Transaction, "id" | "date" | "createdAt"> & {
+  date: Timestamp;
+  createdAt: Timestamp;
+};
 
 /* ============================= */
 /*       CREATE TRANSACTION      */
 /* ============================= */
 
 export async function createTransaction(
-  entity: "maison" | "crepolia",
+  entity: Entity,
   transaction: Omit<Transaction, "id" | "createdAt" | "entity">
 ) {
   const docRef = await addDoc(getTransactionsCollection(entity), {
     ...transaction,
+    // 🔒 on force Timestamp côté Firestore
     date: Timestamp.fromDate(transaction.date),
     createdAt: Timestamp.now(),
+    // (optionnel) entity si tu veux le garder dans le doc:
+    entity,
   });
 
   return docRef.id;
@@ -46,38 +57,38 @@ export async function createTransaction(
 /*       GET BY ENTITY           */
 /* ============================= */
 
-export async function getTransactionsByEntity(entity: string) {
-  const q = query(
-    getTransactionsCollection(entity),
-    orderBy("date", "desc")
-  );
-
+export async function getTransactionsByEntity(entity: Entity) {
+  const q = query(getTransactionsCollection(entity), orderBy("date", "desc"));
   const snapshot = await getDocs(q);
 
+  console.log("✅ getTransactionsByEntity");
+  console.log("ENTITY =", entity);
+  console.log("PATH =", `finance/${entity}/transactions`);
+  console.log("DOCS =", snapshot.size);
+
   return snapshot.docs.map((docSnap) => {
-    const data = docSnap.data();
+    const data = docSnap.data() as FirestoreTransaction;
 
     return {
       id: docSnap.id,
       ...data,
-      date: data.date?.toDate(),
-      createdAt: data.createdAt?.toDate(),
+      // ✅ conversion sûre Timestamp -> Date
+      date: data.date.toDate(),
+      createdAt: data.createdAt.toDate(),
     };
-  }) as Transaction[];
+  });
 }
 
 /* ============================= */
 /*       INTERNAL TRANSFER       */
 /* ============================= */
 
-export async function createInternalTransfer(
-  input: InternalTransferInput
-) {
+export async function createInternalTransfer(input: InternalTransferInput) {
   const batch = writeBatch(db);
   const transferId = uuidv4();
 
-  const sourceRef = doc(getTransactionsCollection(input.sourceEntity));
-  const targetRef = doc(getTransactionsCollection(input.targetEntity));
+  const sourceRef = doc(getTransactionsCollection(input.sourceEntity as Entity));
+  const targetRef = doc(getTransactionsCollection(input.targetEntity as Entity));
 
   batch.set(sourceRef, {
     type: "expense",
@@ -90,6 +101,7 @@ export async function createInternalTransfer(
     isInternalTransfer: true,
     transferId,
     createdAt: Timestamp.now(),
+    entity: input.sourceEntity,
   });
 
   batch.set(targetRef, {
@@ -103,6 +115,7 @@ export async function createInternalTransfer(
     isInternalTransfer: true,
     transferId,
     createdAt: Timestamp.now(),
+    entity: input.targetEntity,
   });
 
   await batch.commit();
@@ -112,10 +125,7 @@ export async function createInternalTransfer(
 /*    DELETE INTERNAL TRANSFER   */
 /* ============================= */
 
-export async function deleteInternalTransfer(
-  entity: string,
-  transferId: string
-) {
+export async function deleteInternalTransfer(entity: Entity, transferId: string) {
   const q = query(
     getTransactionsCollection(entity),
     where("transferId", "==", transferId)
@@ -135,9 +145,6 @@ export async function deleteInternalTransfer(
 /*        DELETE SINGLE          */
 /* ============================= */
 
-export async function deleteTransaction(
-  entity: string,
-  id: string
-) {
+export async function deleteTransaction(entity: Entity, id: string) {
   await deleteDoc(doc(db, "finance", entity, "transactions", id));
 }
