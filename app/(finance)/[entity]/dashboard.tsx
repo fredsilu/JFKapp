@@ -1,3 +1,4 @@
+import React from "react";
 import {
   ScrollView,
   ActivityIndicator,
@@ -8,9 +9,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
+
+// ✅ Important: adapte le chemin selon ton alias
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
-import { Entity } from "@/src/finance/services/financeTransactionService";
-import { Budget, Transaction } from "@/types/finance.types";
+import { EntityType } from "@/types/finance.types";
 
 /* ============================= */
 /*         MAIN SCREEN           */
@@ -19,7 +21,8 @@ import { Budget, Transaction } from "@/types/finance.types";
 export default function DashboardScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const currentEntity = params.entity as Entity;
+
+  const currentEntity = params.entity as EntityType;
 
   if (!currentEntity) {
     return null;
@@ -54,45 +57,75 @@ export default function DashboardScreen() {
     totalBank = 0,
     totalMobile = 0,
     forecastGap = 0,
+
+    // ✅ Budget fields (déjà dans ton EntityDashboardSummary)
     totalBudget = 0,
     budgetGap = 0,
     budgetByCategory = {},
   } = data;
 
-  const budgetAlerts = Object.entries(budgetByCategory).reduce(
-    (acc, [_, values]: any) => {
-      if (values.usageRate > 100) acc.over += 1;
-      else if (values.usageRate >= 85) acc.warning += 1;
+  const budgetAlerts = Object.entries(budgetByCategory || {}).reduce(
+    (acc, [, values]: any) => {
+      if (values?.usageRate > 100) acc.over += 1;
+      else if (values?.usageRate >= 85) acc.warning += 1;
       return acc;
     },
     { over: 0, warning: 0 }
   );
 
   const title =
-    currentEntity === "maison"
-      ? "🏠 Maison"
-      : "🏢 Crepolia";
+    currentEntity === "maison" ? "🏠 Maison" : "🏢 Crepolia";
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
 
-          <TouchableOpacity
-            style={styles.journalButton}
-            onPress={() =>
-              router.push({
-                pathname: "/(finance)/[entity]/journal",
-                params: { entity: currentEntity },
-              })
-            }
-          >
-            <Text style={styles.journalText}>Journal</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.budgetButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(finance)/[entity]/budget/index",
+                  params: { entity: currentEntity },
+                })
+              }
+            >
+              <Text style={styles.budgetText}>Budget</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.journalButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(finance)/[entity]/journal",
+                  params: { entity: currentEntity },
+                })
+              }
+            >
+              <Text style={styles.journalText}>Journal</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* ALERTES BUDGET */}
+        {(budgetAlerts.over > 0 || budgetAlerts.warning > 0) && (
+          <View style={styles.alertBox}>
+            <Text style={styles.alertTitle}>⚠️ Alertes budget</Text>
+            {budgetAlerts.over > 0 && (
+              <Text style={styles.alertText}>
+                🔴 Dépassement sur {budgetAlerts.over} catégorie(s)
+              </Text>
+            )}
+            {budgetAlerts.warning > 0 && (
+              <Text style={styles.alertText}>
+                🟠 Alerte (≥ 85%) sur {budgetAlerts.warning} catégorie(s)
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* RESULT */}
         <View style={styles.section}>
@@ -139,6 +172,93 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* ============================= */}
+        {/*         BUDGET SECTION        */}
+        {/* ============================= */}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Budget du mois</Text>
+
+          {totalBudget > 0 ? (
+            <>
+              <View style={styles.resultCard}>
+                <Text style={styles.resultLabel}>Budget total</Text>
+                <Text style={styles.resultValue}>
+                  {formatNumber(totalBudget)} USD
+                </Text>
+
+                <Text
+                  style={{
+                    marginTop: 8,
+                    fontWeight: "bold",
+                    color: budgetGap >= 0 ? "#16a34a" : "#dc2626",
+                  }}
+                >
+                  Écart global : {formatNumber(budgetGap)} USD
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.manageBudgetLink}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(finance)/[entity]/budget/index",
+                      params: { entity: currentEntity },
+                    })
+                  }
+                >
+                  <Text style={styles.manageBudgetText}>
+                    Gérer le budget →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {!!budgetByCategory &&
+                Object.entries(budgetByCategory).map(
+                  ([category, values]: any) => {
+                    const usage = Number(values?.usageRate || 0);
+                    const color =
+                      usage < 80
+                        ? "#16a34a"
+                        : usage <= 100
+                        ? "#f59e0b"
+                        : "#dc2626";
+
+                    return (
+                      <View key={category} style={styles.budgetRow}>
+                        <Text style={styles.budgetCat}>{category}</Text>
+
+                        <Text style={styles.budgetNumbers}>
+                          {formatNumber(values?.actual || 0)} /{" "}
+                          {formatNumber(values?.budget || 0)}
+                        </Text>
+
+                        <Text style={[styles.budgetPct, { color }]}>
+                          {Math.round(usage)}%
+                        </Text>
+                      </View>
+                    );
+                  }
+                )}
+            </>
+          ) : (
+            <View style={styles.resultCard}>
+              <Text>Aucun budget défini pour ce mois.</Text>
+              <TouchableOpacity
+                style={styles.manageBudgetLink}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(finance)/[entity]/budget/index",
+                    params: { entity: currentEntity },
+                  })
+                }
+              >
+                <Text style={styles.manageBudgetText}>
+                  Définir un budget →
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,45 +280,9 @@ function Card({
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={[styles.cardValue, { color }]}>
-        {formatNumber(value)}
-      </Text>
+      <Text style={[styles.cardValue, { color }]}>{formatNumber(value)}</Text>
     </View>
   );
-}
-
-function calculateBudgetStatus(
-  category: string,
-  budgets: Budget[],
-  transactions: Transaction[]
-) {
-  const budget = budgets.find(
-    (b) => b.category === category
-  )
-
-  if (!budget) return null
-
-  const spent = transactions
-    .filter(
-      (t) =>
-        t.category === category &&
-        t.type === "expense"
-    )
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const remaining = budget.amount - spent
-
-  const percentage =
-    budget.amount > 0
-      ? (spent / budget.amount) * 100
-      : 0
-
-  return {
-    planned: budget.amount,
-    spent,
-    remaining,
-    percentage,
-  }
 }
 
 function formatNumber(value: number) {
@@ -213,13 +297,21 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#f3f4f6" },
   container: { padding: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
+  headerActions: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+  },
+
   title: { fontSize: 22, fontWeight: "bold" },
+
   journalButton: {
     backgroundColor: "#2563eb",
     paddingHorizontal: 14,
@@ -227,13 +319,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   journalText: { color: "white", fontWeight: "600" },
-  section: { marginBottom: 30 },
+
+  budgetButton: {
+    backgroundColor: "#111827",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  budgetText: { color: "white", fontWeight: "600" },
+
+  alertBox: {
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 18,
+    borderLeftWidth: 4,
+    borderLeftColor: "#f59e0b",
+    elevation: 2,
+  },
+  alertTitle: { fontWeight: "800", marginBottom: 6 },
+  alertText: { color: "#374151" },
+
+  section: { marginBottom: 26 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 12,
     color: "#374151",
   },
+
   resultCard: {
     backgroundColor: "white",
     padding: 16,
@@ -243,6 +357,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: { fontSize: 14, color: "#6b7280" },
   resultValue: { fontSize: 22, fontWeight: "bold", marginTop: 6 },
+
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -258,4 +373,29 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 13, color: "#6b7280" },
   cardValue: { fontSize: 18, fontWeight: "bold", marginTop: 6 },
+
+  manageBudgetLink: {
+    marginTop: 12,
+    alignSelf: "flex-start",
+    paddingVertical: 6,
+  },
+  manageBudgetText: {
+    color: "#2563eb",
+    fontWeight: "700",
+  },
+
+  budgetRow: {
+    backgroundColor: "white",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  budgetCat: { fontWeight: "700", flex: 1 },
+  budgetNumbers: { flex: 1, textAlign: "center" },
+  budgetPct: { width: 60, textAlign: "right", fontWeight: "800" },
 });

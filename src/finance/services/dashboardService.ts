@@ -18,7 +18,14 @@ export const getEntitySummary = async (entity: EntityType) => {
   const year = now.getFullYear();
 
   const accountsRef = collection(db, "finance", entity, "accounts");
-  const transactionsRef = collection(db, "finance", entity, "transactions");
+  const startOfMonth = new Date(year, month, 1);
+  const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+
+  const transactionsRef = query(
+    collection(db, "finance", entity, "transactions"),
+    where("date", ">=", startOfMonth),
+    where("date", "<=", endOfMonth)
+  );
 
   const budgetsRef = query(
     collection(db, "budgets"),
