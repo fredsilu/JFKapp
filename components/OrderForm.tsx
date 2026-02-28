@@ -693,7 +693,14 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 style={styles.dishCard}
                 onPress={() => handleAddDish(dish)}
               >
-                <Image source={{ uri: dish.image }} style={styles.dishImage} />
+                <Image
+                  source={
+                    dish.image
+                      ? { uri: dish.image }
+                      : require('@/assets/images/no_dishes_picture.jpg')
+                  }
+                  style={styles.dishImage}
+                />
                 <View style={styles.dishInfo}>
                   <Text style={styles.dishName}>{dish.name}</Text>
                   <Text style={styles.dishMeta}>
@@ -749,9 +756,9 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           )}
         </View>
 
-        {/* ======================
-            INGRÉDIENTS SUPPLÉMENTAIRES
-        ====================== */}
+        {/* ====================== */}
+        <Text style={{fontWeight:'bold',marginBottom:8}}>INGRÉDIENTS SUPPLÉMENTAIRES</Text>
+        {/* ====================== */}
         {/* ⚠️ NOTE: tu avais un ScrollView imbriqué dans un ScrollView.
             Je garde ta structure pour ne pas “casser”, mais idéalement on évite un ScrollView vertical dans un autre.
         */}
@@ -892,7 +899,30 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             <Text style={styles.label}>Date de livraison</Text>
             <View style={styles.inputContainer}>
               <Icon name="event" size={20} color="#665" />
-              deliveryDate
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setShowDeliveryDatePicker(true)}
+              >
+                <Text style={{ color: deliveryDate ? '#000' : '#9CA3AF' }}>
+                  {deliveryDate || 'Sélectionner une date'}
+                </Text>
+              </TouchableOpacity>
+
+              {showDeliveryDatePicker && (
+                <DateTimePicker
+                  value={deliveryDateObj || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDeliveryDatePicker(false);
+                    if (selectedDate) {
+                      setDeliveryDateObj(selectedDate);
+                      const iso = selectedDate.toISOString().split('T')[0];
+                      setDeliveryDate(iso);
+                    }
+                  }}
+                />
+              )}
             </View>
           </View>
 

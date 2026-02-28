@@ -52,6 +52,7 @@ const emptyService = (): CateringServiceInput => ({
   discount: 0,
   serverRate: 25,
   cookRate: 50,
+  serviceMarginRate: 30, // ✅ AJOUTÉ (marge service %)
 });
 
 type Mode = 'new' | 'view' | 'reuse';
@@ -85,7 +86,6 @@ export default function CateringCalculator() {
   const [dateObject, setDateObject] = useState<Date | null>(null);
   const [dateLivraison, setDateLivraison] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
-
 
   const [simulation, setSimulation] = useState<CateringSimulationDraft>({
     name: '',
@@ -184,6 +184,45 @@ export default function CateringCalculator() {
   );
 
   /* =========================
+     ✅ CALCULS GLOBAUX CORRIGÉS
+     - CA total = CA repas + service facturé (coût service + marge%)
+     - Coût total = coût matière + coût service
+     - Marge = CA total - coût total
+  ========================= */
+
+  // ✅ Coût service (charge réelle Crepolia)
+  const serviceCost = result.service?.totalServiceCost || 0;
+
+  // ✅ Coût matière (uniquement repas) — évite l’erreur 270 → 350
+  const foodCostTotal = useMemo(() => {
+    return (
+      (result.breakfast?.totalFoodCost || 0) +
+      (result.lunch?.totalFoodCost || 0) +
+      (result.drinks?.totalFoodCost || 0)
+    );
+  }, [result.breakfast, result.lunch, result.drinks]);
+
+  // ✅ Service facturé (revenu) = coût service + marge
+  const serviceRevenue = useMemo(() => {
+    if (!simulation.service.enabled) return 0;
+    const marginRate = simulation.service.serviceMarginRate || 0;
+    return serviceCost * (1 + marginRate / 100);
+  }, [serviceCost, simulation.service.enabled, simulation.service.serviceMarginRate]);
+
+  // ✅ Totaux corrects
+  const totalRevenue = useMemo(() => {
+    return result.globalTurnover + serviceRevenue;
+  }, [result.globalTurnover, serviceRevenue]);
+
+  const totalCost = useMemo(() => {
+    return foodCostTotal + serviceCost;
+  }, [foodCostTotal, serviceCost]);
+
+  const totalMargin = useMemo(() => {
+    return totalRevenue - totalCost;
+  }, [totalRevenue, totalCost]);
+
+  /* =========================
      SAVE (CREATE ONLY)
   ========================= */
 
@@ -208,10 +247,10 @@ export default function CateringCalculator() {
         dateLivraison,
         name: simulation.name || 'Simulation traiteur',
 
-        // 🔥 AJOUT CRUCIAL
-        globalTurnover: result.globalTurnover,
-        globalCost: result.globalCost,
-        globalMargin: result.globalMargin,
+        // ✅ CORRIGÉ : on enregistre les bons totaux
+        globalTurnover: totalRevenue,
+        globalCost: totalCost,
+        globalMargin: totalMargin,
 
         status: 'validated',
       };
@@ -302,9 +341,7 @@ export default function CateringCalculator() {
         />
 
         {/* DATE LIVRAISON */}
-        <Text style={[styles.label, { marginTop: 12 }]}>
-          Date de livraison
-        </Text>
+        <Text style={[styles.label, { marginTop: 12 }]}>Date de livraison</Text>
 
         {readOnly ? (
           <View style={styles.readOnlyField}>
@@ -334,10 +371,7 @@ export default function CateringCalculator() {
                   if (selectedDate) {
                     setDateObject(selectedDate);
 
-                    const iso = selectedDate
-                      .toISOString()
-                      .split('T')[0];
-
+                    const iso = selectedDate.toISOString().split('T')[0];
                     setDateLivraison(iso);
                   }
                 }}
@@ -347,28 +381,24 @@ export default function CateringCalculator() {
         )}
 
         {/* BLOCS REPAS */}
-        {
-          (['breakfast', 'lunch', 'drinks'] as const).map((k, i) =>
-            renderMealBlock({
-              key: k,
-              title: ['🥐 Petit-déjeuner', '🍽️ Déjeuner', '🥤 Boissons'][i],
-              simulation,
-              result,
-              updateMeal,
-              readOnly,
-            })
-          )
-        }
-
-        {/* SERVICE */}
-        {
-          renderServiceBlock({
+        {(['breakfast', 'lunch', 'drinks'] as const).map((k, i) =>
+          renderMealBlock({
+            key: k,
+            title: ['🥐 Petit-déjeuner', '🍽️ Déjeuner', '🥤 Boissons'][i],
             simulation,
             result,
-            updateService,
+            updateMeal,
             readOnly,
           })
-        }
+        )}
+
+        {/* SERVICE */}
+        {renderServiceBlock({
+          simulation,
+          result,
+          updateService,
+          readOnly,
+        })}
 
         {/* RÉCAP FINANCIER */}
         <View style={styles.card}>
@@ -423,26 +453,43 @@ export default function CateringCalculator() {
         {/* GLOBAL */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
-          <Text>CA total : {result.globalTurnover.toFixed(2)} $</Text>
-          <Text>Coût total : {result.globalCost.toFixed(2)} $</Text>
-          <Text>Marge : {result.globalMargin.toFixed(2)} $</Text>
+
+          <Text style={styles.globalText}>
+            CA total : {totalRevenue.toFixed(2)} $
+          </Text>
+          <Text style={styles.totalBreakdown}>
+            Repas : {result.globalTurnover.toFixed(2)} $
+            {'\n'}
+            Service facturé : {serviceRevenue.toFixed(2)} $
+          </Text>
+
+          <Text style={styles.globalText}>
+            Coût total : {totalCost.toFixed(2)} $
+          </Text>
+          <Text style={styles.totalBreakdown}>
+            Coût matière : {foodCostTotal.toFixed(2)} $
+            {'\n'}
+            Coût service : {serviceCost.toFixed(2)} $
+          </Text>
+
+          <Text style={styles.globalText}>
+            Marge : {totalMargin.toFixed(2)} $
+          </Text>
         </View>
 
-        {
-          !readOnly && (
-            <TouchableOpacity
-              style={[styles.saveButton, saving && { opacity: 0.6 }]}
-              disabled={saving}
-              onPress={handleSave}
-            >
-              {saving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
-              )}
-            </TouchableOpacity>
-          )
-        }
+        {!readOnly && (
+          <TouchableOpacity
+            style={[styles.saveButton, saving && { opacity: 0.6 }]}
+            disabled={saving}
+            onPress={handleSave}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Enregistrer</Text>
+            )}
+          </TouchableOpacity>
+        )}
 
         <View style={{ height: 40 }} />
       </View>
@@ -625,6 +672,14 @@ function renderServiceBlock({
             disabled={readOnly}
           />
 
+          {/* ✅ AJOUTÉ */}
+          <NumberField
+            label="Marge service (%)"
+            value={service.serviceMarginRate}
+            onChange={(v) => updateService({ serviceMarginRate: v })}
+            disabled={readOnly}
+          />
+
           {r && (
             <ResultBox
               title="Détails service"
@@ -750,5 +805,20 @@ const styles = StyleSheet.create({
   recapSub: {
     fontSize: 13,
     color: '#6B7280',
+  },
+
+  globalText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+
+  totalBreakdown: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    marginBottom: 8,
+    lineHeight: 20,
+    paddingLeft: 16,
   },
 });

@@ -26,9 +26,11 @@ export interface CateringServiceInput {
   numberOfPeople: number;
   numberOfDays: number;
   discount: number;
+  serverRate: number;
+  cookRate: number;
 
-  serverRate: number;   // 1 serveur pour X personnes
-  cookRate: number;     // 1 cuisinier pour X personnes
+  // 🔥 NOUVEAU
+  serviceMarginRate: number; // % de marge sur le coût service
 }
 
 export interface CateringServiceCosts {

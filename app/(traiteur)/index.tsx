@@ -213,7 +213,14 @@ export default function DashboardScreen() {
           >
             {dishes.slice(0, 5).map(dish => (
               <View key={dish.id} style={styles.dishCard}>
-                <Image source={{ uri: dish.image }} style={styles.dishImage} />
+                <Image
+                  source={
+                    dish.image
+                      ? { uri: dish.image }
+                      : require('@/assets/images/no_dishes_picture.jpg')
+                  }
+                  style={styles.dishImage}
+                />
                 <View style={styles.dishInfo}>
                   <Text style={styles.dishName}>{dish.name}</Text>
                   <Text style={styles.dishMeta}>
