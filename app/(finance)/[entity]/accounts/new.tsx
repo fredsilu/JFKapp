@@ -1,29 +1,59 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { useState } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { createAccount } from "@/src/finance/services/accountService";
-import { useRouter } from "expo-router";
+import { EntityType, AccountType, CurrencyType } from "@/types/finance.types";
 
 export default function NewAccount() {
   const router = useRouter();
+  const { entity } = useLocalSearchParams<{ entity: EntityType }>();
 
   const [name, setName] = useState("");
   const [initialBalance, setInitialBalance] = useState("");
+  const [type, setType] = useState<AccountType>("bank");
+  const [currency, setCurrency] = useState<CurrencyType>("USD");
 
   const handleSave = async () => {
-    await createAccount("maison", {
-      name,
-      type: "bank",
-      currency: "USD",
-      initialBalance: Number(initialBalance),
-      isActive: true,
-    });
+    if (!name.trim()) {
+      Alert.alert("Erreur", "Le nom du compte est obligatoire.");
+      return;
+    }
 
-    router.back();
+    const balanceNumber = Number(initialBalance);
+
+    if (isNaN(balanceNumber)) {
+      Alert.alert("Erreur", "Le solde initial doit être un nombre.");
+      return;
+    }
+
+    try {
+      await createAccount(entity as EntityType, {
+        name,
+        type,
+        currency,
+        initialBalance: balanceNumber,
+        isActive: true,
+      });
+
+      router.back();
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Impossible de créer le compte.");
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nouveau Compte</Text>
+      <Text style={styles.title}>
+        Nouveau Compte ({entity})
+      </Text>
 
       <TextInput
         placeholder="Nom du compte"

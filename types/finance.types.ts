@@ -32,6 +32,8 @@ export interface Account {
   initialBalance: number;
   currentBalance?: number;
 
+   isActive: boolean; // ← ici
+
   createdAt: Date;
   updatedAt?: Date;
 }

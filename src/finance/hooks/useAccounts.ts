@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { getAccountsByEntity } from "@/src/finance/services/financeAccountService";
-import { Account } from "@/types/finance.types";
+import { Account, EntityType } from "@/types/finance.types";
 
 /* ============================= */
 /* SYSTEM DEFAULT ACCOUNTS      */
 /* ============================= */
 
-function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
+function getSystemAccounts(entity: EntityType): Account[] {
   return [
     {
       id: `${entity}-cash`,
@@ -15,6 +15,8 @@ function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
       type: "cash",
       currency: "USD",
       initialBalance: 0,
+      currentBalance: 0,
+      isActive: true,
       createdAt: new Date(),
     },
     {
@@ -24,6 +26,8 @@ function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
       type: "bank",
       currency: "USD",
       initialBalance: 0,
+      currentBalance: 0,
+      isActive: true,
       createdAt: new Date(),
     },
     {
@@ -33,6 +37,8 @@ function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
       type: "mobile",
       currency: "USD",
       initialBalance: 0,
+      currentBalance: 0,
+      isActive: true,
       createdAt: new Date(),
     },
   ];
@@ -40,7 +46,7 @@ function getSystemAccounts(entity: "maison" | "crepolia"): Account[] {
 
 /* ============================= */
 
-export function useAccounts(entity: "maison" | "crepolia") {
+export function useAccounts(entity: EntityType) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,16 +57,15 @@ export function useAccounts(entity: "maison" | "crepolia") {
       setError(null);
 
       const firestoreAccounts = await getAccountsByEntity(entity);
-
       const systemAccounts = getSystemAccounts(entity);
 
       if (!firestoreAccounts || firestoreAccounts.length === 0) {
         setAccounts(systemAccounts);
       } else {
-        // 🔥 Fusion système + Firestore
+        // Fusion système + Firestore
         const merged = [...systemAccounts, ...firestoreAccounts];
 
-        // Supprimer doublons
+        // Supprimer doublons par id
         const unique = merged.filter(
           (acc, index, self) =>
             index === self.findIndex((a) => a.id === acc.id)
@@ -72,7 +77,7 @@ export function useAccounts(entity: "maison" | "crepolia") {
       console.error("Erreur chargement comptes :", err);
       setError("Impossible de charger les comptes");
 
-      // 🔥 Fallback complet
+      // Fallback système
       setAccounts(getSystemAccounts(entity));
     } finally {
       setLoading(false);
