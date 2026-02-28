@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
 import { Entity } from "@/src/finance/services/financeTransactionService";
+import { Budget, Transaction } from "@/types/finance.types";
 
 /* ============================= */
 /*         MAIN SCREEN           */
@@ -164,6 +165,40 @@ function Card({
       </Text>
     </View>
   );
+}
+
+function calculateBudgetStatus(
+  category: string,
+  budgets: Budget[],
+  transactions: Transaction[]
+) {
+  const budget = budgets.find(
+    (b) => b.category === category
+  )
+
+  if (!budget) return null
+
+  const spent = transactions
+    .filter(
+      (t) =>
+        t.category === category &&
+        t.type === "expense"
+    )
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const remaining = budget.amount - spent
+
+  const percentage =
+    budget.amount > 0
+      ? (spent / budget.amount) * 100
+      : 0
+
+  return {
+    planned: budget.amount,
+    spent,
+    remaining,
+    percentage,
+  }
 }
 
 function formatNumber(value: number) {
