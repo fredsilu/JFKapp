@@ -10,7 +10,9 @@ import { useBudgets } from "@/src/finance/hooks/useBudgets";
 import { EntityType } from "@/types/finance.types";
 
 export default function BudgetScreen() {
+
   const { entity } = useLocalSearchParams<{ entity: EntityType }>();
+    console.log("ENTITY:", entity);
 
   const now = new Date();
   const month = now.getMonth();
