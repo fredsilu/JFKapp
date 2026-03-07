@@ -10,9 +10,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
-// ✅ Important: adapte le chemin selon ton alias
 import { useFinanceDashboard } from "@/src/finance/hooks/useFinanceDashboard";
 import { EntityType } from "@/types/finance.types";
+import { getEntity } from "@/src/finance/utils/getEntity";
 
 /* ============================= */
 /*         MAIN SCREEN           */
@@ -22,10 +22,18 @@ export default function DashboardScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  const currentEntity = params.entity as EntityType;
+  let currentEntity: EntityType;
 
-  if (!currentEntity) {
-    return null;
+  try {
+    currentEntity = getEntity(params);
+  } catch {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text>Entity invalide</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const { data, loading } = useFinanceDashboard(currentEntity);
@@ -57,8 +65,6 @@ export default function DashboardScreen() {
     totalBank = 0,
     totalMobile = 0,
     forecastGap = 0,
-
-    // ✅ Budget fields (déjà dans ton EntityDashboardSummary)
     totalBudget = 0,
     budgetGap = 0,
     budgetByCategory = {},
@@ -80,6 +86,7 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* HEADER */}
+
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
 
@@ -88,7 +95,7 @@ export default function DashboardScreen() {
               style={styles.budgetButton}
               onPress={() =>
                 router.push({
-                  pathname: "/(finance)/[entity]/budget/index",
+                  pathname: "/(finance)/[entity]/budget",
                   params: { entity: currentEntity },
                 })
               }
@@ -111,14 +118,17 @@ export default function DashboardScreen() {
         </View>
 
         {/* ALERTES BUDGET */}
+
         {(budgetAlerts.over > 0 || budgetAlerts.warning > 0) && (
           <View style={styles.alertBox}>
             <Text style={styles.alertTitle}>⚠️ Alertes budget</Text>
+
             {budgetAlerts.over > 0 && (
               <Text style={styles.alertText}>
                 🔴 Dépassement sur {budgetAlerts.over} catégorie(s)
               </Text>
             )}
+
             {budgetAlerts.warning > 0 && (
               <Text style={styles.alertText}>
                 🟠 Alerte (≥ 85%) sur {budgetAlerts.warning} catégorie(s)
@@ -128,11 +138,13 @@ export default function DashboardScreen() {
         )}
 
         {/* RESULT */}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Résultat du mois</Text>
 
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Résultat net</Text>
+
             <Text
               style={[
                 styles.resultValue,
@@ -150,11 +162,13 @@ export default function DashboardScreen() {
         </View>
 
         {/* TREASURY */}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Trésorerie</Text>
 
           <View style={styles.resultCard}>
             <Text style={styles.resultLabel}>Total disponible</Text>
+
             <Text style={[styles.resultValue, { color: "#2563eb" }]}>
               {formatNumber(totalTreasury)} USD
             </Text>
@@ -173,7 +187,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* ============================= */}
-        {/*         BUDGET SECTION        */}
+        {/*           BUDGET              */}
         {/* ============================= */}
 
         <View style={styles.section}>
@@ -183,6 +197,7 @@ export default function DashboardScreen() {
             <>
               <View style={styles.resultCard}>
                 <Text style={styles.resultLabel}>Budget total</Text>
+
                 <Text style={styles.resultValue}>
                   {formatNumber(totalBudget)} USD
                 </Text>
@@ -201,7 +216,7 @@ export default function DashboardScreen() {
                   style={styles.manageBudgetLink}
                   onPress={() =>
                     router.push({
-                      pathname: "/(finance)/[entity]/budget/index",
+                      pathname: "/(finance)/[entity]/budget",
                       params: { entity: currentEntity },
                     })
                   }
@@ -212,42 +227,43 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               </View>
 
-              {!!budgetByCategory &&
-                Object.entries(budgetByCategory).map(
-                  ([category, values]: any) => {
-                    const usage = Number(values?.usageRate || 0);
-                    const color =
-                      usage < 80
-                        ? "#16a34a"
-                        : usage <= 100
-                        ? "#f59e0b"
-                        : "#dc2626";
+              {Object.entries(budgetByCategory).map(
+                ([category, values]: any) => {
+                  const usage = Number(values?.usageRate || 0);
 
-                    return (
-                      <View key={category} style={styles.budgetRow}>
-                        <Text style={styles.budgetCat}>{category}</Text>
+                  const color =
+                    usage < 80
+                      ? "#16a34a"
+                      : usage <= 100
+                      ? "#f59e0b"
+                      : "#dc2626";
 
-                        <Text style={styles.budgetNumbers}>
-                          {formatNumber(values?.actual || 0)} /{" "}
-                          {formatNumber(values?.budget || 0)}
-                        </Text>
+                  return (
+                    <View key={category} style={styles.budgetRow}>
+                      <Text style={styles.budgetCat}>{category}</Text>
 
-                        <Text style={[styles.budgetPct, { color }]}>
-                          {Math.round(usage)}%
-                        </Text>
-                      </View>
-                    );
-                  }
-                )}
+                      <Text style={styles.budgetNumbers}>
+                        {formatNumber(values?.actual || 0)} /{" "}
+                        {formatNumber(values?.budget || 0)}
+                      </Text>
+
+                      <Text style={[styles.budgetPct, { color }]}>
+                        {Math.round(usage)}%
+                      </Text>
+                    </View>
+                  );
+                }
+              )}
             </>
           ) : (
             <View style={styles.resultCard}>
               <Text>Aucun budget défini pour ce mois.</Text>
+
               <TouchableOpacity
                 style={styles.manageBudgetLink}
                 onPress={() =>
                   router.push({
-                    pathname: "/(finance)/[entity]/budget/index",
+                    pathname: "/(finance)/[entity]/budget",
                     params: { entity: currentEntity },
                   })
                 }
@@ -265,7 +281,7 @@ export default function DashboardScreen() {
 }
 
 /* ============================= */
-/* COMPONENTS & UTILS           */
+/* COMPONENTS                    */
 /* ============================= */
 
 function Card({
@@ -280,7 +296,9 @@ function Card({
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={[styles.cardValue, { color }]}>{formatNumber(value)}</Text>
+      <Text style={[styles.cardValue, { color }]}>
+        {formatNumber(value)}
+      </Text>
     </View>
   );
 }
@@ -304,10 +322,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+
   headerActions: {
     flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
   },
 
   title: { fontSize: 22, fontWeight: "bold" },
@@ -317,7 +334,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+    marginLeft: 10,
   },
+
   journalText: { color: "white", fontWeight: "600" },
 
   budgetButton: {
@@ -326,6 +345,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
+
   budgetText: { color: "white", fontWeight: "600" },
 
   alertBox: {
@@ -337,10 +357,12 @@ const styles = StyleSheet.create({
     borderLeftColor: "#f59e0b",
     elevation: 2,
   },
+
   alertTitle: { fontWeight: "800", marginBottom: 6 },
   alertText: { color: "#374151" },
 
   section: { marginBottom: 26 },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -355,6 +377,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
+
   resultLabel: { fontSize: 14, color: "#6b7280" },
   resultValue: { fontSize: 22, fontWeight: "bold", marginTop: 6 },
 
@@ -363,6 +386,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
+
   card: {
     backgroundColor: "white",
     width: "48%",
@@ -371,6 +395,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     elevation: 2,
   },
+
   cardTitle: { fontSize: 13, color: "#6b7280" },
   cardValue: { fontSize: 18, fontWeight: "bold", marginTop: 6 },
 
@@ -379,6 +404,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingVertical: 6,
   },
+
   manageBudgetText: {
     color: "#2563eb",
     fontWeight: "700",
@@ -395,6 +421,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+
   budgetCat: { fontWeight: "700", flex: 1 },
   budgetNumbers: { flex: 1, textAlign: "center" },
   budgetPct: { width: 60, textAlign: "right", fontWeight: "800" },

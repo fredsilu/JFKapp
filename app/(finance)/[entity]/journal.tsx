@@ -5,20 +5,37 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useFinanceTransactions } from "@/src/finance/hooks/useFinanceTransactions";
 import TransactionItem from "@/src/components/TransactionItem";
 import { Entity } from "@/src/finance/services/financeTransactionService";
+import { useState } from "react";
+import { getEntity } from "@/src/finance/utils/getEntity";
+
+
 
 export default function JournalScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const currentEntity = params.entity as Entity;
 
+  const currentEntity = getEntity(params);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  // sécurité si entity absent
   if (!currentEntity) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>
+            Entity non définie
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const { transactions, loading } =
@@ -29,10 +46,22 @@ export default function JournalScreen() {
       ? "📄 Journal Maison"
       : "📄 Journal Crepolia";
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+
+    // petit délai pour laisser Firestore recharger
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 800);
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator style={{ marginTop: 60 }} />
+        <ActivityIndicator
+          style={{ marginTop: 60 }}
+          size="large"
+        />
       </SafeAreaView>
     );
   }
@@ -41,6 +70,7 @@ export default function JournalScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
 
+        {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
 
@@ -53,22 +83,39 @@ export default function JournalScreen() {
               })
             }
           >
-            <Text style={styles.newButtonText}>+ Nouvelle</Text>
+            <Text style={styles.newButtonText}>
+              + Nouvelle
+            </Text>
           </TouchableOpacity>
         </View>
 
+        {/* LISTE DES TRANSACTIONS */}
         <FlatList
           data={transactions}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 30 }}
+          keyExtractor={(item) => item.id?.toString()}
+          contentContainerStyle={{
+            paddingBottom: 30,
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          }
           renderItem={({ item }) => (
-            <TransactionItem transaction={item} />
+            <TransactionItem
+              transaction={item}
+              entity={currentEntity}
+            />
           )}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Aucune transaction pour le moment
-            </Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                Aucune transaction pour le moment
+              </Text>
+            </View>
           }
+          showsVerticalScrollIndicator={false}
         />
       </View>
     </SafeAreaView>
@@ -80,34 +127,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f3f4f6",
   },
+
   container: {
     flex: 1,
     padding: 16,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
   },
+
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#111827",
   },
+
   newButton: {
     backgroundColor: "#2563eb",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
   },
+
   newButtonText: {
     color: "white",
     fontWeight: "600",
   },
+
+  emptyContainer: {
+    alignItems: "center",
+    marginTop: 40,
+  },
+
   emptyText: {
     textAlign: "center",
-    marginTop: 40,
     color: "#6b7280",
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  errorText: {
+    color: "#ef4444",
+    fontSize: 16,
   },
 });

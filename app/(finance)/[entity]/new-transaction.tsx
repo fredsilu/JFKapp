@@ -8,14 +8,24 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { createTransaction, Entity } from "@/src/finance/services/financeTransactionService";
+
+import {
+  createTransaction,
+  Entity,
+} from "@/src/finance/services/financeTransactionService";
+
 import { useAccounts } from "@/src/finance/hooks/useAccounts";
+import { getEntity } from "@/src/finance/utils/getEntity";
+import { getTransactionId } from "@/src/finance/utils/getTransactionId";
+
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 /* ===================================================== */
-/* DEFAULT SYSTEM ACCOUNTS                              */
+/* DEFAULT SYSTEM ACCOUNTS                               */
 /* ===================================================== */
 
 const DEFAULT_ACCOUNTS = [
@@ -25,7 +35,7 @@ const DEFAULT_ACCOUNTS = [
 ];
 
 /* ===================================================== */
-/* CATEGORY MAP                                         */
+/* CATEGORY MAP                                          */
 /* ===================================================== */
 
 const CATEGORY_MAP: Record<
@@ -62,26 +72,73 @@ const CATEGORY_MAP: Record<
 
 export default function NewTransaction() {
   const router = useRouter();
-  const { entity } = useLocalSearchParams<{ entity: Entity }>();
-  const currentEntity = entity as Entity;
+  const params = useLocalSearchParams();
+
+  const currentEntity = getEntity(params);
 
   const { accounts } = useAccounts(currentEntity);
 
-  // 🔥 fallback si aucun compte
   const finalAccounts =
     accounts && accounts.length > 0 ? accounts : DEFAULT_ACCOUNTS;
 
+  let transactionId: string | null = null;
+
+  try {
+    transactionId = getTransactionId(params);
+  } catch {
+    transactionId = null;
+  }
+
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [accountId, setAccountId] = useState<string | null>(null);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  if (!currentEntity) return null;
-
   const categories = CATEGORY_MAP[currentEntity][type];
+
+  /* ============================= */
+  /* LOAD TRANSACTION FOR EDIT     */
+  /* ============================= */
+
+  useEffect(() => {
+
+    if (!transactionId) return;
+
+    const id: string = transactionId;
+
+    async function loadTransaction() {
+      try {
+
+        const ref = doc(db, "finance", id);
+
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const t: any = snap.data();
+
+          setType(t.type);
+          setAmount(String(t.amount));
+          setCategory(t.category);
+          setDescription(t.description || "");
+          setAccountId(t.accountId);
+          setDate(new Date(t.date));
+        }
+
+      } catch (error) {
+        console.log("Erreur chargement transaction", error);
+      }
+    }
+
+    loadTransaction();
+
+  }, [transactionId]);
+
+  /* ============================= */
+  /* SAVE                          */
+  /* ============================= */
 
   async function handleSave() {
     const numericAmount = parseFloat(amount);
@@ -97,19 +154,35 @@ export default function NewTransaction() {
     }
 
     try {
-      await createTransaction(currentEntity, {
-        type,
-        amount: numericAmount,
-        currency: "USD",
-        date,
-        accountId,
-        category,
-        description,
-        isInternalTransfer: false,
-      });
+      if (transactionId) {
+        const id: string = transactionId;
+
+        const ref = doc(db, "finance", id);
+        await updateDoc(doc(db, "finance", transactionId), {
+          type,
+          amount: numericAmount,
+          currency: "USD",
+          date,
+          accountId,
+          category,
+          description,
+        });
+      } else {
+        await createTransaction(currentEntity, {
+          type,
+          amount: numericAmount,
+          currency: "USD",
+          date,
+          accountId,
+          category,
+          description,
+          isInternalTransfer: false,
+        });
+      }
 
       router.back();
-    } catch {
+    } catch (error) {
+      console.log(error);
       Alert.alert("Erreur", "Impossible d'enregistrer");
     }
   }
@@ -117,12 +190,14 @@ export default function NewTransaction() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-
         <Text style={styles.title}>
-          Nouvelle transaction {currentEntity}
+          {transactionId
+            ? "Modifier transaction"
+            : `Nouvelle transaction ${currentEntity}`}
         </Text>
 
         {/* TYPE */}
+
         <View style={styles.typeContainer}>
           {["income", "expense"].map((t) => (
             <TouchableOpacity
@@ -134,7 +209,7 @@ export default function NewTransaction() {
                   ? styles.incomeActive
                   : styles.expenseActive),
               ]}
-              onPress={() => setType(t as any)}
+              onPress={() => setType(t as "income" | "expense")}
             >
               <Text style={styles.typeText}>
                 {t === "income" ? "Entrée" : "Dépense"}
@@ -144,6 +219,7 @@ export default function NewTransaction() {
         </View>
 
         {/* MONTANT */}
+
         <TextInput
           placeholder="Montant USD"
           keyboardType="numeric"
@@ -153,6 +229,7 @@ export default function NewTransaction() {
         />
 
         {/* DATE */}
+
         <TouchableOpacity
           style={styles.input}
           onPress={() => setShowDatePicker(true)}
@@ -164,15 +241,17 @@ export default function NewTransaction() {
           <DateTimePicker
             value={date}
             mode="date"
-            onChange={(_, d) => {
+            onChange={(_, selectedDate) => {
               setShowDatePicker(false);
-              if (d) setDate(d);
+              if (selectedDate) setDate(selectedDate);
             }}
           />
         )}
 
         {/* COMPTES */}
+
         <Text style={styles.label}>Compte</Text>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {finalAccounts.map((acc) => (
             <TouchableOpacity
@@ -189,8 +268,10 @@ export default function NewTransaction() {
         </ScrollView>
 
         {/* CATEGORIES */}
+
         <View style={{ marginTop: 20 }}>
           <Text style={styles.label}>Catégorie</Text>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {categories.map((cat) => (
               <TouchableOpacity
@@ -208,6 +289,7 @@ export default function NewTransaction() {
         </View>
 
         {/* DESCRIPTION */}
+
         <View style={{ marginTop: 20 }}>
           <TextInput
             placeholder="Description"
@@ -218,10 +300,13 @@ export default function NewTransaction() {
         </View>
 
         {/* SAVE */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+        >
           <Text style={styles.saveText}>Enregistrer</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -290,4 +375,11 @@ const styles = StyleSheet.create({
   },
 
   saveText: { color: "white", fontWeight: "bold" },
+
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
