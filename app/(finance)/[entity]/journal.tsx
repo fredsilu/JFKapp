@@ -38,7 +38,7 @@ export default function JournalScreen() {
     );
   }
 
-  const { transactions, loading } =
+  const { transactions, loading, reload } =
     useFinanceTransactions(currentEntity);
 
   const title =
@@ -106,6 +106,7 @@ export default function JournalScreen() {
             <TransactionItem
               transaction={item}
               entity={currentEntity}
+              reload={reload}
             />
           )}
           ListEmptyComponent={

@@ -1,16 +1,19 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+
 import { Transaction } from "@/types/finance.types";
-import { Entity } from "@/src/finance/services/financeTransactionService";
+import {
+  Entity,
+  archiveTransaction,
+} from "@/src/finance/services/financeTransactionService";
 
 interface Props {
   transaction: Transaction;
   entity: Entity;
+  reload?: () => void; // optionnel pour refresh du journal
 }
 
-export default function TransactionItem({ transaction, entity }: Props) {
+export default function TransactionItem({ transaction, entity, reload }: Props) {
   const router = useRouter();
 
   const isIncome = transaction.type === "income";
@@ -20,6 +23,10 @@ export default function TransactionItem({ transaction, entity }: Props) {
       ? transaction.description.slice(0, 40) + "..."
       : transaction.description
     : "—";
+
+  /* ============================= */
+  /* EDIT                          */
+  /* ============================= */
 
   const handleEdit = () => {
     router.push({
@@ -31,26 +38,44 @@ export default function TransactionItem({ transaction, entity }: Props) {
     });
   };
 
-  const handleDelete = () => {
+  /* ============================= */
+  /* ARCHIVE                       */
+  /* ============================= */
+
+  const handleArchive = () => {
     Alert.alert(
-      "Supprimer",
-      "Voulez-vous supprimer cette transaction ?",
+      "Archiver la transaction",
+      "Voulez-vous déplacer cette transaction dans la corbeille ?",
       [
-        { text: "Annuler", style: "cancel" },
         {
-          text: "Supprimer",
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Archiver",
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteDoc(doc(db, "finance", transaction.id));
+              await archiveTransaction(entity, transaction.id);
+
+              // 🔁 refresh du journal
+              if (reload) reload();
             } catch (error) {
-              console.log("Erreur suppression:", error);
+              console.log("Erreur archivage transaction:", error);
+              Alert.alert(
+                "Erreur",
+                "Impossible d’archiver la transaction"
+              );
             }
           },
         },
       ]
     );
   };
+
+  /* ============================= */
+  /* UI                            */
+  /* ============================= */
 
   return (
     <TouchableOpacity style={styles.container} onPress={handleEdit}>
@@ -60,7 +85,9 @@ export default function TransactionItem({ transaction, entity }: Props) {
         <Text style={styles.description}>{shortDescription}</Text>
 
         <Text style={styles.date}>
-          {new Date(transaction.date).toLocaleDateString()}
+          {transaction.date
+            ? new Date(transaction.date).toLocaleDateString()
+            : ""}
         </Text>
       </View>
 
@@ -71,16 +98,20 @@ export default function TransactionItem({ transaction, entity }: Props) {
             { color: isIncome ? "#16a34a" : "#dc2626" },
           ]}
         >
-          {isIncome ? "+" : "-"} {transaction.amount.toLocaleString()}
+          {isIncome ? "+" : "-"} {transaction.amount?.toLocaleString()}
         </Text>
 
-        <TouchableOpacity onPress={handleDelete}>
-          <Text style={styles.delete}>Supprimer</Text>
+        <TouchableOpacity onPress={handleArchive}>
+          <Text style={styles.delete}>Archiver</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 }
+
+/* ============================= */
+/* STYLES                        */
+/* ============================= */
 
 const styles = StyleSheet.create({
   container: {

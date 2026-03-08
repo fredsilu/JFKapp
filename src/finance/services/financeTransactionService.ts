@@ -4,11 +4,11 @@ import {
   getDocs,
   query,
   where,
-  deleteDoc,
   doc,
   Timestamp,
   writeBatch,
   orderBy,
+  updateDoc,
   QueryDocumentSnapshot,
   DocumentData,
 } from "firebase/firestore";
@@ -37,6 +37,8 @@ const getTransactionsCollection = (entity: Entity) =>
 type FirestoreTransaction = Omit<Transaction, "id" | "date" | "createdAt"> & {
   date: Timestamp;
   createdAt: Timestamp;
+  isArchived?: boolean;
+  archivedAt?: Timestamp;
 };
 
 /* ============================= */
@@ -47,15 +49,16 @@ export async function createTransaction(
   entity: Entity,
   transaction: Omit<Transaction, "id" | "createdAt" | "entity">
 ) {
-   console.log("CREATE TRANSACTION FOR ENTITY:", entity);
+  console.log("CREATE TRANSACTION FOR ENTITY:", entity);
 
   const docRef = await addDoc(getTransactionsCollection(entity), {
     ...transaction,
     date: Timestamp.fromDate(transaction.date),
     createdAt: Timestamp.now(),
     entity,
+    isArchived: false,
   });
- 
+
   return docRef.id;
 }
 
@@ -73,16 +76,18 @@ export async function getTransactionsByEntity(
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((docSnap: QueryDocumentSnapshot<DocumentData>) => {
-    const data = docSnap.data() as FirestoreTransaction;
+  return snapshot.docs
+    .map((docSnap: QueryDocumentSnapshot<DocumentData>) => {
+      const data = docSnap.data() as FirestoreTransaction;
 
-    return {
-      id: docSnap.id,
-      ...data,
-      date: data.date?.toDate(),
-      createdAt: data.createdAt?.toDate(),
-    };
-  });
+      return {
+        id: docSnap.id,
+        ...data,
+        date: data.date?.toDate(),
+        createdAt: data.createdAt?.toDate(),
+      } as Transaction & { isArchived?: boolean };
+    })
+    .filter((tx) => tx.isArchived !== true);
 }
 
 /* ============================= */
@@ -110,6 +115,7 @@ export async function createInternalTransfer(
     isInternalTransfer: true,
     transferId,
     createdAt: Timestamp.now(),
+    isArchived: false,
   };
 
   batch.set(sourceRef, {
@@ -130,37 +136,33 @@ export async function createInternalTransfer(
 }
 
 /* ============================= */
-/*    DELETE INTERNAL TRANSFER   */
+/*        ARCHIVE TRANSACTION    */
 /* ============================= */
 
-export async function deleteInternalTransfer(
-  entity: Entity,
-  transferId: string
-) {
-  const q = query(
-    getTransactionsCollection(entity),
-    where("transferId", "==", transferId)
-  );
-
-  const snapshot = await getDocs(q);
-  const batch = writeBatch(db);
-
-  snapshot.forEach((docSnap) => {
-    batch.delete(docSnap.ref);
-  });
-
-  await batch.commit();
-}
-
-/* ============================= */
-/*        DELETE SINGLE          */
-/* ============================= */
-
-export async function deleteTransaction(
+export async function archiveTransaction(
   entity: Entity,
   id: string
 ) {
-  await deleteDoc(
-    doc(db, "finance", entity, "transactions", id)
-  );
+  const ref = doc(db, "finance", entity, "transactions", id);
+
+  await updateDoc(ref, {
+    isArchived: true,
+    archivedAt: Timestamp.now(),
+  });
+}
+
+/* ============================= */
+/*        RESTORE TRANSACTION    */
+/* ============================= */
+
+export async function restoreTransaction(
+  entity: Entity,
+  id: string
+) {
+  const ref = doc(db, "finance", entity, "transactions", id);
+
+  await updateDoc(ref, {
+    isArchived: false,
+    archivedAt: null,
+  });
 }

@@ -7,18 +7,27 @@ export function useFinanceTransactions(entity: "maison" | "crepolia") {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
-    setLoading(true);
-    const data = await getTransactionsByEntity(entity);
-    setTransactions(data);
-    setLoading(false);
-  }
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getTransactionsByEntity(entity);
+      setTransactions(data);
+    } catch (error) {
+      console.log("Erreur chargement transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [entity]);
 
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [entity])
+    }, [load])
   );
 
-  return { transactions, loading, reload: load };
+  return {
+    transactions,
+    loading,
+    reload: load,
+  };
 }

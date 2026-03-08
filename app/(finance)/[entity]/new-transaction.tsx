@@ -111,20 +111,18 @@ export default function NewTransaction() {
 
     async function loadTransaction() {
       try {
-
-        const ref = doc(db, "finance", id);
-
+        const ref = doc(db, "finance", currentEntity, "transactions", id);
         const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        const t: any = snap.data();
+        setType(t.type ?? "expense");
+        setAmount(t.amount ? String(t.amount) : "");
+        setCategory(t.category ?? null);
+        setDescription(t.description ?? "");
+        setAccountId(t.accountId ?? null);
 
-        if (snap.exists()) {
-          const t: any = snap.data();
-
-          setType(t.type);
-          setAmount(String(t.amount));
-          setCategory(t.category);
-          setDescription(t.description || "");
-          setAccountId(t.accountId);
-          setDate(new Date(t.date));
+        if (t.date) {
+          setDate(t.date.toDate());
         }
 
       } catch (error) {
@@ -157,7 +155,7 @@ export default function NewTransaction() {
       if (transactionId) {
         const id: string = transactionId;
 
-        const ref = doc(db, "finance", id);
+        doc(db, "finance", currentEntity, "transactions", transactionId)
         await updateDoc(doc(db, "finance", transactionId), {
           type,
           amount: numericAmount,
