@@ -79,8 +79,7 @@ export default function DashboardScreen() {
     { over: 0, warning: 0 }
   );
 
-  const title =
-    currentEntity === "maison" ? "🏠 Maison" : "🏢 Crepolia";
+  const title = currentEntity === "maison" ? "🏠 Maison" : "🏢 Crepolia";
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -113,6 +112,18 @@ export default function DashboardScreen() {
               }
             >
               <Text style={styles.journalText}>Journal</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.archiveButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(finance)/[entity]/archive",
+                  params: { entity: currentEntity },
+                })
+              }
+            >
+              <Text style={styles.archiveText}>🗑</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -178,17 +189,11 @@ export default function DashboardScreen() {
             <Card title="Espèces" value={totalCash} />
             <Card title="Banque" value={totalBank} />
             <Card title="Mobile" value={totalMobile} />
-            <Card
-              title="Écart prévisionnel"
-              value={forecastGap}
-              color="#f59e0b"
-            />
+            <Card title="Écart prévisionnel" value={forecastGap} color="#f59e0b" />
           </View>
         </View>
 
-        {/* ============================= */}
-        {/*           BUDGET              */}
-        {/* ============================= */}
+        {/* BUDGET */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Budget du mois</Text>
@@ -211,20 +216,6 @@ export default function DashboardScreen() {
                 >
                   Écart global : {formatNumber(budgetGap)} USD
                 </Text>
-
-                <TouchableOpacity
-                  style={styles.manageBudgetLink}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(finance)/[entity]/budget",
-                      params: { entity: currentEntity },
-                    })
-                  }
-                >
-                  <Text style={styles.manageBudgetText}>
-                    Gérer le budget →
-                  </Text>
-                </TouchableOpacity>
               </View>
 
               {Object.entries(budgetByCategory || {}).map(
@@ -235,8 +226,8 @@ export default function DashboardScreen() {
                     usage < 80
                       ? "#16a34a"
                       : usage <= 100
-                        ? "#f59e0b"
-                        : "#dc2626";
+                      ? "#f59e0b"
+                      : "#dc2626";
 
                   return (
                     <View key={category} style={styles.budgetRow}>
@@ -258,39 +249,9 @@ export default function DashboardScreen() {
           ) : (
             <View style={styles.resultCard}>
               <Text>Aucun budget défini pour ce mois.</Text>
-
-              <TouchableOpacity
-                style={styles.manageBudgetLink}
-                onPress={() =>
-                  router.push({
-                    pathname: "/(finance)/[entity]/budget",
-                    params: { entity: currentEntity },
-                  })
-                }
-              >
-                <Text style={styles.manageBudgetText}>
-                  Définir un budget →
-                </Text>
-              </TouchableOpacity>
             </View>
           )}
         </View>
-
-
-
-        <TouchableOpacity
-          style={styles.archiveButton}
-          onPress={() =>
-            router.push({
-              
-              pathname: "/(finance)/[entity]/archive",
-              params: { entity: currentEntity },
-            })
-          }
-        >
-          <Text style={styles.archiveText}>Corbeille</Text>
-        </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -324,12 +285,14 @@ function formatNumber(value: number) {
 }
 
 /* ============================= */
-/*            STYLES             */
+/* STYLES                        */
 /* ============================= */
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#f3f4f6" },
+
   container: { padding: 16 },
+
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
@@ -339,30 +302,45 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  headerActions: {
-    flexDirection: "row",
-  },
-
   title: { fontSize: 22, fontWeight: "bold" },
 
-  journalButton: {
-    backgroundColor: "#2563eb",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 10,
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-
-  journalText: { color: "white", fontWeight: "600" },
 
   budgetButton: {
     backgroundColor: "#111827",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+    marginRight: 8,
   },
 
   budgetText: { color: "white", fontWeight: "600" },
+
+  journalButton: {
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+
+  journalText: { color: "white", fontWeight: "600" },
+
+  archiveButton: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+
+  archiveText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 
   alertBox: {
     backgroundColor: "white",
@@ -371,10 +349,10 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     borderLeftWidth: 4,
     borderLeftColor: "#f59e0b",
-    elevation: 2,
   },
 
   alertTitle: { fontWeight: "800", marginBottom: 6 },
+
   alertText: { color: "#374151" },
 
   section: { marginBottom: 26 },
@@ -391,10 +369,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    elevation: 2,
   },
 
   resultLabel: { fontSize: 14, color: "#6b7280" },
+
   resultValue: { fontSize: 22, fontWeight: "bold", marginTop: 6 },
 
   grid: {
@@ -409,22 +387,11 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginBottom: 14,
-    elevation: 2,
   },
 
   cardTitle: { fontSize: 13, color: "#6b7280" },
+
   cardValue: { fontSize: 18, fontWeight: "bold", marginTop: 6 },
-
-  manageBudgetLink: {
-    marginTop: 12,
-    alignSelf: "flex-start",
-    paddingVertical: 6,
-  },
-
-  manageBudgetText: {
-    color: "#2563eb",
-    fontWeight: "700",
-  },
 
   budgetRow: {
     backgroundColor: "white",
@@ -432,25 +399,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     marginBottom: 10,
-    elevation: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
   budgetCat: { fontWeight: "700", flex: 1 },
-  budgetNumbers: { flex: 1, textAlign: "center" },
-  budgetPct: { width: 60, textAlign: "right", fontWeight: "800" },
-  archiveButton: {
-    backgroundColor: "#6b7280",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 10,
-  },
 
-  archiveText: {
-    color: "white",
-    fontWeight: "600",
-  },
+  budgetNumbers: { flex: 1, textAlign: "center" },
+
+  budgetPct: { width: 60, textAlign: "right", fontWeight: "800" },
 });
