@@ -1,100 +1,167 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  ScrollView,
 } from "react-native";
-import { useState } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { createOrUpdateBudget } from "@/src/finance/services/budgetService";
-import { EntityType } from "@/types/finance.types";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { doc, setDoc } from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+import { getEntity } from "@/src/finance/utils/getEntity";
 
 export default function NewBudgetScreen() {
   const router = useRouter();
-  const { entity } = useLocalSearchParams<{ entity: EntityType }>();
+  const params = useLocalSearchParams();
 
-  const [category, setCategory] = useState("");
-  const [amount, setAmount] = useState("");
+  const entity = getEntity(params);
 
   const now = new Date();
-  const month = now.getMonth();
-  const year = now.getFullYear();
 
-  const handleSave = async () => {
-    if (!category.trim()) {
-      Alert.alert("Erreur", "La catégorie est obligatoire");
-      return;
-    }
+  const [month] = useState(now.getMonth() + 1);
+  const [year] = useState(now.getFullYear());
 
-    const numericAmount = Number(amount);
+  const [categories, setCategories] = useState({
+    courses: "",
+    transport: "",
+    maison: "",
+    loisirs: "",
+    divers: "",
+  });
 
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      Alert.alert("Erreur", "Montant invalide");
-      return;
-    }
+  function updateCategory(key: string, value: string) {
+    setCategories((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
 
-    try {
-      await createOrUpdateBudget(
-        entity as EntityType,
-        category,
+  async function saveBudget() {
+    const id = `${year}-${String(month).padStart(2, "0")}`;
+
+    const numericCategories: any = {};
+
+    Object.entries(categories).forEach(([key, value]) => {
+      numericCategories[key] = Number(value || 0);
+    });
+
+    const totalBudget = Object.values(numericCategories).reduce(
+      (sum: number, val: any) => sum + val,
+      0
+    );
+
+    await setDoc(
+      doc(db, "finance", entity, "budgets", id),
+      {
         month,
         year,
-        numericAmount,
-        "USD"
-      );
+        categories: numericCategories,
+        total: totalBudget,
+        createdAt: new Date(),
+      },
+      { merge: true }
+    );
 
-      router.back();
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Erreur", "Impossible d'enregistrer le budget");
-    }
-  };
+    router.back();
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        Nouveau budget ({entity})
-      </Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Définir un budget</Text>
 
-      <TextInput
-        placeholder="Catégorie"
-        style={styles.input}
-        value={category}
-        onChangeText={setCategory}
-      />
+        <Text style={styles.subtitle}>
+          {month}/{year}
+        </Text>
 
-      <TextInput
-        placeholder="Montant"
-        keyboardType="numeric"
-        style={styles.input}
-        value={amount}
-        onChangeText={setAmount}
-      />
+        {Object.keys(categories).map((cat) => (
+          <View key={cat} style={styles.row}>
+            <Text style={styles.label}>{cat}</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Enregistrer</Text>
-      </TouchableOpacity>
-    </View>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={(categories as any)[cat]}
+              onChangeText={(v) => updateCategory(cat, v)}
+              placeholder="0"
+            />
+          </View>
+        ))}
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={saveBudget}
+        >
+          <Text style={styles.saveText}>Enregistrer</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 15,
+  safe: {
+    flex: 1,
+    backgroundColor: "#f3f4f6",
   },
-  button: {
-    backgroundColor: "#111827",
-    padding: 14,
+
+  container: {
+    padding: 20,
+  },
+
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 6,
+    color: "#111827",
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 20,
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+
+  label: {
+    fontWeight: "600",
+    textTransform: "capitalize",
+    color: "#111827",
+  },
+
+  input: {
+    width: 100,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     borderRadius: 8,
+    padding: 8,
+    textAlign: "right",
+    backgroundColor: "#fafafa",
+  },
+
+  saveButton: {
+    marginTop: 20,
+    backgroundColor: "#2563eb",
+    padding: 14,
+    borderRadius: 10,
     alignItems: "center",
   },
-  buttonText: { color: "white", fontWeight: "bold" },
+
+  saveText: {
+    color: "white",
+    fontWeight: "700",
+  },
 });
