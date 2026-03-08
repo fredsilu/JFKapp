@@ -10,10 +10,14 @@ import {
 interface Props {
   transaction: Transaction;
   entity: Entity;
-  reload?: () => void; // optionnel pour refresh du journal
+  reload?: () => void;
 }
 
-export default function TransactionItem({ transaction, entity, reload }: Props) {
+export default function TransactionItem({
+  transaction,
+  entity,
+  reload,
+}: Props) {
   const router = useRouter();
 
   const isIncome = transaction.type === "income";
@@ -24,9 +28,10 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
       : transaction.description
     : "—";
 
-  /* ============================= */
-  /* EDIT                          */
-  /* ============================= */
+  const formattedDate =
+    transaction.date instanceof Date
+      ? transaction.date.toLocaleDateString()
+      : "";
 
   const handleEdit = () => {
     router.push({
@@ -37,10 +42,6 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
       },
     });
   };
-
-  /* ============================= */
-  /* ARCHIVE                       */
-  /* ============================= */
 
   const handleArchive = () => {
     Alert.alert(
@@ -57,9 +58,7 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
           onPress: async () => {
             try {
               await archiveTransaction(entity, transaction.id);
-
-              // 🔁 refresh du journal
-              if (reload) reload();
+              reload?.();
             } catch (error) {
               console.log("Erreur archivage transaction:", error);
               Alert.alert(
@@ -73,22 +72,16 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
     );
   };
 
-  /* ============================= */
-  /* UI                            */
-  /* ============================= */
-
   return (
     <TouchableOpacity style={styles.container} onPress={handleEdit}>
       <View style={styles.left}>
-        <Text style={styles.category}>{transaction.category}</Text>
+        <Text style={styles.category}>
+          {transaction.category || "Sans catégorie"}
+        </Text>
 
         <Text style={styles.description}>{shortDescription}</Text>
 
-        <Text style={styles.date}>
-          {transaction.date
-            ? new Date(transaction.date).toLocaleDateString()
-            : ""}
-        </Text>
+        <Text style={styles.date}>{formattedDate}</Text>
       </View>
 
       <View style={styles.right}>
@@ -98,7 +91,8 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
             { color: isIncome ? "#16a34a" : "#dc2626" },
           ]}
         >
-          {isIncome ? "+" : "-"} {transaction.amount?.toLocaleString()}
+          {isIncome ? "+" : "-"}{" "}
+          {(transaction.amount ?? 0).toLocaleString()}
         </Text>
 
         <TouchableOpacity onPress={handleArchive}>
@@ -108,10 +102,6 @@ export default function TransactionItem({ transaction, entity, reload }: Props) 
     </TouchableOpacity>
   );
 }
-
-/* ============================= */
-/* STYLES                        */
-/* ============================= */
 
 const styles = StyleSheet.create({
   container: {

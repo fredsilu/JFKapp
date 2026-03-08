@@ -227,7 +227,7 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
               </View>
 
-              {Object.entries(budgetByCategory).map(
+              {Object.entries(budgetByCategory || {}).map(
                 ([category, values]: any) => {
                   const usage = Number(values?.usageRate || 0);
 
@@ -235,8 +235,8 @@ export default function DashboardScreen() {
                     usage < 80
                       ? "#16a34a"
                       : usage <= 100
-                      ? "#f59e0b"
-                      : "#dc2626";
+                        ? "#f59e0b"
+                        : "#dc2626";
 
                   return (
                     <View key={category} style={styles.budgetRow}>
@@ -275,6 +275,22 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
+
+
+
+        <TouchableOpacity
+          style={styles.archiveButton}
+          onPress={() =>
+            router.push({
+              
+              pathname: "/(finance)/[entity]/archive",
+              params: { entity: currentEntity },
+            })
+          }
+        >
+          <Text style={styles.archiveText}>Corbeille</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -425,4 +441,16 @@ const styles = StyleSheet.create({
   budgetCat: { fontWeight: "700", flex: 1 },
   budgetNumbers: { flex: 1, textAlign: "center" },
   budgetPct: { width: 60, textAlign: "right", fontWeight: "800" },
+  archiveButton: {
+    backgroundColor: "#6b7280",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+
+  archiveText: {
+    color: "white",
+    fontWeight: "600",
+  },
 });

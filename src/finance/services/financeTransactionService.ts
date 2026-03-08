@@ -9,6 +9,7 @@ import {
   writeBatch,
   orderBy,
   updateDoc,
+  deleteDoc,
   QueryDocumentSnapshot,
   DocumentData,
 } from "firebase/firestore";
@@ -38,7 +39,7 @@ type FirestoreTransaction = Omit<Transaction, "id" | "date" | "createdAt"> & {
   date: Timestamp;
   createdAt: Timestamp;
   isArchived?: boolean;
-  archivedAt?: Timestamp;
+  archivedAt?: Timestamp | null;
 };
 
 /* ============================= */
@@ -49,21 +50,20 @@ export async function createTransaction(
   entity: Entity,
   transaction: Omit<Transaction, "id" | "createdAt" | "entity">
 ) {
-  console.log("CREATE TRANSACTION FOR ENTITY:", entity);
-
   const docRef = await addDoc(getTransactionsCollection(entity), {
     ...transaction,
     date: Timestamp.fromDate(transaction.date),
     createdAt: Timestamp.now(),
     entity,
     isArchived: false,
+    archivedAt: null,
   });
 
   return docRef.id;
 }
 
 /* ============================= */
-/*       GET BY ENTITY           */
+/*       GET ACTIVE              */
 /* ============================= */
 
 export async function getTransactionsByEntity(
@@ -87,7 +87,35 @@ export async function getTransactionsByEntity(
         createdAt: data.createdAt?.toDate(),
       } as Transaction & { isArchived?: boolean };
     })
-    .filter((tx) => tx.isArchived !== true);
+    .filter((tx) => (tx as Transaction & { isArchived?: boolean }).isArchived !== true);
+}
+
+/* ============================= */
+/*       GET ARCHIVED            */
+/* ============================= */
+
+export async function getArchivedTransactions(
+  entity: Entity
+): Promise<Transaction[]> {
+  const q = query(
+    getTransactionsCollection(entity),
+    orderBy("date", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs
+    .map((docSnap: QueryDocumentSnapshot<DocumentData>) => {
+      const data = docSnap.data() as FirestoreTransaction;
+
+      return {
+        id: docSnap.id,
+        ...data,
+        date: data.date?.toDate(),
+        createdAt: data.createdAt?.toDate(),
+      } as Transaction & { isArchived?: boolean };
+    })
+    .filter((tx) => (tx as Transaction & { isArchived?: boolean }).isArchived === true);
 }
 
 /* ============================= */
@@ -116,6 +144,7 @@ export async function createInternalTransfer(
     transferId,
     createdAt: Timestamp.now(),
     isArchived: false,
+    archivedAt: null,
   };
 
   batch.set(sourceRef, {
@@ -139,10 +168,7 @@ export async function createInternalTransfer(
 /*        ARCHIVE TRANSACTION    */
 /* ============================= */
 
-export async function archiveTransaction(
-  entity: Entity,
-  id: string
-) {
+export async function archiveTransaction(entity: Entity, id: string) {
   const ref = doc(db, "finance", entity, "transactions", id);
 
   await updateDoc(ref, {
@@ -155,14 +181,43 @@ export async function archiveTransaction(
 /*        RESTORE TRANSACTION    */
 /* ============================= */
 
-export async function restoreTransaction(
-  entity: Entity,
-  id: string
-) {
+export async function restoreTransaction(entity: Entity, id: string) {
   const ref = doc(db, "finance", entity, "transactions", id);
 
   await updateDoc(ref, {
     isArchived: false,
     archivedAt: null,
   });
+}
+
+/* ============================= */
+/*     DELETE FOREVER            */
+/* ============================= */
+
+export async function deleteTransactionForever(entity: Entity, id: string) {
+  const ref = doc(db, "finance", entity, "transactions", id);
+  await deleteDoc(ref);
+}
+
+/* ============================= */
+/*    DELETE INTERNAL TRANSFER   */
+/* ============================= */
+
+export async function deleteInternalTransfer(
+  entity: Entity,
+  transferId: string
+) {
+  const q = query(
+    getTransactionsCollection(entity),
+    where("transferId", "==", transferId)
+  );
+
+  const snapshot = await getDocs(q);
+  const batch = writeBatch(db);
+
+  snapshot.forEach((docSnap) => {
+    batch.delete(docSnap.ref);
+  });
+
+  await batch.commit();
 }

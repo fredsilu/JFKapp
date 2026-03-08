@@ -11,11 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useFinanceTransactions } from "@/src/finance/hooks/useFinanceTransactions";
 import TransactionItem from "@/src/components/TransactionItem";
-import { Entity } from "@/src/finance/services/financeTransactionService";
 import { useState } from "react";
 import { getEntity } from "@/src/finance/utils/getEntity";
-
-
 
 export default function JournalScreen() {
   const router = useRouter();
@@ -25,7 +22,6 @@ export default function JournalScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // sécurité si entity absent
   if (!currentEntity) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -47,12 +43,14 @@ export default function JournalScreen() {
       : "📄 Journal Crepolia";
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-
-    // petit délai pour laisser Firestore recharger
-    setTimeout(() => {
+    try {
+      setRefreshing(true);
+      await reload();
+    } catch (error) {
+      console.log("Erreur refresh:", error);
+    } finally {
       setRefreshing(false);
-    }, 800);
+    }
   };
 
   if (loading) {
@@ -92,7 +90,7 @@ export default function JournalScreen() {
         {/* LISTE DES TRANSACTIONS */}
         <FlatList
           data={transactions}
-          keyExtractor={(item) => item.id?.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingBottom: 30,
           }}
