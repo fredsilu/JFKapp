@@ -1,6 +1,7 @@
 // app/(traiteur)/DocumentEditorScreen.tsx
 
 import React, { useMemo, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -233,116 +234,133 @@ export default function DocumentEditorScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>
-        {document.type === "proforma" ? "Proforma" : "Facture"}
-      </Text>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Client</Text>
-        <TextInput
-          style={styles.input}
-          value={document.client.name}
-          onChangeText={(text) =>
-            setDocument((prev) => ({
-              ...prev,
-              client: { ...prev.client, name: text },
-            }))
-          }
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Evénement</Text>
-        <TextInput
-          style={styles.input}
-          value={document.eventName ?? ""}
-          onChangeText={(text) =>
-            setDocument((prev) => ({
-              ...prev,
-              eventName: text,
-            }))
-          }
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Date événement</Text>
-        <TextInput
-          style={styles.input}
-          value={document.meta.eventDate}
-          onChangeText={(text) =>
-            setDocument((prev) => ({
-              ...prev,
-              meta: {
-                ...prev.meta,
-                eventDate: text,
-              },
-            }))
-          }
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.label}>Nombre de personnes</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={String(document.guestCount)}
-          onChangeText={(text) =>
-            setDocument((prev) => ({
-              ...prev,
-              guestCount: Number(text) || 0,
-            }))
-          }
-        />
-      </View>
-
-      <Text style={styles.tableHeader}>Désignation | Jrs | Qté | PU | PT</Text>
-
-      <FlatList
-        data={document.items}
-        renderItem={renderItem}
-        keyExtractor={(_, i) => String(i)}
-        scrollEnabled={false}
-      />
-
-      <TouchableOpacity style={styles.addButton} onPress={addLine}>
-        <Text style={styles.addText}>+ Ajouter ligne</Text>
-      </TouchableOpacity>
-
-      <View style={styles.totalBox}>
-        <Text style={styles.totalLabel}>Sous-total :</Text>
-        <Text style={styles.totalValue}>
-          {document.totals.subtotal.toFixed(2)} $
-        </Text>
-      </View>
-
-      <View style={styles.totalBox}>
-        <Text style={styles.totalLabel}>Total :</Text>
-        <Text style={styles.totalValue}>
-          {document.totals.total.toFixed(2)} $
-        </Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.generateButton}
-        onPress={handleGeneratePDF}
+    <SafeAreaView style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        style={styles.scroll}
       >
-        <Text style={styles.generateText}>Générer PDF</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <Text style={styles.title}>
+          {document.type === "proforma" ? "Proforma" : "Facture"}
+        </Text>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Client</Text>
+          <TextInput
+            style={styles.input}
+            value={document.client.name}
+            onChangeText={(text) =>
+              setDocument((prev) => ({
+                ...prev,
+                client: { ...prev.client, name: text },
+              }))
+            }
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Evénement</Text>
+          <TextInput
+            style={styles.input}
+            value={document.eventName ?? ""}
+            onChangeText={(text) =>
+              setDocument((prev) => ({
+                ...prev,
+                eventName: text,
+              }))
+            }
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Date événement</Text>
+          <TextInput
+            style={styles.input}
+            value={document.meta.eventDate}
+            onChangeText={(text) =>
+              setDocument((prev) => ({
+                ...prev,
+                meta: {
+                  ...prev.meta,
+                  eventDate: text,
+                },
+              }))
+            }
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Nombre de personnes</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(document.guestCount)}
+            onChangeText={(text) =>
+              setDocument((prev) => ({
+                ...prev,
+                guestCount: Number(text) || 0,
+              }))
+            }
+          />
+        </View>
+
+        <Text style={styles.tableHeader}>Désignation | Jrs | Qté | PU | PT</Text>
+
+        <FlatList
+          data={document.items}
+          renderItem={renderItem}
+          keyExtractor={(_, i) => String(i)}
+          scrollEnabled={false}
+        />
+
+        <TouchableOpacity style={styles.addButton} onPress={addLine}>
+          <Text style={styles.addText}>+ Ajouter ligne</Text>
+        </TouchableOpacity>
+
+        <View style={styles.summaryCard}>
+          <View style={styles.totalBox}>
+            <Text style={styles.totalLabel}>Sous-total :</Text>
+            <Text style={styles.totalValue}>
+              {document.totals.subtotal.toFixed(2)} $
+            </Text>
+          </View>
+
+          <View style={styles.totalBox}>
+            <Text style={styles.totalLabel}>Total :</Text>
+            <Text style={styles.totalValue}>
+              {document.totals.total.toFixed(2)} $
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.generateButton}
+          onPress={handleGeneratePDF}
+        >
+          <Text style={styles.generateText}>Générer PDF</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F7F8FA",
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: "#F7F8FA",
+  },
   container: {
     padding: 20,
     paddingBottom: 40,
+    backgroundColor: "#F7F8FA",
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
+    color: "#101828",
     marginBottom: 20,
   },
   section: {
@@ -350,18 +368,21 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "600",
+    color: "#344054",
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     borderColor: "#D0D5DD",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: "#FFF",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    color: "#101828",
   },
   tableHeader: {
     fontWeight: "700",
+    color: "#344054",
     marginTop: 10,
     marginBottom: 10,
   },
@@ -369,6 +390,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
+    backgroundColor: "#FFFFFF",
+    padding: 8,
+    borderRadius: 10,
   },
   designation: {
     flex: 2,
@@ -376,7 +400,8 @@ const styles = StyleSheet.create({
     borderColor: "#D0D5DD",
     borderRadius: 8,
     padding: 8,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFFFF",
+    color: "#101828",
   },
   smallInput: {
     width: 55,
@@ -385,7 +410,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginLeft: 5,
-    backgroundColor: "#FFF",
+    backgroundColor: "#FFFFFF",
+    color: "#101828",
     textAlign: "center",
   },
   total: {
@@ -393,9 +419,10 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     textAlign: "right",
     fontWeight: "600",
+    color: "#101828",
   },
   delete: {
-    color: "red",
+    color: "#D92D20",
     marginLeft: 10,
     fontSize: 16,
     fontWeight: "700",
@@ -405,19 +432,27 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   addText: {
-    color: "#007AFF",
+    color: "#175CD3",
     fontWeight: "600",
+  },
+  summaryCard: {
+    marginTop: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
   },
   totalBox: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 8,
   },
   totalLabel: {
     fontWeight: "700",
+    color: "#344054",
   },
   totalValue: {
     fontWeight: "700",
+    color: "#101828",
   },
   generateButton: {
     marginTop: 24,
@@ -427,7 +462,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   generateText: {
-    color: "#FFF",
+    color: "#FFFFFF",
     fontWeight: "700",
   },
 });
