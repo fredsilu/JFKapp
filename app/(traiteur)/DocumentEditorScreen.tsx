@@ -15,6 +15,8 @@ import {
 
 import { createEmptyDocumentItem } from "@/src/utils/createEmptyDocumentItem";
 import { calculateDocumentTotals } from "@/src/utils/calculateDocumentTotals";
+import { buildDocumentHTML } from "@/src/services/buildDocumentHTML";
+import { generateDocumentPDF } from "@/src/services/generateDocumentPDF";
 
 interface Props {
   initialDocument: CateringDocument;
@@ -70,6 +72,14 @@ export default function DocumentEditorScreen({ initialDocument }: Props) {
       items,
       totals,
     });
+  }
+  async function handleGeneratePDF() {
+
+    const html = buildDocumentHTML(document);
+
+    const uri = await generateDocumentPDF(html);
+
+    console.log("PDF généré :", uri);
   }
 
   function renderItem({
@@ -187,7 +197,10 @@ export default function DocumentEditorScreen({ initialDocument }: Props) {
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.generateButton}>
+      <TouchableOpacity
+        style={styles.generateButton}
+        onPress={handleGeneratePDF}
+      >
         <Text style={styles.generateText}>
           Générer PDF
         </Text>
