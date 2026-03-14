@@ -19,6 +19,7 @@ import {
   CateringDocumentItem,
   CateringDocumentType,
 } from "@/types/documents";
+import * as Sharing from "expo-sharing";
 import { createEmptyDocumentItem } from "@/src/utils/createEmptyDocumentItem";
 import { calculateDocumentTotals } from "@/src/utils/calculateDocumentTotals";
 import { buildDocumentHTML } from "@/src/services/buildDocumentHTML";
@@ -180,6 +181,7 @@ export default function DocumentEditorScreen() {
     try {
       const html = buildDocumentHTML(document);
       const uri = await generateDocumentPDF(html);
+      await Sharing.shareAsync(uri);
       Alert.alert("PDF généré", uri);
     } catch (error) {
       console.error(error);
