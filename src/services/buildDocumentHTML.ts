@@ -6,18 +6,35 @@ export function buildDocumentHTML(document: CateringDocument): string {
     document.type === "invoice" ? "FACTURE" : "PRO FORMA";
 
   const rows = document.items
-    .map(
-      (item) => `
+    .map((item) => {
+
+      const unitPrice = Number(item.unitPrice).toLocaleString("fr-FR", {
+        minimumFractionDigits: 2
+      });
+
+      const totalPrice = Number(item.totalPrice).toLocaleString("fr-FR", {
+        minimumFractionDigits: 2
+      });
+
+      return `
 <tr>
 <td>${item.label}</td>
-<td>${item.days}</td>
-<td>${item.quantity}</td>
-<td>${item.unitPrice}</td>
-<td>${item.totalPrice}</td>
+<td class="center">${item.days}</td>
+<td class="center">${item.quantity}</td>
+<td class="right">$ ${unitPrice}</td>
+<td class="right">$ ${totalPrice}</td>
 </tr>
-`
-    )
+`;
+    })
     .join("");
+
+  const subtotal = Number(document.totals.subtotal).toLocaleString("fr-FR", {
+    minimumFractionDigits: 2
+  });
+
+  const total = Number(document.totals.total).toLocaleString("fr-FR", {
+    minimumFractionDigits: 2
+  });
 
   return `
 <html>
@@ -31,10 +48,13 @@ export function buildDocumentHTML(document: CateringDocument): string {
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
 
 body{
-font-family: 'Montserrat', Arial;
+font-family:'Montserrat',Arial;
 padding:40px;
 color:#1a1a1a;
+font-size:13px;
 }
+
+/* HEADER */
 
 .header{
 display:flex;
@@ -53,34 +73,56 @@ line-height:1.6;
 }
 
 .divider{
-margin-top:20px;
+margin-top:15px;
 margin-bottom:25px;
-border-bottom:2px solid #e6e6e6;
+border-bottom:2px solid #bfc9d4;
 }
 
+/* TITLE + CLIENT */
+
 .title-section{
-display:flex;
-justify-content:space-between;
-align-items:flex-start;
 margin-bottom:20px;
 }
 
+.title-left{
+width:100%;
+}
+
 .title{
-font-size:26px;
+font-size:28px;
 font-weight:700;
-color:#1F3A5F;
+color:#2e4057;
+margin-bottom:6px;
+}
+
+.title-row{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+width:100%;
 }
 
 .number{
-margin-top:5px;
 font-size:14px;
+line-height:1.4;
 }
 
 .client{
 text-align:right;
 font-size:14px;
 line-height:1.6;
+max-width:280px;
 }
+
+/* COMMENT */
+
+.comment{
+margin-top:10px;
+font-size:14px;
+width:100%;
+}
+
+/* TABLE */
 
 table{
 width:100%;
@@ -88,41 +130,128 @@ border-collapse:collapse;
 margin-top:20px;
 }
 
-th{
-background:#1F3A5F;
+thead{
+background:#8fa6b6;
 color:white;
+}
+
+th{
 padding:10px;
 font-size:13px;
+text-align:left;
 }
 
 td{
-border:1px solid #e6e6e6;
+border:1px solid #d5dde5;
 padding:10px;
 font-size:13px;
 }
 
-tbody tr:nth-child(even){
-background:#f5f8fb;
+.center{
+text-align:center;
 }
 
-.total-box{
-margin-top:25px;
+.right{
+text-align:right;
+}
+
+tbody tr:nth-child(even){
+background:#eef3f7;
+}
+
+.event-info td{
+background:#f5f8fb;
+font-size:13px;
+}
+
+/* TOTALS */
+
+.totals-wrapper{
+margin-top:20px;
 display:flex;
 justify-content:flex-end;
 }
 
-.total{
-background:#1F3A5F;
-color:white;
-padding:12px 18px;
+.totals-table{
+width:420px;
+border-collapse:collapse;
 font-size:16px;
+}
+
+.subtotal-row td{
+background:#bfcbd4;
+padding:12px;
+border-top:3px solid black;
+}
+
+.total-row td{
+background:#3a4556;
+color:white;
 font-weight:700;
+padding:14px;
+font-size:18px;
+}
+
+.label{
+text-align:left;
+}
+
+.currency{
+text-align:center;
+width:40px;
+}
+
+.amount{
+text-align:right;
+width:140px;
+}
+
+/* PAYMENT */
+
+.payment{
+margin-top:30px;
+text-align:center;
+font-size:13px;
+line-height:1.6;
+color:#555;
+}
+
+.thankyou{
+margin-top:20px;
+text-align:center;
+font-size:14px;
+font-weight:600;
+}
+
+/* SIGNATURE */
+
+.signature-section{
+margin-top:30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.signature img{
+height:70px;
+}
+
+.stamp img{
+height:90px;
+}
+
+/* FOOTER */
+
+.footer{
+margin-top:25px;
+text-align:center;
+font-size:12px;
+color:#444;
 }
 
 </style>
 
 </head>
-
 
 <body>
 
@@ -131,20 +260,14 @@ font-weight:700;
 <div class="header">
 
 <div class="logo">
-
 <img src="${document.assets?.logoUri ?? ""}" />
-
 </div>
 
 <div class="address">
-
-CREPOLIA<br/>
-54 Avenue de la Justice<br/>
-Gombe – Kinshasa<br/>
-RDC<br/>
-Tel : +243 891111165<br/>
-contact@crepolia.com
-
+Tél. : +243 898111165<br/>
+contact@crepolia.com<br/>
+54, Avenue de la Justice<br/>
+C/Gombe
 </div>
 
 </div>
@@ -155,38 +278,36 @@ contact@crepolia.com
 
 <div class="title-section">
 
-<div>
+<div class="title-left">
 
 <div class="title">${title}</div>
+
+<div class="title-row">
 
 <div class="number">
 Numéro : ${document.meta.number ?? ""}
 </div>
 
-<div class="number">
-Date : ${document.meta.issueDate}
-</div>
-
-</div>
-
 <div class="client">
-
-<strong>${document.client.name}</strong><br/>
-
+<strong>${document.client.name ?? ""}</strong><br/>
+${document.client.rccm ?? ""}<br/>
+${document.client.idNat ?? ""}<br/>
 ${document.client.addressLine1 ?? ""}<br/>
-${document.client.cityCountry ?? ""}
+${document.client.cityCountry ?? ""}<br/>
+${document.meta.issueDate ?? ""}
+</div>
+
+</div>
 
 </div>
 
 </div>
 
-<!-- EVENT -->
+<!-- COMMENT -->
 
-<div style="margin-top:10px;font-size:14px;">
-
-Evènement : ${document.eventName ?? ""}<br/>
-Nombre de personnes : ${document.guestCount}
-
+<div class="comment">
+Commentaires ou indications particulières :
+${document.meta.comment ?? "Aucun"}
 </div>
 
 <!-- TABLE -->
@@ -198,14 +319,22 @@ Nombre de personnes : ${document.guestCount}
 <tr>
 <th>Désignation</th>
 <th>Jrs</th>
-<th>Qté</th>
-<th>P.U</th>
-<th>P.T</th>
+<th>Quantité</th>
+<th>P.U.</th>
+<th>P.T.</th>
 </tr>
 
 </thead>
 
 <tbody>
+
+<tr class="event-info">
+<td colspan="5">
+Evènement : ${document.eventName ?? ""}<br/>
+Date évènement : ${document.eventDate ?? ""}<br/>
+Nbr de personnes : ${document.guestCount ?? ""}
+</td>
+</tr>
 
 ${rows}
 
@@ -213,15 +342,67 @@ ${rows}
 
 </table>
 
-<!-- TOTAL -->
+<!-- TOTALS -->
 
-<div class="total-box">
+<div class="totals-wrapper">
 
-<div class="total">
+<table class="totals-table">
 
-TOTAL : ${document.totals.total} USD
+<tr class="subtotal-row">
+<td class="label">Sous-total :</td>
+<td class="currency">$</td>
+<td class="amount">${subtotal}</td>
+</tr>
+
+<tr class="total-row">
+<td class="label">Total à payer :</td>
+<td class="currency">$</td>
+<td class="amount">${total}</td>
+</tr>
+
+</table>
 
 </div>
+
+<!-- PAYMENT INFO -->
+
+<div class="payment">
+
+Les paiements peuvent se faire en espèces, par chèque ou par virement bancaire.<br/><br/>
+
+Les paiements par virement bancaire doivent se faire en mode OUR (prise en charge
+des frais par le donneur d'ordre) afin que l'intégralité de la facture soit encaissée
+par CREPOLIA ; dans le cas contraire, la facture sera considérée non soldée.
+
+</div>
+
+<div class="thankyou">
+
+MERCI DE NOUS FAIRE CONFIANCE
+
+</div>
+
+<!-- SIGNATURE -->
+
+<div class="signature-section">
+
+<div class="stamp">
+<img src="${document.assets?.stampUri ?? ""}" />
+</div>
+
+<div class="signature">
+<img src="${document.assets?.signatureUri ?? ""}" />
+</div>
+
+</div>
+
+<!-- FOOTER -->
+
+<div class="footer">
+
+RCCM : CD/KNG/RCCM/20-A-00139<br/>
+ID Nat : 01-852-N58548R<br/>
+NIF : A2171348B
 
 </div>
 
