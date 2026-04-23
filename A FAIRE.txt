@@ -832,3 +832,68 @@ Je vais maintenant te livrer :
 On va le faire proprement, scalable et cohérent avec ton architecture actuelle Expo + Firebase.
 
 Je commence par la **structure des dossiers React Native**.
+
+
+feature/ui-improvements-v6 → développement en cours
+development → version stable interne (tests)
+release/v1.1.0 → préparation APK
+main → version officielle livrée
+
+development → version testable interne
+main → version Play Store
+release/* → APK client
+
+
+git add .
+git commit -m "feat: catering simulator stable"
+git push origin feature/invoice       ---HERE    
+
+git checkout develop
+git pull origin develop
+git merge feature/ui-improvements-v6
+git push origin develop
+
+git checkout -b release/v3.0.0
+git push origin release/v3.0.0
+
+
+----beta test--------------------------
+
+git tag v3.0.0-beta.1
+git push origin v3.0.0-beta.1
+eas build -p android --profile beta  
+---fixing crash si il y en a apres les tests
+git add .
+git commit -m "fix: order form image crash"
+git push origin release/v3.0.0                
+
+
+git tag v3.0.0-beta.2
+git push origin v3.0.0-beta.2
+eas build -p android --profile beta       
+
+---fixing crash si il y en a apres les tests
+git add .
+git commit -m "fix: order form image crash"
+git push origin release/v3.0.0
+
+git tag v3.0.0-beta.3
+git push origin v3.0.0-beta.3
+eas build -p android --profile beta
+
+
+----beta test--------------------------
+
+
+git checkout main		
+git pull origin main
+git merge release/v3.0.0
+git push origin main
+
+git tag v3.0.0
+git push origin v3.0.0
+eas build -p android --profile production
+
+------end
+
+git checkout feature/ui-improvements-v6

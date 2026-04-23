@@ -51,7 +51,7 @@ export default function CateringNewSimulation() {
     }
 
     router.push({
-      pathname: '/catering-calculator',
+      pathname: '/tools/calculator',
       params: {
         clientId: selectedClient.id,
         clientName: selectedClient.name,

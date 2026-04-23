@@ -106,7 +106,7 @@ export default function CateringSimulationsScreen() {
 
         <TouchableOpacity
           style={styles.newButton}
-          onPress={() => router.push('/catering-new-simulation')}
+          onPress={() => router.push('/simulations/new')}
         >
           <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
         </TouchableOpacity>
@@ -146,7 +146,7 @@ export default function CateringSimulationsScreen() {
                   style={styles.createOrderBtn}
                   onPress={() =>
                     router.push({
-                      pathname: '/catering-new-order',
+                      pathname: '/orders/new',
                       params: { fromSimulationId: sim.id },
                     })
                   }
@@ -160,7 +160,7 @@ export default function CateringSimulationsScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: '/catering-calculator',
+                        pathname: '/tools/calculator',
                         params: { simulationId: sim.id },
                       })
                     }
@@ -171,7 +171,7 @@ export default function CateringSimulationsScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: '/catering-calculator',
+                        pathname: '/tools/calculator',
                         params: { reuseSimulationId: sim.id },
                       })
                     }
