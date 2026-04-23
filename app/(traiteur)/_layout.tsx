@@ -80,6 +80,16 @@ export default function TraiteurLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+  name="proformas"
+  options={{
+    title: 'Proformas',
+    tabBarLabel: 'Proformas',
+    tabBarIcon: ({ color, size }) => (
+      <Icon name="description" size={size} color={color} />
+    ),
+  }}
+/>
 
       <Tabs.Screen
         name="analytics/index"
