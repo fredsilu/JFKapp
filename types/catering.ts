@@ -265,7 +265,7 @@ export type CateringInvoice = {
 
   number: string;
 
-  status: CateringInvoiceStatus;
+  status: "draft" | "issued" | "paid" | "cancelled";
 
   clientId: string;
   client: CateringDocumentClient;
@@ -287,6 +287,13 @@ export type CateringInvoice = {
   updatedAt: Timestamp;
 
   issuedAt?: Timestamp | null;
+
+  /**
+   * Payment info
+   */
+  paidAt?: Timestamp | null;
+  paymentMethod?: "cash" | "bank" | "mobile";
+  amountPaid?: number;
 };
 
 /**

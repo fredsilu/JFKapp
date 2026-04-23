@@ -40,7 +40,16 @@ export async function createProformaFromSimulation(
 
   const items = buildDocumentItemsFromSimulation(simulation);
 
-  const totals = calculateDocumentTotals(items);
+  const rawTotals = calculateDocumentTotals(items);
+
+  const totals = {
+    subtotal: rawTotals?.subtotal ?? 0,
+    total: rawTotals?.total ?? 0,
+    currency: rawTotals?.currency ?? "USD",
+  };
+  if (!totals || totals.total === undefined) {
+  throw new Error("Totals invalid - check calculateDocumentTotals");
+}
 
   const proforma: Omit<CateringOrder, "id"> = {
 
