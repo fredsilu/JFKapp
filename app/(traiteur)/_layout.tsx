@@ -9,6 +9,8 @@ export default function TraiteurLayout() {
       screenOptions={{
         headerShown: true,
         headerRight: () => <ModuleButton />,
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#999',
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopColor: '#f5f5f5',
@@ -16,8 +18,6 @@ export default function TraiteurLayout() {
           paddingBottom: 8,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#999',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -36,7 +36,7 @@ export default function TraiteurLayout() {
       />
 
       <Tabs.Screen
-        name="clients"
+        name="clients/index"
         options={{
           title: 'Clients',
           tabBarLabel: 'Clients',
@@ -47,7 +47,7 @@ export default function TraiteurLayout() {
       />
 
       <Tabs.Screen
-        name="dishes"
+        name="dishes/index"
         options={{
           title: 'Plats',
           tabBarLabel: 'Plats',
@@ -57,6 +57,8 @@ export default function TraiteurLayout() {
         }}
       />
 
+      {/* IMPORTANT : on pointe vers le dossier simulations,
+          pas vers simulations/index */}
       <Tabs.Screen
         name="simulations"
         options={{
@@ -69,7 +71,7 @@ export default function TraiteurLayout() {
       />
 
       <Tabs.Screen
-        name="orders"
+        name="orders/index"
         options={{
           title: 'Commandes',
           tabBarLabel: 'Commandes',
@@ -80,7 +82,7 @@ export default function TraiteurLayout() {
       />
 
       <Tabs.Screen
-        name="analytics"
+        name="analytics/index"
         options={{
           title: 'Analytics',
           tabBarLabel: 'Stats',
@@ -90,30 +92,12 @@ export default function TraiteurLayout() {
         }}
       />
 
-      {/* Écrans cachés mais accessibles par router.push */}
-      <Tabs.Screen
-        name="ingredients"
-        options={{
-          href: null,
-          title: 'Ingrédients',
-        }}
-      />
-
-      <Tabs.Screen
-        name="documents"
-        options={{
-          href: null,
-          title: 'Documents',
-        }}
-      />
-
-      <Tabs.Screen
-        name="tools"
-        options={{
-          href: null,
-          title: 'Outils',
-        }}
-      />
+      {/* Écrans cachés */}
+      <Tabs.Screen name="ingredients/index" options={{ href: null }} />
+      <Tabs.Screen name="documents/editor" options={{ href: null }} />
+      <Tabs.Screen name="tools" options={{ href: null }} />
+      <Tabs.Screen name="orders/new" options={{ href: null }} />
+      <Tabs.Screen name="orders/from-simulation" options={{ href: null }} />
     </Tabs>
   );
 }

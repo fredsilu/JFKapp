@@ -76,12 +76,12 @@ export default function CateringNewSimulation() {
             clients={clients}
             selectedClientId={selectedClientId}
             onSelect={(id) => {
-              // On interdit ALL sur cet écran
               if (id === 'ALL') return;
               setSelectedClientId(id);
             }}
             onOpenChange={setDropdownOpen}
-            labelAll="Tous les clients"
+            placeholder="Sélectionner un client"
+            showAllOption={false}
           />
         )}
       </View>
@@ -101,16 +101,23 @@ export default function CateringNewSimulation() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#F4F6F8' },
-  title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
 
+  title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F4F6F8',
+    overflow: 'visible',
+  },
   card: {
     backgroundColor: '#fff',
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
     elevation: 2,
+    zIndex: 10,
   },
+
 
   label: { fontSize: 13, color: '#555', marginBottom: 8 },
 

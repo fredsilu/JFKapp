@@ -31,6 +31,9 @@ import {
   createCateringSimulation,
   getSimulationById,
 } from '@/src/services/cateringSimulation.service';
+import  { useCallback } from 'react';
+import { BackHandler } from 'react-native';
+import { useFocusEffect, router } from 'expo-router';
 
 /* =========================
    DEFAULT BUILDERS
@@ -124,6 +127,20 @@ export default function CateringCalculator() {
 
     loadClients();
   }, []);
+
+  useFocusEffect(
+  useCallback(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        router.push('/simulations');
+        return true;
+      }
+    );
+
+    return () => subscription.remove();
+  }, [])
+);
 
   /* =========================
      LOAD SIMULATION (VIEW / REUSE)
