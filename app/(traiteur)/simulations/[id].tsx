@@ -229,20 +229,6 @@ export default function CateringSimulationDetailsScreen() {
           </TouchableOpacity>
         )}
 
-        {/* 🟢 Créer commande */}
-        {sim?.id && (
-          <TouchableOpacity
-            style={styles.createOrderBtn}
-            onPress={() =>
-              router.push({
-                pathname: '/orders/new',
-                params: { fromSimulationId: sim.id },
-              })
-            }
-          >
-            <Text style={styles.createOrderText}>Créer commande</Text>
-          </TouchableOpacity>
-        )}
 
         <TouchableOpacity
           style={styles.secondaryButton}
