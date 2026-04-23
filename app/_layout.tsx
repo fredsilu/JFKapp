@@ -22,9 +22,7 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -34,22 +32,14 @@ export default function RootLayout() {
           headerShown: false,
         }}
       >
-        {/* Route racine */}
         <Stack.Screen name="index" />
+        <Stack.Screen name="(traiteur)" />
+        <Stack.Screen name="(finance)" />
 
-        {/* Écrans indépendants */}
         <Stack.Screen
           name="preparation-ingredients"
           options={{
             title: 'Ingrédients en préparation',
-            headerShown: true,
-          }}
-        />
-
-        <Stack.Screen
-          name="analytics"
-          options={{
-            title: 'Analytics',
             headerShown: true,
           }}
         />
