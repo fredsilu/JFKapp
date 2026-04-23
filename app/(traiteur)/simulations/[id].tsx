@@ -212,6 +212,24 @@ export default function CateringSimulationDetailsScreen() {
       )}
 
       <View style={styles.actions}>
+        {/* 🔵 Créer proforma */}
+        {sim?.id && (
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() =>
+              router.push({
+                pathname: '/proformas/create-from-simulation',
+                params: { simulationId: sim.id },
+              })
+            }
+          >
+            <Text style={styles.secondaryButtonText}>
+              Créer proforma
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* 🟢 Créer commande */}
         {sim?.id && (
           <TouchableOpacity
             style={styles.createOrderBtn}
