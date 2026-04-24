@@ -60,39 +60,45 @@ export default function CateringSimulationsScreen() {
     }
   }, []);
 
-  // 🔥 Recharge automatique à chaque retour sur l’écran
   useFocusEffect(
     useCallback(() => {
       loadAll();
     }, [loadAll])
   );
 
-  // 🔥 Filtrage + tri toujours appliqué
   const filteredSimulations = useMemo(() => {
     const list =
       !selectedClientId || selectedClientId === 'ALL'
         ? simulations
         : simulations.filter((sim) => sim.clientId === selectedClientId);
 
-    return list.sort((a, b) =>
+    return [...list].sort((a, b) =>
       (a.dateLivraison || '').localeCompare(b.dateLivraison || '')
     );
   }, [simulations, selectedClientId]);
 
   function formatDate(date?: string) {
     if (!date) return 'Non définie';
+
     const d = new Date(date);
+
+    if (Number.isNaN(d.getTime())) {
+      return date;
+    }
+
     return d.toLocaleDateString('fr-FR');
   }
 
   async function confirmDelete() {
     if (!toDelete) return;
+
     try {
       await deleteCateringSimulation(toDelete.id);
       setToDelete(null);
-      loadAll();
+      await loadAll();
     } catch (e) {
       console.error('❌ delete error:', e);
+      setError('Erreur lors de la suppression de la simulation');
     }
   }
 
@@ -106,7 +112,7 @@ export default function CateringSimulationsScreen() {
 
         <TouchableOpacity
           style={styles.newButton}
-          onPress={() => router.push('/simulations/new')}
+          onPress={() => router.push('/(traiteur)/simulations/new')}
         >
           <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
         </TouchableOpacity>
@@ -122,10 +128,7 @@ export default function CateringSimulationsScreen() {
           <Text style={styles.empty}>Aucune simulation</Text>
         ) : (
           filteredSimulations.map((sim) => {
-            const clientLabel =
-              clientsById[sim.clientId] ||
-              sim.clientId ||
-              '-';
+            const clientLabel = clientsById[sim.clientId] || sim.clientId || '-';
 
             return (
               <View key={sim.id} style={styles.card}>
@@ -141,18 +144,18 @@ export default function CateringSimulationsScreen() {
                   </Text>
                 </View>
 
-                {/* 🔥 BOUTON PRINCIPAL */}
                 <TouchableOpacity
-                  style={styles.createOrderBtn}
+                  style={styles.createProformaBtn}
                   onPress={() =>
                     router.push({
-                      pathname: '/orders/new',
-                      params: { fromSimulationId: sim.id },
+                      pathname:
+                        '/(traiteur)/proformas/create-from-simulation',
+                      params: { simulationId: sim.id },
                     })
                   }
                 >
-                  <Text style={styles.createOrderText}>
-                    Créer commande
+                  <Text style={styles.createProformaText}>
+                    Créer proforma
                   </Text>
                 </TouchableOpacity>
 
@@ -160,7 +163,7 @@ export default function CateringSimulationsScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: '/simulations/[id]',
+                        pathname: '/(traiteur)/simulations/[id]',
                         params: { id: sim.id },
                       })
                     }
@@ -171,8 +174,11 @@ export default function CateringSimulationsScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: '/tools/calculator',
-                        params: { reuseSimulationId: sim.id },
+                        pathname: '/(traiteur)/tools/calculator',
+                        params: {
+                          reuseSimulationId: sim.id,
+                          backTo: '/(traiteur)/simulations',
+                        },
                       })
                     }
                   >
@@ -205,7 +211,11 @@ export default function CateringSimulationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 16,
+  },
 
   title: {
     fontSize: 20,
@@ -264,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  createOrderBtn: {
+  createProformaBtn: {
     marginTop: 10,
     backgroundColor: '#28a745',
     paddingVertical: 10,
@@ -272,7 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  createOrderText: {
+  createProformaText: {
     color: '#fff',
     fontWeight: '700',
   },

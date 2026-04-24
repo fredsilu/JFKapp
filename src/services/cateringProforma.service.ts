@@ -2,21 +2,24 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
+
 import { db } from '@/lib/firebase';
+import { getNextProformaNumber } from '@/src/services/proformaNumber.service';
 
 export type ProformaStatus =
   | 'draft'
   | 'sent'
   | 'approved'
   | 'rejected'
-  | 'expired';
+  | 'expired'
+  | 'converted';
 
 export type CateringProformaItem = {
   label: string;
@@ -57,10 +60,16 @@ export type CateringProforma = {
 const COLLECTION = 'catering_proformas';
 
 export async function createCateringProforma(
-  data: Omit<CateringProforma, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
-) {
+  data: Omit<
+    CateringProforma,
+    'id' | 'number' | 'createdAt' | 'updatedAt' | 'isDeleted'
+  >
+): Promise<string> {
+  const number = await getNextProformaNumber();
+
   const ref = await addDoc(collection(db, COLLECTION), {
     ...data,
+    number,
     isDeleted: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -72,22 +81,49 @@ export async function createCateringProforma(
 export async function getCateringProformas(): Promise<CateringProforma[]> {
   const q = query(
     collection(db, COLLECTION),
-    where('isDeleted', '==', false),
-    orderBy('createdAt', 'desc')
+    where('isDeleted', '==', false)
   );
 
   const snap = await getDocs(q);
 
-  return snap.docs.map((d) => ({
+  const data = snap.docs.map((d) => ({
     id: d.id,
     ...(d.data() as Omit<CateringProforma, 'id'>),
   }));
+
+  return data.sort((a, b) => {
+    const aTime =
+      a.createdAt?.toMillis?.() ||
+      new Date(a.issueDate || '').getTime() ||
+      0;
+
+    const bTime =
+      b.createdAt?.toMillis?.() ||
+      new Date(b.issueDate || '').getTime() ||
+      0;
+
+    return bTime - aTime;
+  });
+}
+
+export async function getCateringProformaById(
+  id: string
+): Promise<CateringProforma | null> {
+  const ref = doc(db, COLLECTION, id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return null;
+
+  return {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringProforma, 'id'>),
+  };
 }
 
 export async function updateCateringProforma(
   id: string,
   data: Partial<CateringProforma>
-) {
+): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   await updateDoc(ref, {
@@ -96,7 +132,7 @@ export async function updateCateringProforma(
   });
 }
 
-export async function deleteCateringProforma(id: string) {
+export async function deleteCateringProforma(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   await updateDoc(ref, {
