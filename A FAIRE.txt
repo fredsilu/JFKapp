@@ -846,30 +846,30 @@ release/* → APK client
 
 git add .
 git commit -m "feat: catering simulator stable"
-git push origin feature/invoice       ---HERE    
+git push origin feature/invoice          
 
 git checkout develop
 git pull origin develop
 git merge feature/ui-improvements-v6
 git push origin develop
 
-git checkout -b release/v3.0.0
-git push origin release/v3.0.0
+git checkout -b release/v2.2.0
+git push origin release/v2.2.0
 
 
 ----beta test--------------------------
 
-git tag v3.0.0-beta.1
-git push origin v3.0.0-beta.1
-eas build -p android --profile beta  
+git tag v2.2.0-beta.1
+git push origin v2.2.0-beta.1
+eas build -p android --profile beta  ---HERE 
 ---fixing crash si il y en a apres les tests
 git add .
 git commit -m "fix: order form image crash"
-git push origin release/v3.0.0                
+git push origin release/v2.2.0                
 
 
-git tag v3.0.0-beta.2
-git push origin v3.0.0-beta.2
+git tag v2.2.0-beta.2
+git push origin v2.2.0-beta.2
 eas build -p android --profile beta       
 
 ---fixing crash si il y en a apres les tests

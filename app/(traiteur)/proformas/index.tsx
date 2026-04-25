@@ -46,43 +46,42 @@ export default function ProformasScreen() {
             loadProformas();
         }, [loadProformas])
     );
+    const activeProformas = useMemo(() => {
+        return proformas.filter((p) => {
+            const isActiveStatus =
+                p.status === 'draft' || p.status === 'sent';
+
+            const isNotInvoiced = !p.isInvoiced;
+
+            return isActiveStatus && isNotInvoiced;
+        });
+    }, [proformas]);
 
     const totalAmount = useMemo(() => {
-        return proformas
-            .filter((p) => {
-                const isRejected = p.status === 'rejected';
-                const isExpired = p.status === 'expired';
-                const isConverted = p.status === 'converted';
+        return activeProformas.reduce((sum, p) => {
+            return sum + (p.totals?.total ?? 0);
+        }, 0);
+    }, [activeProformas]);
 
-                return !isRejected && !isExpired && !isConverted;
-            })
-            .reduce((sum, p) => {
-                return sum + (p.totals?.total ?? 0);
-            }, 0);
-    }, [proformas]);
     const totalCount = useMemo(() => {
-        return proformas.filter((p) => {
-            const isRejected = p.status === 'rejected';
-            const isExpired = p.status === 'expired';
-            const isConverted = p.status === 'converted';
-
-            return !isRejected && !isExpired && !isConverted;
-        }).length;
-    }, [proformas]);
-
+        return activeProformas.length;
+    }, [activeProformas]);
 
     const approvedTotal = useMemo(() => {
         return proformas
             .filter((p) => p.status === 'approved')
-            .filter((p) => p.status !== 'converted') // sécurité
+            .filter((p) => !p.isInvoiced)
             .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
     }, [proformas]);
 
+
     const invoicedTotal = useMemo(() => {
         return proformas
-            .filter((p) => p.status === 'converted')
+            .filter((p) => p.isInvoiced)
             .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
     }, [proformas]);
+
+
 
     function formatDate(date?: string) {
         if (!date) return '—';
@@ -177,10 +176,10 @@ export default function ProformasScreen() {
                 </Text>
             </View>
 
-            {proformas.length === 0 ? (
-                <Text style={styles.empty}>Aucune proforma créée</Text>
+            {activeProformas.length === 0 ? (
+                <Text style={styles.empty}>Aucune proforma en cours</Text>
             ) : (
-                proformas.map((p) => (
+                activeProformas.map((p) => (
                     <View key={p.id} style={styles.card}>
                         <View style={styles.cardHeader}>
                             <View style={{ flex: 1 }}>

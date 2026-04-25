@@ -12,6 +12,9 @@ import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 
+import { createInvoiceFromProforma } from '@/src/services/cateringInvoice.service';
+import { markProformaAsInvoiced } from '@/src/services/cateringProforma.service';
+
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
 import {
   generateDocumentPDF,
@@ -65,6 +68,40 @@ export default function ProformaDetailScreen() {
       loadProforma();
     }, [loadProforma])
   );
+
+  const handleCreateInvoice = async () => {
+    try {
+      if (!proforma?.id) {
+        Alert.alert('Erreur', 'Proforma invalide');
+        return;
+      }
+
+      setLoading(true);
+
+      const invoice = await createInvoiceFromProforma(proforma);
+
+      if (!invoice?.id || !invoice?.number) {
+        Alert.alert('Erreur', 'Création facture échouée');
+        return;
+      }
+
+      await markProformaAsInvoiced(
+        proforma.id,
+        invoice.id,
+        invoice.number
+      );
+
+      Alert.alert('Succès', 'Facture créée avec succès');
+
+      router.replace('/(traiteur)/invoices');
+
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Erreur', 'Impossible de créer la facture');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   async function getImageBase64(moduleId: number): Promise<string> {
     const asset = Asset.fromModule(moduleId);
@@ -183,22 +220,7 @@ export default function ProformaDetailScreen() {
     );
   }
 
-  function handleConvert() {
-    Alert.alert(
-      'Convertir en commande',
-      'Créer une commande à partir de cette proforma ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Convertir',
-          onPress: async () => {
-            await handleChangeStatus('converted');
-            // 👉 on branchera la création commande juste après
-          },
-        },
-      ]
-    );
-  }
+
 
   function formatDate(date?: string) {
     if (!date) return '—';
@@ -224,8 +246,7 @@ export default function ProformaDetailScreen() {
         return 'Rejetée';
       case 'expired':
         return 'Expirée';
-      case 'converted':
-        return 'Convertie en commande';
+
       default:
         return status || 'Brouillon';
     }
@@ -323,6 +344,49 @@ export default function ProformaDetailScreen() {
         </View>
       </View>
 
+      {proforma.status === 'approved' && !proforma.isInvoiced && (
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#16A34A',
+            paddingVertical: 14,
+            borderRadius: 10,
+            marginTop: 16,
+            marginBottom: 14,
+            alignItems: 'center',
+            elevation: 3,
+            shadowColor: '#000',
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            opacity: loading ? 0.6 : 1,
+          }}
+          onPress={() => {
+            Alert.alert(
+              'Créer facture',
+              'Confirmer la création de la facture ?',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                { text: 'Créer', onPress: handleCreateInvoice },
+              ]
+            );
+          }}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontWeight: '800' }}>
+              Créer facture
+            </Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {proforma.isInvoiced && (
+        <Text style={{ color: '#16A34A', marginTop: 10, fontWeight: '700' }}>
+          ✅ Facturée ({proforma.invoiceNumber})
+        </Text>
+      )}
+
       {proforma.menu?.length ? (
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Menu proposé</Text>
@@ -343,7 +407,7 @@ export default function ProformaDetailScreen() {
         </View>
       ) : null}
 
-      
+
 
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
@@ -375,14 +439,6 @@ export default function ProformaDetailScreen() {
             <Text style={styles.buttonText}>Rejetée</Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      {proforma.status === 'approved' && (
-        <TouchableOpacity style={styles.convertButton} onPress={handleConvert}>
-          <Text style={styles.primaryButtonText}>
-            Convertir en commande
-          </Text>
-        </TouchableOpacity>
       )}
 
       <TouchableOpacity

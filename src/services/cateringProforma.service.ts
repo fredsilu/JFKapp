@@ -17,9 +17,7 @@ export type ProformaStatus =
   | 'draft'
   | 'sent'
   | 'approved'
-  | 'rejected'
-  | 'expired'
-  | 'converted';
+  | 'rejected';
 
 export type CateringProformaItem = {
   label: string;
@@ -50,6 +48,11 @@ export type CateringProforma = {
   validityDate?: string;
   eventDate?: string;
   status: ProformaStatus;
+  isInvoiced?: boolean;
+  invoiceId?: string;
+  invoiceNumber?: string;
+  invoicedAt?: any;
+
   items: CateringProformaItem[];
   menu: CateringProformaMenuItem[];
   totals: {
@@ -123,6 +126,7 @@ export async function createCateringProforma(
   const ref = await addDoc(collection(db, COLLECTION), {
     ...normalizedData,
     number,
+    isInvoiced: false,
     isDeleted: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -183,7 +187,7 @@ export async function updateCateringProforma(
   if (typeof data.clientName !== 'undefined') {
     payload.clientName = normalizeClientName(data.clientName);
   }
-  
+
   if (typeof data.clientRccm !== 'undefined') {
     payload.clientRccm = cleanText(data.clientRccm);
   }
@@ -202,6 +206,22 @@ export async function updateCateringProforma(
 
   await updateDoc(ref, {
     ...payload,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function markProformaAsInvoiced(
+  id: string,
+  invoiceId: string,
+  invoiceNumber: string
+): Promise<void> {
+  const ref = doc(db, COLLECTION, id);
+
+  await updateDoc(ref, {
+    isInvoiced: true,
+    invoiceId,
+    invoiceNumber,
+    invoicedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }
