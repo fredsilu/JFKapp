@@ -69,6 +69,10 @@ export function buildProformaHTML(
   const subtotal = proforma.totals?.subtotal ?? proforma.totals?.total ?? 0;
   const total = proforma.totals?.total ?? subtotal;
   const clientName = safeClientName(proforma);
+  const clientRccm = safe(proforma.clientRccm);
+  const clientIdnat = safe(proforma.clientIdnat);
+  const clientAddress = safe(proforma.clientAddress);
+  const clientCity = safe(proforma.clientCity);
   const menuItems = getMenuItems(proforma);
 
   const headerHTML = `
@@ -99,14 +103,14 @@ export function buildProformaHTML(
   const menuRows =
     menuItems.length > 0
       ? menuItems
-          .map(
-            (item, index) => `
+        .map(
+          (item, index) => `
 <tr>
   <td class="center">${index + 1}</td>
   <td>${safe(item)}</td>
 </tr>`
-          )
-          .join('')
+        )
+        .join('')
       : `
 <tr>
   <td class="center">1</td>
@@ -429,6 +433,11 @@ body {
   line-height: 1.5;
   color: #6b7280;
 }
+
+.client-block div {
+  margin-bottom: 2px;
+}
+  
 </style>
 </head>
 
@@ -441,13 +450,28 @@ body {
   <div class="number">Numéro : ${safe(proforma.number)}</div>
 
   <div class="client-block">
-    <div class="client-name">${clientName}</div>
-    <div>RCCM</div>
-    <div>IDNAT</div>
-    <div>C/GOMBE</div>
-    <div><u>Kinshasa / RDC</u></div>
-    <div class="issue-date">${safe(proforma.issueDate)}</div>
+  <div class="client-name">${clientName}</div>
+
+  <div>
+    RCCM : ${clientRccm || '—'}
   </div>
+
+  <div>
+    IDNAT : ${clientIdnat || '—'}
+  </div>
+
+  <div>
+    ${clientAddress || '—'}
+  </div>
+
+  <div>
+    <u>${clientCity ? clientCity + ' / RDC' : '—'}</u>
+  </div>
+
+  <div class="issue-date">
+    ${safe(proforma.issueDate)}
+  </div>
+</div>
 
   <div class="intro">Vous trouverez ci-dessous pro-forma :</div>
 
