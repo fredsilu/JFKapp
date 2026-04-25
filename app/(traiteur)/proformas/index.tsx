@@ -70,6 +70,20 @@ export default function ProformasScreen() {
         }).length;
     }, [proformas]);
 
+
+    const approvedTotal = useMemo(() => {
+        return proformas
+            .filter((p) => p.status === 'approved')
+            .filter((p) => p.status !== 'converted') // sécurité
+            .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
+    }, [proformas]);
+
+    const invoicedTotal = useMemo(() => {
+        return proformas
+            .filter((p) => p.status === 'converted')
+            .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
+    }, [proformas]);
+
     function formatDate(date?: string) {
         if (!date) return '—';
 
@@ -88,7 +102,7 @@ export default function ProformasScreen() {
                 return 'Brouillon';
             case 'sent':
                 return 'Envoyée';
-            case 'accepted':
+            case 'approved':
                 return 'Acceptée';
             case 'rejected':
                 return 'Rejetée';
@@ -135,6 +149,8 @@ export default function ProformasScreen() {
 
     return (
         <ScrollView style={styles.container}>
+            <Text style={styles.title}>Proformas</Text>
+            {/* 🔵 Proformas en cours */}
             <View style={styles.summaryCard}>
                 <Text style={styles.summaryLabel}>Proformas en cours</Text>
                 <Text style={styles.summaryValue}>{totalCount}</Text>
@@ -142,6 +158,22 @@ export default function ProformasScreen() {
                 <Text style={styles.summaryLabel}>Total en cours</Text>
                 <Text style={styles.summaryAmount}>
                     {formatCurrency(totalAmount)}
+                </Text>
+            </View>
+
+            {/* 🟡 Proformas acceptées */}
+            <View style={[styles.summaryCard, { backgroundColor: '#92400E' }]}>
+                <Text style={styles.summaryLabel}>Proformas acceptées</Text>
+                <Text style={styles.summaryAmount}>
+                    {formatCurrency(approvedTotal)}
+                </Text>
+            </View>
+
+            {/* 🟢 Chiffre d'affaires facturé */}
+            <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
+                <Text style={styles.summaryLabel}>Chiffre d'affaires facturé</Text>
+                <Text style={styles.summaryAmount}>
+                    {formatCurrency(invoicedTotal)}
                 </Text>
             </View>
 
