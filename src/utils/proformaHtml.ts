@@ -14,7 +14,17 @@ function money(value?: number) {
 }
 
 function safe(value?: string | null) {
-  return value && value.trim() ? value : '';
+  return value && value.trim() ? value.trim() : '';
+}
+
+function safeClientName(proforma: CateringProforma) {
+  const name = safe(proforma.clientName);
+
+  if (!name || name.toLowerCase() === 'client') {
+    return 'NOM DU CLIENT À RENSEIGNER';
+  }
+
+  return name;
 }
 
 export function buildProformaHTML(
@@ -38,6 +48,7 @@ export function buildProformaHTML(
 
   const subtotal = proforma.totals?.subtotal ?? proforma.totals?.total ?? 0;
   const total = proforma.totals?.total ?? subtotal;
+  const clientName = safeClientName(proforma);
 
   return `
 <!DOCTYPE html>
@@ -48,88 +59,98 @@ export function buildProformaHTML(
 <style>
 @page {
   size: A4;
-  margin: 0;
+  margin: 5px 40px 5px 40px;
 }
 
 * {
   box-sizing: border-box;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 body {
   margin: 0;
-  padding: 28px 31px 22px 31px;
-  font-family: Arial, Helvetica, sans-serif;
+  padding: 10px 10px 90px 10px; /* TOP réduit */
   color: #5f6368;
-  font-size: 15px;
+  font-size: 10px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  position: relative;
+  min-height: 100vh;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  padding-left : 0px;
 }
 
 .logo {
-  width: 165px;
-  height: 78px;
+  
 }
 
 .logo img {
-  width: 160px;
-  max-height: 76px;
+  width: 155px;
+  max-height: 90px;
   object-fit: contain;
+  margin-left:-20px;
 }
 
 .address {
+margin-top:5px;
   text-align: right;
-  font-size: 14px;
-  line-height: 1.16;
-  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 300 !important;
   color: #374151;
 }
 
+.address * {
+  font-weight: 400 !important;
+}
+
 .top-line {
-  border-bottom: 2px solid #2f3b4f;
-  margin-top: 8px;
+  border-bottom: 1px solid #2f3b4f;
+  margin-top: 0px;
 }
 
 .title {
   margin-top: 18px;
-  font-size: 23px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 900;
   color: #3f4650;
   letter-spacing: 0.5px;
 }
 
 .number {
   margin-top: 6px;
-  font-size: 15px;
+  font-size: 12px;
   color: #6b7280;
 }
 
 .client-block {
   text-align: right;
   margin-top: 10px;
-  font-size: 15px;
+  font-size: 10px;
   line-height: 1.42;
   color: #666;
 }
 
 .client-name {
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  color: #3f4650;
 }
 
 .issue-date {
   margin-top: 22px;
-  font-size: 15px;
+  font-size: 11px;
 }
 
 .intro {
   margin-top: 25px;
   margin-bottom: 4px;
-  font-size: 14px;
+  font-size: 10px;
   color: #7a7a7a;
 }
 
@@ -142,8 +163,8 @@ body {
 .main-table th {
   background: #6f9eb8;
   color: #f7f7f7;
-  font-size: 15px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 700;
   padding: 4px 3px;
   border: 2px solid white;
   text-align: center;
@@ -153,7 +174,7 @@ body {
   background: #dce8ee;
   border: 2px solid white;
   padding: 3px 5px;
-  font-size: 14px;
+  font-size: 11px;
   color: #5f6368;
 }
 
@@ -162,6 +183,10 @@ body {
   height: 82px;
   vertical-align: top;
   line-height: 1.65;
+}
+
+.main-table .event td:first-child {
+  font-weight: 700;
 }
 
 .col-designation { width: 40%; }
@@ -191,7 +216,7 @@ body {
 .validity {
   margin-top: 3px;
   margin-left: 2px;
-  font-size: 14px;
+  font-size: 10px;
   font-style: italic;
   color: #555;
 }
@@ -211,7 +236,7 @@ body {
   border-bottom: 1px solid #6f9eb8;
   border-left: 1px solid #6f9eb8;
   padding: 6px 10px;
-  font-size: 17px;
+  font-size: 12px;
   color: #555;
 }
 
@@ -222,7 +247,7 @@ body {
   color: white;
   padding: 8px 10px;
   margin-top: 26px;
-  font-size: 18px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -230,7 +255,7 @@ body {
   margin-top: 39px;
   border-top: 2px solid #9ca3af;
   padding-top: 8px;
-  font-size: 14px;
+  font-size: 10px;
   font-style: italic;
   line-height: 1.5;
   color: #777;
@@ -243,17 +268,17 @@ body {
 
 .signature-area {
   position: relative;
-  height: 145px;
+  height: 155px;
 }
 
 .stamp {
   position: absolute;
-  left: 25px;
-  top: 8px;
+  left: 18px;
+  top: 4px;
 }
 
 .stamp img {
-  width: 185px;
+  width: 245px;
   object-fit: contain;
 }
 
@@ -274,11 +299,16 @@ body {
 }
 
 .footer {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  bottom: 5px;
+  padding-top: 8px;
+  border-top: 1px solid #2f3b4f;
   text-align: center;
-  margin-top: 8px;
-  font-size: 12px;
+  font-size: 10px;
   color: #374151;
-  font-weight: 700;
+  background: white;
 }
 </style>
 </head>
@@ -304,7 +334,7 @@ body {
 <div class="number">Numéro : ${safe(proforma.number)}</div>
 
 <div class="client-block">
-  <div class="client-name">${safe(proforma.clientName) || 'CLIENT'}</div>
+  <div class="client-name">${clientName}</div>
   <div>RCCM</div>
   <div>IDNAT</div>
   <div>C/GOMBE</div>
@@ -370,8 +400,7 @@ body {
 
 <div class="payment">
   Un acompte de 70% est payable à la confirmation de la commande.
-  Et la totalité sera soldée la <br/>
-  <strong>veille de l’évènement.</strong>
+  Et la totalité sera soldée la veille de l’évènement.
 </div>
 
 <div class="signature-area">
@@ -383,8 +412,6 @@ body {
     ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
   </div>
 </div>
-
-<div class="bottom-line"></div>
 
 <div class="footer">
   RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;

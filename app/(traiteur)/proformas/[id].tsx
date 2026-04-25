@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
   CateringProforma,
   getCateringProformaById,

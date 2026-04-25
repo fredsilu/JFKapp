@@ -1,113 +1,166 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { MaterialIcons as Icon } from '@expo/vector-icons';
-import ModuleButton from '@/components/ModuleButton';
+import { ActivityIndicator, View } from 'react-native';
+import { Stack } from 'expo-router';
+
+import {
+  useFonts,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+  Montserrat_800ExtraBold,
+  Montserrat_900Black,
+} from '@expo-google-fonts/montserrat';
 
 export default function TraiteurLayout() {
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_800ExtraBold,
+    Montserrat_900Black,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#ffffff',
+        }}
+      >
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
-    <Tabs
+    <Stack
       screenOptions={{
         headerShown: true,
-        headerRight: () => <ModuleButton />,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#999',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#f5f5f5',
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 6,
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: '#ffffff',
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontFamily: 'Montserrat_700Bold',
+          fontSize: 16,
+          color: '#111827',
+        },
+        headerBackTitleVisible: false,
+        contentStyle: {
+          backgroundColor: '#ffffff',
         },
       }}
     >
-      <Tabs.Screen
+      <Stack.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarLabel: 'Accueil',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="dashboard" size={size} color={color} />
-          ),
+          title: 'Traiteur',
         }}
       />
 
-      <Tabs.Screen
-        name="clients/index"
+      <Stack.Screen
+        name="dashboard"
         options={{
-          title: 'Clients',
-          tabBarLabel: 'Clients',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="people" size={size} color={color} />
-          ),
+          title: 'Dashboard Traiteur',
         }}
       />
 
-      <Tabs.Screen
-        name="dishes/index"
-        options={{
-          title: 'Plats',
-          tabBarLabel: 'Plats',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="restaurant-menu" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* IMPORTANT : on pointe vers le dossier simulations,
-          pas vers simulations/index */}
-      <Tabs.Screen
-        name="simulations"
+      <Stack.Screen
+        name="simulations/index"
         options={{
           title: 'Simulations',
-          tabBarLabel: 'Simul.',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="calculate" size={size} color={color} />
-          ),
         }}
       />
 
-      <Tabs.Screen
+      <Stack.Screen
+        name="simulations/new"
+        options={{
+          title: 'Nouvelle simulation',
+        }}
+      />
+
+      <Stack.Screen
+        name="simulations/[id]"
+        options={{
+          title: 'Détail simulation',
+        }}
+      />
+
+      <Stack.Screen
+        name="proformas/index"
+        options={{
+          title: 'Proformas',
+        }}
+      />
+
+      <Stack.Screen
+        name="proformas/new"
+        options={{
+          title: 'Nouvelle proforma',
+        }}
+      />
+
+      <Stack.Screen
+        name="proformas/from-simulation"
+        options={{
+          title: 'Créer proforma',
+        }}
+      />
+
+      <Stack.Screen
+        name="proformas/[id]"
+        options={{
+          title: 'Détail proforma',
+        }}
+      />
+
+      <Stack.Screen
         name="orders/index"
         options={{
           title: 'Commandes',
-          tabBarLabel: 'Commandes',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="shopping-bag" size={size} color={color} />
-          ),
         }}
       />
-      <Tabs.Screen
-  name="proformas"
-  options={{
-    title: 'Proformas',
-    tabBarLabel: 'Proformas',
-    tabBarIcon: ({ color, size }) => (
-      <Icon name="description" size={size} color={color} />
-    ),
-  }}
-/>
 
-      <Tabs.Screen
-        name="analytics/index"
+      <Stack.Screen
+        name="orders/new"
         options={{
-          title: 'Analytics',
-          tabBarLabel: 'Stats',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="bar-chart" size={size} color={color} />
-          ),
+          title: 'Nouvelle commande',
         }}
       />
 
-      {/* Écrans cachés */}
-      <Tabs.Screen name="ingredients/index" options={{ href: null }} />
-      <Tabs.Screen name="documents/editor" options={{ href: null }} />
-      <Tabs.Screen name="tools" options={{ href: null }} />
-      <Tabs.Screen name="orders/new" options={{ href: null }} />
-      <Tabs.Screen name="orders/from-simulation" options={{ href: null }} />
-    </Tabs>
+      <Stack.Screen
+        name="orders/[id]"
+        options={{
+          title: 'Détail commande',
+        }}
+      />
+
+      <Stack.Screen
+        name="invoices/index"
+        options={{
+          title: 'Factures',
+        }}
+      />
+
+      <Stack.Screen
+        name="invoices/new"
+        options={{
+          title: 'Nouvelle facture',
+        }}
+      />
+
+      <Stack.Screen
+        name="invoices/[id]"
+        options={{
+          title: 'Détail facture',
+        }}
+      />
+    </Stack>
   );
 }
