@@ -11,10 +11,6 @@ import {
 import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
-import {
-  CateringProforma,
-  getCateringProformaById,
-} from '@/src/services/cateringProforma.service';
 
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
 import {
@@ -22,6 +18,12 @@ import {
   shareDocumentPDF,
 } from '@/src/services/generateDocumentPDF';
 import { formatCurrency } from '@/src/utils/costs';
+import {
+  CateringProforma,
+  ProformaStatus,
+  getCateringProformaById,
+  updateCateringProforma,
+} from '@/src/services/cateringProforma.service';
 
 export default function ProformaDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -125,6 +127,79 @@ export default function ProformaDetailScreen() {
     }
   }
 
+
+  async function handleChangeStatus(status: ProformaStatus) {
+    if (!proforma?.id) return;
+
+    try {
+      await updateCateringProforma(proforma.id, { status });
+      await loadProforma();
+    } catch (e) {
+      console.error('❌ update status error:', e);
+      Alert.alert('Erreur', 'Impossible de mettre à jour le statut');
+    }
+  }
+
+  function handleSend() {
+    Alert.alert(
+      'Envoyer proforma',
+      'Confirmer l’envoi au client ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Envoyer',
+          onPress: () => handleChangeStatus('sent'),
+        },
+      ]
+    );
+  }
+
+  function handleApprove() {
+    Alert.alert(
+      'Valider proforma',
+      'Le client a accepté ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Oui',
+          onPress: () => handleChangeStatus('approved'),
+        },
+      ]
+    );
+  }
+
+  function handleReject() {
+    Alert.alert(
+      'Rejeter proforma',
+      'Confirmer le rejet ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Rejeter',
+          style: 'destructive',
+          onPress: () => handleChangeStatus('rejected'),
+        },
+      ]
+    );
+  }
+
+  function handleConvert() {
+    Alert.alert(
+      'Convertir en commande',
+      'Créer une commande à partir de cette proforma ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Convertir',
+          onPress: async () => {
+            await handleChangeStatus('converted');
+            // 👉 on branchera la création commande juste après
+          },
+        },
+      ]
+    );
+  }
+
   function formatDate(date?: string) {
     if (!date) return '—';
 
@@ -207,10 +282,6 @@ export default function ProformaDetailScreen() {
         <Text style={styles.line}>
           Date événement : {formatDate(proforma.eventDate)}
         </Text>
-
-        <Text style={styles.line}>
-          Simulation liée : {proforma.simulationId || '—'}
-        </Text>
       </View>
 
       <View style={styles.card}>
@@ -272,6 +343,8 @@ export default function ProformaDetailScreen() {
         </View>
       ) : null}
 
+      
+
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -283,6 +356,34 @@ export default function ProformaDetailScreen() {
           <Text style={styles.pdfButtonText}>Générer PDF client</Text>
         )}
       </TouchableOpacity>
+
+      {/* ===== ACTIONS PROFORMA ===== */}
+
+      {proforma.status === 'draft' && (
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSend}>
+          <Text style={styles.primaryButtonText}>Envoyer au client</Text>
+        </TouchableOpacity>
+      )}
+
+      {proforma.status === 'sent' && (
+        <View style={styles.rowActions}>
+          <TouchableOpacity style={styles.successButton} onPress={handleApprove}>
+            <Text style={styles.buttonText}>Acceptée</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.dangerButton} onPress={handleReject}>
+            <Text style={styles.buttonText}>Rejetée</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {proforma.status === 'approved' && (
+        <TouchableOpacity style={styles.convertButton} onPress={handleConvert}>
+          <Text style={styles.primaryButtonText}>
+            Convertir en commande
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.backButton}
@@ -472,7 +573,7 @@ const styles = StyleSheet.create({
   },
 
   pdfButton: {
-    backgroundColor: '#28A745',
+    backgroundColor: '#286aa7',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -500,5 +601,53 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '800',
     fontSize: 14,
+  },
+  primaryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 15,
+  },
+
+  rowActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  successButton: {
+    flex: 1,
+    backgroundColor: '#28A745',
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  dangerButton: {
+    flex: 1,
+    backgroundColor: '#DC3545',
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: '800',
+  },
+
+  convertButton: {
+    backgroundColor: '#6F42C1',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
   },
 });

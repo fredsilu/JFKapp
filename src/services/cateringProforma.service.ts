@@ -59,6 +59,48 @@ export type CateringProforma = {
 
 const COLLECTION = 'catering_proformas';
 
+function cleanText(value?: string | null): string {
+  return value && value.trim() ? value.trim() : '';
+}
+
+function normalizeClientName(value?: string | null): string {
+  const clientName = cleanText(value);
+
+  if (!clientName || clientName.toLowerCase() === 'client') {
+    throw new Error('Le nom du client est obligatoire pour créer une proforma.');
+  }
+
+  return clientName;
+}
+
+function normalizeProformaData(
+  data: Omit<
+    CateringProforma,
+    'id' | 'number' | 'createdAt' | 'updatedAt' | 'isDeleted'
+  >
+) {
+  const clientName = normalizeClientName(data.clientName);
+
+  return {
+    ...data,
+    clientName,
+    clientId: cleanText(data.clientId),
+    simulationId: cleanText(data.simulationId),
+    issueDate: cleanText(data.issueDate),
+    validityDate: cleanText(data.validityDate),
+    eventDate: cleanText(data.eventDate),
+    status: data.status || 'draft',
+    items: Array.isArray(data.items) ? data.items : [],
+    menu: Array.isArray(data.menu) ? data.menu : [],
+    totals: {
+      subtotal: Number(data.totals?.subtotal || 0),
+      tax: Number(data.totals?.tax || 0),
+      total: Number(data.totals?.total || 0),
+      currency: data.totals?.currency || 'USD',
+    },
+  };
+}
+
 export async function createCateringProforma(
   data: Omit<
     CateringProforma,
@@ -66,9 +108,10 @@ export async function createCateringProforma(
   >
 ): Promise<string> {
   const number = await getNextProformaNumber();
+  const normalizedData = normalizeProformaData(data);
 
   const ref = await addDoc(collection(db, COLLECTION), {
-    ...data,
+    ...normalizedData,
     number,
     isDeleted: false,
     createdAt: serverTimestamp(),
@@ -79,10 +122,7 @@ export async function createCateringProforma(
 }
 
 export async function getCateringProformas(): Promise<CateringProforma[]> {
-  const q = query(
-    collection(db, COLLECTION),
-    where('isDeleted', '==', false)
-  );
+  const q = query(collection(db, COLLECTION), where('isDeleted', '==', false));
 
   const snap = await getDocs(q);
 
@@ -126,8 +166,16 @@ export async function updateCateringProforma(
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
-  await updateDoc(ref, {
+  const payload: Partial<CateringProforma> = {
     ...data,
+  };
+
+  if (typeof data.clientName !== 'undefined') {
+    payload.clientName = normalizeClientName(data.clientName);
+  }
+
+  await updateDoc(ref, {
+    ...payload,
     updatedAt: serverTimestamp(),
   });
 }

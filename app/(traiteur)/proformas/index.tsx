@@ -48,9 +48,26 @@ export default function ProformasScreen() {
     );
 
     const totalAmount = useMemo(() => {
-        return proformas.reduce((sum, p) => {
-            return sum + (p.totals?.total ?? 0);
-        }, 0);
+        return proformas
+            .filter((p) => {
+                const isRejected = p.status === 'rejected';
+                const isExpired = p.status === 'expired';
+                const isConverted = p.status === 'converted';
+
+                return !isRejected && !isExpired && !isConverted;
+            })
+            .reduce((sum, p) => {
+                return sum + (p.totals?.total ?? 0);
+            }, 0);
+    }, [proformas]);
+    const totalCount = useMemo(() => {
+        return proformas.filter((p) => {
+            const isRejected = p.status === 'rejected';
+            const isExpired = p.status === 'expired';
+            const isConverted = p.status === 'converted';
+
+            return !isRejected && !isExpired && !isConverted;
+        }).length;
     }, [proformas]);
 
     function formatDate(date?: string) {
@@ -118,14 +135,14 @@ export default function ProformasScreen() {
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.title}>Proformas</Text>
-
             <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Nombre de proformas</Text>
-                <Text style={styles.summaryValue}>{proformas.length}</Text>
+                <Text style={styles.summaryLabel}>Proformas en cours</Text>
+                <Text style={styles.summaryValue}>{totalCount}</Text>
 
-                <Text style={styles.summaryLabel}>Total global</Text>
-                <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+                <Text style={styles.summaryLabel}>Total en cours</Text>
+                <Text style={styles.summaryAmount}>
+                    {formatCurrency(totalAmount)}
+                </Text>
             </View>
 
             {proformas.length === 0 ? (
