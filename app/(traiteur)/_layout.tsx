@@ -51,7 +51,6 @@ export default function TraiteurLayout() {
           fontSize: 16,
           color: '#111827',
         },
-        headerBackTitleVisible: false,
         contentStyle: {
           backgroundColor: '#ffffff',
         },
