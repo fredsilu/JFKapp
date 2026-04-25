@@ -37,8 +37,14 @@ export type CateringProformaMenuItem = {
 export type CateringProforma = {
   id?: string;
   simulationId?: string;
+
   clientId?: string;
   clientName?: string;
+  clientRccm?: string;
+  clientIdnat?: string;
+  clientAddress?: string;
+  clientCity?: string;
+
   number?: string;
   issueDate: string;
   validityDate?: string;
@@ -85,6 +91,10 @@ function normalizeProformaData(
     ...data,
     clientName,
     clientId: cleanText(data.clientId),
+    clientRccm: cleanText(data.clientRccm),
+    clientIdnat: cleanText(data.clientIdnat),
+    clientAddress: cleanText(data.clientAddress),
+    clientCity: cleanText(data.clientCity),
     simulationId: cleanText(data.simulationId),
     issueDate: cleanText(data.issueDate),
     validityDate: cleanText(data.validityDate),
@@ -172,6 +182,22 @@ export async function updateCateringProforma(
 
   if (typeof data.clientName !== 'undefined') {
     payload.clientName = normalizeClientName(data.clientName);
+  }
+  
+  if (typeof data.clientRccm !== 'undefined') {
+    payload.clientRccm = cleanText(data.clientRccm);
+  }
+
+  if (typeof data.clientIdnat !== 'undefined') {
+    payload.clientIdnat = cleanText(data.clientIdnat);
+  }
+
+  if (typeof data.clientAddress !== 'undefined') {
+    payload.clientAddress = cleanText(data.clientAddress);
+  }
+
+  if (typeof data.clientCity !== 'undefined') {
+    payload.clientCity = cleanText(data.clientCity);
   }
 
   await updateDoc(ref, {

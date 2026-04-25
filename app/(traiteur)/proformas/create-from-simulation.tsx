@@ -120,6 +120,22 @@ export default function CreateProformaFromSimulationScreen() {
     );
   }
 
+  function getClientRccm() {
+  return client?.rccm || '';
+}
+
+function getClientIdnat() {
+  return client?.idnat || '';
+}
+
+function getClientAddress() {
+  return client?.address || simulation?.clientAddress || '';
+}
+
+function getClientCity() {
+  return client?.city || simulation?.clientCity || '';
+}
+
   function getEventDate() {
     return simulation?.dateLivraison || simulation?.eventDate || '';
   }

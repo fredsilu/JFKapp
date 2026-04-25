@@ -40,16 +40,20 @@ export default function ClientsScreen() {
     error: ordersError,
   } = useOrders();
 
-const normalizedQuery = normalizeText(searchQuery);
+  const normalizedQuery = normalizeText(searchQuery);
 
-const filteredClients = clients.filter(client =>
-  (client.name &&
-    normalizeText(client.name).includes(normalizedQuery)) ||
-  (client.email &&
-    normalizeText(client.email).includes(normalizedQuery)) ||
-  (client.phone &&
-    normalizeText(client.phone.toString()).includes(normalizedQuery))
-);
+  const filteredClients = clients.filter(client =>
+    (client.name &&
+      normalizeText(client.name).includes(normalizedQuery)) ||
+    (client.email &&
+      normalizeText(client.email).includes(normalizedQuery)) ||
+    (client.phone &&
+      normalizeText(client.phone.toString()).includes(normalizedQuery)) ||
+    (client.rccm &&
+      normalizeText(client.rccm).includes(normalizedQuery)) ||
+    (client.idnat &&
+      normalizeText(client.idnat).includes(normalizedQuery))
+  );
 
 
   const handleCreateClient = async (values: Partial<Client>) => {
@@ -123,6 +127,13 @@ const filteredClients = clients.filter(client =>
 
                 <View style={styles.clientInfo}>
                   <Text style={styles.clientName}>{client.name}</Text>
+                  {client.rccm ? (
+                    <Text style={styles.legalText}>RCCM : {client.rccm}</Text>
+                  ) : null}
+
+                  {client.idnat ? (
+                    <Text style={styles.legalText}>IDNAT : {client.idnat}</Text>
+                  ) : null}
 
                   <View style={styles.contactInfo}>
                     {client.email && (
@@ -300,5 +311,10 @@ const styles = StyleSheet.create({
   lastOrder: {
     fontSize: 12,
     color: '#666',
+  },
+  legalText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
   },
 });

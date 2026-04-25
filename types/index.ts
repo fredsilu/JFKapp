@@ -7,6 +7,9 @@ export interface Client {
   email: string;
   phone: string;
   address: string;
+  rccm?: string;
+  idnat?: string;
+  city?: string;
   notes?: string;
   totalOrders: number;
   lastOrderDate?: Date;
@@ -145,6 +148,6 @@ export interface IngredientDetailsProps {
   quantity: number;
   description: string;
   onClose: () => void;
-// Removed duplicate OrderFormProps interfacenClose: () => void;
-    onSubmit: (values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  }
+  // Removed duplicate OrderFormProps interfacenClose: () => void;
+  onSubmit: (values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}

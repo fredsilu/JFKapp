@@ -15,6 +15,9 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [rccm, setRccm] = useState('');
+  const [idnat, setIdnat] = useState('');
+  const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +28,9 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
       setEmail(client.email || '');
       setPhone(client.phone || '');
       setAddress(client.address || '');
+      setRccm(client.rccm || '');
+      setIdnat(client.idnat || '');
+      setCity(client.city || '');
       setNotes(client.notes || '');
       setProfilePicture(client.profilePicture || '');
     }
@@ -75,28 +81,31 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
 
     if (!validateForm()) {
       return;
-    } 
-    
-    const payload: any = {
-    name: name.trim(),
-    email: email.trim(),
-    phone: phone.trim(),
-    address: address.trim(),
-  };
-  if (notes.trim()) {
-    payload.notes = notes.trim();
-  }
+    }
 
-  if (profilePicture.trim()) {
-    payload.profilePicture = profilePicture.trim();
-  }
+    const payload: any = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      address: address.trim(),
+      rccm: rccm.trim(),
+      idnat: idnat.trim(),
+      city: city.trim(),
+    };
+    if (notes.trim()) {
+      payload.notes = notes.trim();
+    }
+
+    if (profilePicture.trim()) {
+      payload.profilePicture = profilePicture.trim();
+    }
 
     Alert.alert('Success', client ? 'Client updated successfully' : 'Client created successfully');
     onSubmit(payload);
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
       <View style={styles.header}>
@@ -106,7 +115,7 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
@@ -163,6 +172,38 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
           </View>
 
           <View style={styles.formField}>
+            <Text style={styles.label}>Ville</Text>
+            <TextInput
+              style={styles.input}
+              value={city}
+              onChangeText={setCity}
+              placeholder="Kinshasa"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>RCCM</Text>
+            <TextInput
+              style={styles.input}
+              value={rccm}
+              onChangeText={setRccm}
+              placeholder="CD/KIN/RCCM/..."
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>IDNAT</Text>
+            <TextInput
+              style={styles.input}
+              value={idnat}
+              onChangeText={setIdnat}
+              placeholder="ID.NAT..."
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.formField}>
             <Text style={styles.label}>Profile Picture URL (optional)</Text>
             <TextInput
               style={styles.input}
@@ -188,12 +229,12 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.cancelButton}
           onPress={onClose}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.submitButton}
           onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>{client ? 'Update Client' : 'Add Client'}</Text>

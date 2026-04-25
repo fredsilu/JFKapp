@@ -100,9 +100,23 @@ export default function ClientDetails({
 
           <View style={styles.profileInfo}>
             <Text style={styles.name}>{client.name}</Text>
+
             <Text style={styles.info}>{client.email}</Text>
             <Text style={styles.info}>{client.phone}</Text>
+
+            {client.city && (
+              <Text style={styles.info}>Ville : {client.city}</Text>
+            )}
+
             <Text style={styles.info}>{client.address}</Text>
+
+            {client.rccm && (
+              <Text style={styles.legal}>RCCM : {client.rccm}</Text>
+            )}
+
+            {client.idnat && (
+              <Text style={styles.legal}>IDNAT : {client.idnat}</Text>
+            )}
           </View>
         </View>
 
@@ -263,4 +277,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
   },
+  legal: {
+  fontSize: 13,
+  color: '#374151',
+  fontWeight: '600',
+},
 });
