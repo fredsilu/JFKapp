@@ -27,6 +27,26 @@ function safeClientName(proforma: CateringProforma) {
   return name;
 }
 
+function getMenuItems(proforma: CateringProforma): string[] {
+  const p: any = proforma;
+
+  const menuItems =
+    p.menuItems ||
+    p.dishes ||
+    p.selectedDishes ||
+    p.menu ||
+    [];
+
+  if (!Array.isArray(menuItems)) return [];
+
+  return menuItems
+    .map((item: any) => {
+      if (typeof item === 'string') return item;
+      return item?.name || item?.label || item?.title || '';
+    })
+    .filter((name: string) => name && name.trim());
+}
+
 export function buildProformaHTML(
   proforma: CateringProforma,
   assets?: ProformaPdfAssets
@@ -49,6 +69,49 @@ export function buildProformaHTML(
   const subtotal = proforma.totals?.subtotal ?? proforma.totals?.total ?? 0;
   const total = proforma.totals?.total ?? subtotal;
   const clientName = safeClientName(proforma);
+  const menuItems = getMenuItems(proforma);
+
+  const headerHTML = `
+<div class="header">
+  <div class="logo">
+    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ''}
+  </div>
+
+  <div class="address">
+    Tél. : +243 898111165<br/>
+    contact@crepolia.com<br/>
+    54, Avenue de la Justice<br/>
+    C/Gombe
+  </div>
+</div>
+
+<div class="top-line"></div>
+`;
+
+  const footerHTML = `
+<div class="page-footer">
+  RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;
+  ID Nat : 01-852-N58548R&nbsp;&nbsp;
+  NIF:A2171348B
+</div>
+`;
+
+  const menuRows =
+    menuItems.length > 0
+      ? menuItems
+          .map(
+            (item, index) => `
+<tr>
+  <td class="center">${index + 1}</td>
+  <td>${safe(item)}</td>
+</tr>`
+          )
+          .join('')
+      : `
+<tr>
+  <td class="center">1</td>
+  <td>Menu à préciser lors de la confirmation de la commande</td>
+</tr>`;
 
   return `
 <!DOCTYPE html>
@@ -69,34 +132,41 @@ export function buildProformaHTML(
 
 body {
   margin: 0;
-  padding: 10px 10px 90px 10px; /* TOP réduit */
+  padding: 0;
   color: #5f6368;
   font-size: 10px;
   font-family: 'Montserrat', Arial, sans-serif;
+}
+
+.pdf-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 1080px;
+  padding: 10px 10px 30px 10px;
+  page-break-after: always;
+  break-after: page;
+}
+
+.pdf-page:last-child {
+  page-break-after: auto;
+  break-after: auto;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-left : 0px;
-}
-
-.logo {
-  
+  padding-left: 0px;
 }
 
 .logo img {
   width: 155px;
   max-height: 90px;
   object-fit: contain;
-  margin-left:-20px;
+  margin-left: -20px;
 }
 
 .address {
-margin-top:5px;
+  margin-top: 5px;
   text-align: right;
   font-size: 12px;
   line-height: 1.25;
@@ -293,13 +363,8 @@ margin-top:5px;
   object-fit: contain;
 }
 
-.bottom-line {
-  border-bottom: 2px solid #2f3b4f;
-  margin-top: 38px;
-}
-
-.footer {
-  position: fixed;
+.page-footer {
+  position: absolute;
   left: 20px;
   right: 20px;
   bottom: 5px;
@@ -310,113 +375,184 @@ margin-top:5px;
   color: #374151;
   background: white;
 }
+
+.menu-title {
+  margin-top: 26px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #3f4650;
+  letter-spacing: 0.5px;
+}
+
+.menu-subtitle {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.menu-client {
+  margin-top: 24px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  table-layout: fixed;
+}
+
+.menu-table th {
+  background: #6f9eb8;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px;
+  border: 2px solid white;
+  text-align: left;
+}
+
+.menu-table td {
+  background: #dce8ee;
+  color: #4b5563;
+  font-size: 11px;
+  padding: 8px;
+  border: 2px solid white;
+}
+
+.menu-note {
+  margin-top: 24px;
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #6b7280;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <div class="logo">
-    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ''}
+<div class="pdf-page">
+  ${headerHTML}
+
+  <div class="title">PRO FORMA</div>
+  <div class="number">Numéro : ${safe(proforma.number)}</div>
+
+  <div class="client-block">
+    <div class="client-name">${clientName}</div>
+    <div>RCCM</div>
+    <div>IDNAT</div>
+    <div>C/GOMBE</div>
+    <div><u>Kinshasa / RDC</u></div>
+    <div class="issue-date">${safe(proforma.issueDate)}</div>
   </div>
 
-  <div class="address">
-    Tél. : +243 898111165<br/>
-    contact@crepolia.com<br/>
-    54, Avenue de la Justice<br/>
-    C/Gombe
+  <div class="intro">Vous trouverez ci-dessous pro-forma :</div>
+
+  <table class="main-table">
+    <colgroup>
+      <col class="col-designation" />
+      <col class="col-days" />
+      <col class="col-qty" />
+      <col class="col-pu-currency" />
+      <col class="col-pu" />
+      <col class="col-pt-currency" />
+      <col class="col-pt" />
+    </colgroup>
+
+    <thead>
+      <tr>
+        <th>Désignation</th>
+        <th>Jrs</th>
+        <th>Quantité</th>
+        <th colspan="2">P.U.</th>
+        <th colspan="2">P.T.</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr class="event">
+        <td>
+          Evénement :<br/>
+          Date événement : ${safe(proforma.eventDate)}<br/>
+          Nbr de personnes : ${proforma.items?.[0]?.quantity || ''}
+        </td>
+        <td></td>
+        <td></td>
+        <td colspan="2"></td>
+        <td colspan="2"></td>
+      </tr>
+
+      ${rows}
+    </tbody>
+  </table>
+
+  <div class="validity">Date de validité : ${safe(proforma.validityDate)}</div>
+
+  <div class="totals">
+    <div class="subtotal">
+      <div>Sous-total :</div>
+      <div>$</div>
+      <div style="text-align:right;">${money(subtotal)}</div>
+    </div>
+
+    <div class="grand-total">
+      <div>Total à payer :</div>
+      <div>$</div>
+      <div style="text-align:right;">${money(total)}</div>
+    </div>
   </div>
+
+  <div class="payment">
+    Un acompte de 70% est payable à la confirmation de la commande.
+    Et la totalité sera soldée la veille de l’évènement.
+  </div>
+
+  <div class="signature-area">
+    <div class="stamp">
+      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
+    </div>
+
+    <div class="signature">
+      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+    </div>
+  </div>
+
+  ${footerHTML}
 </div>
 
-<div class="top-line"></div>
+<div class="pdf-page">
+  ${headerHTML}
 
-<div class="title">PRO FORMA</div>
-<div class="number">Numéro : ${safe(proforma.number)}</div>
+  <div class="menu-title">MENU DES PLATS</div>
+  <div class="menu-subtitle">Annexe à la proforma : ${safe(proforma.number)}</div>
 
-<div class="client-block">
-  <div class="client-name">${clientName}</div>
-  <div>RCCM</div>
-  <div>IDNAT</div>
-  <div>C/GOMBE</div>
-  <div><u>Kinshasa / RDC</u></div>
-  <div class="issue-date">${safe(proforma.issueDate)}</div>
-</div>
-
-<div class="intro">Vous trouverez ci-dessous pro-forma :</div>
-
-<table class="main-table">
-  <colgroup>
-    <col class="col-designation" />
-    <col class="col-days" />
-    <col class="col-qty" />
-    <col class="col-pu-currency" />
-    <col class="col-pu" />
-    <col class="col-pt-currency" />
-    <col class="col-pt" />
-  </colgroup>
-
-  <thead>
-    <tr>
-      <th>Désignation</th>
-      <th>Jrs</th>
-      <th>Quantité</th>
-      <th colspan="2">P.U.</th>
-      <th colspan="2">P.T.</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <tr class="event">
-      <td>
-        Evénement :<br/>
-        Date événement : ${safe(proforma.eventDate)}<br/>
-        Nbr de personnes : ${proforma.items?.[0]?.quantity || ''}
-      </td>
-      <td></td>
-      <td></td>
-      <td colspan="2"></td>
-      <td colspan="2"></td>
-    </tr>
-
-    ${rows}
-  </tbody>
-</table>
-
-<div class="validity">Date de validité : ${safe(proforma.validityDate)}</div>
-
-<div class="totals">
-  <div class="subtotal">
-    <div>Sous-total :</div>
-    <div>$</div>
-    <div style="text-align:right;">${money(subtotal)}</div>
+  <div class="menu-client">
+    <strong>Client :</strong> ${clientName}<br/>
+    <strong>Date événement :</strong> ${safe(proforma.eventDate)}<br/>
+    <strong>Date proforma :</strong> ${safe(proforma.issueDate)}
   </div>
 
-  <div class="grand-total">
-    <div>Total à payer :</div>
-    <div>$</div>
-    <div style="text-align:right;">${money(total)}</div>
+  <table class="menu-table">
+    <thead>
+      <tr>
+        <th style="width: 12%; text-align:center;">N°</th>
+        <th>Plat proposé</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${menuRows}
+    </tbody>
+  </table>
+
+  <div class="menu-note">
+    Ce menu est proposé à titre indicatif et peut être ajusté selon les préférences du client,
+    les contraintes opérationnelles et la disponibilité des produits.
   </div>
-</div>
 
-<div class="payment">
-  Un acompte de 70% est payable à la confirmation de la commande.
-  Et la totalité sera soldée la veille de l’évènement.
-</div>
-
-<div class="signature-area">
-  <div class="stamp">
-    ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
-  </div>
-
-  <div class="signature">
-    ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
-  </div>
-</div>
-
-<div class="footer">
-  RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;
-  ID Nat : 01-852-N58548R&nbsp;&nbsp;
-  NIF:A2171348B
+  ${footerHTML}
 </div>
 
 </body>
