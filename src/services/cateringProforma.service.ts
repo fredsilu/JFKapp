@@ -18,6 +18,7 @@ export type ProformaStatus =
   | 'sent'
   | 'approved'
   | 'rejected'
+  | 'converted'
   | 'invoiced';
 
 export type CateringProformaItem = {
@@ -51,6 +52,10 @@ export type CateringProforma = {
   eventDate?: string;
 
   status: ProformaStatus;
+
+  orderId?: string;
+  orderNumber?: string;
+  convertedAt?: any;
 
   isInvoiced?: boolean;
   invoiceId?: string;
@@ -158,6 +163,12 @@ function normalizeProformaData(
 
     status: data.status || 'draft',
     isInvoiced: Boolean(data.isInvoiced),
+
+    orderId: cleanText(data.orderId),
+    orderNumber: cleanText(data.orderNumber),
+
+    invoiceId: cleanText(data.invoiceId),
+    invoiceNumber: cleanText(data.invoiceNumber),
 
     items,
     menu,
@@ -288,6 +299,22 @@ export async function updateCateringProforma(
     payload.eventDate = cleanText(data.eventDate);
   }
 
+  if (typeof data.orderId !== 'undefined') {
+    payload.orderId = cleanText(data.orderId);
+  }
+
+  if (typeof data.orderNumber !== 'undefined') {
+    payload.orderNumber = cleanText(data.orderNumber);
+  }
+
+  if (typeof data.invoiceId !== 'undefined') {
+    payload.invoiceId = cleanText(data.invoiceId);
+  }
+
+  if (typeof data.invoiceNumber !== 'undefined') {
+    payload.invoiceNumber = cleanText(data.invoiceNumber);
+  }
+
   if (typeof data.items !== 'undefined') {
     payload.items = normalizeItems(data.items);
   }
@@ -318,6 +345,29 @@ export async function updateCateringProformaMenu(
   });
 }
 
+/* =========================================
+   MARK PROFORMA AS CONVERTED TO ORDER
+========================================= */
+export async function markProformaAsConvertedToOrder(
+  id: string,
+  orderId: string,
+  orderNumber: string
+): Promise<void> {
+  const ref = doc(db, COLLECTION, id);
+
+  await updateDoc(ref, {
+    status: 'converted',
+    orderId,
+    orderNumber,
+    convertedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/* =========================================
+   MARK PROFORMA AS INVOICED
+   À utiliser plus tard après événement
+========================================= */
 export async function markProformaAsInvoiced(
   id: string,
   invoiceId: string,

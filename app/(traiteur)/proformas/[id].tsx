@@ -12,10 +12,7 @@ import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 
-import { createInvoiceFromProforma } from '@/src/services/cateringInvoice.service';
 import { createOrderFromProforma } from '@/src/services/cateringOrderService';
-import { markProformaAsInvoiced } from '@/src/services/cateringProforma.service';
-
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
 import {
   generateDocumentPDF,
@@ -27,6 +24,7 @@ import {
   ProformaStatus,
   getCateringProformaById,
   updateCateringProforma,
+  markProformaAsConvertedToOrder,
 } from '@/src/services/cateringProforma.service';
 
 export default function ProformaDetailScreen() {
@@ -69,15 +67,15 @@ export default function ProformaDetailScreen() {
     }, [loadProforma])
   );
 
-  const handleCreateOrderAndInvoice = async () => {
+  const handleCreateOrder = async () => {
     try {
       if (!proforma?.id) {
         Alert.alert('Erreur', 'Proforma invalide');
         return;
       }
 
-      if (proforma.isInvoiced) {
-        Alert.alert('Information', 'Cette proforma a déjà été convertie.');
+      if (proforma.orderId || proforma.status === 'converted') {
+        Alert.alert('Information', 'Cette proforma a déjà été convertie en commande.');
         return;
       }
 
@@ -90,31 +88,18 @@ export default function ProformaDetailScreen() {
         return;
       }
 
-      const invoice = await createInvoiceFromProforma({
-        ...proforma,
-        orderId: order.id,
-      } as any);
-
-      if (!invoice?.id || !invoice?.number) {
-        Alert.alert('Erreur', 'Commande créée, mais création facture échouée');
-        return;
-      }
-
-      await markProformaAsInvoiced(
+      await markProformaAsConvertedToOrder(
         proforma.id,
-        invoice.id,
-        invoice.number
+        order.id,
+        order.number ?? ''
       );
 
-      Alert.alert(
-        'Succès',
-        'Commande et facture créées avec succès'
-      );
+      Alert.alert('Succès', 'Commande créée avec succès');
 
       router.replace('/(traiteur)/orders');
     } catch (e) {
-      console.error('❌ create order and invoice error:', e);
-      Alert.alert('Erreur', 'Impossible de créer la commande et la facture');
+      console.error('❌ create order error:', e);
+      Alert.alert('Erreur', 'Impossible de créer la commande');
     } finally {
       setLoading(false);
     }
@@ -233,11 +218,13 @@ export default function ProformaDetailScreen() {
       case 'sent':
         return 'Envoyée';
       case 'approved':
-        return 'Approuvée';
+        return 'Acceptée';
+      case 'converted':
+        return 'Convertie en commande';
+      case 'invoiced':
+        return 'Facturée';
       case 'rejected':
         return 'Rejetée';
-      case 'expired':
-        return 'Expirée';
       default:
         return status || 'Brouillon';
     }
@@ -259,6 +246,8 @@ export default function ProformaDetailScreen() {
       </View>
     );
   }
+
+  const isConverted = proforma.status === 'converted' || !!proforma.orderId;
 
   return (
     <ScrollView style={styles.container}>
@@ -282,18 +271,13 @@ export default function ProformaDetailScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Informations</Text>
+        <Text style={styles.line}>Date émission : {formatDate(proforma.issueDate)}</Text>
+        <Text style={styles.line}>Validité : {formatDate(proforma.validityDate)}</Text>
+        <Text style={styles.line}>Date événement : {formatDate(proforma.eventDate)}</Text>
 
-        <Text style={styles.line}>
-          Date émission : {formatDate(proforma.issueDate)}
-        </Text>
-
-        <Text style={styles.line}>
-          Validité : {formatDate(proforma.validityDate)}
-        </Text>
-
-        <Text style={styles.line}>
-          Date événement : {formatDate(proforma.eventDate)}
-        </Text>
+        {proforma.orderNumber ? (
+          <Text style={styles.line}>Commande : {proforma.orderNumber}</Text>
+        ) : null}
       </View>
 
       <View style={styles.card}>
@@ -335,30 +319,28 @@ export default function ProformaDetailScreen() {
         </View>
       </View>
 
-      {proforma.status === 'approved' && !proforma.isInvoiced && (
+      {proforma.status === 'approved' && !isConverted && (
         <TouchableOpacity
           style={styles.convertButton}
           onPress={() => {
             Alert.alert(
-              'Créer commande et facture',
-              'Confirmer la création de la commande et de la facture ?',
+              'Créer commande',
+              'Confirmer la création de la commande ?',
               [
                 { text: 'Annuler', style: 'cancel' },
-                { text: 'Créer', onPress: handleCreateOrderAndInvoice },
+                { text: 'Créer', onPress: handleCreateOrder },
               ]
             );
           }}
           disabled={loading}
         >
-          <Text style={styles.convertButtonText}>
-            Créer commande + facture
-          </Text>
+          <Text style={styles.convertButtonText}>Créer commande</Text>
         </TouchableOpacity>
       )}
 
-      {proforma.isInvoiced && (
-        <Text style={styles.invoicedText}>
-          ✅ Convertie / Facturée ({proforma.invoiceNumber})
+      {isConverted && (
+        <Text style={styles.convertedText}>
+          ✅ Convertie en commande ({proforma.orderNumber || 'commande créée'})
         </Text>
       )}
 
@@ -646,7 +628,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontSize: 15,
   },
-  invoicedText: {
+  convertedText: {
     color: '#16A34A',
     marginTop: 10,
     marginBottom: 14,
