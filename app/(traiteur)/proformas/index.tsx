@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
-
 import {
     CateringProforma,
     deleteCateringProforma,
@@ -18,13 +17,17 @@ import {
 } from '@/src/services/cateringProforma.service';
 import { formatCurrency } from '@/src/utils/costs';
 
+type ProformaView = 'active' | 'invoiced' | 'all';
+
 export default function ProformasScreen() {
     const [proformas, setProformas] = useState<CateringProforma[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDishId, setSelectedDishId] = useState<string>('');
+    const [view, setView] = useState<ProformaView>('active');
+
     const loadProformas = useCallback(async () => {
         try {
             setLoading(true);
+
             const data = await getCateringProformas();
 
             const sortedData = [...data].sort((a, b) => {
@@ -47,25 +50,28 @@ export default function ProformasScreen() {
             loadProformas();
         }, [loadProformas])
     );
+
     const activeProformas = useMemo(() => {
         return proformas.filter((p) => {
             const isActiveStatus =
-                p.status === 'draft' || p.status === 'sent';
+                p.status === 'draft' || p.status === 'sent' || p.status === 'approved';
 
-            const isNotInvoiced = !p.isInvoiced;
-
-            return isActiveStatus && isNotInvoiced;
+            return isActiveStatus && !p.isInvoiced;
         });
     }, [proformas]);
 
-    const totalAmount = useMemo(() => {
-        return activeProformas.reduce((sum, p) => {
-            return sum + (p.totals?.total ?? 0);
-        }, 0);
-    }, [activeProformas]);
+    const invoicedProformas = useMemo(() => {
+        return proformas.filter((p) => p.isInvoiced);
+    }, [proformas]);
 
-    const totalCount = useMemo(() => {
-        return activeProformas.length;
+    const displayedProformas = useMemo(() => {
+        if (view === 'active') return activeProformas;
+        if (view === 'invoiced') return invoicedProformas;
+        return proformas;
+    }, [view, activeProformas, invoicedProformas, proformas]);
+
+    const activeTotal = useMemo(() => {
+        return activeProformas.reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
     }, [activeProformas]);
 
     const approvedTotal = useMemo(() => {
@@ -75,14 +81,9 @@ export default function ProformasScreen() {
             .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
     }, [proformas]);
 
-
     const invoicedTotal = useMemo(() => {
-        return proformas
-            .filter((p) => p.isInvoiced)
-            .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
-    }, [proformas]);
-
-
+        return invoicedProformas.reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
+    }, [invoicedProformas]);
 
     function formatDate(date?: string) {
         if (!date) return '—';
@@ -96,7 +97,9 @@ export default function ProformasScreen() {
         return d.toLocaleDateString('fr-FR');
     }
 
-    function getStatusLabel(status?: string) {
+    function getStatusLabel(status?: string, isInvoiced?: boolean) {
+        if (isInvoiced) return 'Facturée';
+
         switch (status) {
             case 'draft':
                 return 'Brouillon';
@@ -107,7 +110,7 @@ export default function ProformasScreen() {
             case 'rejected':
                 return 'Rejetée';
             case 'converted':
-                return 'Convertie en commande';
+                return 'Convertie';
             default:
                 return status || 'Brouillon';
         }
@@ -150,37 +153,58 @@ export default function ProformasScreen() {
     return (
         <ScrollView style={styles.container}>
             <Text style={styles.title}>Proformas</Text>
-            {/* 🔵 Proformas en cours */}
+
             <View style={styles.summaryCard}>
                 <Text style={styles.summaryLabel}>Proformas en cours</Text>
-                <Text style={styles.summaryValue}>{totalCount}</Text>
+                <Text style={styles.summaryValue}>{activeProformas.length}</Text>
 
                 <Text style={styles.summaryLabel}>Total en cours</Text>
-                <Text style={styles.summaryAmount}>
-                    {formatCurrency(totalAmount)}
-                </Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
             </View>
 
-            {/* 🟡 Proformas acceptées */}
             <View style={[styles.summaryCard, { backgroundColor: '#92400E' }]}>
-                <Text style={styles.summaryLabel}>Proformas acceptées</Text>
-                <Text style={styles.summaryAmount}>
-                    {formatCurrency(approvedTotal)}
-                </Text>
+                <Text style={styles.summaryLabel}>Proformas acceptées non facturées</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
             </View>
 
-            {/* 🟢 Chiffre d'affaires facturé */}
             <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
-                <Text style={styles.summaryLabel}>Chiffre d'affaires facturé</Text>
-                <Text style={styles.summaryAmount}>
-                    {formatCurrency(invoicedTotal)}
-                </Text>
+                <Text style={styles.summaryLabel}>Chiffre d’affaires facturé</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
             </View>
 
-            {activeProformas.length === 0 ? (
-                <Text style={styles.empty}>Aucune proforma en cours</Text>
+            <View style={styles.tabs}>
+                <TouchableOpacity
+                    style={[styles.tab, view === 'active' && styles.activeTab]}
+                    onPress={() => setView('active')}
+                >
+                    <Text style={[styles.tabText, view === 'active' && styles.activeTabText]}>
+                        En cours
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.tab, view === 'invoiced' && styles.activeTab]}
+                    onPress={() => setView('invoiced')}
+                >
+                    <Text style={[styles.tabText, view === 'invoiced' && styles.activeTabText]}>
+                        Facturées
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.tab, view === 'all' && styles.activeTab]}
+                    onPress={() => setView('all')}
+                >
+                    <Text style={[styles.tabText, view === 'all' && styles.activeTabText]}>
+                        Toutes
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            {displayedProformas.length === 0 ? (
+                <Text style={styles.empty}>Aucune proforma dans cette vue</Text>
             ) : (
-                activeProformas.map((p) => (
+                displayedProformas.map((p) => (
                     <View key={p.id} style={styles.card}>
                         <View style={styles.cardHeader}>
                             <View style={{ flex: 1 }}>
@@ -193,9 +217,15 @@ export default function ProformasScreen() {
                                 </Text>
                             </View>
 
-                            <View style={styles.statusBadge}>
-                                <Text style={styles.statusText}>
-                                    {getStatusLabel(p.status)}
+                            <View style={[
+                                styles.statusBadge,
+                                p.isInvoiced && styles.invoicedBadge,
+                            ]}>
+                                <Text style={[
+                                    styles.statusText,
+                                    p.isInvoiced && styles.invoicedBadgeText,
+                                ]}>
+                                    {getStatusLabel(p.status, p.isInvoiced)}
                                 </Text>
                             </View>
                         </View>
@@ -206,6 +236,10 @@ export default function ProformasScreen() {
                             <Text style={styles.line}>
                                 Événement : {formatDate(p.eventDate)}
                             </Text>
+                        ) : null}
+
+                        {p.invoiceNumber ? (
+                            <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
                         ) : null}
 
                         <Text style={styles.amount}>
@@ -227,26 +261,30 @@ export default function ProformasScreen() {
                                 <Text style={styles.primaryActionText}>Voir</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity
-                                style={styles.secondaryAction}
-                                onPress={() => {
-                                    if (!p.id) return;
+                            {!p.isInvoiced && (
+                                <>
+                                    <TouchableOpacity
+                                        style={styles.secondaryAction}
+                                        onPress={() => {
+                                            if (!p.id) return;
 
-                                    router.push({
-                                        pathname: '/(traiteur)/proformas/[id]',
-                                        params: { id: p.id },
-                                    });
-                                }}
-                            >
-                                <Text style={styles.secondaryActionText}>Modifier</Text>
-                            </TouchableOpacity>
+                                            router.push({
+                                                pathname: '/(traiteur)/proformas/[id]',
+                                                params: { id: p.id },
+                                            });
+                                        }}
+                                    >
+                                        <Text style={styles.secondaryActionText}>Modifier</Text>
+                                    </TouchableOpacity>
 
-                            <TouchableOpacity
-                                style={styles.deleteAction}
-                                onPress={() => handleDelete(p.id)}
-                            >
-                                <Text style={styles.deleteActionText}>Supprimer</Text>
-                            </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.deleteAction}
+                                        onPress={() => handleDelete(p.id)}
+                                    >
+                                        <Text style={styles.deleteActionText}>Supprimer</Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
                         </View>
                     </View>
                 ))
@@ -310,6 +348,36 @@ const styles = StyleSheet.create({
         fontWeight: '900',
     },
 
+    tabs: {
+        flexDirection: 'row',
+        backgroundColor: '#E5E7EB',
+        borderRadius: 12,
+        padding: 4,
+        marginBottom: 14,
+        gap: 4,
+    },
+
+    tab: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: 9,
+        alignItems: 'center',
+    },
+
+    activeTab: {
+        backgroundColor: '#111827',
+    },
+
+    tabText: {
+        color: '#374151',
+        fontWeight: '800',
+        fontSize: 13,
+    },
+
+    activeTabText: {
+        color: '#fff',
+    },
+
     empty: {
         textAlign: 'center',
         color: '#6B7280',
@@ -354,6 +422,14 @@ const styles = StyleSheet.create({
         color: '#1A73E8',
         fontSize: 11,
         fontWeight: '700',
+    },
+
+    invoicedBadge: {
+        backgroundColor: '#DCFCE7',
+    },
+
+    invoicedBadgeText: {
+        color: '#166534',
     },
 
     line: {

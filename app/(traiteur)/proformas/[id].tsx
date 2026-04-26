@@ -13,6 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import { createInvoiceFromProforma } from '@/src/services/cateringInvoice.service';
+import { createOrderFromProforma } from '@/src/services/cateringOrderService';
 import { markProformaAsInvoiced } from '@/src/services/cateringProforma.service';
 
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
@@ -45,7 +46,6 @@ export default function ProformaDetailScreen() {
 
     try {
       setLoading(true);
-
       const data = await getCateringProformaById(id);
 
       if (!data) {
@@ -69,19 +69,34 @@ export default function ProformaDetailScreen() {
     }, [loadProforma])
   );
 
-  const handleCreateInvoice = async () => {
+  const handleCreateOrderAndInvoice = async () => {
     try {
       if (!proforma?.id) {
         Alert.alert('Erreur', 'Proforma invalide');
         return;
       }
 
+      if (proforma.isInvoiced) {
+        Alert.alert('Information', 'Cette proforma a déjà été convertie.');
+        return;
+      }
+
       setLoading(true);
 
-      const invoice = await createInvoiceFromProforma(proforma);
+      const order = await createOrderFromProforma(proforma);
+
+      if (!order?.id) {
+        Alert.alert('Erreur', 'Création commande échouée');
+        return;
+      }
+
+      const invoice = await createInvoiceFromProforma({
+        ...proforma,
+        orderId: order.id,
+      } as any);
 
       if (!invoice?.id || !invoice?.number) {
-        Alert.alert('Erreur', 'Création facture échouée');
+        Alert.alert('Erreur', 'Commande créée, mais création facture échouée');
         return;
       }
 
@@ -91,13 +106,15 @@ export default function ProformaDetailScreen() {
         invoice.number
       );
 
-      Alert.alert('Succès', 'Facture créée avec succès');
+      Alert.alert(
+        'Succès',
+        'Commande et facture créées avec succès'
+      );
 
-      router.replace('/(traiteur)/invoices');
-
+      router.replace('/(traiteur)/orders');
     } catch (e) {
-      console.error(e);
-      Alert.alert('Erreur', 'Impossible de créer la facture');
+      console.error('❌ create order and invoice error:', e);
+      Alert.alert('Erreur', 'Impossible de créer la commande et la facture');
     } finally {
       setLoading(false);
     }
@@ -110,7 +127,7 @@ export default function ProformaDetailScreen() {
     const uri = asset.localUri || asset.uri;
 
     const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: 'base64'
+      encoding: 'base64',
     });
 
     return `data:image/png;base64,${base64}`;
@@ -122,7 +139,6 @@ export default function ProformaDetailScreen() {
     try {
       setPdfLoading(true);
 
-      // 🔥 Convert images en base64 (OBLIGATOIRE pour expo-print)
       const logoBase64 = await getImageBase64(
         require('@/assets/images/crepolia-logo.png')
       );
@@ -134,15 +150,14 @@ export default function ProformaDetailScreen() {
         stampBase64 = await getImageBase64(
           require('@/assets/images/crepolia-stamp.png')
         );
-      } catch { }
+      } catch {}
 
       try {
         signatureBase64 = await getImageBase64(
           require('@/assets/images/crepolia-signature.png')
         );
-      } catch { }
+      } catch {}
 
-      // 🔥 HTML CORRECT
       const html = buildProformaHTML(proforma, {
         logoBase64,
         stampBase64,
@@ -150,9 +165,7 @@ export default function ProformaDetailScreen() {
       });
 
       const uri = await generateDocumentPDF(html);
-
       await shareDocumentPDF(uri);
-
     } catch (e: any) {
       console.error('❌ generate proforma pdf error:', e);
       Alert.alert(
@@ -163,7 +176,6 @@ export default function ProformaDetailScreen() {
       setPdfLoading(false);
     }
   }
-
 
   async function handleChangeStatus(status: ProformaStatus) {
     if (!proforma?.id) return;
@@ -178,49 +190,29 @@ export default function ProformaDetailScreen() {
   }
 
   function handleSend() {
-    Alert.alert(
-      'Envoyer proforma',
-      'Confirmer l’envoi au client ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Envoyer',
-          onPress: () => handleChangeStatus('sent'),
-        },
-      ]
-    );
+    Alert.alert('Envoyer proforma', 'Confirmer l’envoi au client ?', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Envoyer', onPress: () => handleChangeStatus('sent') },
+    ]);
   }
 
   function handleApprove() {
-    Alert.alert(
-      'Valider proforma',
-      'Le client a accepté ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Oui',
-          onPress: () => handleChangeStatus('approved'),
-        },
-      ]
-    );
+    Alert.alert('Valider proforma', 'Le client a accepté ?', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Oui', onPress: () => handleChangeStatus('approved') },
+    ]);
   }
 
   function handleReject() {
-    Alert.alert(
-      'Rejeter proforma',
-      'Confirmer le rejet ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Rejeter',
-          style: 'destructive',
-          onPress: () => handleChangeStatus('rejected'),
-        },
-      ]
-    );
+    Alert.alert('Rejeter proforma', 'Confirmer le rejet ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Rejeter',
+        style: 'destructive',
+        onPress: () => handleChangeStatus('rejected'),
+      },
+    ]);
   }
-
-
 
   function formatDate(date?: string) {
     if (!date) return '—';
@@ -246,7 +238,6 @@ export default function ProformaDetailScreen() {
         return 'Rejetée';
       case 'expired':
         return 'Expirée';
-
       default:
         return status || 'Brouillon';
     }
@@ -346,44 +337,28 @@ export default function ProformaDetailScreen() {
 
       {proforma.status === 'approved' && !proforma.isInvoiced && (
         <TouchableOpacity
-          style={{
-            backgroundColor: '#16A34A',
-            paddingVertical: 14,
-            borderRadius: 10,
-            marginTop: 16,
-            marginBottom: 14,
-            alignItems: 'center',
-            elevation: 3,
-            shadowColor: '#000',
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            opacity: loading ? 0.6 : 1,
-          }}
+          style={styles.convertButton}
           onPress={() => {
             Alert.alert(
-              'Créer facture',
-              'Confirmer la création de la facture ?',
+              'Créer commande et facture',
+              'Confirmer la création de la commande et de la facture ?',
               [
                 { text: 'Annuler', style: 'cancel' },
-                { text: 'Créer', onPress: handleCreateInvoice },
+                { text: 'Créer', onPress: handleCreateOrderAndInvoice },
               ]
             );
           }}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={{ color: '#fff', fontWeight: '800' }}>
-              Créer facture
-            </Text>
-          )}
+          <Text style={styles.convertButtonText}>
+            Créer commande + facture
+          </Text>
         </TouchableOpacity>
       )}
 
       {proforma.isInvoiced && (
-        <Text style={{ color: '#16A34A', marginTop: 10, fontWeight: '700' }}>
-          ✅ Facturée ({proforma.invoiceNumber})
+        <Text style={styles.invoicedText}>
+          ✅ Convertie / Facturée ({proforma.invoiceNumber})
         </Text>
       )}
 
@@ -407,8 +382,6 @@ export default function ProformaDetailScreen() {
         </View>
       ) : null}
 
-
-
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -420,8 +393,6 @@ export default function ProformaDetailScreen() {
           <Text style={styles.pdfButtonText}>Générer PDF client</Text>
         )}
       </TouchableOpacity>
-
-      {/* ===== ACTIONS PROFORMA ===== */}
 
       {proforma.status === 'draft' && (
         <TouchableOpacity style={styles.primaryButton} onPress={handleSend}>
@@ -459,7 +430,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F4F6F8',
     padding: 16,
   },
-
   center: {
     flex: 1,
     backgroundColor: '#fff',
@@ -467,39 +437,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
-
   loadingText: {
     marginTop: 10,
     color: '#4B5563',
   },
-
   title: {
     fontSize: 24,
     fontWeight: '800',
     color: '#111827',
     marginBottom: 16,
   },
-
   headerCard: {
     backgroundColor: '#111827',
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
   },
-
   number: {
     color: '#fff',
     fontSize: 22,
     fontWeight: '900',
     marginBottom: 8,
   },
-
   client: {
     color: '#D1D5DB',
     fontSize: 15,
     marginTop: 8,
   },
-
   statusBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#E8F0FE',
@@ -507,13 +471,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 999,
   },
-
   statusText: {
     color: '#1A73E8',
     fontSize: 12,
     fontWeight: '800',
   },
-
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -521,25 +483,21 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     elevation: 2,
   },
-
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: '#111827',
     marginBottom: 10,
   },
-
   line: {
     fontSize: 14,
     color: '#4B5563',
     marginBottom: 5,
   },
-
   empty: {
     color: '#6B7280',
     fontSize: 14,
   },
-
   itemRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -547,26 +505,22 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
     paddingVertical: 10,
   },
-
   itemLabel: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
   },
-
   itemSub: {
     fontSize: 13,
     color: '#6B7280',
     marginTop: 3,
   },
-
   itemTotal: {
     fontSize: 14,
     fontWeight: '800',
     color: '#111827',
     marginLeft: 10,
   },
-
   totalCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -574,60 +528,50 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     elevation: 2,
   },
-
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-
   totalLabel: {
     fontSize: 14,
     color: '#4B5563',
   },
-
   totalValue: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
   },
-
   grandTotalLabel: {
     fontSize: 16,
     fontWeight: '900',
     color: '#111827',
   },
-
   grandTotalValue: {
     fontSize: 16,
     fontWeight: '900',
     color: '#111827',
   },
-
   menuItem: {
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     paddingVertical: 9,
   },
-
   menuName: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
   },
-
   menuMeta: {
     fontSize: 12,
     color: '#007AFF',
     marginTop: 2,
   },
-
   menuNotes: {
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
   },
-
   pdfButton: {
     backgroundColor: '#286aa7',
     paddingVertical: 14,
@@ -635,24 +579,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-
   pdfButtonText: {
     color: '#fff',
     fontWeight: '900',
     fontSize: 15,
   },
-
   disabledButton: {
     opacity: 0.7,
   },
-
   backButton: {
     backgroundColor: '#E5E7EB',
     paddingVertical: 13,
     borderRadius: 10,
     alignItems: 'center',
   },
-
   backButtonText: {
     color: '#111827',
     fontWeight: '800',
@@ -665,19 +605,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-
   primaryButtonText: {
     color: '#fff',
     fontWeight: '900',
     fontSize: 15,
   },
-
   rowActions: {
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
   },
-
   successButton: {
     flex: 1,
     backgroundColor: '#28A745',
@@ -685,7 +622,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-
   dangerButton: {
     flex: 1,
     backgroundColor: '#DC3545',
@@ -693,17 +629,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-
   buttonText: {
     color: '#fff',
     fontWeight: '800',
   },
-
   convertButton: {
     backgroundColor: '#6F42C1',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 10,
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  convertButtonText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 15,
+  },
+  invoicedText: {
+    color: '#16A34A',
+    marginTop: 10,
+    marginBottom: 14,
+    fontWeight: '700',
   },
 });
