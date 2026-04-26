@@ -93,7 +93,7 @@ export default function DashboardScreen() {
         </View>
         <TouchableOpacity
           style={styles.analyticsButton}
-          onPress={() => router.push('/analytics')}
+          onPress={() => router.push('/analytics/index')}
         >
           <Icon name="analytics" size={24} color="#fff" />
         </TouchableOpacity>

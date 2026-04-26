@@ -1,17 +1,19 @@
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from "firebase/firestore";
 
 /**
  * =========================
  * INPUTS MÉTIER
  * =========================
  */
+
 export interface CateringMealInput {
   enabled: boolean;
   numberOfPeople: number;
-  unitPrice: number;        // $ / personne / jour
+  unitPrice: number; // $ / personne / jour
   numberOfDays: number;
-  discount: number;         // $
-  foodCostRate: number;     // %
+  discount: number; // $
+  foodCostRate: number; // %
+  name?: string; // utile pour documents
 }
 
 export interface CateringMealResult {
@@ -26,11 +28,11 @@ export interface CateringServiceInput {
   numberOfPeople: number;
   numberOfDays: number;
   discount: number;
+
   serverRate: number;
   cookRate: number;
 
-  // 🔥 NOUVEAU
-  serviceMarginRate: number; // % de marge sur le coût service
+  serviceMarginRate: number; // %
 }
 
 export interface CateringServiceCosts {
@@ -60,6 +62,7 @@ export interface CateringServiceResult {
  * SIMULATION – DRAFT (UI / CALCUL)
  * =========================
  */
+
 export interface CateringSimulationDraft {
   breakfast: CateringMealInput;
   lunch: CateringMealInput;
@@ -68,12 +71,18 @@ export interface CateringSimulationDraft {
 
   serviceCosts: CateringServiceCosts;
 
-  // infos optionnelles côté UI
+  // infos UI
   name?: string;
   clientId?: string;
 
-  // ✅ AJOUT IMPORTANT
   dateLivraison: string;
+
+  // infos commerciales
+  designation?: string;
+  guestCount?: number;
+  deliveryAddress?: string;
+  deliveryTime?: string;
+  comment?: string;
 }
 
 /**
@@ -81,6 +90,7 @@ export interface CateringSimulationDraft {
  * RÉSULTAT DE SIMULATION
  * =========================
  */
+
 export interface CateringSimulationResult {
   breakfast?: CateringMealResult;
   lunch?: CateringMealResult;
@@ -94,54 +104,125 @@ export interface CateringSimulationResult {
 
 /**
  * =========================
- * SIMULATION PERSISTÉE (FIRESTORE)
+ * SIMULATION PERSISTÉE
  * =========================
  */
 
-  export type CateringSimulation =
-  CateringSimulationDraft & {
-    id: string;
-
-    name: string;
-    clientId: string;
-
-    // 🔥 TOTAUX PERSISTÉS
-    globalTurnover?: number;
-    globalCost?: number;
-    globalMargin?: number;
-
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-    isDeleted: boolean;
-
-    dateLivraison: string;
-
-    status: 'draft' | 'validated';
-    convertedToOrder?: boolean;
-    orderId?: string;
-    convertedAt?: string;
-  };
-export type CateringOrder = {
+export type CateringSimulation = CateringSimulationDraft & {
   id: string;
-  simulationId: string;
 
   name: string;
   clientId: string;
-  dateLivraison: string;
 
+  globalTurnover?: number;
+  globalCost?: number;
+  globalMargin?: number;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+
+  isDeleted: boolean;
+
+  status: "draft" | "validated";
+
+  convertedToOrder?: boolean;
+  orderId?: string;
+  convertedAt?: string;
+};
+
+/**
+ * =========================
+ * DOCUMENTS COMMERCIAUX
+ * =========================
+ */
+
+export type CateringDocumentType = "proforma" | "invoice";
+
+export interface CateringDocumentItem {
+  label: string;
+  days: number;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface CateringDocumentTotals {
+  subtotal: number;
+  total: number;
+  currency: "USD" | "CDF";
+}
+
+export interface CateringDocumentClient {
+  name: string;
+  address?: string;
+  cityCountry?: string;
+  phone?: string;
+  notes?: string;
+  rccm?: string;
+  idNat?: string;
+}
+
+/**
+ * =========================
+ * ORDER / PROFORMA
+ * =========================
+ */
+
+export type CateringOrderStatus =
+  | "draft"
+  | "sent"
+  | "confirmed"
+  | "in-production"
+  | "delivered"
+  | "cancelled";
+
+export type CateringOrderDocumentType =
+  | "proforma"
+  | "order";
+
+export type CateringOrder = {
+  id: string;
+
+  simulationId: string | null;
+
+  documentType: CateringOrderDocumentType;
+  status: CateringOrderStatus;
+
+  number: string;
+  version: number;
+
+  name: string;
+
+  clientId: string;
+  client: CateringDocumentClient;
+
+  designation: string;
+
+  dateLivraison: string;
+  deliveryTime?: string;
+  deliveryAddress?: string;
+
+  guestCount?: number;
+
+  comment?: string;
+
+  /**
+   * Snapshot commercial figé
+   */
+  items: CateringDocumentItem[];
+  totals: CateringDocumentTotals;
+
+  /**
+   * Snapshot technique (facultatif)
+   */
   breakfast?: CateringMealInput;
   lunch?: CateringMealInput;
   drinks?: CateringMealInput;
   service?: CateringServiceInput;
 
-  // 🔵 Prix final (modifiable)
-  totals?: {
-    totalHT: number;
-    totalCost: number;
-    margin: number;
-  };
-
-  // 🆕 Prix d'origine de la simulation (référence)
+  /**
+   * référence pricing simulation
+   */
   pricingReference?: {
     totalHT: number;
     totalCost: number;
@@ -150,28 +231,72 @@ export type CateringOrder = {
 
   lieu?: string;
   heureLivraison?: string;
+
   contactSurSite?: string;
   telephoneContact?: string;
+
   instructions?: string;
 
-  status: 'draft' | 'confirmed' | 'in-production' | 'delivered';
+  invoiceId?: string | null;
 
-  createdAt: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+
+  confirmedAt?: Timestamp | null;
 };
 
-export type CateringOrderStatus =
-  | 'draft'
-  | 'confirmed'
-  | 'in-production'
-  | 'delivered';
+/**
+ * =========================
+ * FACTURE
+ * =========================
+ */
+
+export type CateringInvoiceStatus =
+  | "draft"
+  | "issued"
+  | "paid"
+  | "cancelled";
+
+export type CateringInvoice = {
+  id: string;
+
+  orderId: string;
+  sourceProformaId?: string | null;
+
+  number: string;
+
+  status: CateringInvoiceStatus;
+
+  clientId: string;
+  client: CateringDocumentClient;
+
+  designation: string;
+
+  dateLivraison: string;
+  deliveryTime?: string;
+  deliveryAddress?: string;
+
+  guestCount?: number;
+
+  comment?: string;
+
+  items: CateringDocumentItem[];
+  totals: CateringDocumentTotals;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+
+  issuedAt?: Timestamp | null;
+};
+
+/**
+ * =========================
+ * MONEY UTILS
+ * =========================
+ */
 
 export type MoneyTotals = {
   totalHT: number;
   totalCost: number;
   margin: number;
 };
-
-
-
-
-

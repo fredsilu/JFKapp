@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 import { Order } from '@/types';
 import { updateOrder, updateOrderStatus } from '@/src/services/firestore';
 import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
 import Modal from '@/components/Modal';
 import OrderForm from '@/components/OrderForm';
 import OrderIngredientsModal from '@/components/OrderIngredientsModal';
+import {
+  createDocumentFromOrder,
+  DocumentType,
+} from '@/src/services/cateringDocumentService';
 
 interface OrderDetailsProps {
   order: Order;
@@ -16,6 +30,7 @@ interface OrderDetailsProps {
 export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
+  const [loadingDocument, setLoadingDocument] = useState<DocumentType | null>(null);
 
   const STATUS_TRANSITIONS: Record<Order['status'], Order['status']> = {
     'En cours': 'En préparation',
@@ -37,32 +52,78 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
   };
 
   const handleUpdateStatus = async () => {
-    const nextStatus = STATUS_TRANSITIONS[order.status];
-    if (nextStatus !== order.status) {
-      await updateOrderStatus(order.id, nextStatus);
+    try {
+      const nextStatus = STATUS_TRANSITIONS[order.status];
+      if (nextStatus !== order.status) {
+        await updateOrderStatus(order.id, nextStatus);
+      }
+    } catch (error) {
+      console.error('Erreur mise à jour statut:', error);
+      Alert.alert('Erreur', 'Impossible de mettre à jour le statut.');
     }
   };
 
   const handleUpdateOrder = async (
     updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
-    await updateOrder(order.id, updatedOrder);
-    setShowEditForm(false);
+    try {
+      await updateOrder(order.id, updatedOrder);
+      setShowEditForm(false);
+    } catch (error) {
+      console.error('Erreur mise à jour commande:', error);
+      Alert.alert('Erreur', 'Impossible de modifier la commande.');
+    }
   };
 
+  const handleCreateDocument = async (type: DocumentType) => {
+    try {
+      setLoadingDocument(type);
+
+      // 🔥 transformation dishes → items
+      const items = (order.dishes || []).map((d) => ({
+        label: d.dish?.name || "Plat",
+        quantity: d.quantity || 0,
+        unitPrice: d.dish?.price || 0,
+        totalPrice: (d.quantity || 0) * (d.dish?.price || 0),
+      }));
+
+      const orderForDocument = {
+        ...order,
+        items,
+      };
+
+      console.log("ORDER FOR DOCUMENT:", orderForDocument);
+
+      await createDocumentFromOrder(orderForDocument as any, type);
+
+      alert(
+        type === "proforma"
+          ? "Proforma générée avec succès"
+          : "Facture générée avec succès"
+      );
+    } catch (error) {
+      console.error("Erreur génération document:", error);
+      alert("Erreur génération document");
+    } finally {
+      setLoadingDocument(null);
+    }
+  };
   return (
     <>
       <View style={styles.container}>
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>Détails de la commande</Text>
+
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => setShowIngredientsModal(true)}>
               <MaterialIcons name="list" size={22} color="#34C759" />
             </TouchableOpacity>
+
             <TouchableOpacity onPress={() => setShowEditForm(true)}>
               <MaterialIcons name="edit" size={22} color="#007AFF" />
             </TouchableOpacity>
+
             <TouchableOpacity onPress={onClose}>
               <MaterialIcons name="close" size={24} color="#666" />
             </TouchableOpacity>
@@ -71,25 +132,61 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* FACTURATION */}
-          {(order.designation || order.billedAmount !== undefined) && (
-            <View style={[styles.sectionCard, styles.bgBlue]}>
-              <Text style={styles.sectionTitle}>Facturation</Text>
+          <View style={[styles.sectionCard, styles.bgBlue]}>
+            <Text style={styles.sectionTitle}>Facturation</Text>
 
-              {order.designation && (
-                <Text style={styles.line}>• {order.designation}</Text>
-              )}
+            {order.designation ? (
+              <Text style={styles.line}>• {order.designation}</Text>
+            ) : (
+              <Text style={styles.line}>• Aucune désignation</Text>
+            )}
 
-              {order.billedAmount !== undefined && (
-                <Text style={styles.billedAmount}>
-                  • Montant facturé : {formatCurrency(order.billedAmount)}
-                </Text>
-              )}
+            {order.billedAmount !== undefined ? (
+              <Text style={styles.billedAmount}>
+                • Montant facturé : {formatCurrency(order.billedAmount)}
+              </Text>
+            ) : null}
+
+            <View style={styles.documentsRow}>
+              <TouchableOpacity
+                style={[styles.docButton, styles.proformaButton]}
+                onPress={() => {
+                  console.log("CLICK PROFORMA");
+                  handleCreateDocument('proforma');
+                }}
+                disabled={loadingDocument !== null}
+              >
+                {loadingDocument === 'proforma' ? (
+                  <ActivityIndicator size="small" color="#0b5ed7" />
+                ) : (
+                  <>
+                    <MaterialIcons name="description" size={18} color="#0b5ed7" />
+                    <Text style={styles.proformaButtonText}>Proforma</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.docButton, styles.invoiceButton]}
+                onPress={() => handleCreateDocument('invoice')}
+                disabled={loadingDocument !== null}
+              >
+                {loadingDocument === 'invoice' ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <MaterialIcons name="receipt-long" size={18} color="#fff" />
+                    <Text style={styles.invoiceButtonText}>Facture</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-          )}
+          </View>
 
           {/* STATUT */}
           <View style={[styles.sectionCard, styles.bgGray]}>
             <Text style={styles.sectionTitle}>Statut</Text>
+
             <View style={styles.statusRow}>
               <View
                 style={[
@@ -97,7 +194,12 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
                   { backgroundColor: `${getStatusColor(order.status)}20` },
                 ]}
               >
-                <Text style={{ color: getStatusColor(order.status), fontWeight: '600' }}>
+                <Text
+                  style={{
+                    color: getStatusColor(order.status),
+                    fontWeight: '600',
+                  }}
+                >
                   {order.status}
                 </Text>
               </View>
@@ -106,7 +208,11 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
                 <TouchableOpacity
                   style={[
                     styles.updateBtn,
-                    { backgroundColor: getStatusColor(STATUS_TRANSITIONS[order.status]) },
+                    {
+                      backgroundColor: getStatusColor(
+                        STATUS_TRANSITIONS[order.status]
+                      ),
+                    },
                   ]}
                   onPress={handleUpdateStatus}
                 >
@@ -121,19 +227,25 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
           {/* CLIENT */}
           <View style={[styles.sectionCard, styles.bgWhite]}>
             <Text style={styles.sectionTitle}>Client</Text>
+
             <View style={styles.clientRow}>
               <Image
                 source={
-                  order.client.profilePicture
+                  order.client?.profilePicture
                     ? { uri: order.client.profilePicture }
                     : require('@/assets/images/no_client_picture.jpg')
                 }
                 style={styles.clientImage}
               />
-              <View>
-                <Text style={styles.clientName}>{order.client.name}</Text>
-                <Text style={styles.clientMeta}>{order.client.phone}</Text>
-                <Text style={styles.clientMeta}>{order.client.email}</Text>
+
+              <View style={styles.clientInfo}>
+                <Text style={styles.clientName}>{order.client?.name || '-'}</Text>
+                {!!order.client?.phone && (
+                  <Text style={styles.clientMeta}>{order.client.phone}</Text>
+                )}
+                {!!order.client?.email && (
+                  <Text style={styles.clientMeta}>{order.client.email}</Text>
+                )}
               </View>
             </View>
           </View>
@@ -141,19 +253,24 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
           {/* LIVRAISON */}
           <View style={[styles.sectionCard, styles.bgGray]}>
             <Text style={styles.sectionTitle}>Livraison</Text>
-            <Text style={styles.line}>📅 {order.deliveryDate}</Text>
-            <Text style={styles.line}>⏰ {order.deliveryTime}</Text>
-            <Text style={styles.line}>📍 {order.address}</Text>
+            <Text style={styles.line}>📅 {order.deliveryDate || '-'}</Text>
+            <Text style={styles.line}>⏰ {order.deliveryTime || '-'}</Text>
+            <Text style={styles.line}>📍 {order.address || '-'}</Text>
           </View>
 
           {/* PLATS */}
           <View style={[styles.sectionCard, styles.bgWhite]}>
             <Text style={styles.sectionTitle}>Plats commandés</Text>
-            {order.dishes.map(({ dish, quantity }) => (
-              <Text key={dish.id} style={styles.line}>
-                • {quantity} × {dish.name}
-              </Text>
-            ))}
+
+            {order.dishes && order.dishes.length > 0 ? (
+              order.dishes.map(({ dish, quantity }) => (
+                <Text key={dish.id} style={styles.line}>
+                  • {quantity} × {dish.name}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.line}>Aucun plat sélectionné</Text>
+            )}
           </View>
 
           {/* TOTAL */}
@@ -184,7 +301,10 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
 
   header: {
     padding: 16,
@@ -196,34 +316,107 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  title: { fontSize: 18, fontWeight: '700' },
-  headerActions: { flexDirection: 'row', gap: 16 },
-  scrollContent: { padding: 16, gap: 16 },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+  },
 
   sectionCard: {
     borderRadius: 12,
     padding: 16,
   },
 
-  bgWhite: { backgroundColor: '#fff' },
-  bgGray: { backgroundColor: '#f0f0f0' },
-  bgBlue: { backgroundColor: '#e9f2ff' },
-  bgGreen: { backgroundColor: '#e9f7ef' },
+  bgWhite: {
+    backgroundColor: '#fff',
+  },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  line: { fontSize: 14, color: '#333', marginBottom: 4 },
+  bgGray: {
+    backgroundColor: '#f0f0f0',
+  },
+
+  bgBlue: {
+    backgroundColor: '#e9f2ff',
+  },
+
+  bgGreen: {
+    backgroundColor: '#e9f7ef',
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+
+  line: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 4,
+  },
 
   billedAmount: {
     fontSize: 16,
     fontWeight: '700',
     color: '#0b5ed7',
     marginTop: 4,
+    marginBottom: 12,
+  },
+
+  documentsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
+
+  docButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minWidth: 120,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
+  proformaButton: {
+    backgroundColor: '#dbeafe',
+    borderWidth: 1,
+    borderColor: '#93c5fd',
+  },
+
+  invoiceButton: {
+    backgroundColor: '#0b5ed7',
+  },
+
+  proformaButtonText: {
+    color: '#0b5ed7',
+    fontWeight: '700',
+  },
+
+  invoiceButtonText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
   },
 
   statusBadge: {
@@ -249,15 +442,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  clientInfo: {
+    flex: 1,
+  },
+
   clientImage: {
     width: 56,
     height: 56,
     borderRadius: 28,
   },
 
-  clientName: { fontSize: 16, fontWeight: '600' },
-  clientMeta: { fontSize: 14, color: '#666' },
+  clientName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
-  totalLabel: { fontSize: 16, fontWeight: '700' },
-  totalValue: { fontSize: 22, fontWeight: '800', color: '#2e7d32' },
+  clientMeta: {
+    fontSize: 14,
+    color: '#666',
+  },
+
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  totalValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#2e7d32',
+  },
 });

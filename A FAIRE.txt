@@ -833,6 +833,11 @@ On va le faire proprement, scalable et cohérent avec ton architecture actuelle 
 
 Je commence par la **structure des dossiers React Native**.
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> release/v2.2.0
 Oui. Ton workflow est bon dans l’idée, mais il mélange les noms de branches et versions. Voici une version **simple, claire et stable**.
 
 ## Workflow recommandé JFKApp
@@ -958,3 +963,7 @@ git checkout -b feature/next-improvement
 `main` = production stable
 `vX.X.X-beta.1` = version test
 `vX.X.X` = version finale production
+<<<<<<< HEAD
+=======
+
+>>>>>>> release/v2.2.0
