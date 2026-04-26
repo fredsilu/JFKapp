@@ -27,26 +27,6 @@ function safeClientName(proforma: CateringProforma) {
   return name;
 }
 
-function getMenuItems(proforma: CateringProforma): string[] {
-  const p: any = proforma;
-
-  const menuItems =
-    p.menuItems ||
-    p.dishes ||
-    p.selectedDishes ||
-    p.menu ||
-    [];
-
-  if (!Array.isArray(menuItems)) return [];
-
-  return menuItems
-    .map((item: any) => {
-      if (typeof item === 'string') return item;
-      return item?.name || item?.label || item?.title || '';
-    })
-    .filter((name: string) => name && name.trim());
-}
-
 export function buildProformaHTML(
   proforma: CateringProforma,
   assets?: ProformaPdfAssets
@@ -68,12 +48,36 @@ export function buildProformaHTML(
 
   const subtotal = proforma.totals?.subtotal ?? proforma.totals?.total ?? 0;
   const total = proforma.totals?.total ?? subtotal;
+
   const clientName = safeClientName(proforma);
   const clientRccm = safe(proforma.clientRccm);
   const clientIdnat = safe(proforma.clientIdnat);
   const clientAddress = safe(proforma.clientAddress);
   const clientCity = safe(proforma.clientCity);
-  const menuItems = getMenuItems(proforma);
+
+  const menuRows =
+    proforma.menu && proforma.menu.length > 0
+      ? proforma.menu
+          .map(
+            (item, index) => `
+<tr>
+  <td class="center">${index + 1}</td>
+  <td>
+    ${safe(item.name)}
+    ${
+      item.notes
+        ? `<br/><span class="dish-note">${safe(item.notes)}</span>`
+        : ''
+    }
+  </td>
+</tr>`
+          )
+          .join('')
+      : `
+<tr>
+  <td class="center">1</td>
+  <td>Menu à préciser lors de la confirmation de la commande</td>
+</tr>`;
 
   const headerHTML = `
 <div class="header">
@@ -99,23 +103,6 @@ export function buildProformaHTML(
   NIF:A2171348B
 </div>
 `;
-
-  const menuRows =
-    menuItems.length > 0
-      ? menuItems
-        .map(
-          (item, index) => `
-<tr>
-  <td class="center">${index + 1}</td>
-  <td>${safe(item)}</td>
-</tr>`
-        )
-        .join('')
-      : `
-<tr>
-  <td class="center">1</td>
-  <td>Menu à préciser lors de la confirmation de la commande</td>
-</tr>`;
 
   return `
 <!DOCTYPE html>
@@ -426,6 +413,12 @@ body {
   border: 2px solid white;
 }
 
+.dish-note {
+  font-size: 9px;
+  color: #555;
+  font-style: italic;
+}
+
 .menu-note {
   margin-top: 24px;
   font-size: 10px;
@@ -437,7 +430,6 @@ body {
 .client-block div {
   margin-bottom: 2px;
 }
-  
 </style>
 </head>
 
@@ -450,28 +442,17 @@ body {
   <div class="number">Numéro : ${safe(proforma.number)}</div>
 
   <div class="client-block">
-  <div class="client-name">${clientName}</div>
+    <div class="client-name">${clientName}</div>
 
-  <div>
-    RCCM : ${clientRccm || '—'}
-  </div>
+    <div>RCCM : ${clientRccm || '—'}</div>
+    <div>IDNAT : ${clientIdnat || '—'}</div>
+    <div>${clientAddress || '—'}</div>
+    <div><u>${clientCity ? clientCity + ' / RDC' : '—'}</u></div>
 
-  <div>
-    IDNAT : ${clientIdnat || '—'}
+    <div class="issue-date">
+      ${safe(proforma.issueDate)}
+    </div>
   </div>
-
-  <div>
-    ${clientAddress || '—'}
-  </div>
-
-  <div>
-    <u>${clientCity ? clientCity + ' / RDC' : '—'}</u>
-  </div>
-
-  <div class="issue-date">
-    ${safe(proforma.issueDate)}
-  </div>
-</div>
 
   <div class="intro">Vous trouverez ci-dessous pro-forma :</div>
 
@@ -566,6 +547,7 @@ body {
         <th>Plat proposé</th>
       </tr>
     </thead>
+
     <tbody>
       ${menuRows}
     </tbody>

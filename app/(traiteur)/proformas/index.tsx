@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
+
 import {
     CateringProforma,
     deleteCateringProforma,
@@ -20,7 +21,7 @@ import { formatCurrency } from '@/src/utils/costs';
 export default function ProformasScreen() {
     const [proformas, setProformas] = useState<CateringProforma[]>([]);
     const [loading, setLoading] = useState(true);
-
+    const [selectedDishId, setSelectedDishId] = useState<string>('');
     const loadProformas = useCallback(async () => {
         try {
             setLoading(true);

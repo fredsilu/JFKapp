@@ -24,6 +24,7 @@ import {
 } from '@/src/services/cateringProforma.service';
 import { fetchClients } from '@/src/services/clientService';
 import { formatCurrency } from '@/src/utils/costs';
+import { Picker } from '@react-native-picker/picker';
 
 type CateringDish = {
   id: string;
@@ -54,6 +55,7 @@ export default function CreateProformaFromSimulationScreen() {
   const [simulation, setSimulation] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
   const [dishes, setDishes] = useState<CateringDish[]>([]);
+  const [selectedDishId, setSelectedDishId] = useState<string>('');
   const [selectedMenu, setSelectedMenu] = useState<CateringProformaMenuItem[]>([]);
   const [menuNotesByDishId, setMenuNotesByDishId] = useState<Record<string, string>>(
     {}
@@ -337,71 +339,81 @@ export default function CreateProformaFromSimulationScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Menu des plats</Text>
+
         <Text style={styles.helperText}>
-          Sélectionne les plats qui seront affichés en annexe de la proforma.
+          Ajoute les plats à inclure dans la proforma.
         </Text>
 
-        {dishes.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Aucun plat trouvé dans la base de données.
-          </Text>
-        ) : (
-          dishes.map((dish) => {
-            const selected = isDishSelected(dish.id);
+        {/* Dropdown */}
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={selectedDishId}
+            onValueChange={(value) => setSelectedDishId(value)}
+          >
+            <Picker.Item label="Sélectionner un plat..." value="" />
 
-            return (
-              <View key={dish.id} style={styles.dishBlock}>
-                <TouchableOpacity
-                  style={[
-                    styles.dishRow,
-                    selected && styles.dishRowSelected,
-                  ]}
-                  onPress={() => toggleDish(dish)}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={[
-                        styles.dishName,
-                        selected && styles.dishNameSelected,
-                      ]}
-                    >
-                      {dish.name}
-                    </Text>
-
-                    {!!dish.category && (
-                      <Text style={styles.dishCategory}>{dish.category}</Text>
-                    )}
-                  </View>
-
-                  <Text
-                    style={[
-                      styles.selectBadge,
-                      selected && styles.selectBadgeSelected,
-                    ]}
-                  >
-                    {selected ? 'Sélectionné' : 'Ajouter'}
-                  </Text>
-                </TouchableOpacity>
-
-                {selected && (
-                  <TextInput
-                    style={styles.notesInput}
-                    placeholder="Note spécifique pour ce plat (optionnel)"
-                    value={menuNotesByDishId[dish.id] || ''}
-                    onChangeText={(text) => updateDishNote(dish.id, text)}
-                    multiline
-                  />
-                )}
-              </View>
-            );
-          })
-        )}
-
-        <View style={styles.menuSummary}>
-          <Text style={styles.menuSummaryText}>
-            Plats sélectionnés : {selectedMenu.length}
-          </Text>
+            {dishes.map((dish) => (
+              <Picker.Item
+                key={dish.id}
+                label={dish.name}
+                value={dish.id}
+              />
+            ))}
+          </Picker>
         </View>
+
+        {/* Bouton ajouter */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => {
+            const dish = dishes.find((d) => d.id === selectedDishId);
+
+            if (!dish) return;
+
+            if (selectedMenu.some((m) => m.dishId === dish.id)) {
+              Alert.alert('Déjà ajouté', 'Ce plat est déjà dans le menu.');
+              return;
+            }
+
+            setSelectedMenu((prev) => [
+              ...prev,
+              {
+                dishId: dish.id,
+                name: dish.name,
+                category: dish.category || '',
+                notes: '',
+              },
+            ]);
+
+            setSelectedDishId('');
+          }}
+        >
+          <Text style={styles.addButtonText}>Ajouter le plat</Text>
+        </TouchableOpacity>
+
+        {/* Liste des plats sélectionnés */}
+        {selectedMenu.map((item) => (
+          <View key={item.dishId} style={styles.selectedDish}>
+            <Text style={styles.dishName}>{item.name}</Text>
+
+            <TextInput
+              placeholder="Note..."
+              value={item.notes}
+              onChangeText={(text) => updateDishNote(item.dishId, text)}
+              style={styles.notesInput}
+            />
+
+            <TouchableOpacity
+              onPress={() =>
+                setSelectedMenu((prev) =>
+                  prev.filter((d) => d.dishId !== item.dishId)
+                )
+              }
+            >
+              <Text style={styles.removeText}>Supprimer</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
 
       <TouchableOpacity
@@ -633,6 +645,40 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
+  },
+
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+
+  addButton: {
+    backgroundColor: '#10B981',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  addButtonText: {
+    color: '#fff',
+    fontWeight: '800',
+  },
+
+  selectedDish: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+
+  removeText: {
+    color: '#EF4444',
+    fontWeight: '700',
+    marginTop: 5,
   },
 
   backButtonText: {

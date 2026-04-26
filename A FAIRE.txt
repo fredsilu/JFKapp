@@ -967,3 +967,9 @@ git checkout -b feature/next-improvement
 =======
 
 >>>>>>> release/v2.2.0
+
+
+Petites remarques non bloquantes :
+
+Ces styles ne sont plus utilisés, tu peux les supprimer plus tard :
+dishBlock, dishRow, dishRowSelected, dishNameSelected, dishCategory, selectBadge, selectBadgeSelected, emptyText, menuSummary, menuSummaryText.
