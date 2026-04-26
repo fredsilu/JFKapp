@@ -832,3 +832,129 @@ Je vais maintenant te livrer :
 On va le faire proprement, scalable et cohérent avec ton architecture actuelle Expo + Firebase.
 
 Je commence par la **structure des dossiers React Native**.
+
+Oui. Ton workflow est bon dans l’idée, mais il mélange les noms de branches et versions. Voici une version **simple, claire et stable**.
+
+## Workflow recommandé JFKApp
+
+### 1. Développement sur une branche feature
+
+```bash
+git checkout develop
+git pull origin develop
+
+git checkout -b feature/invoice
+```
+
+Tu développes, puis :
+
+```bash
+git add .
+git commit -m "feat: add catering invoice workflow"
+git push origin feature/invoice
+```
+
+---
+
+### 2. Fusion dans develop
+
+```bash
+git checkout develop
+git pull origin develop
+git merge feature/invoice
+git push origin develop
+```
+
+---
+
+### 3. Créer une branche release
+
+```bash
+git checkout -b release/v2.2.0
+git push origin release/v2.2.0
+```
+
+---
+
+### 4. Beta test
+
+```bash
+git tag v2.2.0-beta.1
+git push origin v2.2.0-beta.1
+
+eas build -p android --profile beta
+```
+
+---
+
+### 5. Si bug pendant test beta
+
+Tu restes sur la branche release :
+
+```bash
+git checkout release/v2.2.0
+```
+
+Tu corriges, puis :
+
+```bash
+git add .
+git commit -m "fix: invoice creation crash"
+git push origin release/v2.2.0
+```
+
+Puis nouvelle beta :
+
+```bash
+git tag v2.2.0-beta.2
+git push origin v2.2.0-beta.2
+
+eas build -p android --profile beta
+```
+
+---
+
+### 6. Validation finale vers main
+
+Quand tout est bon :
+
+```bash
+git checkout main
+git pull origin main
+git merge release/v2.2.0
+git push origin main
+```
+
+Puis tag production :
+
+```bash
+git tag v2.2.0
+git push origin v2.2.0
+
+eas build -p android --profile production
+```
+
+---
+
+### 7. Retour au développement
+
+```bash
+git checkout develop
+git merge main
+git push origin develop
+```
+
+Puis nouvelle feature :
+
+```bash
+git checkout -b feature/next-improvement
+```
+
+## Règle simple à retenir
+
+`feature/*` = développement
+`develop` = intégration
+`release/vX.X.X` = test beta
+`main` = production stable
+`vX.X.X-beta.1` = version test
+`vX.X.X` = version finale production
