@@ -14,22 +14,22 @@ import {
     orderBy,
 } from 'firebase/firestore';
 
-import {  getDoc } from 'firebase/firestore';
+import { getDoc } from 'firebase/firestore';
 
 const COLLECTION = 'catering_invoices';
 
 export async function getCateringInvoiceById(
-  id: string
+    id: string
 ): Promise<CateringInvoice | null> {
-  const ref = doc(db, COLLECTION, id);
-  const snap = await getDoc(ref);
+    const ref = doc(db, COLLECTION, id);
+    const snap = await getDoc(ref);
 
-  if (!snap.exists()) return null;
+    if (!snap.exists()) return null;
 
-  return {
-    id: snap.id,
-    ...(snap.data() as Omit<CateringInvoice, 'id'>),
-  };
+    return {
+        id: snap.id,
+        ...(snap.data() as Omit<CateringInvoice, 'id'>),
+    };
 }
 
 
@@ -86,6 +86,51 @@ export type CateringInvoice = {
 
     createdAt?: any;
 };
+
+/* =========================================
+   CREATE INVOICE FROM ORDER
+========================================= */
+export async function createInvoiceFromOrder(order: any) {
+
+    if (!order?.id) {
+        throw new Error('Commande invalide');
+    }
+
+    const invoiceNumber = await getNextInvoiceNumber();
+
+    const invoice = {
+        orderId: order.id,
+        orderNumber: order.number ?? '',
+
+        clientId: order.clientId ?? '',
+        clientName: order.client?.name ?? '',
+
+        issueDate: new Date().toISOString(),
+
+        items: order.items ?? [],
+        totals: order.totals ?? {
+            subtotal: 0,
+            total: 0,
+            currency: 'USD',
+        },
+
+        status: 'issued',
+
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    };
+
+    const ref = await addDoc(collection(db, 'catering_invoices'), {
+        ...invoice,
+        number: invoiceNumber,
+    });
+
+    return {
+        id: ref.id,
+        number: invoiceNumber,
+        ...invoice,
+    };
+}
 
 export async function createInvoiceFromProforma(proforma: any) {
     const number = await getNextInvoiceNumber();

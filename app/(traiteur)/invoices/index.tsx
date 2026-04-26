@@ -23,8 +23,24 @@ export default function InvoicesScreen() {
   const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
+
       const data = await getCateringInvoices();
-      setInvoices(data);
+
+      const sorted = [...data].sort((a: any, b: any) => {
+        const aTime =
+          a.createdAt?.toMillis?.() ||
+          new Date(a.issueDate || '').getTime() ||
+          0;
+
+        const bTime =
+          b.createdAt?.toMillis?.() ||
+          new Date(b.issueDate || '').getTime() ||
+          0;
+
+        return bTime - aTime;
+      });
+
+      setInvoices(sorted);
     } catch (e) {
       console.error('❌ load invoices error:', e);
       Alert.alert('Erreur', 'Impossible de charger les factures');
@@ -50,11 +66,22 @@ export default function InvoicesScreen() {
 
     const d = new Date(date);
 
-    if (Number.isNaN(d.getTime())) {
-      return date;
-    }
+    if (Number.isNaN(d.getTime())) return date;
 
     return d.toLocaleDateString('fr-FR');
+  }
+
+  function getStatusLabel(status?: string) {
+    switch (status) {
+      case 'issued':
+        return 'Émise';
+      case 'paid':
+        return 'Payée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return status || 'Émise';
+    }
   }
 
   if (loading) {
@@ -83,7 +110,7 @@ export default function InvoicesScreen() {
       {invoices.length === 0 ? (
         <Text style={styles.empty}>Aucune facture créée</Text>
       ) : (
-        invoices.map((invoice) => (
+        invoices.map((invoice: any) => (
           <View key={invoice.id} style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={{ flex: 1 }}>
@@ -97,13 +124,23 @@ export default function InvoicesScreen() {
               </View>
 
               <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>Facturée</Text>
+                <Text style={styles.statusText}>
+                  {getStatusLabel(invoice.status)}
+                </Text>
               </View>
             </View>
 
             <Text style={styles.line}>
-              Date : {formatDate(invoice.issueDate)}
+              Date facture : {formatDate(invoice.issueDate)}
             </Text>
+
+            {invoice.orderNumber ? (
+              <Text style={styles.line}>Commande : {invoice.orderNumber}</Text>
+            ) : null}
+
+            {invoice.proformaNumber ? (
+              <Text style={styles.line}>Proforma : {invoice.proformaNumber}</Text>
+            ) : null}
 
             <Text style={styles.amount}>
               Total : {formatCurrency(invoice.totals?.total ?? 0)}
@@ -130,9 +167,9 @@ export default function InvoicesScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/(traiteur)/proformas')}
+        onPress={() => router.push('/(traiteur)/orders')}
       >
-        <Text style={styles.backButtonText}>Retour aux proformas</Text>
+        <Text style={styles.backButtonText}>Retour aux commandes</Text>
       </TouchableOpacity>
 
       <View style={{ height: 40 }} />

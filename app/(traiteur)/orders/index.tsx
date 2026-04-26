@@ -1,314 +1,449 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialIcons as Icon } from '@expo/vector-icons';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 
-import { useOrders } from '@/src/hooks/useFirestore';
-import Modal from '@/components/Modal';
-import OrderDetails from '@/components/OrderDetails';
-import OrderForm from '@/components/OrderForm';
-import LoadingSpinner from '@/src/components/LoadingSpinner';
-import ErrorMessage from '@/src/components/ErrorMessage';
-import { Order } from '@/types';
-import { addOrder } from '@/src/services/firestore';
+import {
+  getOrders,
+  updateOrder,
+} from '@/src/services/cateringOrderService';
+import { CateringOrder } from '@/types/catering';
 import { formatCurrency } from '@/src/utils/costs';
 
 export default function OrdersScreen() {
-  const router = useRouter();
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [showOrderForm, setShowOrderForm] = useState(false);
+  const [orders, setOrders] = useState<CateringOrder[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: orders = [], loading, error } = useOrders({
-    orderBy: ['createdAt', 'desc'],
-  });
+  const loadOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getOrders();
 
-  const selectedOrder = selectedOrderId
-    ? orders.find(o => o.id === selectedOrderId) || null
-    : null;
+      const sorted = [...data].sort((a: any, b: any) => {
+        const aTime =
+          a.createdAt?.toMillis?.() ||
+          new Date(a.dateLivraison || '').getTime() ||
+          0;
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message="Error loading orders" />;
+        const bTime =
+          b.createdAt?.toMillis?.() ||
+          new Date(b.dateLivraison || '').getTime() ||
+          0;
 
-  const calculateOrderTotal = (order: Order) => {
-    let total = 0;
-
-    order.dishes?.forEach(({ dish, quantity }) => {
-      dish?.ingredients?.forEach(({ ingredient, quantity: q }) => {
-        if (ingredient?.price) {
-          total += ingredient.price * q * quantity;
-        }
+        return bTime - aTime;
       });
-    });
 
-    order.additionalIngredients?.forEach(({ ingredient, quantity }) => {
-      if (ingredient?.price) {
-        total += ingredient.price * quantity;
-      }
-    });
-
-    return total;
-  };
-
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'En cours':
-        return '#007AFF';
-      case 'En préparation':
-        return '#FF9500';
-      case 'Livré':
-        return '#34C759';
-      default:
-        return '#666';
+      setOrders(sorted);
+    } catch (e) {
+      console.error('❌ load orders error:', e);
+      Alert.alert('Erreur', 'Impossible de charger les commandes');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  async function handleCreateOrder(values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
-    await addOrder(values);
-    setShowOrderForm(false);
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [loadOrders])
+  );
+
+  const totalOrders = orders.length;
+
+  const completedOrders = useMemo(() => {
+    return orders.filter((o: any) => o.status === 'completed').length;
+  }, [orders]);
+
+  const totalAmount = useMemo(() => {
+    return orders.reduce((sum: number, o: any) => {
+      return sum + (o.totals?.total ?? 0);
+    }, 0);
+  }, [orders]);
+
+  function formatDate(date?: string) {
+    if (!date) return '—';
+
+    const d = new Date(date);
+
+    if (Number.isNaN(d.getTime())) return date;
+
+    return d.toLocaleDateString('fr-FR');
+  }
+
+  function getStatusLabel(status?: string) {
+    switch (status) {
+      case 'confirmed':
+        return 'Confirmée';
+      case 'in_progress':
+        return 'En préparation';
+      case 'completed':
+        return 'Terminée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return status || 'Confirmée';
+    }
+  }
+
+  function getStatusStyle(status?: string) {
+    switch (status) {
+      case 'confirmed':
+        return {
+          backgroundColor: '#DBEAFE',
+          color: '#1D4ED8',
+        };
+      case 'in_progress':
+        return {
+          backgroundColor: '#FEF3C7',
+          color: '#92400E',
+        };
+      case 'completed':
+        return {
+          backgroundColor: '#DCFCE7',
+          color: '#166534',
+        };
+      case 'cancelled':
+        return {
+          backgroundColor: '#FEE2E2',
+          color: '#991B1B',
+        };
+      default:
+        return {
+          backgroundColor: '#E5E7EB',
+          color: '#374151',
+        };
+    }
+  }
+
+  async function handleChangeStatus(orderId?: string, status?: string) {
+    if (!orderId || !status) return;
+
+    try {
+      await updateOrder(orderId, { status } as any);
+      await loadOrders();
+    } catch (e) {
+      console.error('❌ update order status error:', e);
+      Alert.alert('Erreur', 'Impossible de modifier le statut');
+    }
+  }
+
+  function confirmStatusChange(orderId?: string, status?: string) {
+    if (!orderId || !status) return;
+
+    Alert.alert(
+      'Modifier statut',
+      `Confirmer le changement vers "${getStatusLabel(status)}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: () => handleChangeStatus(orderId, status),
+        },
+      ]
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+        <Text style={styles.loadingText}>Chargement des commandes...</Text>
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Commandes</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Commandes</Text>
 
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.preparationButton}
-            onPress={() => router.push('/preparation-ingredients')}
-          >
-            <Icon name="list" size={18} color="#fff" />
-            <Text style={styles.preparationButtonText}>Ingrédients</Text>
-          </TouchableOpacity>
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryLabel}>Commandes créées</Text>
+        <Text style={styles.summaryValue}>{totalOrders}</Text>
 
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowOrderForm(true)}
-          >
-            <Icon name="add" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.summaryLabel}>Valeur totale</Text>
+        <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        {orders.map(order => {
-          const totalItems = order.dishes.reduce((t, d) => t + d.quantity, 0);
-          const costAmount = calculateOrderTotal(order);
-          const billedAmount = order.billedAmount ?? 0;
+      <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
+        <Text style={styles.summaryLabel}>Commandes terminées</Text>
+        <Text style={styles.summaryAmount}>{completedOrders}</Text>
+      </View>
+
+      {orders.length === 0 ? (
+        <Text style={styles.empty}>Aucune commande créée</Text>
+      ) : (
+        orders.map((order: any) => {
+          const statusStyle = getStatusStyle(order.status);
 
           return (
-            <TouchableOpacity
-              key={order.id}
-              style={styles.orderCard}
-              onPress={() => setSelectedOrderId(order.id)}
-            >
-              {/* HEADER */}
-              <View style={styles.orderHeader}>
-                <Text style={styles.clientName}>{order.client.name}</Text>
+            <View key={order.id} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>
+                    {order.number || 'Commande sans numéro'}
+                  </Text>
+
+                  <Text style={styles.client}>
+                    {order.client?.name || order.clientName || order.clientId || 'Client non défini'}
+                  </Text>
+                </View>
 
                 <View
                   style={[
                     styles.statusBadge,
-                    { backgroundColor: `${getStatusColor(order.status)}15` },
+                    { backgroundColor: statusStyle.backgroundColor },
                   ]}
                 >
                   <Text
                     style={[
                       styles.statusText,
-                      { color: getStatusColor(order.status) },
+                      { color: statusStyle.color },
                     ]}
                   >
-                    {order.status}
+                    {getStatusLabel(order.status)}
                   </Text>
                 </View>
               </View>
 
-              {/* META */}
-              <View style={styles.metaRow}>
-                <Text style={styles.metaText}>{totalItems} articles</Text>
+              {order.proformaNumber ? (
+                <Text style={styles.line}>Proforma : {order.proformaNumber}</Text>
+              ) : null}
 
-                <View style={styles.amountContainer}>
-                  {/* Coût */}
-                  <Text style={styles.costText}>
-                    Coût : {formatCurrency(costAmount)}
-                  </Text>
+              <Text style={styles.line}>
+                Date événement : {formatDate(order.dateLivraison)}
+              </Text>
 
-                  {/* Facturé */}
-                  {billedAmount > 0 ? (
-                    <Text style={styles.billedText}>
-                      Facturé : {formatCurrency(billedAmount)}
-                    </Text>
-                  ) : (
-                    <Text style={styles.notBilledText}>
-                      Non facturé
-                    </Text>
-                  )}
-                </View>
+              {order.deliveryTime ? (
+                <Text style={styles.line}>Heure : {order.deliveryTime}</Text>
+              ) : null}
+
+              {order.deliveryAddress ? (
+                <Text style={styles.line}>Adresse : {order.deliveryAddress}</Text>
+              ) : null}
+
+              {order.guestCount ? (
+                <Text style={styles.line}>Invités : {order.guestCount}</Text>
+              ) : null}
+
+              <Text style={styles.amount}>
+                Total : {formatCurrency(order.totals?.total ?? 0)}
+              </Text>
+
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.primaryAction}
+                  onPress={() => {
+                    if (!order.id) return;
+
+                    router.push({
+                      pathname: '/(traiteur)/orders/[id]',
+                      params: { id: order.id },
+                    });
+                  }}
+                >
+                  <Text style={styles.primaryActionText}>Voir</Text>
+                </TouchableOpacity>
+
+                {order.status === 'confirmed' && (
+                  <TouchableOpacity
+                    style={styles.secondaryAction}
+                    onPress={() =>
+                      confirmStatusChange(order.id, 'in_progress')
+                    }
+                  >
+                    <Text style={styles.secondaryActionText}>Préparer</Text>
+                  </TouchableOpacity>
+                )}
+
+                {order.status === 'in_progress' && (
+                  <TouchableOpacity
+                    style={styles.successAction}
+                    onPress={() =>
+                      confirmStatusChange(order.id, 'completed')
+                    }
+                  >
+                    <Text style={styles.successActionText}>Terminer</Text>
+                  </TouchableOpacity>
+                )}
+
+                {order.status !== 'completed' && order.status !== 'cancelled' && (
+                  <TouchableOpacity
+                    style={styles.deleteAction}
+                    onPress={() =>
+                      confirmStatusChange(order.id, 'cancelled')
+                    }
+                  >
+                    <Text style={styles.deleteActionText}>Annuler</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-
-              {/* DESIGNATION */}
-              {order.designation && (
-                <Text style={styles.designation}>
-                  {order.designation}
-                </Text>
-              )}
-
-              {/* DATE / HEURE */}
-              <View style={styles.deliveryRow}>
-                <Icon name="event" size={14} color="#666" />
-                <Text style={styles.deliveryText}>
-                  {order.deliveryDate} à {order.deliveryTime}
-                </Text>
-              </View>
-
-              {/* CTA */}
-              <View style={styles.viewButton}>
-                <Text style={styles.viewButtonText}>Voir les détails</Text>
-                <Icon name="chevron-right" size={20} color="#007AFF" />
-              </View>
-            </TouchableOpacity>
+            </View>
           );
-        })}
-      </ScrollView>
+        })
+      )}
 
-      <Modal visible={!!selectedOrder}>
-        {selectedOrder && (
-          <OrderDetails
-            order={selectedOrder}
-            onClose={() => setSelectedOrderId(null)}
-          />
-        )}
-      </Modal>
-
-      <Modal visible={showOrderForm}>
-        <OrderForm
-          onClose={() => setShowOrderForm(false)}
-          onSubmit={handleCreateOrder}
-        />
-      </Modal>
-    </View>
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    marginTop: 30,
-  },
-  header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F6F8',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  preparationButton: {
-    flexDirection: 'row',
-    gap: 6,
-    backgroundColor: '#FF9500',
-    padding: 8,
-    borderRadius: 8,
-  },
-  preparationButtonText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  addButton: {
-    backgroundColor: '#007AFF',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  center: {
+    flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  content: {
     padding: 16,
   },
-  orderCard: {
+  loadingText: {
+    marginTop: 10,
+    color: '#4B5563',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 16,
+    color: '#111827',
+  },
+  summaryCard: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+  },
+  summaryLabel: {
+    color: '#D1D5DB',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  summaryValue: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  summaryAmount: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  empty: {
+    textAlign: 'center',
+    color: '#6B7280',
+    marginTop: 40,
+  },
+  card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     marginBottom: 12,
     elevation: 2,
   },
-  orderHeader: {
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    gap: 8,
   },
-  clientName: {
+  cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#111827',
+  },
+  client: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginTop: 3,
   },
   statusBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   statusText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '800',
   },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  metaText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  amountContainer: {
-    alignItems: 'flex-end',
-  },
-  costText: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  billedText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#007AFF',
-  },
-  notBilledText: {
-    fontSize: 12,
-    color: '#F59E0B',
-    fontWeight: '600',
-  },
-  designation: {
-    marginTop: 8,
+  line: {
     fontSize: 14,
-    fontStyle: 'italic',
-    color: '#444',
+    color: '#4B5563',
+    marginBottom: 4,
   },
-  deliveryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
+  amount: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+    marginTop: 6,
   },
-  deliveryText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  viewButton: {
+  actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    marginTop: 14,
+    gap: 8,
+    flexWrap: 'wrap',
   },
-  viewButtonText: {
-    color: '#007AFF',
-    fontWeight: '500',
+  primaryAction: {
+    flex: 1,
+    minWidth: 90,
+    backgroundColor: '#007AFF',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  primaryActionText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  secondaryAction: {
+    flex: 1,
+    minWidth: 90,
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  secondaryActionText: {
+    color: '#92400E',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  successAction: {
+    flex: 1,
+    minWidth: 90,
+    backgroundColor: '#DCFCE7',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  successActionText: {
+    color: '#166534',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  deleteAction: {
+    flex: 1,
+    minWidth: 90,
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  deleteActionText: {
+    color: '#DC2626',
+    fontWeight: '800',
+    fontSize: 13,
   },
 });
