@@ -289,12 +289,7 @@ export default function ProformasScreen() {
                                         <Text style={styles.secondaryActionText}>Modifier</Text>
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity
-                                        style={styles.deleteAction}
-                                        onPress={() => handleDelete(p.id)}
-                                    >
-                                        <Text style={styles.deleteActionText}>Supprimer</Text>
-                                    </TouchableOpacity>
+                                    
                                 </>
                             )}
                         </View>
