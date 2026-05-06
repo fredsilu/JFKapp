@@ -104,38 +104,84 @@ export default function TraiteurLayout() {
         }}
       />
 
-      {/* Routes cachées - anciens écrans / routes techniques */}
+      {/* Routes cachées */}
       <Tabs.Screen name="tools" options={{ href: null }} />
 
       <Tabs.Screen name="simulations" options={{ href: null }} />
-      <Tabs.Screen name="simulations/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="simulations/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="simulations/new" options={{ href: null }} />
       <Tabs.Screen name="simulations/[id]" options={{ href: null }} />
 
       <Tabs.Screen name="proformas" options={{ href: null }} />
-      <Tabs.Screen name="proformas/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="proformas/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="proformas/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="proformas/create-from-simulation"
+        options={{ href: null }}
+      />
 
       <Tabs.Screen name="orders" options={{ href: null }} />
-      <Tabs.Screen name="orders/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="orders/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="orders/new" options={{ href: null }} />
       <Tabs.Screen name="orders/[id]" options={{ href: null }} />
       <Tabs.Screen name="orders/from-simulation" options={{ href: null }} />
 
       <Tabs.Screen name="invoices" options={{ href: null }} />
-      <Tabs.Screen name="invoices/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="invoices/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="invoices/[id]" options={{ href: null }} />
 
       <Tabs.Screen name="clients" options={{ href: null }} />
-      <Tabs.Screen name="clients/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="clients/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="clients/[id]" options={{ href: null }} />
 
       <Tabs.Screen name="dishes" options={{ href: null }} />
-      <Tabs.Screen name="dishes/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="dishes/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="dishes/[id]" options={{ href: null }} />
 
       <Tabs.Screen name="ingredients" options={{ href: null }} />
-      <Tabs.Screen name="ingredients/index" options={{ href: null }} />
+      <Tabs.Screen
+        name="ingredients/index"
+        options={{
+          href: null,
+          headerLeft: () => null,
+        }}
+      />
       <Tabs.Screen name="ingredients/[id]" options={{ href: null }} />
 
       <Tabs.Screen name="analytics" options={{ href: null }} />

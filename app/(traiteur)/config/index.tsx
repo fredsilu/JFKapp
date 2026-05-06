@@ -17,6 +17,12 @@ export default function ConfigHome() {
       icon: "🍽️",
       route: "/dishes",
     },
+    {
+      title: "Ingrédients",
+      subtitle: "Gérer les ingrédients",
+      icon: "🥦",
+      route: "/ingredients",
+    },
   ];
 
   return (

@@ -9,6 +9,7 @@ import DishDetails from '@/components/DishDetails';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Dish } from '@/types';
+import { useRouter } from 'expo-router';
 
 const DEFAULT_DISH_IMAGE = 'https://images.unsplash.com/photo-1546241072-48010ad2862c?w=400&h=300&q=80&fit=crop';
 
@@ -16,7 +17,9 @@ export default function DishesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
-  
+
+  const router = useRouter();
+
   const { data: dishes = [], loading: dishesLoading, error: dishesError } = useDishes({
     orderBy: ['name', 'asc']
   });
@@ -24,13 +27,13 @@ export default function DishesScreen() {
     orderBy: ['name', 'asc']
   });
 
-  const filteredDishes = dishes.filter(dish => 
+  const filteredDishes = dishes.filter(dish =>
     (dish.name && dish.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (dish.description && dish.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Get the current dish object from the updated list
-  const selectedDish = selectedDishId 
+  const selectedDish = selectedDishId
     ? dishes.find(d => d.id === selectedDishId) || null
     : null;
 
@@ -67,6 +70,13 @@ export default function DishesScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/config')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backIcon}>←</Text>
+        <Text style={styles.backText}>Plats</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -78,14 +88,14 @@ export default function DishesScreen() {
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
           onPress={() => setIsFormModalVisible(true)}>
           <MaterialIcons name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}>
         {filteredDishes.length === 0 ? (
@@ -96,12 +106,12 @@ export default function DishesScreen() {
         ) : (
           <View style={styles.grid}>
             {filteredDishes.map((dish) => (
-              <TouchableOpacity 
-                key={dish.id} 
+              <TouchableOpacity
+                key={dish.id}
                 style={styles.dishCard}
                 onPress={() => setSelectedDishId(dish.id)}>
-                <Image 
-                  source={{ uri: dish.image || DEFAULT_DISH_IMAGE }} 
+                <Image
+                  source={{ uri: dish.image || DEFAULT_DISH_IMAGE }}
                   style={styles.dishImage}
                   defaultSource={{ uri: DEFAULT_DISH_IMAGE }}
                 />
@@ -240,4 +250,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
   },
+  backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+
+backIcon: {
+  fontSize: 24,
+  marginRight: 10,
+  color: '#111827',
+},
+
+backText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#111827',
+},
 });

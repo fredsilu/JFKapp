@@ -95,6 +95,13 @@ export default function InvoicesScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/sales')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backIcon}>←</Text>
+        <Text style={styles.backText}>Factures</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Factures</Text>
 
       <View style={styles.summaryCard}>
@@ -289,16 +296,34 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
   },
-  backButton: {
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 13,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  backButtonText: {
+
+ 
+   backButtonText: {
     color: '#111827',
     fontWeight: '800',
     fontSize: 14,
+    marginLeft: 8,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 13,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+ 
+
+  backIcon: {
+    fontSize: 24,
+    marginRight: 10,
+    color: '#111827',
+  },
+
+  backText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
   },
 });

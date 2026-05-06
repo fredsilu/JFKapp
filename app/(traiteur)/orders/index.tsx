@@ -161,6 +161,13 @@ export default function OrdersScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/sales')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backIcon}>←</Text>
+        <Text style={styles.backText}>Commandes</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Commandes</Text>
 
       <View style={styles.summaryCard}>
@@ -446,4 +453,21 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
   },
+  backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+
+backIcon: {
+  fontSize: 24,
+  marginRight: 10,
+  color: '#111827',
+},
+
+backText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#111827',
+},
 });

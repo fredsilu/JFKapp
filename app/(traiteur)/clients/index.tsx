@@ -18,6 +18,7 @@ import ClientDetails from '@/components/ClientDetails';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Client } from '@/types';
+import { useRouter } from 'expo-router';
 import { normalizeText } from '@/src/utils/search';
 
 
@@ -25,6 +26,8 @@ export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const {
     data: clients = [],
@@ -78,6 +81,14 @@ export default function ClientsScreen() {
 
   return (
     <View style={styles.container}>
+
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/config')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backIcon}>←</Text>
+        <Text style={styles.backText}>Clients</Text>
+      </TouchableOpacity>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchContainer}>
@@ -317,4 +328,21 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontWeight: '500',
   },
+  backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+
+backIcon: {
+  fontSize: 24,
+  marginRight: 10,
+  color: '#111827',
+},
+
+backText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#111827',
+},
 });
