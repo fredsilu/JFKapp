@@ -147,6 +147,23 @@ export function buildInvoiceHTML(
   font-family: 'Montserrat', Arial, sans-serif;
 }
 
+* {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
