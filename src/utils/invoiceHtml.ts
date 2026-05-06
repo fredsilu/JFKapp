@@ -1,219 +1,504 @@
-import {
-  CateringInvoice
-} from '@/src/services/cateringInvoice.service';
-
 import { InvoicePdfData } from '@/types/invoicePdf.types';
 
-function money(value: number) {
-  return `${Number(value || 0).toLocaleString('fr-FR')} $`;
+type InvoicePdfAssets = {
+  logoBase64?: string;
+  stampBase64?: string;
+  signatureBase64?: string;
+};
+
+function money(value?: number) {
+  return Number(value || 0).toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-export function buildInvoiceHTML(invoice: InvoicePdfData) {
+function safe(value?: string | null) {
+  return value && value.trim() ? value.trim() : '';
+}
+
+function toDate(value: any): Date | null {
+  if (!value) return null;
+
+  if (value?.toDate) return value.toDate();
+
+  if (value instanceof Date) return value;
+
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
+  const date = toDate(value);
+  if (!date) return '—';
+
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  return date.toLocaleDateString(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
+  const date = toDate(value);
+  if (!date) return '—';
+
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  return date.toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function safeClientName(invoice: InvoicePdfData) {
+  const name = safe(invoice.clientName);
+
+  if (!name || name.toLowerCase() === 'client') {
+    return 'NOM DU CLIENT À RENSEIGNER';
+  }
+
+  return name;
+}
+
+export function buildInvoiceHTML(
+  invoice: InvoicePdfData,
+  assets?: InvoicePdfAssets
+): string {
   const items = invoice.items || [];
 
+  const rows = items
+    .map(
+      (item: any) => `
+<tr>
+  <td class="designation">${safe(item.label)}</td>
+  <td class="center">${item.days || 1}</td>
+  <td class="center">${item.quantity || 0}</td>
+  <td class="currency">$</td>
+  <td class="price">${money(item.unitPrice)}</td>
+  <td class="currency">$</td>
+  <td class="price">${money(item.totalPrice ?? item.total)}</td>
+</tr>`
+    )
+    .join('');
+
+  const subtotal = invoice.subtotal ?? invoice.total ?? 0;
+  const total = invoice.total ?? subtotal;
+
+  const clientName = safeClientName(invoice);
+  const clientRccm = safe(invoice.clientRccm);
+  const clientIdnat = safe(invoice.clientIdnat);
+  const clientAddress = safe(invoice.clientAddress);
+  const clientCity = safe(invoice.clientCity);
+
+  const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
+  const eventDateFormatted = formatShortDate(
+    (invoice as any).eventDate || (invoice as any).dateLivraison,
+    'fr'
+  );
+
+  const headerHTML = `
+<div class="header">
+  <div class="logo">
+    ${
+      assets?.logoBase64
+        ? `<img src="${assets.logoBase64}" />`
+        : `<div class="logo-text">CREPOLIA</div>`
+    }
+  </div>
+
+  <div class="address">
+    Tél. : +243 898111165<br/>
+    contact@crepolia.com<br/>
+    54, Avenue de la Justice<br/>
+    C/Gombe
+  </div>
+</div>
+
+<div class="top-line"></div>
+`;
+
+  const footerHTML = `
+<div class="page-footer">
+  RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;
+  ID Nat : 01-852-N58548R&nbsp;&nbsp;
+  NIF:A2171348B
+</div>
+`;
+
   return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 36px;
-        color: #111;
-        font-size: 11px;
-      }
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        border-bottom: 1px solid #222;
-        padding-bottom: 12px;
-        margin-bottom: 28px;
-      }
+<style>
+@page {
+  size: A4;
+  margin: 5px 40px 5px 40px;
+}
 
-      .logo {
-        font-size: 22px;
-        font-weight: 900;
-        color: #0B3A66;
-      }
+* {
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
 
-      .company {
-        text-align: right;
-        font-size: 10px;
-        line-height: 1.4;
-      }
+body {
+  margin: 0;
+  padding: 0;
+  color: #5f6368;
+  font-size: 10px;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
 
-      .title {
-        font-size: 16px;
-        font-weight: 900;
-        margin-bottom: 4px;
-      }
+.pdf-page {
+  position: relative;
+  min-height: 1080px;
+  padding: 10px 10px 30px 10px;
+}
 
-      .invoice-number {
-        font-size: 12px;
-        margin-bottom: 22px;
-      }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-left: 0px;
+}
 
-      .meta {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 24px;
-      }
+.logo img {
+  width: 155px;
+  max-height: 90px;
+  object-fit: contain;
+  margin-left: -20px;
+}
 
-      .client-name {
-        font-size: 12px;
-        font-weight: 900;
-        margin-bottom: 6px;
-      }
+.logo-text {
+  font-size: 24px;
+  font-weight: 900;
+  color: #2f3b4f;
+  letter-spacing: 1px;
+  margin-top: 18px;
+}
 
-      .small {
-        font-size: 10px;
-        line-height: 1.5;
-      }
+.address {
+  margin-top: 5px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 300 !important;
+  color: #374151;
+}
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 18px;
-      }
+.top-line {
+  border-bottom: 1px solid #2f3b4f;
+  margin-top: 0px;
+}
 
-      th {
-        background: #E9EEF5;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 8px;
-        border: 1px solid #999;
-        text-align: left;
-      }
+.title {
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #3f4650;
+  letter-spacing: 0.5px;
+}
 
-      td {
-        font-size: 11px;
-        padding: 8px;
-        border: 1px solid #999;
-      }
+.number {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
 
-      .right {
-        text-align: right;
-      }
+.client-block {
+  text-align: right;
+  margin-top: 10px;
+  font-size: 10px;
+  line-height: 1.42;
+  color: #666;
+}
 
-      .totals {
-        margin-top: 18px;
-        width: 45%;
-        margin-left: auto;
-      }
+.client-name {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  color: #3f4650;
+}
 
-      .totals-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 7px 0;
-        font-size: 12px;
-      }
+.issue-date {
+  margin-top: 22px;
+  font-size: 11px;
+}
 
-      .grand-total {
-        font-weight: 900;
-        border-top: 1px solid #111;
-        font-size: 13px;
-      }
+.intro {
+  margin-top: 25px;
+  margin-bottom: 4px;
+  font-size: 10px;
+  color: #7a7a7a;
+}
 
-      .note {
-        margin-top: 28px;
-        font-size: 10px;
-        line-height: 1.5;
-      }
+.main-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
 
-      .stamp {
-        margin-top: 45px;
-        text-align: right;
-        font-size: 11px;
-        font-weight: 700;
-      }
-    </style>
-  </head>
+.main-table th {
+  background: #6f9eb8;
+  color: #f7f7f7;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 3px;
+  border: 2px solid white;
+  text-align: center;
+}
 
-  <body>
-    <div class="header">
-      <div class="logo">CREPOLIA</div>
+.main-table td {
+  background: #dce8ee;
+  border: 2px solid white;
+  padding: 3px 5px;
+  font-size: 11px;
+  color: #5f6368;
+}
 
-      <div class="company">
-        CREPOLIA<br/>
-        Kinshasa, RDC<br/>
-        Service traiteur & restauration<br/>
-        Tél : +243 ...
-      </div>
+.main-table .event td {
+  background: #c8dbe5;
+  height: 82px;
+  vertical-align: top;
+  line-height: 1.65;
+}
+
+.main-table .event td:first-child {
+  font-weight: 700;
+}
+
+.col-designation { width: 40%; }
+.col-days { width: 10%; }
+.col-qty { width: 12%; }
+.col-pu-currency { width: 5%; }
+.col-pu { width: 17%; }
+.col-pt-currency { width: 5%; }
+.col-pt { width: 16%; }
+
+.designation {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.currency {
+  text-align: center;
+}
+
+.price {
+  text-align: right;
+}
+
+.totals {
+  width: 49%;
+  margin-left: auto;
+  margin-top: 5px;
+}
+
+.subtotal {
+  display: grid;
+  grid-template-columns: 1fr 35px 115px;
+  background: #dce8ee;
+  border-top: 2px solid #111827;
+  border-right: 1px solid #6f9eb8;
+  border-bottom: 1px solid #6f9eb8;
+  border-left: 1px solid #6f9eb8;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #555;
+}
+
+.grand-total {
+  display: grid;
+  grid-template-columns: 1fr 35px 115px;
+  background: #2f3b4f;
+  color: white;
+  padding: 8px 10px;
+  margin-top: 26px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payment {
+  margin-top: 39px;
+  border-top: 2px solid #9ca3af;
+  padding-top: 8px;
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #777;
+}
+
+.payment strong {
+  font-weight: 700;
+  color: #4b5563;
+}
+
+.signature-area {
+  position: relative;
+  height: 155px;
+}
+
+.stamp {
+  position: absolute;
+  left: 18px;
+  top: 4px;
+}
+
+.stamp img {
+  width: 245px;
+  object-fit: contain;
+}
+
+.signature {
+  position: absolute;
+  left: 355px;
+  top: -12px;
+}
+
+.signature img {
+  width: 250px;
+  object-fit: contain;
+}
+
+.stamp-text {
+  position: absolute;
+  right: 20px;
+  top: 45px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.page-footer {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 5px;
+  padding-top: 8px;
+  border-top: 1px solid #2f3b4f;
+  text-align: center;
+  font-size: 10px;
+  color: #374151;
+  background: white;
+}
+
+.client-block div {
+  margin-bottom: 2px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="pdf-page">
+  ${headerHTML}
+
+  <div class="title">FACTURE</div>
+  <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
+
+  <div class="client-block">
+    <div class="client-name">${clientName}</div>
+
+    <div>RCCM : ${clientRccm || '—'}</div>
+    <div>IDNAT : ${clientIdnat || '—'}</div>
+    <div>${clientAddress || '—'}</div>
+    <div><u>${clientCity ? clientCity + ' / RDC' : '—'}</u></div>
+
+    <div class="issue-date">
+      ${invoiceDateFormatted}
+    </div>
+  </div>
+
+  <div class="intro">
+    Vous trouverez ci-dessous la facture relative aux prestations convenues :
+  </div>
+
+  <table class="main-table">
+    <colgroup>
+      <col class="col-designation" />
+      <col class="col-days" />
+      <col class="col-qty" />
+      <col class="col-pu-currency" />
+      <col class="col-pu" />
+      <col class="col-pt-currency" />
+      <col class="col-pt" />
+    </colgroup>
+
+    <thead>
+      <tr>
+        <th>Désignation</th>
+        <th>Jrs</th>
+        <th>Quantité</th>
+        <th colspan="2">P.U.</th>
+        <th colspan="2">P.T.</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr class="event">
+        <td>
+          Evénement :<br/>
+          Date événement : ${eventDateFormatted}<br/>
+          Nbr de personnes : ${items?.[0]?.quantity || ''}
+        </td>
+        <td></td>
+        <td></td>
+        <td colspan="2"></td>
+        <td colspan="2"></td>
+      </tr>
+
+      ${rows}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="subtotal">
+      <div>Sous-total :</div>
+      <div>$</div>
+      <div style="text-align:right;">${money(subtotal)}</div>
     </div>
 
-    <div class="title">FACTURE</div>
-    <div class="invoice-number">N° ${invoice.invoiceNumber || ''}</div>
-
-    <div class="meta">
-      <div>
-        <div class="client-name">${invoice.clientName || 'CLIENT NON RENSEIGNÉ'}</div>
-        <div class="small">
-          RCCM : ${invoice.clientRccm || '-'}<br/>
-          IDNAT : ${invoice.clientIdnat || '-'}<br/>
-          Adresse : ${invoice.clientAddress || '-'}<br/>
-          Ville : ${invoice.clientCity || 'Kinshasa'}
-        </div>
-      </div>
-
-      <div class="small">
-        Date : ${invoice.date || ''}<br/>
-        Devise : USD
-      </div>
+    <div class="grand-total">
+      <div>Total à payer :</div>
+      <div>$</div>
+      <div style="text-align:right;">${money(total)}</div>
     </div>
+  </div>
 
-    <p class="small">
-      Vous trouverez ci-dessous la facture relative aux prestations convenues.
-    </p>
+  <div class="payment">
+    La totalité de la facture est payable conformément aux conditions convenues.
+  </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th class="right">Jours</th>
-          <th class="right">Qté</th>
-          <th class="right">Prix unitaire</th>
-          <th class="right">Total</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        ${items.map((item: any) => `
-          <tr>
-            <td>${item.label || ''}</td>
-            <td class="right">${item.days || 1}</td>
-            <td class="right">${item.quantity || 1}</td>
-            <td class="right">${money(item.unitPrice || 0)}</td>
-            <td class="right">${money(item.totalPrice || 0)}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-
-    <div class="totals">
-      <div class="totals-row">
-        <span>Sous-total</span>
-        <span>${money(invoice.subtotal || invoice.total || 0)}</span>
-      </div>
-
-      <div class="totals-row grand-total">
-        <span>Total à payer</span>
-        <span>${money(invoice.total || 0)}</span>
-      </div>
-    </div>
-
-    <div class="note">
-      Commentaires ou indications : aucun.<br/>
-      La totalité de la facture est payable conformément aux conditions convenues.
-    </div>
-
+  <div class="signature-area">
     <div class="stamp">
-      Pour CREPOLIA<br/><br/><br/>
-      Signature & cachet
+      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
     </div>
-  </body>
-  </html>
-  `;
+
+    <div class="signature">
+      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+    </div>
+
+    ${
+      !assets?.stampBase64 && !assets?.signatureBase64
+        ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
+        : ''
+    }
+  </div>
+
+  ${footerHTML}
+</div>
+
+</body>
+</html>
+`;
 }
