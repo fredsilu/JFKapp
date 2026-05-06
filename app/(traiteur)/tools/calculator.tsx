@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { fetchClients } from '@/src/services/clientService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Platform } from 'react-native';
 
 import {
   Alert,
@@ -31,7 +32,7 @@ import {
   createCateringSimulation,
   getSimulationById,
 } from '@/src/services/cateringSimulation.service';
-import  { useCallback } from 'react';
+import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 
@@ -129,18 +130,18 @@ export default function CateringCalculator() {
   }, []);
 
   useFocusEffect(
-  useCallback(() => {
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        router.push('/simulations');
-        return true;
-      }
-    );
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          router.push('/simulations');
+          return true;
+        }
+      );
 
-    return () => subscription.remove();
-  }, [])
-);
+      return () => subscription.remove();
+    }, [])
+  );
 
   /* =========================
      LOAD SIMULATION (VIEW / REUSE)
@@ -274,12 +275,10 @@ export default function CateringCalculator() {
 
       await createCateringSimulation(payload as any);
 
-      Alert.alert('Succès', 'Simulation enregistrée avec succès.', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      Alert.alert('Succès', 'Simulation enregistrée avec succès.');
+
+      router.replace('/simulations');
+      
     } catch (e) {
       console.error('❌ save error:', e);
       Alert.alert('Erreur', 'Échec de la sauvegarde.');
@@ -368,31 +367,64 @@ export default function CateringCalculator() {
           </View>
         ) : (
           <>
-            <TouchableOpacity
-              style={styles.input}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={{ color: dateLivraison ? '#000' : '#9CA3AF' }}>
-                {dateLivraison || 'Sélectionner une date'}
-              </Text>
-            </TouchableOpacity>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                value={dateLivraison || ''}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
 
-            {showDatePicker && (
-              <DateTimePicker
-                value={dateObject || new Date()}
-                mode="date"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowDatePicker(false);
-
-                  if (selectedDate) {
-                    setDateObject(selectedDate);
-
-                    const iso = selectedDate.toISOString().split('T')[0];
-                    setDateLivraison(iso);
+                  if (!value) {
+                    setDateObject(null);
+                    setDateLivraison('');
+                    return;
                   }
+
+                  const [year, month, day] = value.split('-').map(Number);
+                  const date = new Date(year, month - 1, day);
+
+                  setDateObject(date);
+                  setDateLivraison(value);
+                }}
+                style={{
+                  height: 45,
+                  borderRadius: 8,
+                  border: '1px solid #E5E7EB',
+                  padding: 10,
+                  fontSize: 16,
+                  backgroundColor: '#F9FAFB',
+                  marginTop: 4,
                 }}
               />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={{ color: dateLivraison ? '#000' : '#9CA3AF' }}>
+                    {dateLivraison || 'Sélectionner une date'}
+                  </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dateObject || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+
+                      if (selectedDate) {
+                        setDateObject(selectedDate);
+
+                        const iso = selectedDate.toISOString().split('T')[0];
+                        setDateLivraison(iso);
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
           </>
         )}
