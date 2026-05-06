@@ -87,7 +87,7 @@ export default function ClientsScreen() {
         style={styles.backButton}
       >
         <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.backText}>Clients</Text>
+        <Text style={styles.backText}>Configuration</Text>
       </TouchableOpacity>
       {/* Header */}
       <View style={styles.header}>

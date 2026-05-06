@@ -7,6 +7,7 @@ export default function SimulationsLayout() {
       <Stack.Screen
         name="index"
         options={{
+          
           title: 'Simulations',
         }}
       />

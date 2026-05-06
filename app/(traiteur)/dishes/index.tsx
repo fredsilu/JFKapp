@@ -75,7 +75,7 @@ export default function DishesScreen() {
         style={styles.backButton}
       >
         <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.backText}>Plats</Text>
+        <Text style={styles.backText}>Configuration</Text>
       </TouchableOpacity>
       <View style={styles.header}>
         <View style={styles.searchContainer}>

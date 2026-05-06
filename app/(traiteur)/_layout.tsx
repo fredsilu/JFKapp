@@ -34,9 +34,11 @@ export default function TraiteurLayout() {
   }
 
   return (
+
     <Tabs
       screenOptions={{
         headerShown: true,
+        headerTitle: () => null,
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: '#FFFFFF',
@@ -124,6 +126,7 @@ export default function TraiteurLayout() {
         options={{
           href: null,
           headerLeft: () => null,
+         
         }}
       />
       <Tabs.Screen name="proformas/[id]" options={{ href: null }} />

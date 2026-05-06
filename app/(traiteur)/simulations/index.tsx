@@ -117,7 +117,7 @@ export default function CateringSimulationsScreen() {
           style={styles.backButton}
         >
           <Text style={styles.backIcon}>←</Text>
-          <Text style={styles.backText}>Simulations</Text>
+          <Text style={styles.backText}>Ventes</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Simulations traiteur</Text>

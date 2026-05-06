@@ -166,7 +166,7 @@ export default function OrdersScreen() {
         style={styles.backButton}
       >
         <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.backText}>Commandes</Text>
+        <Text style={styles.backText}>Ventes</Text>
       </TouchableOpacity>
       <Text style={styles.title}>Commandes</Text>
 

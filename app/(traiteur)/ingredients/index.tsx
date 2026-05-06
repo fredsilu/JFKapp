@@ -11,11 +11,13 @@ import IngredientForm from '@/components/IngredientForm';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Ingredient } from '@/types';
+import { useRouter } from 'expo-router';
 
 export default function Ingredients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
+  const router = useRouter();
 
   const { data: ingredients, loading, error } = useIngredients({
     orderBy: ['category', 'asc']
@@ -27,7 +29,7 @@ export default function Ingredients() {
   );
 
   // Get the current ingredient object from the updated list
-  const selectedIngredient = selectedIngredientId 
+  const selectedIngredient = selectedIngredientId
     ? ingredients.find(i => i.id === selectedIngredientId) || null
     : null;
 
@@ -41,6 +43,13 @@ export default function Ingredients() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/config')}
+        style={styles.backButton}
+      >
+        <Text style={styles.backIcon}>←</Text>
+        <Text style={styles.backText}>Configuration</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -108,8 +117,8 @@ export default function Ingredients() {
       </ScrollView>
 
       <Modal visible={isModalVisible}>
-        <IngredientForm 
-          onClose={() => setIsModalVisible(false)} 
+        <IngredientForm
+          onClose={() => setIsModalVisible(false)}
           onSubmit={async (values) => {
             try {
               await addIngredient(values);
@@ -117,7 +126,7 @@ export default function Ingredients() {
             } catch (error) {
               console.error('Error adding ingredient:', error);
             }
-          }} 
+          }}
         />
       </Modal>
       <Modal visible={!!selectedIngredient}>
@@ -257,4 +266,20 @@ const styles = StyleSheet.create({
   stockWarning: {
     color: '#FF3B30',
   },
+    backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+backIcon: {
+  fontSize: 24,
+  marginRight: 10,
+  color: '#111827',
+},
+
+backText: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#111827',
+},
 });

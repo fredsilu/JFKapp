@@ -158,7 +158,7 @@ export default function ProformasScreen() {
                 style={styles.backButton}
             >
                 <Text style={styles.backIcon}>←</Text>
-                <Text style={styles.backText}>Proformas</Text>
+                <Text style={styles.backText}>Ventes</Text>
             </TouchableOpacity>
 
             <Text style={styles.title}>Proformas</Text>
