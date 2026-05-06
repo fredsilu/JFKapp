@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 
+import { downloadHtmlAsPdfWeb } from '@/src/utils/downloadHtmlAsPdfWeb';
 import { createOrderFromProforma } from '@/src/services/cateringOrderService';
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
 import {
@@ -95,7 +97,6 @@ export default function ProformaDetailScreen() {
       );
 
       Alert.alert('Succès', 'Commande créée avec succès');
-
       router.replace('/(traiteur)/orders');
     } catch (e) {
       console.error('❌ create order error:', e);
@@ -148,6 +149,13 @@ export default function ProformaDetailScreen() {
         stampBase64,
         signatureBase64,
       });
+
+      const filename = `Proforma-${proforma.number || proforma.id || 'client'}.pdf`;
+
+      if (Platform.OS === 'web') {
+        downloadHtmlAsPdfWeb(html, filename);
+        return;
+      }
 
       const uri = await generateDocumentPDF(html);
       await shareDocumentPDF(uri);

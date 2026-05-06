@@ -93,7 +93,7 @@ export function buildProformaHTML(
   const clientRccm = safe(proforma.clientRccm);
   const clientIdnat = safe(proforma.clientIdnat);
   const clientAddress = safe(proforma.clientAddress);
-  const clientCity = safe(proforma.clientCity);
+  const clientCity = safe(proforma.clientCity) || 'Kinshasa';
   const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
   const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
   const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');
@@ -310,10 +310,17 @@ body {
 
 .currency {
   text-align: center;
+  border-right: none !important;
+  padding-right: 0 !important;
 }
 
 .price {
   text-align: right;
+  border-left: none !important;
+  padding-left: 0 !important;
+}
+  .main-table td.currency + td.price {
+  border-left: none !important;
 }
 
 .validity {
@@ -489,7 +496,7 @@ body {
     <div>RCCM : ${clientRccm || '—'}</div>
     <div>IDNAT : ${clientIdnat || '—'}</div>
     <div>${clientAddress || '—'}</div>
-    <div><u>${clientCity ? clientCity + ' / RDC' : '—'}</u></div>
+    <div><u>${clientCity} / RDC</u></div>
 
     <div class="issue-date">
       ${issueDateFormatted}

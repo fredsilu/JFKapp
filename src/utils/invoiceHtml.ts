@@ -93,7 +93,7 @@ export function buildInvoiceHTML(
   const clientRccm = safe(invoice.clientRccm);
   const clientIdnat = safe(invoice.clientIdnat);
   const clientAddress = safe(invoice.clientAddress);
-  const clientCity = safe(invoice.clientCity);
+  const clientCity = safe(invoice.clientCity) || 'Kinshasa / RDC';
 
   const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
   const eventDateFormatted = formatShortDate(
@@ -291,10 +291,18 @@ body {
 
 .currency {
   text-align: center;
+  border-right: none !important;
+  padding-right: 0 !important;
 }
 
 .price {
   text-align: right;
+  border-left: none !important;
+  padding-left: 0 !important;
+}
+
+.main-table td.currency + td.price {
+  border-left: none !important;
 }
 
 .totals {
@@ -412,7 +420,7 @@ body {
     <div>RCCM : ${clientRccm || '—'}</div>
     <div>IDNAT : ${clientIdnat || '—'}</div>
     <div>${clientAddress || '—'}</div>
-    <div><u>${clientCity ? clientCity + ' / RDC' : '—'}</u></div>
+    <div><u>${clientCity} / RDC</u></div>
 
     <div class="issue-date">
       ${invoiceDateFormatted}
