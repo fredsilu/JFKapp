@@ -10,6 +10,7 @@ import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Dish } from '@/types';
 import { useRouter } from 'expo-router';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 const DEFAULT_DISH_IMAGE = 'https://images.unsplash.com/photo-1546241072-48010ad2862c?w=400&h=300&q=80&fit=crop';
 
@@ -72,11 +73,14 @@ export default function DishesScreen() {
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => router.replace('/(traiteur)/config')}
-        style={styles.backButton}
+        style={styles.backPill}
+        activeOpacity={0.75}
       >
-        <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.backText}>Configuration</Text>
+        <Icon name="arrow-back" size={18} color="#0F4C81" />
+        <Text style={styles.backPillText}>Configuration</Text>
       </TouchableOpacity>
+
+
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -251,20 +255,39 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   backButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginBottom: 12,
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
 
-backIcon: {
-  fontSize: 24,
-  marginRight: 10,
-  color: '#111827',
-},
+  backIcon: {
+    fontSize: 24,
+    marginRight: 10,
+    color: '#111827',
+  },
 
-backText: {
-  fontSize: 16,
-  fontWeight: '700',
-  color: '#111827',
-},
+  backText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 12,
+  },
+
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

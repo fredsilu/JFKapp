@@ -1,18 +1,17 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
-import { Client } from '@/types'
-
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Client } from '@/types';
 
 export interface SimulationInput {
-  client: Client
-  simulationName: string
-  description?: string
-  totalCost: number
-  ingredients: any[]
+  client: Client;
+  simulationName: string;
+  description?: string;
+  totalCost: number;
+  ingredients: any[];
 }
 
 export async function saveSimulation(data: SimulationInput) {
-  await addDoc(collection(db, 'catering_simulations'), {
+  const docRef = await addDoc(collection(db, 'catering_simulations'), {
     clientId: data.client.id,
     clientName: data.client.name,
     simulationName: data.simulationName,
@@ -21,5 +20,7 @@ export async function saveSimulation(data: SimulationInput) {
     ingredients: data.ingredients,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  })
+  });
+
+  return docRef.id;
 }

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import {
   deleteCateringSimulation,
@@ -111,13 +112,13 @@ export default function CateringSimulationsScreen() {
       <ScrollView style={styles.container}>
 
         {/* BACK BUTTON */}
-
         <TouchableOpacity
           onPress={() => router.replace('/(traiteur)/sales')}
-          style={styles.backButton}
+          style={styles.backPill}
+          activeOpacity={0.75}
         >
-          <Text style={styles.backIcon}>←</Text>
-          <Text style={styles.backText}>Ventes</Text>
+          <Icon name="arrow-back" size={18} color="#0F4C81" />
+          <Text style={styles.backPillText}>Ventes</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Simulations traiteur</Text>
@@ -314,20 +315,39 @@ const styles = StyleSheet.create({
     color: '#d9534f',
   },
   backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  backIcon: {
+    fontSize: 24,
+    marginRight: 10,
+    color: '#111827',
+  },
+
+  backText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  backPill: {
+  alignSelf: 'flex-start',
   flexDirection: 'row',
   alignItems: 'center',
+  gap: 6,
+  backgroundColor: '#EEF6FF',
+  borderColor: '#BFDBFE',
+  borderWidth: 1,
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 999,
   marginBottom: 12,
 },
 
-backIcon: {
-  fontSize: 24,
-  marginRight: 10,
-  color: '#111827',
-},
-
-backText: {
-  fontSize: 16,
+backPillText: {
+  color: '#0F4C81',
+  fontSize: 14,
   fontWeight: '700',
-  color: '#111827',
 },
 });

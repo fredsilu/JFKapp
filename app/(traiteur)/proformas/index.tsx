@@ -16,6 +16,7 @@ import {
     getCateringProformas,
 } from '@/src/services/cateringProforma.service';
 import { formatCurrency } from '@/src/utils/costs';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 type ProformaView = 'active' | 'invoiced' | 'all';
 
@@ -155,11 +156,13 @@ export default function ProformasScreen() {
 
             <TouchableOpacity
                 onPress={() => router.replace('/(traiteur)/sales')}
-                style={styles.backButton}
+                style={styles.backPill}
+                activeOpacity={0.75}
             >
-                <Text style={styles.backIcon}>←</Text>
-                <Text style={styles.backText}>Ventes</Text>
+                <Icon name="arrow-back" size={18} color="#0F4C81" />
+                <Text style={styles.backPillText}>Ventes</Text>
             </TouchableOpacity>
+
 
             <Text style={styles.title}>Proformas</Text>
 
@@ -503,20 +506,39 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+
+    backIcon: {
+        fontSize: 24,
+        marginRight: 10,
+        color: '#111827',
+    },
+
+    backText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    backPill: {
+  alignSelf: 'flex-start',
   flexDirection: 'row',
   alignItems: 'center',
+  gap: 6,
+  backgroundColor: '#EEF6FF',
+  borderColor: '#BFDBFE',
+  borderWidth: 1,
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 999,
   marginBottom: 12,
 },
 
-backIcon: {
-  fontSize: 24,
-  marginRight: 10,
-  color: '#111827',
-},
-
-backText: {
-  fontSize: 16,
+backPillText: {
+  color: '#0F4C81',
+  fontSize: 14,
   fontWeight: '700',
-  color: '#111827',
 },
 });
