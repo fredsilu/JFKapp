@@ -121,6 +121,10 @@ export default function ProformaDetailScreen() {
 
   async function handleGeneratePDF() {
     if (!proforma) return;
+    const printWindow =
+      Platform.OS === 'web'
+        ? window.open('', '_blank')
+        : null;
 
     try {
       setPdfLoading(true);
@@ -136,13 +140,13 @@ export default function ProformaDetailScreen() {
         stampBase64 = await getImageBase64(
           require('@/assets/images/crepolia-stamp.png')
         );
-      } catch {}
+      } catch { }
 
       try {
         signatureBase64 = await getImageBase64(
           require('@/assets/images/crepolia-signature.png')
         );
-      } catch {}
+      } catch { }
 
       const html = buildProformaHTML(proforma, {
         logoBase64,
@@ -153,7 +157,11 @@ export default function ProformaDetailScreen() {
       const filename = `Proforma-${proforma.number || proforma.id || 'client'}.pdf`;
 
       if (Platform.OS === 'web') {
-        downloadHtmlAsPdfWeb(html, filename);
+        downloadHtmlAsPdfWeb(
+          html,
+          filename,
+          printWindow
+        );
         return;
       }
 

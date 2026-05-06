@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
@@ -16,6 +17,8 @@ import {
 } from '@/src/services/cateringInvoice.service';
 import { formatCurrency } from '@/src/utils/costs';
 import { generateInvoicePDF } from '@/src/services/invoicePdf.service';
+import { downloadHtmlAsPdfWeb } from '@/src/utils/downloadHtmlAsPdfWeb';
+import { buildInvoiceHTML } from '@/src/utils/invoiceHtml';
 
 export default function InvoiceDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -23,6 +26,7 @@ export default function InvoiceDetailScreen() {
 
   const [invoice, setInvoice] = useState<CateringInvoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
@@ -58,9 +62,64 @@ export default function InvoiceDetailScreen() {
 
   function formatDate(date?: string) {
     if (!date) return '—';
+
     const d = new Date(date);
-    if (Number.isNaN(d.getTime())) return date;
+
+    if (Number.isNaN(d.getTime())) {
+      return date;
+    }
+
     return d.toLocaleDateString('fr-FR');
+  }
+
+  async function handleGeneratePDF() {
+    if (!invoice) return;
+    const printWindow =
+      Platform.OS === 'web'
+        ? window.open('', '_blank')
+        : null;
+
+    try {
+      setPdfLoading(true);
+
+      const invoicePdfData = {
+        ...invoice,
+
+        invoiceNumber: invoice.number,
+        date: invoice.issueDate,
+        subtotal: invoice.totals?.subtotal,
+        total: invoice.totals?.total,
+
+        items:
+          invoice.items?.map((item) => ({
+            label: item.label,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.total,
+            total: item.total,
+            days: 1,
+          })) || [],
+      };
+
+      const filename = `Facture-${invoice.number || invoice.id || 'client'}.pdf`;
+
+      if (Platform.OS === 'web') {
+        const html = buildInvoiceHTML(invoicePdfData);
+        downloadHtmlAsPdfWeb(
+          html,
+          filename,
+          printWindow
+        );
+        return;
+      }
+
+      await generateInvoicePDF(invoicePdfData);
+    } catch (error) {
+      console.error('❌ PDF error:', error);
+      Alert.alert('Erreur', 'Impossible de générer le PDF');
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   if (loading) {
@@ -101,7 +160,7 @@ export default function InvoiceDetailScreen() {
         <Text style={styles.line}>RCCM : {invoice.clientRccm || '—'}</Text>
         <Text style={styles.line}>IDNAT : {invoice.clientIdnat || '—'}</Text>
         <Text style={styles.line}>Adresse : {invoice.clientAddress || '—'}</Text>
-        <Text style={styles.line}>Ville : {invoice.clientCity || '—'}</Text>
+        <Text style={styles.line}>Ville : {invoice.clientCity || 'Kinshasa / RDC'}</Text>
         <Text style={styles.line}>Date facture : {formatDate(invoice.issueDate)}</Text>
       </View>
 
@@ -145,36 +204,15 @@ export default function InvoiceDetailScreen() {
       </View>
 
       <TouchableOpacity
-        style={styles.pdfButton}
-        onPress={async () => {
-          try {
-            if (!invoice) return;
-
-            await generateInvoicePDF({
-              ...invoice,
-
-              // 🔥 mapping IMPORTANT (très important pour éviter bugs)
-              invoiceNumber: invoice.number,
-              date: invoice.issueDate,
-              subtotal: invoice.totals?.subtotal,
-              total: invoice.totals?.total,
-
-              items: invoice.items?.map(item => ({
-                label: item.label,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                totalPrice: item.total,
-                days: 1,
-              })) || [],
-            });
-
-          } catch (error) {
-            console.error('❌ PDF error:', error);
-            Alert.alert('Erreur', 'Impossible de générer le PDF');
-          }
-        }}
+        style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
+        onPress={handleGeneratePDF}
+        disabled={pdfLoading}
       >
-        <Text style={styles.pdfButtonText}>Générer PDF facture</Text>
+        {pdfLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.pdfButtonText}>Générer PDF facture</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -215,6 +253,7 @@ const styles = StyleSheet.create({
   grandTotalValue: { fontSize: 16, fontWeight: '900', color: '#111827' },
   pdfButton: { backgroundColor: '#286aa7', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
   pdfButtonText: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  disabledButton: { opacity: 0.7 },
   backButton: { backgroundColor: '#E5E7EB', paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
   backButtonText: { color: '#111827', fontWeight: '800', fontSize: 14 },
 });

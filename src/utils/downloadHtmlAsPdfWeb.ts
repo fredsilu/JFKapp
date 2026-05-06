@@ -1,19 +1,44 @@
-export function downloadHtmlAsPdfWeb(html: string, filename: string) {
+export function downloadHtmlAsPdfWeb(
+  html: string,
+  filename: string,
+  printWindow?: Window | null
+) {
   if (typeof window === 'undefined') return;
 
-  const printWindow = window.open('', '_blank');
+  const targetWindow = printWindow || window.open('', '_blank');
 
-  if (!printWindow) {
+  if (!targetWindow) {
     alert('Veuillez autoriser les popups pour générer le PDF.');
     return;
   }
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
+  targetWindow.document.open();
+  targetWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>${filename}</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
+        </style>
+      </head>
+      <body>
+        ${html}
+        <script>
+          window.onload = function () {
+            setTimeout(function () {
+              window.focus();
+              window.print();
+            }, 800);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  targetWindow.document.close();
 }
