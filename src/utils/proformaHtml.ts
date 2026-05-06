@@ -27,6 +27,46 @@ function safeClientName(proforma: CateringProforma) {
   return name;
 }
 
+function toDate(value: any): Date | null {
+  if (!value) return null;
+
+  if (value?.toDate) return value.toDate();
+
+  if (value instanceof Date) return value;
+
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// Date complète → mercredi 06/05/2026
+function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
+  const date = toDate(value);
+  if (!date) return '—';
+
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  return date.toLocaleDateString(locale, {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+// Date courte → 06/05/2026
+function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
+  const date = toDate(value);
+  if (!date) return '—';
+
+  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+
+  return date.toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 export function buildProformaHTML(
   proforma: CateringProforma,
   assets?: ProformaPdfAssets
@@ -54,25 +94,27 @@ export function buildProformaHTML(
   const clientIdnat = safe(proforma.clientIdnat);
   const clientAddress = safe(proforma.clientAddress);
   const clientCity = safe(proforma.clientCity);
+  const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
+  const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
+  const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');
 
   const menuRows =
     proforma.menu && proforma.menu.length > 0
       ? proforma.menu
-          .map(
-            (item, index) => `
+        .map(
+          (item, index) => `
 <tr>
   <td class="center">${index + 1}</td>
   <td>
     ${safe(item.name)}
-    ${
-      item.notes
-        ? `<br/><span class="dish-note">${safe(item.notes)}</span>`
-        : ''
-    }
+    ${item.notes
+              ? `<br/><span class="dish-note">${safe(item.notes)}</span>`
+              : ''
+            }
   </td>
 </tr>`
-          )
-          .join('')
+        )
+        .join('')
       : `
 <tr>
   <td class="center">1</td>
@@ -450,7 +492,7 @@ body {
     <div><u>${clientCity ? clientCity + ' / RDC' : '—'}</u></div>
 
     <div class="issue-date">
-      ${safe(proforma.issueDate)}
+      ${issueDateFormatted}
     </div>
   </div>
 
@@ -481,7 +523,7 @@ body {
       <tr class="event">
         <td>
           Evénement :<br/>
-          Date événement : ${safe(proforma.eventDate)}<br/>
+          Date événement : ${eventDateFormatted}<br/>
           Nbr de personnes : ${proforma.items?.[0]?.quantity || ''}
         </td>
         <td></td>
@@ -494,7 +536,7 @@ body {
     </tbody>
   </table>
 
-  <div class="validity">Date de validité : ${safe(proforma.validityDate)}</div>
+  <div class="validity">Date de validité : ${validityDateFormatted}</div>
 
   <div class="totals">
     <div class="subtotal">
@@ -536,8 +578,8 @@ body {
 
   <div class="menu-client">
     <strong>Client :</strong> ${clientName}<br/>
-    <strong>Date événement :</strong> ${safe(proforma.eventDate)}<br/>
-    <strong>Date proforma :</strong> ${safe(proforma.issueDate)}
+    <strong>Date événement :</strong> ${eventDateFormatted}<br/>
+    <strong>Date proforma :</strong> ${issueDateFormatted}
   </div>
 
   <table class="menu-table">
