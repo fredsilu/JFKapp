@@ -56,13 +56,24 @@ export default function ClientDetails({
   }, [rawOrders]);
 
   const handleUpdateClient = async (updatedData: Partial<Client>) => {
-    if (!client?.id) return;
+    if (!client?.id) {
+      Alert.alert('Erreur', 'Client introuvable.');
+      return;
+    }
 
     try {
-      await updateClient(client.id, updatedData);
+      console.log('CLIENT ID TO UPDATE:', client.id);
+      console.log('UPDATED DATA:', updatedData);
+
+      await updateClient(client.id, {
+        ...updatedData,
+        updatedAt: new Date(),
+      } as Partial<Client>);
+
+      Alert.alert('Succès', 'Client modifié avec succès.');
       setShowEditForm(false);
     } catch (err) {
-      console.error(err);
+      console.error('Error updating client:', err);
       Alert.alert(
         'Erreur',
         'Impossible de modifier les informations du client.'

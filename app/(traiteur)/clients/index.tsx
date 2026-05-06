@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -48,17 +48,17 @@ export default function ClientsScreen() {
   const normalizedQuery = normalizeText(searchQuery);
 
   const filteredClients = clients.filter(client =>
-    (client.name &&
-      normalizeText(client.name).includes(normalizedQuery)) ||
-    (client.email &&
-      normalizeText(client.email).includes(normalizedQuery)) ||
-    (client.phone &&
-      normalizeText(client.phone.toString()).includes(normalizedQuery)) ||
-    (client.rccm &&
-      normalizeText(client.rccm).includes(normalizedQuery)) ||
-    (client.idnat &&
-      normalizeText(client.idnat).includes(normalizedQuery))
+    (client.name && normalizeText(client.name).includes(normalizedQuery)) ||
+    (client.email && normalizeText(client.email).includes(normalizedQuery)) ||
+    (client.phone && normalizeText(client.phone.toString()).includes(normalizedQuery)) ||
+    (client.rccm && normalizeText(client.rccm).includes(normalizedQuery)) ||
+    (client.idnat && normalizeText(client.idnat).includes(normalizedQuery))
   );
+
+  const selectedOrder = useMemo(() => {
+    if (!selectedOrderId) return null;
+    return orders.find(order => order.id === selectedOrderId) || null;
+  }, [orders, selectedOrderId]);
 
   const handleCreateClient = async (values: Partial<Client>) => {
     try {
@@ -99,7 +99,6 @@ export default function ClientsScreen() {
         <Text style={styles.backPillText}>Configuration</Text>
       </TouchableOpacity>
 
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
@@ -122,7 +121,6 @@ export default function ClientsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Clients list */}
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -164,18 +162,14 @@ export default function ClientsScreen() {
                     ) : null}
 
                     {client.idnat ? (
-                      <Text style={styles.legalText}>
-                        IDNAT : {client.idnat}
-                      </Text>
+                      <Text style={styles.legalText}>IDNAT : {client.idnat}</Text>
                     ) : null}
 
                     <View style={styles.contactInfo}>
                       {client.email ? (
                         <View style={styles.contactItem}>
                           <Icon name="email" size={14} color="#666" />
-                          <Text style={styles.contactText}>
-                            {client.email}
-                          </Text>
+                          <Text style={styles.contactText}>{client.email}</Text>
                         </View>
                       ) : null}
 
@@ -190,9 +184,7 @@ export default function ClientsScreen() {
                     <View style={styles.statsContainer}>
                       <View style={styles.stat}>
                         <Icon name="shopping-bag" size={16} color="#007AFF" />
-                        <Text style={styles.statNumber}>
-                          {clientOrdersCount}
-                        </Text>
+                        <Text style={styles.statNumber}>{clientOrdersCount}</Text>
                         <Text style={styles.statLabel}>
                           {clientOrdersCount === 1 ? 'commande' : 'commandes'}
                         </Text>
@@ -212,7 +204,6 @@ export default function ClientsScreen() {
         </View>
       </ScrollView>
 
-      {/* Add client modal */}
       <Modal visible={isFormModalVisible}>
         <ClientForm
           onClose={() => setIsFormModalVisible(false)}
@@ -220,7 +211,6 @@ export default function ClientsScreen() {
         />
       </Modal>
 
-      {/* Client details modal */}
       <Modal visible={!!selectedClientId}>
         {selectedClientId ? (
           <ClientDetails
@@ -232,12 +222,10 @@ export default function ClientsScreen() {
         ) : null}
       </Modal>
 
-      {/* Order details modal */}
-      {/* Order details modal */}
       <Modal visible={!!selectedOrderId}>
-        {selectedOrderId && orders.find(order => order.id === selectedOrderId) ? (
+        {selectedOrder ? (
           <OrderDetails
-            order={orders.find(order => order.id === selectedOrderId)!}
+            order={selectedOrder}
             onClose={() => setSelectedOrderId(null)}
           />
         ) : null}

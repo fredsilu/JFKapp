@@ -1,6 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Client } from '@/types';
 
@@ -10,7 +22,11 @@ interface ClientFormProps {
   onSubmit: (values: Partial<Client>) => void | Promise<void>;
 }
 
-export default function ClientForm({ client, onClose, onSubmit }: ClientFormProps) {
+export default function ClientForm({
+  client,
+  onClose,
+  onSubmit,
+}: ClientFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -21,54 +37,47 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
   const [notes, setNotes] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (client) {
       setName(client.name || '');
       setEmail(client.email || '');
-      setPhone(client.phone || '');
+      setPhone(client.phone ? client.phone.toString() : '');
       setAddress(client.address || '');
       setRccm(client.rccm || '');
       setIdnat(client.idnat || '');
       setCity(client.city || '');
-      setNotes(client.notes || '');
+      setNotes((client as any).notes || '');
       setProfilePicture(client.profilePicture || '');
     }
   }, [client]);
 
   const validateForm = () => {
     if (!name.trim()) {
-      setError('Name is required');
-      return false;
-    }
-
-    if (!email.trim()) {
-      setError('Email is required');
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Invalid email address');
+      setError('Le nom est obligatoire');
       return false;
     }
 
     if (!phone.trim()) {
-      setError('Phone number is required');
+      setError('Le téléphone est obligatoire');
       return false;
     }
 
-    if (!address.trim()) {
-      setError('Address is required');
-      return false;
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!emailRegex.test(email.trim())) {
+        setError('Adresse email invalide');
+        return false;
+      }
     }
 
-    // Validate profile picture URL if provided
     if (profilePicture.trim()) {
       try {
-        new URL(profilePicture);
+        new URL(profilePicture.trim());
       } catch {
-        setError('Invalid profile picture URL');
+        setError('URL de la photo invalide');
         return false;
       }
     }
@@ -76,14 +85,14 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (submitting) return;
+
     setError(null);
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
-    const payload: any = {
+    const payload: Partial<Client> = {
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
@@ -91,26 +100,45 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
       rccm: rccm.trim(),
       idnat: idnat.trim(),
       city: city.trim(),
-    };
-    if (notes.trim()) {
-      payload.notes = notes.trim();
-    }
+      notes: notes.trim(),
+      profilePicture: profilePicture.trim(),
+    } as Partial<Client>;
 
-    if (profilePicture.trim()) {
-      payload.profilePicture = profilePicture.trim();
-    }
+    try {
+      setSubmitting(true);
 
-    Alert.alert('Success', client ? 'Client updated successfully' : 'Client created successfully');
-    onSubmit(payload);
+      console.log('CLIENT FORM PAYLOAD:', payload);
+
+      await onSubmit(payload);
+
+      Alert.alert(
+        'Succès',
+        client ? 'Client modifié avec succès' : 'Client créé avec succès'
+      );
+    } catch (err) {
+      console.error('ClientForm submit error:', err);
+      Alert.alert(
+        'Erreur',
+        client
+          ? 'Impossible de modifier le client.'
+          : 'Impossible de créer le client.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
+      style={styles.container}
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>{client ? 'Edit Client' : 'New Client'}</Text>
-        <TouchableOpacity onPress={onClose}>
+        <Text style={styles.title}>
+          {client ? 'Modifier le client' : 'Nouveau client'}
+        </Text>
+
+        <TouchableOpacity onPress={onClose} disabled={submitting}>
           <MaterialIcons name="close" size={24} color="#666" />
         </TouchableOpacity>
       </View>
@@ -118,54 +146,55 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {error && (
+        showsVerticalScrollIndicator={false}
+      >
+        {error ? (
           <View style={styles.errorContainer}>
             <ErrorMessage message={error} />
           </View>
-        )}
+        ) : null}
 
         <View style={styles.form}>
           <View style={styles.formField}>
-            <Text style={styles.label}>Name *</Text>
+            <Text style={styles.label}>Nom *</Text>
             <TextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
-              placeholder="John Doe"
+              placeholder="Nom du client"
             />
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Email *</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="john@example.com"
+              placeholder="client@example.com"
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Phone *</Text>
+            <Text style={styles.label}>Téléphone *</Text>
             <TextInput
               style={styles.input}
               value={phone}
               onChangeText={setPhone}
-              placeholder="+1 234 567 8900"
+              placeholder="+243..."
               keyboardType="phone-pad"
             />
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Address *</Text>
+            <Text style={styles.label}>Adresse</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={address}
               onChangeText={setAddress}
-              placeholder="123 Main St, City, Country"
+              placeholder="Adresse du client"
               multiline
               numberOfLines={3}
             />
@@ -204,7 +233,7 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Profile Picture URL (optional)</Text>
+            <Text style={styles.label}>URL photo de profil</Text>
             <TextInput
               style={styles.input}
               value={profilePicture}
@@ -215,12 +244,12 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Notes (optional)</Text>
+            <Text style={styles.label}>Notes</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Additional notes about the client..."
+              placeholder="Notes complémentaires..."
               multiline
               numberOfLines={4}
             />
@@ -231,13 +260,27 @@ export default function ClientForm({ client, onClose, onSubmit }: ClientFormProp
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.cancelButton}
-          onPress={onClose}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          onPress={onClose}
+          disabled={submitting}
+        >
+          <Text style={styles.cancelButtonText}>Annuler</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>{client ? 'Update Client' : 'Add Client'}</Text>
+          style={[
+            styles.submitButton,
+            submitting && styles.submitButtonDisabled,
+          ]}
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>
+              {client ? 'Mettre à jour' : 'Ajouter'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -249,6 +292,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -259,43 +303,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     zIndex: 10,
   },
+
   title: {
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 20,
+    fontWeight: '700',
     color: '#1a1a1a',
   },
+
   scrollView: {
     flex: 1,
   },
+
   scrollContent: {
     padding: 20,
   },
+
   errorContainer: {
     marginBottom: 20,
   },
+
   form: {
     gap: 20,
   },
+
   formField: {
     gap: 8,
   },
+
   label: {
-    fontFamily: 'Inter_500Medium',
     fontSize: 14,
+    fontWeight: '600',
     color: '#1a1a1a',
   },
+
   input: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 16,
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
     padding: 12,
     color: '#1a1a1a',
   },
+
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
+
   footer: {
     flexDirection: 'row',
     padding: 20,
@@ -304,6 +357,7 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: '#fff',
   },
+
   cancelButton: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -311,11 +365,13 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+
   cancelButtonText: {
-    fontFamily: 'Inter_500Medium',
     fontSize: 16,
+    fontWeight: '600',
     color: '#666',
   },
+
   submitButton: {
     flex: 1,
     backgroundColor: '#007AFF',
@@ -323,9 +379,14 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
   },
+
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+
   submitButtonText: {
-    fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
+    fontWeight: '700',
     color: '#fff',
   },
 });
