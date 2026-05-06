@@ -106,11 +106,15 @@ export default function ProformaDetailScreen() {
     }
   };
 
-  async function getImageBase64(moduleId: number): Promise<string> {
+  async function getImageSource(moduleId: number): Promise<string> {
     const asset = Asset.fromModule(moduleId);
     await asset.downloadAsync();
 
     const uri = asset.localUri || asset.uri;
+
+    if (Platform.OS === 'web') {
+      return uri;
+    }
 
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: 'base64',
@@ -129,7 +133,7 @@ export default function ProformaDetailScreen() {
     try {
       setPdfLoading(true);
 
-      const logoBase64 = await getImageBase64(
+      const logoBase64 = await getImageSource(
         require('@/assets/images/crepolia-logo.png')
       );
 
@@ -137,13 +141,13 @@ export default function ProformaDetailScreen() {
       let signatureBase64 = '';
 
       try {
-        stampBase64 = await getImageBase64(
+        stampBase64 = await getImageSource(
           require('@/assets/images/crepolia-stamp.png')
         );
       } catch { }
 
       try {
-        signatureBase64 = await getImageBase64(
+        signatureBase64 = await getImageSource(
           require('@/assets/images/crepolia-signature.png')
         );
       } catch { }
