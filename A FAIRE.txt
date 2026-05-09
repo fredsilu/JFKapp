@@ -862,7 +862,7 @@ git push origin develop
 git checkout -b release/v2.2.0
 git push origin release/v2.2.0
 
-# Beta
+# Beta / le tag ne change pas la branche
 git tag v2.2.0-beta.1
 git push origin v2.2.0-beta.1
 eas build -p android --profile beta
