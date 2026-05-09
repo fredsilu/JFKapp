@@ -9,6 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import {
+  cancelCateringInvoice,
+} from '@/src/services/cateringInvoice.service';
+
+import {
+  createCreditNote,
+} from '@/src/services/creditNote.service';
 
 import {
   CateringInvoice,
@@ -73,12 +80,24 @@ export default function InvoicesScreen() {
 
   function getStatusLabel(status?: string) {
     switch (status) {
+      case 'draft':
+        return 'Brouillon';
+
       case 'issued':
         return 'Émise';
+
       case 'paid':
         return 'Payée';
+
       case 'cancelled':
         return 'Annulée';
+
+      case 'credited':
+        return 'Avoir total';
+
+      case 'partially_credited':
+        return 'Avoir partiel';
+
       default:
         return status || 'Émise';
     }
@@ -91,6 +110,14 @@ export default function InvoicesScreen() {
         <Text style={styles.loadingText}>Chargement des factures...</Text>
       </View>
     );
+  }
+
+  function canCancel(invoice: any) {
+    return invoice.status === 'issued';
+  }
+
+  function canCredit(invoice: any) {
+    return invoice.status === 'issued';
   }
 
   return (
@@ -167,6 +194,99 @@ export default function InvoicesScreen() {
               >
                 <Text style={styles.primaryActionText}>Voir</Text>
               </TouchableOpacity>
+              {canCancel(invoice) ? (
+                <TouchableOpacity
+                  style={styles.cancelAction}
+                  onPress={() => {
+                    Alert.prompt(
+                      'Annuler la facture',
+                      "Motif obligatoire de l'annulation",
+                      async (reason) => {
+                        try {
+                          if (!reason || reason.trim().length < 3) {
+                            Alert.alert(
+                              'Erreur',
+                              "Veuillez saisir un motif valide"
+                            );
+                            return;
+                          }
+
+                          await cancelCateringInvoice(
+                            invoice.id,
+                            reason
+                          );
+
+                          Alert.alert(
+                            'Succès',
+                            'Facture annulée'
+                          );
+
+                          loadInvoices();
+                        } catch (e: any) {
+                          Alert.alert(
+                            'Erreur',
+                            e?.message || 'Erreur annulation'
+                          );
+                        }
+                      }
+                    );
+                  }}
+                >
+                  <Text style={styles.cancelActionText}>
+                    Annuler
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {canCredit(invoice) ? (
+                <TouchableOpacity
+                  style={styles.creditAction}
+                  onPress={() => {
+                    Alert.prompt(
+                      'Créer un avoir',
+                      "Montant de l'avoir",
+                      async (value) => {
+                        try {
+                          const amount = Number(value);
+
+                          if (!amount || amount <= 0) {
+                            Alert.alert(
+                              'Erreur',
+                              'Montant invalide'
+                            );
+                            return;
+                          }
+
+                          await createCreditNote(
+                            invoice.id,
+                            amount,
+                            'Avoir manuel'
+                          );
+
+                          Alert.alert(
+                            'Succès',
+                            'Avoir créé'
+                          );
+
+                          loadInvoices();
+                        } catch (e: any) {
+                          Alert.alert(
+                            'Erreur',
+                            e?.message || 'Erreur avoir'
+                          );
+                        }
+                      }
+                    );
+                  }}
+                >
+                  <Text style={styles.creditActionText}>
+                    Avoir
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+
+
+
             </View>
           </View>
         ))
@@ -297,8 +417,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
- 
-   backButtonText: {
+
+  backButtonText: {
     color: '#111827',
     fontWeight: '800',
     fontSize: 14,
@@ -313,7 +433,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
   },
- 
+
 
   backIcon: {
     fontSize: 24,
@@ -325,5 +445,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
+  },
+  cancelAction: {
+    flex: 1,
+    backgroundColor: '#DC2626',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+
+  cancelActionText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+
+  creditAction: {
+    flex: 1,
+    backgroundColor: '#D97706',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+
+  creditActionText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 13,
   },
 });
