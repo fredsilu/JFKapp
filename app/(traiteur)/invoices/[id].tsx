@@ -19,6 +19,13 @@ import { formatCurrency } from '@/src/utils/costs';
 import { generateInvoicePDF } from '@/src/services/invoicePdf.service';
 import { downloadHtmlAsPdfWeb } from '@/src/utils/downloadHtmlAsPdfWeb';
 import { buildInvoiceHTML } from '@/src/utils/invoiceHtml';
+import {
+  cancelCateringInvoice,
+} from '@/src/services/cateringInvoice.service';
+
+import {
+  createCreditNote,
+} from '@/src/services/creditNote.service';
 
 export default function InvoiceDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -72,6 +79,28 @@ export default function InvoiceDetailScreen() {
     return d.toLocaleDateString('fr-FR');
   }
 
+  function getStatusLabel(status?: string) {
+    switch (status) {
+      case 'draft':
+        return 'Brouillon';
+
+      case 'issued':
+        return 'Émise';
+
+      case 'cancelled':
+        return 'Annulée';
+
+      case 'credited':
+        return 'Avoir total';
+
+      case 'partially_credited':
+        return 'Avoir partiel';
+
+      default:
+        return status || 'Émise';
+    }
+  }
+
   async function handleGeneratePDF() {
     if (!invoice) return;
     const printWindow =
@@ -89,6 +118,10 @@ export default function InvoiceDetailScreen() {
         date: invoice.issueDate,
         subtotal: invoice.totals?.subtotal,
         total: invoice.totals?.total,
+        discount: invoice.discount,
+        discountAmount: invoice.totals?.discountAmount,
+        totalAfterDiscount: invoice.totals?.totalAfterDiscount,
+        status: invoice.status,
 
         items:
           invoice.items?.map((item) => ({
@@ -147,7 +180,9 @@ export default function InvoiceDetailScreen() {
         <Text style={styles.number}>{invoice.number}</Text>
 
         <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>Facturée</Text>
+          <Text style={styles.statusText}>
+            {getStatusLabel(invoice.status)}
+          </Text>
         </View>
 
         <Text style={styles.client}>
@@ -195,6 +230,18 @@ export default function InvoiceDetailScreen() {
           </Text>
         </View>
 
+        {invoice.totals?.discountAmount ? (
+          <View style={styles.totalRow}>
+            <Text style={styles.discountLabel}>
+              Remise
+            </Text>
+
+            <Text style={styles.discountValue}>
+              - {formatCurrency(invoice.totals.discountAmount)}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.totalRow}>
           <Text style={styles.grandTotalLabel}>Total facture</Text>
           <Text style={styles.grandTotalValue}>
@@ -214,6 +261,44 @@ export default function InvoiceDetailScreen() {
           <Text style={styles.pdfButtonText}>Générer PDF facture</Text>
         )}
       </TouchableOpacity>
+
+      {invoice.status === 'issued' ? (
+        <>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => {
+              router.push({
+                pathname:
+                  '/(traiteur)/invoices/cancel/[id]',
+                params: {
+                  id: invoice.id,
+                },
+              });
+            }}
+          >
+            <Text style={styles.cancelButtonText}>
+              Annuler facture
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.creditButton}
+            onPress={() => {
+              router.push({
+                pathname:
+                  '/(traiteur)/invoices/credit-note/[id]',
+                params: {
+                  id: invoice.id,
+                },
+              });
+            }}
+          >
+            <Text style={styles.creditButtonText}>
+              Créer un avoir
+            </Text>
+          </TouchableOpacity>
+        </>
+      ) : null}
 
       <TouchableOpacity
         style={styles.backButton}
@@ -256,4 +341,44 @@ const styles = StyleSheet.create({
   disabledButton: { opacity: 0.7 },
   backButton: { backgroundColor: '#E5E7EB', paddingVertical: 13, borderRadius: 10, alignItems: 'center' },
   backButtonText: { color: '#111827', fontWeight: '800', fontSize: 14 },
+
+  discountLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+
+  discountValue: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#DC2626',
+  },
+
+  cancelButton: {
+    backgroundColor: '#DC2626',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 15,
+  },
+
+  creditButton: {
+    backgroundColor: '#D97706',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  creditButtonText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 15,
+  },
 });
