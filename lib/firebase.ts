@@ -81,6 +81,7 @@ export const DOCUMENT_PREFIX =
 console.log('APP_ENV:', APP_ENV);
 console.log('IS_TEST:', IS_TEST);
 console.log('IS_PRODUCTION:', IS_PRODUCTION);
+console.log(process.env.EXPO_PUBLIC_APP_ENV);
 
 export { db };
 export default app;
