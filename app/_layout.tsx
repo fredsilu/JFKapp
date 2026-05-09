@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

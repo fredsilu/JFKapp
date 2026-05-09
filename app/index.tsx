@@ -1,11 +1,16 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import EnvironmentBadge from "@/src/components/EnvironmentBadge";
 
 export default function ModuleSelector() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
+      <View style={{ padding: 16 }}>
+        <EnvironmentBadge />
+      </View>
+
       <Text style={styles.title}>JFKApp</Text>
 
       <TouchableOpacity

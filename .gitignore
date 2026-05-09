@@ -41,3 +41,8 @@ app-example
 *-adminsdk-*.json
 *.pem
 *.key
+
+# Environment variables
+.env
+.env.test
+.env.production
