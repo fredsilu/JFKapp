@@ -54,7 +54,7 @@ const emptyService = (): CateringServiceInput => ({
   numberOfDays: 1,
   serverRate: 25,
   cookRate: 50,
-  serviceMarginRate: 30, // ✅ AJOUTÉ (marge service %)
+
 });
 
 type Mode = 'new' | 'view' | 'reuse';
@@ -203,11 +203,11 @@ export default function CateringCalculator() {
   );
 
   /* =========================
-     ✅ CALCULS GLOBAUX CORRIGÉS
-     - CA total = CA repas + service facturé (coût service + marge%)
-     - Coût total = coût matière + coût service
-     - Marge = CA total - coût total
-  ========================= */
+    ✅ CALCULS GLOBAUX
+    - CA total = ventes repas
+    - Coût total = coût matière + coût service
+    - Marge = CA total - coût total
+ ========================= */
 
   // ✅ Coût service (charge réelle Crepolia)
   const serviceCost = result.service?.totalServiceCost || 0;
@@ -221,17 +221,12 @@ export default function CateringCalculator() {
     );
   }, [result.breakfast, result.lunch, result.drinks]);
 
-  // ✅ Service facturé (revenu) = coût service + marge
-  const serviceRevenue = useMemo(() => {
-    if (!simulation.service.enabled) return 0;
-    const marginRate = simulation.service.serviceMarginRate || 0;
-    return serviceCost * (1 + marginRate / 100);
-  }, [serviceCost, simulation.service.enabled, simulation.service.serviceMarginRate]);
+
 
   // ✅ Totaux corrects
   const totalRevenue = useMemo(() => {
-    return result.globalTurnover + serviceRevenue;
-  }, [result.globalTurnover, serviceRevenue]);
+    return result.globalTurnover;
+  }, [result.globalTurnover]);
 
   const totalCost = useMemo(() => {
     return foodCostTotal + serviceCost;
@@ -461,20 +456,20 @@ export default function CateringCalculator() {
         })}
 
         <View style={styles.card}>
-  <Text style={styles.cardTitle}>💸 Remise globale</Text>
+          <Text style={styles.cardTitle}>💸 Remise globale</Text>
 
-  <NumberField
-    label="Remise globale ($)"
-    value={simulation.discount || 0}
-    onChange={(v) =>
-      setSimulation((p) => ({
-        ...p,
-        discount: v,
-      }))
-    }
-    disabled={readOnly}
-  />
-</View>
+          <NumberField
+            label="Remise globale ($)"
+            value={simulation.discount || 0}
+            onChange={(v) =>
+              setSimulation((p) => ({
+                ...p,
+                discount: v,
+              }))
+            }
+            disabled={readOnly}
+          />
+        </View>
 
         {/* RÉCAP FINANCIER */}
         <View style={styles.card}>
@@ -538,8 +533,6 @@ export default function CateringCalculator() {
           </Text>
           <Text style={styles.totalBreakdown}>
             Repas : {result.globalTurnover.toFixed(2)} $
-            {'\n'}
-            Service facturé : {serviceRevenue.toFixed(2)} $
           </Text>
 
           <Text style={styles.globalText}>
@@ -745,13 +738,7 @@ function renderServiceBlock({
           />
 
 
-          {/* ✅ AJOUTÉ */}
-          <NumberField
-            label="Marge service (%)"
-            value={service.serviceMarginRate}
-            onChange={(v) => updateService({ serviceMarginRate: v })}
-            disabled={readOnly}
-          />
+
 
           {r && (
             <ResultBox

@@ -195,6 +195,18 @@ export default function ProformaDetailScreen() {
   }
 
   function handleSend() {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Confirmer l’envoi au client ?'
+      );
+
+      if (confirmed) {
+        handleChangeStatus('sent');
+      }
+
+      return;
+    }
+
     Alert.alert('Envoyer proforma', 'Confirmer l’envoi au client ?', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Envoyer', onPress: () => handleChangeStatus('sent') },
@@ -202,6 +214,18 @@ export default function ProformaDetailScreen() {
   }
 
   function handleApprove() {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Le client a accepté ?'
+      );
+
+      if (confirmed) {
+        handleChangeStatus('approved');
+      }
+
+      return;
+    }
+
     Alert.alert('Valider proforma', 'Le client a accepté ?', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Oui', onPress: () => handleChangeStatus('approved') },
@@ -209,6 +233,18 @@ export default function ProformaDetailScreen() {
   }
 
   function handleReject() {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Confirmer le rejet ?'
+      );
+
+      if (confirmed) {
+        handleChangeStatus('rejected');
+      }
+
+      return;
+    }
+
     Alert.alert('Rejeter proforma', 'Confirmer le rejet ?', [
       { text: 'Annuler', style: 'cancel' },
       {
@@ -333,8 +369,34 @@ export default function ProformaDetailScreen() {
           </Text>
         </View>
 
-        <View style={styles.totalRow}>
+        {Number(proforma.totals?.discount || 0) > 0 && (
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Remise globale</Text>
+
+            <Text
+              style={[
+                styles.totalValue,
+                { color: '#DC2626', fontWeight: '800' },
+              ]}
+            >
+              - {formatCurrency(Number(proforma.totals?.discount || 0))}
+            </Text>
+          </View>
+        )}
+
+        <View
+          style={[
+            styles.totalRow,
+            {
+              borderTopWidth: 1,
+              borderTopColor: '#E5E7EB',
+              paddingTop: 10,
+              marginTop: 6,
+            },
+          ]}
+        >
           <Text style={styles.grandTotalLabel}>Total proforma</Text>
+
           <Text style={styles.grandTotalValue}>
             {formatCurrency(proforma.totals?.total ?? 0)}
           </Text>

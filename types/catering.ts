@@ -30,8 +30,6 @@ export interface CateringServiceInput {
 
   serverRate: number;
   cookRate: number;
-
-  serviceMarginRate: number; // %
 }
 
 export interface CateringServiceCosts {

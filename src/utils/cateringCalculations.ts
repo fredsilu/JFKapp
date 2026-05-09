@@ -5,7 +5,7 @@ import {
 } from '@/types/catering';
 
 /* =========================
-   TYPES RESULTATS
+   TYPES RÉSULTATS
 ========================= */
 
 type MealResult = {
@@ -46,24 +46,49 @@ export type CateringSimulationResult = {
    HELPERS
 ========================= */
 
-function calculateMeal(meal: CateringMealInput): MealResult | null {
-  if (!meal.enabled || meal.numberOfPeople <= 0 || meal.unitPrice <= 0) {
-    return null;
-  }
+function toNumber(value: unknown, fallback = 0): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
 
-  const dailyTurnover =
-    meal.numberOfPeople * meal.unitPrice - meal.discount;
+function safeDays(value: unknown): number {
+  const days = toNumber(value, 1);
+  return days > 0 ? days : 1;
+}
 
-  const totalTurnover = dailyTurnover * meal.numberOfDays;
+/* =========================
+   MEALS
+========================= */
 
-  const dailyFoodCost =
-    dailyTurnover * (meal.foodCostRate / 100);
+function calculateMeal(meal?: CateringMealInput): MealResult | null {
+  if (!meal?.enabled) return null;
 
-  const totalFoodCost =
-    dailyFoodCost * meal.numberOfDays;
+  const numberOfPeople = toNumber(meal.numberOfPeople);
+  const unitPrice = toNumber(meal.unitPrice);
+  const numberOfDays = safeDays(meal.numberOfDays);
+  const foodCostRate = toNumber(meal.foodCostRate);
+  const discount = toNumber((meal as any).discount);
+
+  if (numberOfPeople <= 0 || unitPrice <= 0) return null;
+
+  const dailyTurnover = Math.max(
+    numberOfPeople * unitPrice - discount,
+    0
+  );
+
+  const totalTurnover = dailyTurnover * numberOfDays;
+
+  const dailyFoodCost = dailyTurnover * (foodCostRate / 100);
+  const totalFoodCost = dailyFoodCost * numberOfDays;
 
   return {
-    recap: meal,
+    recap: {
+      ...meal,
+      numberOfPeople,
+      unitPrice,
+      numberOfDays,
+      foodCostRate,
+    },
     dailyTurnover,
     totalTurnover,
     dailyFoodCost,
@@ -71,51 +96,65 @@ function calculateMeal(meal: CateringMealInput): MealResult | null {
   };
 }
 
+/* =========================
+   SERVICE
+========================= */
+
 function calculateService(
-  service: CateringServiceInput,
-  costs: {
-    serverDailyCost: number;
-    cookDailyCost: number;
-    electricityDailyCost: number;
-    gasDailyCost: number;
-    fuelDailyCost: number;
-  }
+  service?: CateringServiceInput,
+  costs?: CateringSimulationDraft['serviceCosts']
 ): ServiceResult | null {
-  if (!service.enabled || service.numberOfPeople <= 0) {
-    return null;
-  }
+  if (!service?.enabled) return null;
 
-  const numberOfServers = Math.ceil(
-    service.numberOfPeople / service.serverRate
-  );
+  const numberOfPeople = toNumber(service.numberOfPeople);
+  const numberOfDays = safeDays(service.numberOfDays);
 
-  const numberOfCooks = Math.ceil(
-    service.numberOfPeople / service.cookRate
-  );
+  const serverRate = toNumber(service.serverRate, 25);
+  const cookRate = toNumber(service.cookRate, 50);
 
-  const serversCost =
-    numberOfServers * costs.serverDailyCost;
+  const serverDailyCost = toNumber(costs?.serverDailyCost);
+  const cookDailyCost = toNumber(costs?.cookDailyCost);
+  const electricityDailyCost = toNumber(costs?.electricityDailyCost);
+  const gasDailyCost = toNumber(costs?.gasDailyCost);
+  const fuelDailyCost = toNumber(costs?.fuelDailyCost);
 
-  const cooksCost =
-    numberOfCooks * costs.cookDailyCost;
+  const discount = toNumber((service as any).discount);
 
-  const electricityCost = costs.electricityDailyCost;
-  const gasCost = costs.gasDailyCost;
-  const fuelCost = costs.fuelDailyCost;
+  if (numberOfPeople <= 0) return null;
 
-  const dailyServiceCost =
+  const numberOfServers =
+    serverRate > 0 ? Math.ceil(numberOfPeople / serverRate) : 0;
+
+  const numberOfCooks =
+    cookRate > 0 ? Math.ceil(numberOfPeople / cookRate) : 0;
+
+  const serversCost = numberOfServers * serverDailyCost;
+  const cooksCost = numberOfCooks * cookDailyCost;
+
+  const electricityCost = electricityDailyCost;
+  const gasCost = gasDailyCost;
+  const fuelCost = fuelDailyCost;
+
+  const dailyServiceCost = Math.max(
     serversCost +
-    cooksCost +
-    electricityCost +
-    gasCost +
-    fuelCost -
-    service.discount;
+      cooksCost +
+      electricityCost +
+      gasCost +
+      fuelCost -
+      discount,
+    0
+  );
 
-  const totalServiceCost =
-    dailyServiceCost * service.numberOfDays;
+  const totalServiceCost = dailyServiceCost * numberOfDays;
 
   return {
-    recap: service,
+    recap: {
+      ...service,
+      numberOfPeople,
+      numberOfDays,
+      serverRate,
+      cookRate,
+    },
     numberOfServers,
     numberOfCooks,
 
@@ -147,15 +186,15 @@ export function calculateSimulation(
   );
 
   const globalTurnover =
-    (breakfast?.totalTurnover || 0) +
-    (lunch?.totalTurnover || 0) +
-    (drinks?.totalTurnover || 0);
+    toNumber(breakfast?.totalTurnover) +
+    toNumber(lunch?.totalTurnover) +
+    toNumber(drinks?.totalTurnover);
 
   const globalCost =
-    (breakfast?.totalFoodCost || 0) +
-    (lunch?.totalFoodCost || 0) +
-    (drinks?.totalFoodCost || 0) +
-    (service?.totalServiceCost || 0);
+    toNumber(breakfast?.totalFoodCost) +
+    toNumber(lunch?.totalFoodCost) +
+    toNumber(drinks?.totalFoodCost) +
+    toNumber(service?.totalServiceCost);
 
   const globalMargin = globalTurnover - globalCost;
 
