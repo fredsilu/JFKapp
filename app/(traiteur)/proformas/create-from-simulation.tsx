@@ -22,6 +22,7 @@ import { fetchClients } from '@/src/services/clientService';
 import { formatCurrency } from '@/src/utils/costs';
 import { Picker } from '@react-native-picker/picker';
 
+
 type CateringDish = {
   id: string;
   name: string;
@@ -47,6 +48,7 @@ export default function CreateProformaFromSimulationScreen() {
   const simulationId = Array.isArray(params.simulationId)
     ? params.simulationId[0]
     : params.simulationId;
+  
 
   const [simulation, setSimulation] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
@@ -226,9 +228,9 @@ export default function CreateProformaFromSimulationScreen() {
       prev.map((item) =>
         item.dishId === dishId
           ? {
-              ...item,
-              notes,
-            }
+            ...item,
+            notes,
+          }
           : item
       )
     );

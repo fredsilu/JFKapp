@@ -171,10 +171,20 @@ export default function OrderDetailScreen() {
                 </TouchableOpacity>
             )}
 
-            {order.invoiceNumber && (
-                <Text style={styles.success}>
-                    ✅ Facturée ({order.invoiceNumber})
-                </Text>
+            {order.invoiceId && (
+                <TouchableOpacity
+                    style={styles.invoiceButton}
+                    onPress={() =>
+                        router.push({
+                            pathname: '/(traiteur)/invoices/[id]',
+                            params: { id: order.invoiceId },
+                        })
+                    }
+                >
+                    <Text style={styles.invoiceButtonText}>
+                        Voir facture {order.invoiceNumber ? `(${order.invoiceNumber})` : ''}
+                    </Text>
+                </TouchableOpacity>
             )}
 
             <TouchableOpacity
@@ -237,4 +247,19 @@ const styles = StyleSheet.create({
         marginTop: 20,
         alignItems: 'center',
     },
+    invoiceButton: {
+  backgroundColor: '#EEF6FF',
+  borderColor: '#BFDBFE',
+  borderWidth: 1,
+  paddingVertical: 13,
+  borderRadius: 10,
+  alignItems: 'center',
+  marginTop: 10,
+},
+
+invoiceButtonText: {
+  color: '#0F4C81',
+  fontWeight: '900',
+  fontSize: 14,
+},
 });

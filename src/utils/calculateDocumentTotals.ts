@@ -11,7 +11,8 @@ export interface CalculatedDocumentTotalsResult {
 }
 
 export function calculateDocumentTotals(
-  items: CateringDocumentItem[]
+  items: CateringDocumentItem[],
+  discount: number = 0
 ): CalculatedDocumentTotalsResult {
   const normalizedItems = items.map((item) => {
     const days = Number(item.days) || 0;
@@ -34,11 +35,15 @@ export function calculateDocumentTotals(
     0
   );
 
+  const safeDiscount = Math.max(Number(discount) || 0, 0);
+  const total = Math.max(subtotal - safeDiscount, 0);
+
   return {
     items: normalizedItems,
     totals: {
       subtotal,
-      total: subtotal,
+      discount: safeDiscount,
+      total,
       currency: "USD",
     },
   };

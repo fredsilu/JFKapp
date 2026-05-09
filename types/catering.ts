@@ -1,4 +1,9 @@
 import { Timestamp } from "firebase/firestore";
+import {
+  CateringDocumentItem,
+  CateringDocumentTotals,
+  CateringDocumentType,
+} from "@/types/documents";
 
 /**
  * =========================
@@ -136,21 +141,6 @@ export type CateringSimulation = CateringSimulationDraft & {
  * =========================
  */
 
-export type CateringDocumentType = "proforma" | "invoice";
-
-export interface CateringDocumentItem {
-  label: string;
-  days: number;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-export interface CateringDocumentTotals {
-  subtotal: number;
-  total: number;
-  currency: "USD" | "CDF";
-}
 
 export interface CateringDocumentClient {
   name: string;

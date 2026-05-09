@@ -117,15 +117,17 @@ export default function InvoiceDetailScreen() {
             label: item.label ?? '',
             quantity: item.quantity ?? 0,
             unitPrice: item.unitPrice ?? 0,
-            totalPrice: item.total ?? 0,
-            total: item.total ?? 0,
-            days: 1,
+
+            days: item.days ?? item.numberOfDays ?? 1,
+            numberOfDays: item.numberOfDays ?? item.days ?? 1,
+
+            totalPrice: item.totalPrice ?? item.total ?? 0,
+            total: item.total ?? item.totalPrice ?? 0,
           })) || [],
       };
 
-      const filename = `Facture-${
-        invoice.number || invoice.id || 'client'
-      }.pdf`;
+      const filename = `Facture-${invoice.number || invoice.id || 'client'
+        }.pdf`;
 
       if (Platform.OS === 'web') {
         const html = buildInvoiceHTML(invoicePdfData);
@@ -227,6 +229,7 @@ export default function InvoiceDetailScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemLabel}>{item.label || '—'}</Text>
                 <Text style={styles.itemSub}>
+                  Jrs : {item.days ?? item.numberOfDays ?? 1} ×
                   Qté : {item.quantity ?? 0} ×{' '}
                   {formatCurrency(item.unitPrice ?? 0)}
                 </Text>
@@ -250,12 +253,20 @@ export default function InvoiceDetailScreen() {
           </Text>
         </View>
 
-        {invoice.totals?.discountAmount ? (
+        {Number(
+          invoice.totals?.discount ??
+          invoice.totals?.discountAmount ??
+          0
+        ) > 0 ? (
           <View style={styles.totalRow}>
             <Text style={styles.discountLabel}>Remise</Text>
 
             <Text style={styles.discountValue}>
-              - {formatCurrency(invoice.totals.discountAmount)}
+              - {formatCurrency(
+                invoice.totals?.discount ??
+                invoice.totals?.discountAmount ??
+                0
+              )}
             </Text>
           </View>
         ) : null}

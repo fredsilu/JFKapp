@@ -1,7 +1,8 @@
 import { CateringDocumentItem } from "@/types/catering";
 
 export function calculateDocumentTotals(
-  items: CateringDocumentItem[]
+  items: CateringDocumentItem[],
+  discount: number = 0
 ) {
 
   const subtotal = items.reduce(
@@ -9,9 +10,12 @@ export function calculateDocumentTotals(
     0
   );
 
+  const total = Math.max(subtotal - discount, 0);
+
   return {
     subtotal,
-    total: subtotal,
+    discount,
+    total,
     currency: "USD" as const
   };
 }

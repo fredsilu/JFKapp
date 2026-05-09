@@ -54,6 +54,7 @@ export type CateringInvoice = {
 
   totals: {
     subtotal: number;
+    discount?: number;
     tax?: number;
     discountAmount?: number;
     totalAfterDiscount?: number;
@@ -97,12 +98,22 @@ function normalizeTotals(
   const tax = Number(totals?.tax ?? 0);
   const currency = totals?.currency ?? 'USD';
 
-  const discountAmount = calculateDiscountAmount(subtotal, discount);
+  const existingDiscount =
+    Number(totals?.discount ?? 0);
+
+  const calculatedDiscount =
+    calculateDiscountAmount(subtotal, discount);
+
+  const discountAmount =
+    existingDiscount > 0
+      ? existingDiscount
+      : calculatedDiscount;
   const totalAfterDiscount = Math.max(subtotal - discountAmount, 0);
   const total = totalAfterDiscount + tax;
 
   return {
     subtotal,
+    discount: discountAmount,
     tax,
     discountAmount,
     totalAfterDiscount,

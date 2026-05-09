@@ -21,8 +21,9 @@ export interface CateringDocumentItem {
 
 export interface CateringDocumentTotals {
   subtotal: number;
+  discount?: number;
   total: number;
-  currency: "USD";
+  currency: string;
 }
 
 export interface CateringDocumentMeta {
