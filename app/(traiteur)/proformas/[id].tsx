@@ -407,6 +407,18 @@ export default function ProformaDetailScreen() {
         <TouchableOpacity
           style={styles.convertButton}
           onPress={() => {
+            if (Platform.OS === 'web') {
+              const confirmed = window.confirm(
+                'Confirmer la création de la commande ?'
+              );
+
+              if (confirmed) {
+                handleCreateOrder();
+              }
+
+              return;
+            }
+
             Alert.alert(
               'Créer commande',
               'Confirmer la création de la commande ?',

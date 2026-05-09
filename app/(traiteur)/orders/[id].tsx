@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Alert,
+    Platform,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 
@@ -139,11 +140,23 @@ export default function OrderDetailScreen() {
                 </Text>
             </View>
 
-            {/* 🔥 CRÉATION FACTURE UNIQUEMENT SI TERMINÉ */}
-            {order.status === 'completed' && !order.invoiceId && (
+            {/* 🔥 FACTURE POSSIBLE DÈS QU’UNE COMMANDE EXISTE */}
+            {!order.invoiceId && (
                 <TouchableOpacity
                     style={styles.button}
                     onPress={() => {
+                        if (Platform.OS === 'web') {
+                            const confirmed = window.confirm(
+                                'Confirmer la création de la facture ?'
+                            );
+
+                            if (confirmed) {
+                                handleCreateInvoice();
+                            }
+
+                            return;
+                        }
+
                         Alert.alert(
                             'Créer facture',
                             'Confirmer la création de la facture ?',

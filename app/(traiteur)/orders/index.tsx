@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
@@ -138,9 +139,21 @@ export default function OrdersScreen() {
   function confirmStatusChange(orderId?: string, status?: string) {
     if (!orderId || !status) return;
 
+    const message = `Confirmer le changement vers "${getStatusLabel(status)}" ?`;
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(message);
+
+      if (confirmed) {
+        handleChangeStatus(orderId, status);
+      }
+
+      return;
+    }
+
     Alert.alert(
       'Modifier statut',
-      `Confirmer le changement vers "${getStatusLabel(status)}" ?`,
+      message,
       [
         { text: 'Annuler', style: 'cancel' },
         {
