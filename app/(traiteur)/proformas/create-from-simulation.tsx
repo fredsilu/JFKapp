@@ -263,6 +263,18 @@ export default function CreateProformaFromSimulationScreen() {
 
         status: 'draft',
 
+        service:
+          simulation.serviceType ||
+          simulation.typeService ||
+          simulation.serviceName ||
+          (simulation.service?.enabled ? 'Service traiteur' : ''),
+
+        serviceType:
+          simulation.serviceType ||
+          simulation.typeService ||
+          simulation.serviceName ||
+          (simulation.service?.enabled ? 'Service traiteur' : ''),
+
         items,
         menu: selectedMenu,
 

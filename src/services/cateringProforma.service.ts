@@ -57,6 +57,9 @@ export type CateringProforma = {
   orderNumber?: string;
   convertedAt?: any;
 
+  service?: string;
+  serviceType?: string;
+
   isInvoiced?: boolean;
   invoiceId?: string;
   invoiceNumber?: string;
@@ -155,6 +158,9 @@ function normalizeProformaData(
     clientIdnat: cleanText(data.clientIdnat),
     clientAddress: cleanText(data.clientAddress),
     clientCity: cleanText(data.clientCity),
+
+    service: cleanText(data.service),
+    serviceType: cleanText(data.serviceType),
 
     simulationId: cleanText(data.simulationId),
     issueDate: cleanText(data.issueDate),
@@ -279,6 +285,15 @@ export async function updateCateringProforma(
     payload.clientAddress = cleanText(data.clientAddress);
   }
 
+
+  if (typeof data.service !== 'undefined') {
+    payload.service = cleanText(data.service);
+  }
+
+  if (typeof data.serviceType !== 'undefined') {
+    payload.serviceType = cleanText(data.serviceType);
+  }
+  
   if (typeof data.clientCity !== 'undefined') {
     payload.clientCity = cleanText(data.clientCity);
   }

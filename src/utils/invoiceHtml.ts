@@ -19,9 +19,7 @@ function safe(value?: string | null) {
 
 function toDate(value: any): Date | null {
   if (!value) return null;
-
   if (value?.toDate) return value.toDate();
-
   if (value instanceof Date) return value;
 
   const parsed = new Date(value);
@@ -32,9 +30,7 @@ function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
   const date = toDate(value);
   if (!date) return '—';
 
-  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
-
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -46,9 +42,7 @@ function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
   const date = toDate(value);
   if (!date) return '—';
 
-  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
-
-  return date.toLocaleDateString(locale, {
+  return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -63,6 +57,35 @@ function safeClientName(invoice: InvoicePdfData) {
   }
 
   return name;
+}
+
+function formatClientCity(value?: string | null) {
+  const city = safe(value);
+
+  if (!city) return 'Kinshasa / RDC';
+
+  if (city.toLowerCase().includes('rdc')) {
+    return city;
+  }
+
+  return `${city} / RDC`;
+}
+
+function getStatusLabel(status?: string) {
+  switch (status) {
+    case 'draft':
+      return 'BROUILLON';
+    case 'issued':
+      return 'FACTURE ÉMISE';
+    case 'cancelled':
+      return 'FACTURE ANNULÉE';
+    case 'credited':
+      return 'AVOIR TOTAL';
+    case 'partially_credited':
+      return 'AVOIR PARTIEL';
+    default:
+      return 'FACTURE';
+  }
 }
 
 export function buildInvoiceHTML(
@@ -87,27 +110,21 @@ export function buildInvoiceHTML(
     .join('');
 
   const subtotal = invoice.subtotal ?? invoice.total ?? 0;
-
-  const discountAmount =
-    (invoice as any).discountAmount ?? 0;
+  const discountAmount = (invoice as any).discountAmount ?? 0;
 
   const totalAfterDiscount =
-    (invoice as any).totalAfterDiscount ??
-    invoice.total ??
-    subtotal;
+    (invoice as any).totalAfterDiscount ?? invoice.total ?? subtotal;
 
-  const total = invoice.total ?? subtotal;
-
-  const status =
-    (invoice as any).status ?? 'issued';
+  const status = (invoice as any).status ?? 'issued';
 
   const clientName = safeClientName(invoice);
   const clientRccm = safe(invoice.clientRccm);
   const clientIdnat = safe(invoice.clientIdnat);
   const clientAddress = safe(invoice.clientAddress);
-  const clientCity = safe(invoice.clientCity) || 'Kinshasa / RDC';
+  const clientCity = formatClientCity(invoice.clientCity);
 
   const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
+
   const eventDateFormatted = formatShortDate(
     (invoice as any).eventDate || (invoice as any).dateLivraison,
     'fr'
@@ -116,9 +133,10 @@ export function buildInvoiceHTML(
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${assets?.logoBase64
-      ? `<img src="${assets.logoBase64}" />`
-      : `<div class="logo-text">CREPOLIA</div>`
+    ${
+      assets?.logoBase64
+        ? `<img src="${assets.logoBase64}" />`
+        : `<div class="logo-text">CREPOLIA</div>`
     }
   </div>
 
@@ -137,31 +155,9 @@ export function buildInvoiceHTML(
 <div class="page-footer">
   RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;
   ID Nat : 01-852-N58548R&nbsp;&nbsp;
-  NIF:A2171348B
+  NIF : A2171348B
 </div>
 `;
-
-  function getStatusLabel(status?: string) {
-    switch (status) {
-      case 'draft':
-        return 'BROUILLON';
-
-      case 'issued':
-        return 'FACTURE ÉMISE';
-
-      case 'cancelled':
-        return 'FACTURE ANNULÉE';
-
-      case 'credited':
-        return 'AVOIR TOTAL';
-
-      case 'partially_credited':
-        return 'AVOIR PARTIEL';
-
-      default:
-        return 'FACTURE';
-    }
-  }
 
   return `
 <!DOCTYPE html>
@@ -178,23 +174,8 @@ export function buildInvoiceHTML(
 * {
   box-sizing: border-box;
   font-family: 'Montserrat', Arial, sans-serif;
-}
-
-* {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
-}
-
-@media print {
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
 }
 
 body {
@@ -202,7 +183,6 @@ body {
   padding: 0;
   color: #5f6368;
   font-size: 10px;
-  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 .pdf-page {
@@ -215,7 +195,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding-left: 0px;
 }
 
 .logo img {
@@ -238,13 +217,12 @@ body {
   text-align: right;
   font-size: 12px;
   line-height: 1.25;
-  font-weight: 300 !important;
+  font-weight: 300;
   color: #374151;
 }
 
 .top-line {
   border-bottom: 1px solid #2f3b4f;
-  margin-top: 0px;
 }
 
 .title {
@@ -267,6 +245,10 @@ body {
   font-size: 10px;
   line-height: 1.42;
   color: #666;
+}
+
+.client-block div {
+  margin-bottom: 2px;
 }
 
 .client-name {
@@ -341,18 +323,18 @@ body {
 
 .currency {
   text-align: center;
-  border-right: none !important;
+  border-right: 0 !important;
   padding-right: 0 !important;
 }
 
 .price {
   text-align: right;
-  border-left: none !important;
+  border-left: 0 !important;
   padding-left: 0 !important;
 }
 
 .main-table td.currency + td.price {
-  border-left: none !important;
+  border-left: 0 !important;
 }
 
 .totals {
@@ -393,11 +375,6 @@ body {
   font-style: italic;
   line-height: 1.5;
   color: #777;
-}
-
-.payment strong {
-  font-weight: 700;
-  color: #4b5563;
 }
 
 .signature-area {
@@ -470,11 +447,7 @@ body {
   color: #dc2626;
 }
 
-.status-credited {
-  background: #fef3c7;
-  color: #d97706;
-}
-
+.status-credited,
 .status-partially_credited {
   background: #fef3c7;
   color: #d97706;
@@ -484,157 +457,144 @@ body {
   background: #e5e7eb;
   color: #374151;
 }
-  .watermark {
+
+.watermark {
   position: absolute;
   top: 45%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-30deg);
-
   font-size: 90px;
   font-weight: 900;
-
   color: rgba(220, 38, 38, 0.12);
-
   z-index: 0;
-
   pointer-events: none;
-}
-
-.client-block div {
-  margin-bottom: 2px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="pdf-page">
 
 ${
   status === 'cancelled'
     ? `
-<div class="watermark">
-  ANNULÉE
-</div>
+<div class="watermark">ANNULÉE</div>
 `
     : ''
 }
 
-  ${headerHTML}
+${headerHTML}
 
-  <div class="title">FACTURE</div>
-  <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
+<div class="title">FACTURE</div>
+<div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
 
-  <div class="status-banner status-${status}">
+<div class="status-banner status-${status}">
   ${getStatusLabel(status)}
-  </div>
-
-  <div class="client-block">
-    <div class="client-name">${clientName}</div>
-
-    <div>RCCM : ${clientRccm || '—'}</div>
-    <div>IDNAT : ${clientIdnat || '—'}</div>
-    <div>${clientAddress || '—'}</div>
-    <div><u>${clientCity} / RDC</u></div>
-
-    <div class="issue-date">
-      ${invoiceDateFormatted}
-    </div>
-  </div>
-
-  <div class="intro">
-    Vous trouverez ci-dessous la facture relative aux prestations convenues :
-  </div>
-
-  <table class="main-table">
-    <colgroup>
-      <col class="col-designation" />
-      <col class="col-days" />
-      <col class="col-qty" />
-      <col class="col-pu-currency" />
-      <col class="col-pu" />
-      <col class="col-pt-currency" />
-      <col class="col-pt" />
-    </colgroup>
-
-    <thead>
-      <tr>
-        <th>Désignation</th>
-        <th>Jrs</th>
-        <th>Quantité</th>
-        <th colspan="2">P.U.</th>
-        <th colspan="2">P.T.</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr class="event">
-        <td>
-          Evénement :<br/>
-          Date événement : ${eventDateFormatted}<br/>
-          Nbr de personnes : ${items?.[0]?.quantity || ''}
-        </td>
-        <td></td>
-        <td></td>
-        <td colspan="2"></td>
-        <td colspan="2"></td>
-      </tr>
-
-      ${rows}
-    </tbody>
-  </table>
-
-  <div class="totals">
-    <div class="subtotal">
-      <div>Sous-total :</div>
-      <div>$</div>
-      <div style="text-align:right;">${money(subtotal)}</div>
-    </div>
-
-    ${discountAmount > 0
-      ? `
-      <div class="subtotal">
-        <div>Remise :</div>
-        <div>$</div>
-        <div style="text-align:right;">
-          - ${money(discountAmount)}
-        </div>
-      </div>
-      `
-      : ''
-    }
-
-    <div class="grand-total">
-      <div>Total à payer :</div>
-      <div>$</div>
-      <div style="text-align:right;">
-  ${money(totalAfterDiscount)}
 </div>
-    </div>
+
+<div class="client-block">
+  <div class="client-name">${clientName}</div>
+  <div>RCCM : ${clientRccm || '—'}</div>
+  <div>IDNAT : ${clientIdnat || '—'}</div>
+  <div>${clientAddress || '—'}</div>
+  <div><u>${clientCity}</u></div>
+
+  <div class="issue-date">
+    ${invoiceDateFormatted}
+  </div>
+</div>
+
+<div class="intro">
+  Vous trouverez ci-dessous la facture relative aux prestations convenues :
+</div>
+
+<table class="main-table">
+  <colgroup>
+    <col class="col-designation" />
+    <col class="col-days" />
+    <col class="col-qty" />
+    <col class="col-pu-currency" />
+    <col class="col-pu" />
+    <col class="col-pt-currency" />
+    <col class="col-pt" />
+  </colgroup>
+
+  <thead>
+    <tr>
+      <th>Désignation</th>
+      <th>Jrs</th>
+      <th>Quantité</th>
+      <th colspan="2">P.U.</th>
+      <th colspan="2">P.T.</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr class="event">
+      <td>
+        Evénement :<br/>
+        Date événement : ${eventDateFormatted}<br/>
+        Nbr de personnes : ${items?.[0]?.quantity || ''}
+      </td>
+      <td></td>
+      <td></td>
+      <td colspan="2"></td>
+      <td colspan="2"></td>
+    </tr>
+
+    ${rows}
+  </tbody>
+</table>
+
+<div class="totals">
+  <div class="subtotal">
+    <div>Sous-total :</div>
+    <div>$</div>
+    <div style="text-align:right;">${money(subtotal)}</div>
   </div>
 
-  <div class="payment">
-    La totalité de la facture est payable conformément aux conditions convenues.
+  ${
+    discountAmount > 0
+      ? `
+  <div class="subtotal">
+    <div>Remise :</div>
+    <div>$</div>
+    <div style="text-align:right;">- ${money(discountAmount)}</div>
+  </div>
+  `
+      : ''
+  }
+
+  <div class="grand-total">
+    <div>Total à payer :</div>
+    <div>$</div>
+    <div style="text-align:right;">${money(totalAfterDiscount)}</div>
+  </div>
+</div>
+
+<div class="payment">
+  La totalité de la facture est payable conformément aux conditions convenues.
+</div>
+
+<div class="signature-area">
+  <div class="stamp">
+    ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
   </div>
 
-  <div class="signature-area">
-    <div class="stamp">
-      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
-    </div>
+  <div class="signature">
+    ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+  </div>
 
-    <div class="signature">
-      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
-    </div>
-
-    ${!assets?.stampBase64 && !assets?.signatureBase64
+  ${
+    !assets?.stampBase64 && !assets?.signatureBase64
       ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
       : ''
-    }
-  </div>
-
-  ${footerHTML}
+  }
 </div>
 
+${footerHTML}
+
+</div>
 </body>
 </html>
 `;
