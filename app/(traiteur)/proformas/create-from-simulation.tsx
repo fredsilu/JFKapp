@@ -86,6 +86,15 @@ export default function CreateProformaFromSimulationScreen() {
           (c: any) => c.id === foundSimulation.clientId
         );
 
+        console.log(
+          '🧾 FOUND SIMULATION:',
+          JSON.stringify(foundSimulation, null, 2)
+        );
+
+        console.log('🧾 SERVICE:', foundSimulation.service);
+        console.log('🧾 SERVICE COSTS:', foundSimulation.serviceCosts);
+        console.log('🧾 KEYS:', Object.keys(foundSimulation));
+
         setSimulation(foundSimulation);
         setClient(foundClient || null);
         setDishes(dishesData);
@@ -113,28 +122,21 @@ export default function CreateProformaFromSimulationScreen() {
 
     const result: any[] = [];
 
-    const map = [
+    const mealMap = [
       { key: 'breakfast', label: 'Petit-déjeuner' },
       { key: 'lunch', label: 'Déjeuner' },
       { key: 'dinner', label: 'Dîner' },
       { key: 'drinks', label: 'Boissons' },
-      { key: 'service', label: 'Service traiteur' },
     ];
 
-    map.forEach(({ key, label }) => {
+    mealMap.forEach(({ key, label }) => {
       const item = simulation[key];
 
       if (item?.enabled) {
         const numberOfPeople = Number(item.numberOfPeople || 0);
         const numberOfDays = Number(item.numberOfDays || 1);
         const unitPrice = Number(item.unitPrice || 0);
-
-        let quantity = numberOfPeople * numberOfDays;
-
-        if (key === 'service') {
-          quantity = Number(item.quantity || 1);
-        }
-
+        const quantity = numberOfPeople * numberOfDays;
         const total = quantity * unitPrice;
 
         if (quantity > 0 && unitPrice > 0) {
@@ -147,6 +149,46 @@ export default function CreateProformaFromSimulationScreen() {
         }
       }
     });
+
+    const service = simulation.service;
+
+    if (service?.enabled) {
+      const quantity = Number(
+        service.quantity ||
+        service.numberOfPeople ||
+        service.people ||
+        service.persons ||
+        1
+      );
+
+      const unitPrice = Number(
+        service.unitPrice ||
+        service.price ||
+        service.servicePrice ||
+        service.dailyPrice ||
+        service.amount ||
+        0
+      );
+
+      const total = Number(
+        service.total ||
+        service.totalPrice ||
+        service.totalAmount ||
+        service.serviceTotal ||
+        service.cost ||
+        service.totalCost ||
+        quantity * unitPrice
+      );
+
+      if (total > 0) {
+        result.push({
+          label: service.label || service.name || 'Service traiteur',
+          quantity: unitPrice > 0 ? quantity : 1,
+          unitPrice: unitPrice > 0 ? unitPrice : total,
+          total,
+        });
+      }
+    }
 
     return result;
   }, [simulation]);

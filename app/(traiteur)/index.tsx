@@ -93,7 +93,7 @@ export default function DashboardScreen() {
         </View>
         <TouchableOpacity
           style={styles.analyticsButton}
-          onPress={() => router.push('/analytics/index')}
+          onPress={() => router.push('/analytics')}
         >
           <Icon name="analytics" size={24} color="#fff" />
         </TouchableOpacity>
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
             <Text style={styles.sectionTitle}>Recent Orders</Text>
             <TouchableOpacity
               style={styles.seeAllButton}
-              onPress={() => router.push('/all-orders')}
+              onPress={() => router.push('/(traiteur)/orders')}
             >
               <Text style={styles.seeAllText}>See All</Text>
               <Icon name="chevron-right" size={20} color="#007AFF" />
@@ -169,8 +169,11 @@ export default function DashboardScreen() {
               <View style={styles.orderInfo}>
                 <Text style={styles.clientName}>{order.client.name}</Text>
                 <Text style={styles.orderMeta}>
-                  {order.dishes.reduce((t, d) => t + d.quantity, 0)} items •{' '}
-                  {order.deliveryDate} at {order.deliveryTime}
+                  {(order.dishes || []).reduce(
+                    (t, d) => t + (d.quantity || 0),
+                    0
+                  )}{' '}
+                  items • {order.deliveryDate} at {order.deliveryTime}
                 </Text>
               </View>
 
@@ -199,7 +202,7 @@ export default function DashboardScreen() {
             <Text style={styles.sectionTitle}>Popular Dishes</Text>
             <TouchableOpacity
               style={styles.seeAllButton}
-              onPress={() => router.push('/all-dishes')}
+              onPress={() => router.push('/(traiteur)/dishes')}
             >
               <Text style={styles.seeAllText}>See All</Text>
               <Icon name="chevron-right" size={20} color="#007AFF" />
