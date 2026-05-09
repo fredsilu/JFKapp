@@ -87,7 +87,19 @@ export function buildInvoiceHTML(
     .join('');
 
   const subtotal = invoice.subtotal ?? invoice.total ?? 0;
+
+  const discountAmount =
+    (invoice as any).discountAmount ?? 0;
+
+  const totalAfterDiscount =
+    (invoice as any).totalAfterDiscount ??
+    invoice.total ??
+    subtotal;
+
   const total = invoice.total ?? subtotal;
+
+  const status =
+    (invoice as any).status ?? 'issued';
 
   const clientName = safeClientName(invoice);
   const clientRccm = safe(invoice.clientRccm);
@@ -104,10 +116,9 @@ export function buildInvoiceHTML(
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${
-      assets?.logoBase64
-        ? `<img src="${assets.logoBase64}" />`
-        : `<div class="logo-text">CREPOLIA</div>`
+    ${assets?.logoBase64
+      ? `<img src="${assets.logoBase64}" />`
+      : `<div class="logo-text">CREPOLIA</div>`
     }
   </div>
 
@@ -129,6 +140,28 @@ export function buildInvoiceHTML(
   NIF:A2171348B
 </div>
 `;
+
+  function getStatusLabel(status?: string) {
+    switch (status) {
+      case 'draft':
+        return 'BROUILLON';
+
+      case 'issued':
+        return 'FACTURE ÉMISE';
+
+      case 'cancelled':
+        return 'FACTURE ANNULÉE';
+
+      case 'credited':
+        return 'AVOIR TOTAL';
+
+      case 'partially_credited':
+        return 'AVOIR PARTIEL';
+
+      default:
+        return 'FACTURE';
+    }
+  }
 
   return `
 <!DOCTYPE html>
@@ -417,6 +450,56 @@ body {
   background: white;
 }
 
+.status-banner {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.status-issued {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.status-credited {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-partially_credited {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-draft {
+  background: #e5e7eb;
+  color: #374151;
+}
+  .watermark {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+
+  font-size: 90px;
+  font-weight: 900;
+
+  color: rgba(220, 38, 38, 0.12);
+
+  z-index: 0;
+
+  pointer-events: none;
+}
+
 .client-block div {
   margin-bottom: 2px;
 }
@@ -426,10 +509,25 @@ body {
 <body>
 
 <div class="pdf-page">
+
+${
+  status === 'cancelled'
+    ? `
+<div class="watermark">
+  ANNULÉE
+</div>
+`
+    : ''
+}
+
   ${headerHTML}
 
   <div class="title">FACTURE</div>
   <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
+
+  <div class="status-banner status-${status}">
+  ${getStatusLabel(status)}
+  </div>
 
   <div class="client-block">
     <div class="client-name">${clientName}</div>
@@ -493,10 +591,25 @@ body {
       <div style="text-align:right;">${money(subtotal)}</div>
     </div>
 
+    ${discountAmount > 0
+      ? `
+      <div class="subtotal">
+        <div>Remise :</div>
+        <div>$</div>
+        <div style="text-align:right;">
+          - ${money(discountAmount)}
+        </div>
+      </div>
+      `
+      : ''
+    }
+
     <div class="grand-total">
       <div>Total à payer :</div>
       <div>$</div>
-      <div style="text-align:right;">${money(total)}</div>
+      <div style="text-align:right;">
+  ${money(totalAfterDiscount)}
+</div>
     </div>
   </div>
 
@@ -513,10 +626,9 @@ body {
       ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
     </div>
 
-    ${
-      !assets?.stampBase64 && !assets?.signatureBase64
-        ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
-        : ''
+    ${!assets?.stampBase64 && !assets?.signatureBase64
+      ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
+      : ''
     }
   </div>
 
