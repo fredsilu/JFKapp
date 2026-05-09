@@ -10,11 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import {
-  collection,
-  getDocs,
-
-} from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
 import { getCateringSimulations } from '@/src/services/cateringSimulation.service';
@@ -57,9 +53,7 @@ export default function CreateProformaFromSimulationScreen() {
   const [dishes, setDishes] = useState<CateringDish[]>([]);
   const [selectedDishId, setSelectedDishId] = useState<string>('');
   const [selectedMenu, setSelectedMenu] = useState<CateringProformaMenuItem[]>([]);
-  const [menuNotesByDishId, setMenuNotesByDishId] = useState<Record<string, string>>(
-    {}
-  );
+  const [menuNotesByDishId, setMenuNotesByDishId] = useState<Record<string, string>>({});
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,22 +80,11 @@ export default function CreateProformaFromSimulationScreen() {
           (c: any) => c.id === foundSimulation.clientId
         );
 
-        console.log(
-          '🧾 FOUND SIMULATION:',
-          JSON.stringify(foundSimulation, null, 2)
-        );
-
-        console.log('🧾 SERVICE:', foundSimulation.service);
-        console.log('🧾 SERVICE COSTS:', foundSimulation.serviceCosts);
-        console.log('🧾 KEYS:', Object.keys(foundSimulation));
-
         setSimulation(foundSimulation);
         setClient(foundClient || null);
         setDishes(dishesData);
         setSelectedMenu([]);
         setMenuNotesByDishId({});
-
-
       } catch (e) {
         console.error('❌ load simulation proforma error:', e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -136,12 +119,13 @@ export default function CreateProformaFromSimulationScreen() {
         const numberOfPeople = Number(item.numberOfPeople || 0);
         const numberOfDays = Number(item.numberOfDays || 1);
         const unitPrice = Number(item.unitPrice || 0);
-        const quantity = numberOfPeople * numberOfDays;
-        const total = quantity * unitPrice;
+        const quantity = numberOfPeople;
+        const total = numberOfDays * quantity * unitPrice;
 
         if (quantity > 0 && unitPrice > 0) {
           result.push({
             label,
+            numberOfDays,
             quantity,
             unitPrice,
             total,
@@ -153,38 +137,39 @@ export default function CreateProformaFromSimulationScreen() {
     const service = simulation.service;
 
     if (service?.enabled) {
-      const quantity = Number(
-        service.quantity ||
-        service.numberOfPeople ||
-        service.people ||
-        service.persons ||
-        1
-      );
+      const numberOfPeople = Number(service.numberOfPeople || 0);
+      const numberOfDays = Number(service.numberOfDays || 1);
 
-      const unitPrice = Number(
-        service.unitPrice ||
-        service.price ||
-        service.servicePrice ||
-        service.dailyPrice ||
-        service.amount ||
-        0
-      );
+      const serverRate = Number(service.serverRate || 1);
+      const cookRate = Number(service.cookRate || 1);
 
-      const total = Number(
-        service.total ||
-        service.totalPrice ||
-        service.totalAmount ||
-        service.serviceTotal ||
-        service.cost ||
-        service.totalCost ||
-        quantity * unitPrice
-      );
+      const serviceCosts = simulation.serviceCosts || {};
 
-      if (total > 0) {
+      const serverDailyCost = Number(serviceCosts.serverDailyCost || 0);
+      const cookDailyCost = Number(serviceCosts.cookDailyCost || 0);
+      const electricityDailyCost = Number(serviceCosts.electricityDailyCost || 0);
+      const gasDailyCost = Number(serviceCosts.gasDailyCost || 0);
+      const fuelDailyCost = Number(serviceCosts.fuelDailyCost || 0);
+
+      const numberOfServers = Math.ceil(numberOfPeople / serverRate);
+      const numberOfCooks = Math.ceil(numberOfPeople / cookRate);
+
+      const unitPrice =
+        numberOfServers * serverDailyCost +
+        numberOfCooks * cookDailyCost +
+        electricityDailyCost +
+        gasDailyCost +
+        fuelDailyCost;
+
+      const quantity = 1;
+      const total = numberOfDays * quantity * unitPrice;
+
+      if (numberOfDays > 0 && unitPrice > 0) {
         result.push({
-          label: service.label || service.name || 'Service traiteur',
-          quantity: unitPrice > 0 ? quantity : 1,
-          unitPrice: unitPrice > 0 ? unitPrice : total,
+          label: 'Service traiteur',
+          numberOfDays,
+          quantity,
+          unitPrice,
           total,
         });
       }
@@ -196,6 +181,10 @@ export default function CreateProformaFromSimulationScreen() {
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + Number(item.total || 0), 0);
   }, [items]);
+
+  const generalDiscount = Number(simulation?.discount || 0);
+
+  const totalAfterDiscount = Math.max(subtotal - generalDiscount, 0);
 
   function getClientName() {
     return client?.name || client?.clientName || simulation?.clientName || 'Client';
@@ -227,29 +216,6 @@ export default function CreateProformaFromSimulationScreen() {
     return d.toISOString().slice(0, 10);
   }
 
-  function isDishSelected(dishId: string) {
-    return selectedMenu.some((item) => item.dishId === dishId);
-  }
-
-  function toggleDish(dish: CateringDish) {
-    const selected = isDishSelected(dish.id);
-
-    if (selected) {
-      setSelectedMenu((prev) => prev.filter((item) => item.dishId !== dish.id));
-      return;
-    }
-
-    setSelectedMenu((prev) => [
-      ...prev,
-      {
-        dishId: dish.id,
-        name: dish.name,
-        category: dish.category || '',
-        notes: menuNotesByDishId[dish.id] || dish.notes || '',
-      },
-    ]);
-  }
-
   function updateDishNote(dishId: string, notes: string) {
     setMenuNotesByDishId((prev) => ({
       ...prev,
@@ -260,9 +226,9 @@ export default function CreateProformaFromSimulationScreen() {
       prev.map((item) =>
         item.dishId === dishId
           ? {
-            ...item,
-            notes,
-          }
+              ...item,
+              notes,
+            }
           : item
       )
     );
@@ -279,16 +245,10 @@ export default function CreateProformaFromSimulationScreen() {
       return;
     }
 
-    if (selectedMenu.length === 0) {
-      Alert.alert(
-        'Menu requis',
-        'Veuillez sélectionner au moins un plat pour le menu de la proforma.'
-      );
-      return;
-    }
-
     try {
       setSaving(true);
+
+      console.log('🧾 PROFORMA ITEMS:', JSON.stringify(items, null, 2));
 
       const proformaId = await createCateringProforma({
         simulationId: simulation.id,
@@ -322,7 +282,8 @@ export default function CreateProformaFromSimulationScreen() {
 
         totals: {
           subtotal,
-          total: subtotal,
+          discount: generalDiscount,
+          total: totalAfterDiscount,
           currency: 'USD',
         },
       });
@@ -377,7 +338,8 @@ export default function CreateProformaFromSimulationScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.itemLabel}>{item.label}</Text>
               <Text style={styles.itemSub}>
-                Qté : {item.quantity} × {formatCurrency(item.unitPrice)}
+                Jrs : {item.numberOfDays || 1} | Qté : {item.quantity} ×{' '}
+                {formatCurrency(item.unitPrice)}
               </Text>
             </View>
 
@@ -386,8 +348,24 @@ export default function CreateProformaFromSimulationScreen() {
         ))}
 
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total proforma</Text>
+          <Text style={styles.totalLabel}>Sous-total</Text>
           <Text style={styles.totalValue}>{formatCurrency(subtotal)}</Text>
+        </View>
+
+        {generalDiscount > 0 && (
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Remise</Text>
+            <Text style={styles.totalValue}>
+              -{formatCurrency(generalDiscount)}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total final</Text>
+          <Text style={styles.totalValue}>
+            {formatCurrency(totalAfterDiscount)}
+          </Text>
         </View>
       </View>
 
@@ -398,7 +376,6 @@ export default function CreateProformaFromSimulationScreen() {
           Ajoute les plats à inclure dans la proforma.
         </Text>
 
-        {/* Dropdown */}
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={selectedDishId}
@@ -407,16 +384,11 @@ export default function CreateProformaFromSimulationScreen() {
             <Picker.Item label="Sélectionner un plat..." value="" />
 
             {dishes.map((dish) => (
-              <Picker.Item
-                key={dish.id}
-                label={dish.name}
-                value={dish.id}
-              />
+              <Picker.Item key={dish.id} label={dish.name} value={dish.id} />
             ))}
           </Picker>
         </View>
 
-        {/* Bouton ajouter */}
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
@@ -445,7 +417,6 @@ export default function CreateProformaFromSimulationScreen() {
           <Text style={styles.addButtonText}>Ajouter le plat</Text>
         </TouchableOpacity>
 
-        {/* Liste des plats sélectionnés */}
         {selectedMenu.map((item) => (
           <View key={item.dishId} style={styles.selectedDish}>
             <Text style={styles.dishName}>{item.name}</Text>
@@ -594,55 +565,10 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
 
-  dishBlock: {
-    marginBottom: 10,
-  },
-
-  dishRow: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: 12,
-    backgroundColor: '#F9FAFB',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  dishRowSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#EFF6FF',
-  },
-
   dishName: {
     fontSize: 14,
     fontWeight: '800',
     color: '#111827',
-  },
-
-  dishNameSelected: {
-    color: '#005BBB',
-  },
-
-  dishCategory: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 3,
-  },
-
-  selectBadge: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#374151',
-    backgroundColor: '#E5E7EB',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 999,
-    marginLeft: 10,
-  },
-
-  selectBadgeSelected: {
-    color: '#fff',
-    backgroundColor: '#007AFF',
   },
 
   notesInput: {
@@ -655,25 +581,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     backgroundColor: '#fff',
     textAlignVertical: 'top',
-  },
-
-  emptyText: {
-    color: '#6B7280',
-    fontSize: 14,
-    marginTop: 4,
-  },
-
-  menuSummary: {
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 10,
-  },
-
-  menuSummaryText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#111827',
   },
 
   button: {

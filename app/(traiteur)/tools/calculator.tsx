@@ -45,7 +45,6 @@ const emptyMeal = (): CateringMealInput => ({
   numberOfPeople: 0,
   unitPrice: 0,
   numberOfDays: 1,
-  discount: 0,
   foodCostRate: 0,
 });
 
@@ -53,7 +52,6 @@ const emptyService = (): CateringServiceInput => ({
   enabled: false,
   numberOfPeople: 0,
   numberOfDays: 1,
-  discount: 0,
   serverRate: 25,
   cookRate: 50,
   serviceMarginRate: 30, // ✅ AJOUTÉ (marge service %)
@@ -91,10 +89,13 @@ export default function CateringCalculator() {
   const [dateLivraison, setDateLivraison] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+
+
   const [simulation, setSimulation] = useState<CateringSimulationDraft>({
     name: '',
     clientId: '',
     dateLivraison: '',
+    discount: 0,
     breakfast: emptyMeal(),
     lunch: emptyMeal(),
     drinks: emptyMeal(),
@@ -240,6 +241,15 @@ export default function CateringCalculator() {
     return totalRevenue - totalCost;
   }, [totalRevenue, totalCost]);
 
+  const globalDiscount = Number(simulation.discount || 0);
+
+  const finalRevenue = Math.max(
+    totalRevenue - globalDiscount,
+    0
+  );
+
+  const finalMargin = finalRevenue - totalCost;
+
   /* =========================
      SAVE (CREATE ONLY)
   ========================= */
@@ -266,9 +276,10 @@ export default function CateringCalculator() {
         name: simulation.name || 'Simulation traiteur',
 
         // ✅ CORRIGÉ : on enregistre les bons totaux
-        globalTurnover: totalRevenue,
+        globalTurnover: finalRevenue,
         globalCost: totalCost,
-        globalMargin: totalMargin,
+        globalMargin: finalMargin,
+        discount: globalDiscount,
 
         status: 'validated',
       };
@@ -278,7 +289,7 @@ export default function CateringCalculator() {
       Alert.alert('Succès', 'Simulation enregistrée avec succès.');
 
       router.replace('/simulations');
-      
+
     } catch (e) {
       console.error('❌ save error:', e);
       Alert.alert('Erreur', 'Échec de la sauvegarde.');
@@ -449,6 +460,22 @@ export default function CateringCalculator() {
           readOnly,
         })}
 
+        <View style={styles.card}>
+  <Text style={styles.cardTitle}>💸 Remise globale</Text>
+
+  <NumberField
+    label="Remise globale ($)"
+    value={simulation.discount || 0}
+    onChange={(v) =>
+      setSimulation((p) => ({
+        ...p,
+        discount: v,
+      }))
+    }
+    disabled={readOnly}
+  />
+</View>
+
         {/* RÉCAP FINANCIER */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>💰 Récapitulatif financier</Text>
@@ -504,7 +531,10 @@ export default function CateringCalculator() {
           <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
 
           <Text style={styles.globalText}>
-            CA total : {totalRevenue.toFixed(2)} $
+            CA avant remise : {totalRevenue.toFixed(2)} $
+          </Text>
+          <Text style={styles.globalText}>
+            Remise globale : -{globalDiscount.toFixed(2)} $
           </Text>
           <Text style={styles.totalBreakdown}>
             Repas : {result.globalTurnover.toFixed(2)} $
@@ -522,7 +552,11 @@ export default function CateringCalculator() {
           </Text>
 
           <Text style={styles.globalText}>
-            Marge : {totalMargin.toFixed(2)} $
+            CA final : {finalRevenue.toFixed(2)} $
+          </Text>
+
+          <Text style={styles.globalText}>
+            Marge finale : {finalMargin.toFixed(2)} $
           </Text>
         </View>
 
@@ -639,12 +673,7 @@ function renderMealBlock({
             onChange={(v) => updateMeal(key, { numberOfDays: v })}
             disabled={readOnly}
           />
-          <NumberField
-            label="Remise ($ / jour)"
-            value={meal.discount}
-            onChange={(v) => updateMeal(key, { discount: v })}
-            disabled={readOnly}
-          />
+
           <NumberField
             label="Taux coût matière (%)"
             value={meal.foodCostRate}
@@ -714,12 +743,7 @@ function renderServiceBlock({
             onChange={(v) => updateService({ cookRate: v })}
             disabled={readOnly}
           />
-          <NumberField
-            label="Remise ($ / jour)"
-            value={service.discount}
-            onChange={(v) => updateService({ discount: v })}
-            disabled={readOnly}
-          />
+
 
           {/* ✅ AJOUTÉ */}
           <NumberField

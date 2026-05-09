@@ -76,7 +76,7 @@ export function buildProformaHTML(
       (item) => `
 <tr>
   <td class="designation">${safe(item.label)}</td>
-  <td class="center">1</td>
+  <td class="center">${Number(item.numberOfDays || 1)}</td>
   <td class="center">${item.quantity || 0}</td>
   <td class="currency">$</td>
   <td class="price">${money(item.unitPrice)}</td>
@@ -86,8 +86,9 @@ export function buildProformaHTML(
     )
     .join('');
 
-  const subtotal = proforma.totals?.subtotal ?? proforma.totals?.total ?? 0;
-  const total = proforma.totals?.total ?? subtotal;
+  const subtotal = proforma.totals?.subtotal ?? 0;
+  const discount = proforma.totals?.discount ?? 0;
+  const total = proforma.totals?.total ?? subtotal - discount;
 
   const clientName = safeClientName(proforma);
   const clientRccm = safe(proforma.clientRccm);
@@ -569,6 +570,14 @@ body {
       <div style="text-align:right;">${money(subtotal)}</div>
     </div>
 
+    ${discount > 0 ? `
+<div class="subtotal">
+  <div>Remise :</div>
+  <div>$</div>
+  <div style="text-align:right;">-${money(discount)}</div>
+</div>
+` : ''}
+
     <div class="grand-total">
       <div>Total à payer :</div>
       <div>$</div>
@@ -594,6 +603,7 @@ body {
   ${footerHTML}
 </div>
 
+${proforma.menu && proforma.menu.length > 0 ? `
 <div class="pdf-page">
   ${headerHTML}
 
@@ -626,6 +636,7 @@ body {
 
   ${footerHTML}
 </div>
+` : ''}
 
 </body>
 </html>

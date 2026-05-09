@@ -26,6 +26,8 @@ export type CateringProformaItem = {
   quantity: number;
   unitPrice: number;
   total: number;
+  // AJOUT
+  numberOfDays?: number;
 };
 
 export type CateringProformaMenuItem = {
@@ -70,6 +72,7 @@ export type CateringProforma = {
 
   totals: {
     subtotal: number;
+    discount?: number;
     tax?: number;
     total: number;
     currency: 'USD' | 'CDF';
@@ -110,6 +113,7 @@ function normalizeItems(items?: CateringProformaItem[]): CateringProformaItem[] 
         quantity,
         unitPrice,
         total,
+        numberOfDays: Number(item.numberOfDays || 1),
       };
     })
     .filter((item) => item.label.length > 0);
@@ -131,10 +135,18 @@ function normalizeMenu(
 }
 
 function normalizeTotals(totals?: CateringProforma['totals']) {
+  const subtotal = Number(totals?.subtotal || 0);
+  const discount = Number(totals?.discount || 0);
+  const tax = Number(totals?.tax || 0);
+  const total = Number(
+    totals?.total || Math.max(subtotal - discount + tax, 0)
+  );
+
   return {
-    subtotal: Number(totals?.subtotal || 0),
-    tax: Number(totals?.tax || 0),
-    total: Number(totals?.total || 0),
+    subtotal,
+    discount,
+    tax,
+    total,
     currency: totals?.currency || 'USD',
   };
 }
@@ -293,7 +305,7 @@ export async function updateCateringProforma(
   if (typeof data.serviceType !== 'undefined') {
     payload.serviceType = cleanText(data.serviceType);
   }
-  
+
   if (typeof data.clientCity !== 'undefined') {
     payload.clientCity = cleanText(data.clientCity);
   }

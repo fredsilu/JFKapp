@@ -9,29 +9,36 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import ClientDropdownFilter, { ClientFilterValue } from '@/src/components/ClientDropdownFilter';
+import ClientDropdownFilter, {
+  ClientFilterValue,
+} from '@/src/components/ClientDropdownFilter';
 import { fetchClients } from '@/src/services/clientService';
 
-type Client = { id: string; name: string };
+type Client = {
+  id: string;
+  name: string;
+};
 
 export default function CateringNewSimulation() {
   const router = useRouter();
 
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<ClientFilterValue | null>(null);
+  const [selectedClientId, setSelectedClientId] =
+    useState<ClientFilterValue | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const [loading, setLoading] = useState(true);
 
   const selectedClient = useMemo(() => {
     if (!selectedClientId || selectedClientId === 'ALL') return null;
-    return clients.find(c => c.id === selectedClientId) || null;
+
+    return clients.find((client) => client.id === selectedClientId) || null;
   }, [selectedClientId, clients]);
 
   useEffect(() => {
-    const loadClients = async () => {
+    async function loadClients() {
       try {
         setLoading(true);
+
         const data = await fetchClients();
         setClients(data);
       } catch (e) {
@@ -40,11 +47,12 @@ export default function CateringNewSimulation() {
       } finally {
         setLoading(false);
       }
-    };
+    }
+
     loadClients();
   }, []);
 
-  const handleStart = () => {
+  function handleStart() {
     if (!selectedClient) {
       Alert.alert('Client requis', 'Veuillez sélectionner un client.');
       return;
@@ -57,7 +65,7 @@ export default function CateringNewSimulation() {
         clientName: selectedClient.name,
       },
     });
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -86,10 +94,9 @@ export default function CateringNewSimulation() {
         )}
       </View>
 
-      {/* ✅ BUG 4 FIX : si dropdown ouvert, on masque le bouton */}
       {!dropdownOpen && (
         <TouchableOpacity
-          style={[styles.button, !selectedClient && { opacity: 0.5 }]}
+          style={[styles.button, !selectedClient && styles.buttonDisabled]}
           disabled={!selectedClient}
           onPress={handleStart}
         >
@@ -101,14 +108,20 @@ export default function CateringNewSimulation() {
 }
 
 const styles = StyleSheet.create({
-
-  title: { fontSize: 22, fontWeight: '800', marginBottom: 16 },
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: '#F4F6F8',
     overflow: 'visible',
   },
+
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 16,
+    color: '#111827',
+  },
+
   card: {
     backgroundColor: '#fff',
     padding: 14,
@@ -118,11 +131,21 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
+  label: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 8,
+  },
 
-  label: { fontSize: 13, color: '#555', marginBottom: 8 },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
 
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  loadingText: { color: '#666' },
+  loadingText: {
+    color: '#666',
+  },
 
   button: {
     backgroundColor: '#007AFF',
@@ -131,5 +154,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  buttonText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+  },
 });

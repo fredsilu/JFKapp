@@ -11,7 +11,6 @@ export interface CateringMealInput {
   numberOfPeople: number;
   unitPrice: number; // $ / personne / jour
   numberOfDays: number;
-  discount: number; // $
   foodCostRate: number; // %
   name?: string; // utile pour documents
 }
@@ -27,7 +26,7 @@ export interface CateringServiceInput {
   enabled: boolean;
   numberOfPeople: number;
   numberOfDays: number;
-  discount: number;
+
 
   serverRate: number;
   cookRate: number;
@@ -74,8 +73,10 @@ export interface CateringSimulationDraft {
   // infos UI
   name?: string;
   clientId?: string;
+  discount?: number;
 
   dateLivraison: string;
+
 
   // infos commerciales
   designation?: string;
@@ -113,6 +114,7 @@ export type CateringSimulation = CateringSimulationDraft & {
 
   name: string;
   clientId: string;
+  discount?: number;
 
   globalTurnover?: number;
   globalCost?: number;

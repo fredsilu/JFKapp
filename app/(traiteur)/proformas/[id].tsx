@@ -309,7 +309,9 @@ export default function ProformaDetailScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemLabel}>{item.label}</Text>
                 <Text style={styles.itemSub}>
-                  Qté : {item.quantity} × {formatCurrency(item.unitPrice)}
+                  Jrs : {item.numberOfDays || 1} ×
+                  Qté : {item.quantity} ×
+                  {formatCurrency(item.unitPrice)}
                 </Text>
               </View>
 
