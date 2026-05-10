@@ -18,11 +18,10 @@ import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
 import Modal from '@/components/Modal';
 import OrderForm from '@/components/OrderForm';
 import OrderIngredientsModal from '@/components/OrderIngredientsModal';
-import {
-  createDocumentFromOrder,
-  DocumentType,
-} from '@/src/services/cateringDocumentService';
+
 import { useState } from 'react';
+import { router } from 'expo-router';
+import { createInvoiceFromOrder } from '@/src/services/cateringInvoice.service';
 
 interface OrderDetailsProps {
 
@@ -35,7 +34,7 @@ interface OrderDetailsProps {
 export default function OrderDetails({ order, onClose, onUpdated }: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
-  const [loadingDocument, setLoadingDocument] = useState<DocumentType | null>(null);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
 
   const STATUS_TRANSITIONS: Record<Order['status'], Order['status']> = {
     'En cours': 'En préparation',
@@ -84,71 +83,42 @@ export default function OrderDetails({ order, onClose, onUpdated }: OrderDetails
       Alert.alert('Erreur', 'Impossible de modifier la commande.');
     }
   };
-
-  const calculateDishUnitPrice = (dish: any) => {
-    if (!dish?.ingredients || dish.ingredients.length === 0) return 0;
-
-    return dish.ingredients.reduce((sum: number, item: any) => {
-      const ingredientPrice = Number(item.ingredient?.price || 0);
-      const quantity = Number(item.quantity || 0);
-
-      return sum + ingredientPrice * quantity;
-    }, 0);
-  };
-  const handleCreateDocument = async (type: DocumentType) => {
+  const handleCreateInvoice = async () => {
     try {
-      setLoadingDocument(type);
+      setLoadingInvoice(true);
 
-      const items = (order.dishes || []).map((d) => {
-        const unitPrice = calculateDishUnitPrice(d.dish);
-        const quantity = Number(d.quantity || 0);
-        const total = quantity * unitPrice;
+      const cateringOrder = order as any;
 
-        return {
-          label: d.dish?.name || d.name || 'Plat',
-          quantity,
-          unitPrice,
-          total,
-        };
-      });
+      if (!cateringOrder.items || cateringOrder.items.length === 0) {
+        Alert.alert('Erreur', 'Cette commande ne contient aucune ligne à facturer.');
+        return;
+      }
 
-      const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-      const additionalCost = calculateOrderTotalCost({
-        ...order,
-        dishes: [],
-        additionalIngredients: order.additionalIngredients || [],
-      });
+      if (!cateringOrder.totals) {
+        Alert.alert('Erreur', 'Les totaux de la commande sont manquants.');
+        return;
+      }
 
-      const total = subtotal + additionalCost;
-
-      const orderForDocument = {
-        ...order,
-        items,
-        totals: {
-          subtotal: total,
-          discount: 0,
-          total,
-          currency: 'USD',
-        },
-      };
-
-      console.log('ORDER FOR DOCUMENT:', orderForDocument);
-
-      await createDocumentFromOrder(orderForDocument as any, type);
+      const invoice = await createInvoiceFromOrder(cateringOrder);
 
       Alert.alert(
         'Succès',
-        type === 'proforma'
-          ? 'Proforma générée avec succès'
-          : 'Facture générée avec succès'
+        `Facture ${invoice.number} générée avec succès.`
       );
-    } catch (error) {
-      console.error('Erreur génération document:', error);
-      Alert.alert('Erreur', 'Erreur génération document');
+
+      onUpdated?.();
+    } catch (error: any) {
+      console.error('Erreur génération facture:', error);
+      Alert.alert(
+        'Erreur',
+        error?.message || 'Impossible de générer la facture.'
+      );
     } finally {
-      setLoadingDocument(null);
+      setLoadingInvoice(false);
     }
   };
+
+
   return (
     <>
       <View style={styles.container}>
@@ -192,27 +162,29 @@ export default function OrderDetails({ order, onClose, onUpdated }: OrderDetails
               <TouchableOpacity
                 style={[styles.docButton, styles.proformaButton]}
                 onPress={() => {
-                  console.log("CLICK PROFORMA");
-                  handleCreateDocument('proforma');
+                  const proformaId = (order as any).proformaId;
+
+                  if (!proformaId) {
+                    Alert.alert('Information', 'Aucune proforma source liée à cette commande.');
+                    return;
+                  }
+
+                  router.push({
+                    pathname: '/(traiteur)/proformas/[id]',
+                    params: { id: proformaId },
+                  });
                 }}
-                disabled={loadingDocument !== null}
               >
-                {loadingDocument === 'proforma' ? (
-                  <ActivityIndicator size="small" color="#0b5ed7" />
-                ) : (
-                  <>
-                    <MaterialIcons name="description" size={18} color="#0b5ed7" />
-                    <Text style={styles.proformaButtonText}>Proforma</Text>
-                  </>
-                )}
+                <MaterialIcons name="visibility" size={18} color="#0b5ed7" />
+                <Text style={styles.proformaButtonText}>Voir proforma</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.docButton, styles.invoiceButton]}
-                onPress={() => handleCreateDocument('invoice')}
-                disabled={loadingDocument !== null}
+                onPress={handleCreateInvoice}
+                disabled={loadingInvoice}
               >
-                {loadingDocument === 'invoice' ? (
+                {loadingInvoice ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
