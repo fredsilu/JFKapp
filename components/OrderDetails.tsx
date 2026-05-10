@@ -1,5 +1,6 @@
-//components/OrderDetails.tsx
+// components/OrderDetails.tsx
 
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,303 +11,930 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+import { router } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { Order } from '@/types';
-import { updateOrder, updateOrderStatus } from '@/src/services/firestore';
-import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
+
+import {
+  updateOrder,
+  updateOrderStatus,
+} from '@/src/services/cateringOrderService';
+import { formatCurrency } from '@/src/utils/costs';
+
 import Modal from '@/components/Modal';
 import OrderForm from '@/components/OrderForm';
 import OrderIngredientsModal from '@/components/OrderIngredientsModal';
 
-import { useState } from 'react';
-import { router } from 'expo-router';
 import { createInvoiceFromOrder } from '@/src/services/cateringInvoice.service';
 
 interface OrderDetailsProps {
-
   order: Order;
   onClose: () => void;
   onUpdated?: () => void;
 }
 
-
-export default function OrderDetails({ order, onClose, onUpdated }: OrderDetailsProps) {
+export default function OrderDetails({
+  order,
+  onClose,
+  onUpdated,
+}: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
 
-  const STATUS_TRANSITIONS: Record<Order['status'], Order['status']> = {
-    'En cours': 'En préparation',
-    'En préparation': 'Livré',
-    'Livré': 'Livré',
-  };
+
+
+  /**
+   * =========================
+   * NORMALISATION DES ITEMS
+   * =========================
+   */
+
+  const items = useMemo(() => {
+    if (!order) return [];
+
+    // Nouveau format
+    if (Array.isArray((order as any).items)) {
+      return (order as any).items;
+    }
+
+    // Ancien format
+    if (Array.isArray((order as any).dishes)) {
+      return (order as any).dishes;
+    }
+
+    return [];
+  }, [order]);
+
+  /**
+   * =========================
+   * INGREDIENTS
+   * =========================
+   */
+
+  const additionalIngredients =
+    order.additionalIngredients || [];
+
+  const hasIngredientsData =
+    items.length > 0 ||
+    additionalIngredients.length > 0;
+
+  /**
+   * =========================
+   * TOTALS
+   * =========================
+   */
+
+  const calculatedTotal = useMemo(() => {
+    const totals = (order as any)?.totals;
+
+    if (totals?.total && totals.total > 0) {
+      return totals.total;
+    }
+
+    return items.reduce((sum: number, item: any) => {
+      const itemTotal =
+        item?.total ||
+        (item?.quantity || 0) * (item?.unitPrice || 0);
+
+      return sum + itemTotal;
+    }, 0);
+  }, [items, order]);
+
+  const billedAmount = useMemo(() => {
+    // priorité au montant brut venant des totals
+    if ((order as any)?.totals?.subtotal) {
+      return (order as any).totals.subtotal;
+    }
+
+    // fallback calcul manuel avant remise
+    return items.reduce((sum: number, item: any) => {
+      const quantity = item?.quantity || 0;
+      const unitPrice = item?.unitPrice || 0;
+
+      return sum + quantity * unitPrice;
+    }, 0);
+  }, [items, order]);
+
+  const deliveryDate =
+    order.deliveryDate ||
+    (order as any).eventDate ||
+    (order as any).dateLivraison ||
+    (order as any).proforma?.deliveryDate ||
+    '-';
+
+  const deliveryTime =
+    order.deliveryTime ||
+    (order as any).eventTime ||
+    (order as any).proforma?.deliveryTime ||
+    '-';
+
+  const deliveryAddress =
+    order.deliveryAddress ||
+    order.address ||
+    (order as any).eventLocation ||
+    (order as any).proforma?.deliveryAddress ||
+    '-';
+
+  /**
+   * =========================
+   * STATUS COLOR
+   * =========================
+   */
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'En cours':
-        return '#007AFF';
+        return '#2563EB';
+
       case 'En préparation':
-        return '#FF9500';
+        return '#D97706';
+
       case 'Livré':
-        return '#34C759';
+        return '#059669';
+
       default:
-        return '#666';
+        return '#6B7280';
+    }
+  };
+
+  const statusColor = getStatusColor(order.status);
+
+  /**
+   * =========================
+   * UPDATE STATUS
+   * =========================
+   */
+
+  const getNextStatus = (status?: string) => {
+    switch (status) {
+      case 'draft':
+      case 'confirmed':
+      case 'En cours':
+        return 'En préparation';
+
+      case 'En préparation':
+        return 'Livré';
+
+      case 'Livré':
+        return null;
+
+      default:
+        return 'En préparation';
     }
   };
 
   const handleUpdateStatus = async () => {
     try {
-      const nextStatus = STATUS_TRANSITIONS[order.status];
-      if (nextStatus !== order.status) {
-        await updateOrderStatus(order.id, nextStatus);
+      const nextStatus = getNextStatus(order.status as any);
+
+      if (!nextStatus) {
+        Alert.alert(
+          'Information',
+          'Cette commande est déjà livrée.'
+        );
+        return;
       }
+
+      Alert.alert(
+        'Confirmation',
+        `Voulez-vous vraiment passer la commande au statut : "${nextStatus}" ?`,
+        [
+          {
+            text: 'Annuler',
+            style: 'cancel',
+          },
+          {
+            text: 'Confirmer',
+            style: 'default',
+            onPress: async () => {
+              try {
+                await updateOrderStatus(
+                  order.id,
+                  nextStatus as any
+                );
+
+                Alert.alert(
+                  'Succès',
+                  `Commande passée à : ${nextStatus}`
+                );
+
+                await onUpdated?.();
+              } catch (error) {
+                console.error(error);
+
+                Alert.alert(
+                  'Erreur',
+                  'Impossible de modifier le statut.'
+                );
+              }
+            },
+          },
+        ]
+      );
     } catch (error) {
-      console.error('Erreur mise à jour statut:', error);
-      Alert.alert('Erreur', 'Impossible de mettre à jour le statut.');
+      console.error(error);
+
+      Alert.alert(
+        'Erreur',
+        'Impossible de modifier le statut.'
+      );
     }
   };
 
+  /**
+   * =========================
+   * UPDATE ORDER
+   * =========================
+   */
+
   const handleUpdateOrder = async (
-    updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
+    updatedOrder: Omit<
+      Order,
+      'id' | 'createdAt' | 'updatedAt'
+    >
   ) => {
     try {
-      await updateOrder(order.id, updatedOrder);
+      await updateOrder(order.id, updatedOrder as any);
 
       setShowEditForm(false);
 
-      Alert.alert('Succès', 'Commande modifiée avec succès.');
+      Alert.alert(
+        'Succès',
+        'Commande modifiée avec succès.'
+      );
 
-      onUpdated?.();
+      await onUpdated?.();
     } catch (error) {
-      console.error('Erreur mise à jour commande:', error);
-      Alert.alert('Erreur', 'Impossible de modifier la commande.');
+      console.error(error);
+
+      Alert.alert(
+        'Erreur',
+        'Impossible de modifier la commande.'
+      );
     }
   };
+
+  /**
+   * =========================
+   * CREATE INVOICE
+   * =========================
+   */
+
   const handleCreateInvoice = async () => {
     try {
       setLoadingInvoice(true);
 
-      const cateringOrder = order as any;
+      if (!order?.id) {
+        Alert.alert(
+          'Erreur',
+          'Commande invalide.'
+        );
 
-      if (!cateringOrder.items || cateringOrder.items.length === 0) {
-        Alert.alert('Erreur', 'Cette commande ne contient aucune ligne à facturer.');
         return;
       }
 
-      if (!cateringOrder.totals) {
-        Alert.alert('Erreur', 'Les totaux de la commande sont manquants.');
+      if (items.length === 0) {
+        Alert.alert(
+          'Erreur',
+          'Aucun élément à facturer.'
+        );
+
         return;
       }
 
-      const invoice = await createInvoiceFromOrder(cateringOrder);
+      const invoice =
+        await createInvoiceFromOrder(order as any);
 
       Alert.alert(
         'Succès',
-        `Facture ${invoice.number} générée avec succès.`
+        `Facture ${invoice.number} créée avec succès.`
       );
 
-      onUpdated?.();
+      await onUpdated?.();
     } catch (error: any) {
-      console.error('Erreur génération facture:', error);
+      console.error(error);
+
       Alert.alert(
         'Erreur',
-        error?.message || 'Impossible de générer la facture.'
+        error?.message ||
+        'Impossible de générer la facture.'
       );
     } finally {
       setLoadingInvoice(false);
     }
   };
 
+  /**
+   * =========================
+   * OPEN PROFORMA
+   * =========================
+   */
+
+  const openSourceProforma = () => {
+    const proformaId =
+      (order as any)?.proformaId ||
+      (order as any)?.sourceProformaId;
+
+    if (!proformaId) {
+      Alert.alert(
+        'Information',
+        'Aucune proforma liée.'
+      );
+
+      return;
+    }
+
+    router.push({
+      pathname: '/(traiteur)/proformas/[id]',
+      params: {
+        id: proformaId,
+      },
+    });
+  };
 
   return (
     <>
       <View style={styles.container}>
         {/* HEADER */}
+
         <View style={styles.header}>
-          <Text style={styles.title}>Détails de la commande</Text>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onClose}
+          >
+            <MaterialIcons
+              name="arrow-back"
+              size={22}
+              color="#111827"
+            />
+          </TouchableOpacity>
 
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => setShowIngredientsModal(true)}>
-              <MaterialIcons name="list" size={22} color="#34C759" />
-            </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>
+              Détails commande
+            </Text>
 
-            <TouchableOpacity onPress={() => setShowEditForm(true)}>
-              <MaterialIcons name="edit" size={22} color="#007AFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#666" />
-            </TouchableOpacity>
+            <Text style={styles.headerSubtitle}>
+              {(order as any).number ||
+                (order as any).orderNumber ||
+                'CMD-XXXX'}
+            </Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() =>
+              setShowEditForm(true)
+            }
+          >
+            <MaterialIcons
+              name="edit"
+              size={22}
+              color="#2563EB"
+            />
+          </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* FACTURATION */}
-          <View style={[styles.sectionCard, styles.bgBlue]}>
-            <Text style={styles.sectionTitle}>Facturation</Text>
+        <ScrollView
+          contentContainerStyle={
+            styles.scrollContent
+          }
+        >
+          {/* HERO */}
 
-            {order.designation ? (
-              <Text style={styles.line}>• {order.designation}</Text>
-            ) : (
-              <Text style={styles.line}>• Aucune désignation</Text>
-            )}
+          <View style={styles.heroCard}>
+            <View style={styles.heroTop}>
+              <View>
+                <Text style={styles.heroLabel}>
+                  {order.designation ||
+                    'Commande traiteur'}
+                </Text>
 
-            {order.billedAmount !== undefined ? (
-              <Text style={styles.billedAmount}>
-                • Montant facturé : {formatCurrency(order.billedAmount)}
-              </Text>
-            ) : null}
+                <Text style={styles.heroSmallLabel}>
+                  Montant facturé
+                </Text>
 
-            <View style={styles.documentsRow}>
-              <TouchableOpacity
-                style={[styles.docButton, styles.proformaButton]}
-                onPress={() => {
-                  const proformaId = (order as any).proformaId;
+                <Text style={styles.heroAmount}>
+                  {formatCurrency(billedAmount)}
+                </Text>
+              </View>
 
-                  if (!proformaId) {
-                    Alert.alert('Information', 'Aucune proforma source liée à cette commande.');
-                    return;
-                  }
-
-                  router.push({
-                    pathname: '/(traiteur)/proformas/[id]',
-                    params: { id: proformaId },
-                  });
-                }}
-              >
-                <MaterialIcons name="visibility" size={18} color="#0b5ed7" />
-                <Text style={styles.proformaButtonText}>Voir proforma</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.docButton, styles.invoiceButton]}
-                onPress={handleCreateInvoice}
-                disabled={loadingInvoice}
-              >
-                {loadingInvoice ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <MaterialIcons name="receipt-long" size={18} color="#fff" />
-                    <Text style={styles.invoiceButtonText}>Facture</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* STATUT */}
-          <View style={[styles.sectionCard, styles.bgGray]}>
-            <Text style={styles.sectionTitle}>Statut</Text>
-
-            <View style={styles.statusRow}>
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: `${getStatusColor(order.status)}20` },
+                  {
+                    backgroundColor:
+                      `${statusColor}18`,
+                  },
                 ]}
               >
                 <Text
-                  style={{
-                    color: getStatusColor(order.status),
-                    fontWeight: '600',
-                  }}
+                  style={[
+                    styles.statusText,
+                    {
+                      color: statusColor,
+                    },
+                  ]}
                 >
                   {order.status}
                 </Text>
               </View>
+            </View>
 
-              {order.status !== 'Livré' && (
-                <TouchableOpacity
-                  style={[
-                    styles.updateBtn,
-                    {
-                      backgroundColor: getStatusColor(
-                        STATUS_TRANSITIONS[order.status]
-                      ),
-                    },
-                  ]}
-                  onPress={handleUpdateStatus}
-                >
-                  <Text style={styles.updateBtnText}>
-                    → {STATUS_TRANSITIONS[order.status]}
-                  </Text>
-                </TouchableOpacity>
-              )}
+            <View style={styles.heroDivider} />
+
+            <View style={styles.heroGrid}>
+              <View style={styles.heroItem}>
+                <MaterialIcons
+                  name="event"
+                  size={18}
+                  color="#9CA3AF"
+                />
+
+                <Text style={styles.heroItemText}>
+                  {deliveryDate}
+                </Text>
+              </View>
+
+              <View style={styles.heroItem}>
+                <MaterialIcons
+                  name="schedule"
+                  size={18}
+                  color="#9CA3AF"
+                />
+
+                <Text style={styles.heroItemText}>
+                  {deliveryTime}
+                </Text>
+              </View>
             </View>
           </View>
 
+          {/* ACTIONS */}
+
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity
+              style={styles.primaryAction}
+              onPress={
+                handleCreateInvoice
+              }
+              disabled={loadingInvoice}
+            >
+              {loadingInvoice ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#fff"
+                />
+              ) : (
+                <>
+                  <MaterialIcons
+                    name="receipt-long"
+                    size={20}
+                    color="#fff"
+                  />
+
+                  <Text
+                    style={
+                      styles.primaryActionText
+                    }
+                  >
+                    Créer facture
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryAction}
+              onPress={
+                openSourceProforma
+              }
+            >
+              <MaterialIcons
+                name="visibility"
+                size={20}
+                color="#2563EB"
+              />
+
+              <Text
+                style={
+                  styles.secondaryActionText
+                }
+              >
+                Voir proforma
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryAction}
+              onPress={() => {
+                if (
+                  !hasIngredientsData
+                ) {
+                  Alert.alert(
+                    'Information',
+                    'Aucun ingrédient disponible.'
+                  );
+
+                  return;
+                }
+
+                setShowIngredientsModal(
+                  true
+                );
+              }}
+            >
+              <MaterialIcons
+                name="list-alt"
+                size={20}
+                color="#059669"
+              />
+
+              <Text
+                style={
+                  styles.secondaryActionText
+                }
+              >
+                Ingrédients
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryAction}
+              onPress={() =>
+                router.push({
+                  pathname: '/(traiteur)/orders/operational/[id]',
+                  params: { id: order.id },
+                } as any)
+              }
+            >
+              <MaterialIcons name="assignment" size={20} color="#7C3AED" />
+              <Text style={styles.secondaryActionText}>Fiche équipe</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* STATUS BUTTON */}
+
+          {order.status !== 'Livré' && (
+            <TouchableOpacity
+              style={[
+                styles.nextStatusButton,
+                {
+                  backgroundColor:
+                    getStatusColor(
+                      getNextStatus(order.status as any) as any
+                    ),
+                },
+              ]}
+              onPress={
+                handleUpdateStatus
+              }
+            >
+              <Text
+                style={
+                  styles.nextStatusText
+                }
+              >
+                Passer à :
+                {' '}
+                {
+                  getNextStatus(order.status as any) as any
+                }
+              </Text>
+
+              <MaterialIcons
+                name="arrow-forward"
+                size={20}
+                color="#fff"
+              />
+            </TouchableOpacity>
+          )}
+
           {/* CLIENT */}
-          <View style={[styles.sectionCard, styles.bgWhite]}>
-            <Text style={styles.sectionTitle}>Client</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              Client
+            </Text>
 
             <View style={styles.clientRow}>
               <Image
                 source={
-                  order.client?.profilePicture
-                    ? { uri: order.client.profilePicture }
+                  order.client
+                    ?.profilePicture
+                    ? {
+                      uri: order.client
+                        .profilePicture,
+                    }
                     : require('@/assets/images/no_client_picture.jpg')
                 }
                 style={styles.clientImage}
               />
 
               <View style={styles.clientInfo}>
-                <Text style={styles.clientName}>{order.client?.name || '-'}</Text>
-                {!!order.client?.phone && (
-                  <Text style={styles.clientMeta}>{order.client.phone}</Text>
-                )}
-                {!!order.client?.email && (
-                  <Text style={styles.clientMeta}>{order.client.email}</Text>
-                )}
+                <Text
+                  style={
+                    styles.clientName
+                  }
+                >
+                  {order.client?.name ||
+                    'Client non défini'}
+                </Text>
+
+                {!!order.client
+                  ?.phone && (
+                    <Text
+                      style={
+                        styles.clientMeta
+                      }
+                    >
+                      {
+                        order.client
+                          .phone
+                      }
+                    </Text>
+                  )}
+
+                {!!order.client
+                  ?.email && (
+                    <Text
+                      style={
+                        styles.clientMeta
+                      }
+                    >
+                      {
+                        order.client
+                          .email
+                      }
+                    </Text>
+                  )}
               </View>
             </View>
           </View>
 
           {/* LIVRAISON */}
-          <View style={[styles.sectionCard, styles.bgGray]}>
-            <Text style={styles.sectionTitle}>Livraison</Text>
-            <Text style={styles.line}>📅 {order.deliveryDate || '-'}</Text>
-            <Text style={styles.line}>⏰ {order.deliveryTime || '-'}</Text>
-            <Text style={styles.line}>📍 {order.address || '-'}</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              Livraison
+            </Text>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons
+                name="location-on"
+                size={18}
+                color="#6B7280"
+              />
+
+              <Text style={styles.infoText}>
+                {deliveryAddress}
+              </Text>
+            </View>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons
+                name="event"
+                size={18}
+                color="#6B7280"
+              />
+
+              <Text style={styles.infoText}>
+                {deliveryDate}
+              </Text>
+            </View>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons
+                name="schedule"
+                size={18}
+                color="#6B7280"
+              />
+
+              <Text style={styles.infoText}>
+                {deliveryTime}
+              </Text>
+            </View>
           </View>
 
-          {/* PLATS */}
-          <View style={[styles.sectionCard, styles.bgWhite]}>
-            <Text style={styles.sectionTitle}>Plats commandés</Text>
+          {/* ITEMS */}
 
-            {order.dishes && order.dishes.length > 0 ? (
-              order.dishes.map(({ dish, quantity }) => (
-                <Text key={dish.id} style={styles.line}>
-                  • {quantity} × {dish.name}
-                </Text>
-              ))
+          <View style={styles.card}>
+            <View
+              style={
+                styles.sectionHeaderRow
+              }
+            >
+              <Text
+                style={
+                  styles.sectionTitle
+                }
+              >
+                Éléments commandés
+              </Text>
+
+              <Text
+                style={
+                  styles.countBadge
+                }
+              >
+                {items.length}
+              </Text>
+            </View>
+
+            {items.length > 0 ? (
+              items.map(
+                (
+                  item: any,
+                  index: number
+                ) => {
+                  const itemName =
+                    item?.dish?.name ||
+                    item?.label ||
+                    item?.name ||
+                    'Élément';
+
+                  const quantity =
+                    item?.quantity || 0;
+
+                  const total =
+                    item?.total ||
+                    quantity *
+                    (item?.unitPrice ||
+                      0);
+
+                  return (
+                    <View
+                      key={
+                        item?.id ||
+                        item?.dish?.id ||
+                        index
+                      }
+                      style={
+                        styles.dishRow
+                      }
+                    >
+                      <View
+                        style={
+                          styles.dishIcon
+                        }
+                      >
+                        <MaterialIcons
+                          name="restaurant"
+                          size={18}
+                          color="#2563EB"
+                        />
+                      </View>
+
+                      <View
+                        style={
+                          styles.dishInfo
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.dishName
+                          }
+                        >
+                          {itemName}
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.dishMeta
+                          }
+                        >
+                          Quantité :
+                          {' '}
+                          {quantity}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={
+                          styles.itemAmount
+                        }
+                      >
+                        {formatCurrency(
+                          total
+                        )}
+                      </Text>
+                    </View>
+                  );
+                }
+              )
             ) : (
-              <Text style={styles.line}>Aucun plat sélectionné</Text>
+              <Text style={styles.emptyText}>
+                Aucun élément
+              </Text>
             )}
           </View>
 
+          {/* INGREDIENTS */}
+
+          {additionalIngredients.length >
+            0 && (
+              <View style={styles.card}>
+                <View
+                  style={
+                    styles.sectionHeaderRow
+                  }
+                >
+                  <Text
+                    style={
+                      styles.sectionTitle
+                    }
+                  >
+                    Ingrédients
+                    supplémentaires
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.countBadge
+                    }
+                  >
+                    {
+                      additionalIngredients.length
+                    }
+                  </Text>
+                </View>
+
+                {additionalIngredients.map(
+                  (
+                    item: any,
+                    index: number
+                  ) => (
+                    <View
+                      key={
+                        item?.ingredient
+                          ?.id || index
+                      }
+                      style={
+                        styles.ingredientRow
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.ingredientName
+                        }
+                      >
+                        {item?.ingredient
+                          ?.name ||
+                          'Ingrédient'}
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.ingredientQty
+                        }
+                      >
+                        {item?.quantity || 0}
+                        {' '}
+                        {item?.ingredient
+                          ?.unit || ''}
+                      </Text>
+                    </View>
+                  )
+                )}
+              </View>
+            )}
+
           {/* TOTAL */}
-          <View style={[styles.sectionCard, styles.bgGreen]}>
-            <Text style={styles.totalLabel}>Coût de la commande</Text>
+
+          <View style={styles.totalCard}>
+            <Text style={styles.totalLabel}>
+              Total estimé
+            </Text>
+
             <Text style={styles.totalValue}>
-              {formatCurrency(calculateOrderTotalCost(order))}
+              {formatCurrency(
+                calculatedTotal
+              )}
             </Text>
           </View>
         </ScrollView>
       </View>
 
+      {/* EDIT MODAL */}
+
       <Modal visible={showEditForm}>
         <OrderForm
           order={order}
-          onClose={() => setShowEditForm(false)}
+          onClose={() =>
+            setShowEditForm(false)
+          }
           onSubmit={handleUpdateOrder}
         />
       </Modal>
 
+      {/* INGREDIENTS MODAL */}
+
       <OrderIngredientsModal
         visible={showIngredientsModal}
-        order={order}
+        order={order as any}
         onClose={() => setShowIngredientsModal(false)}
       />
     </>
@@ -316,173 +944,338 @@ export default function OrderDetails({ order, onClose, onUpdated }: OrderDetails
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F3F4F6',
   },
 
   header: {
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#E5E7EB',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
   },
 
-  title: {
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  headerCenter: {
+    flex: 1,
+  },
+
+  headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#111827',
   },
 
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
   },
 
   scrollContent: {
     padding: 16,
-    gap: 16,
+    gap: 14,
+    paddingBottom: 40,
   },
 
-  sectionCard: {
-    borderRadius: 12,
-    padding: 16,
+  heroCard: {
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    padding: 18,
   },
 
-  bgWhite: {
-    backgroundColor: '#fff',
-  },
-
-  bgGray: {
-    backgroundColor: '#f0f0f0',
-  },
-
-  bgBlue: {
-    backgroundColor: '#e9f2ff',
-  },
-
-  bgGreen: {
-    backgroundColor: '#e9f7ef',
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-
-  line: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-
-  billedAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0b5ed7',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-
-  documentsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-    flexWrap: 'wrap',
-  },
-
-  docButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minWidth: 120,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-
-  proformaButton: {
-    backgroundColor: '#dbeafe',
-    borderWidth: 1,
-    borderColor: '#93c5fd',
-  },
-
-  invoiceButton: {
-    backgroundColor: '#0b5ed7',
-  },
-
-  proformaButtonText: {
-    color: '#0b5ed7',
-    fontWeight: '700',
-  },
-
-  invoiceButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-
-  statusRow: {
+  heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+
+  heroLabel: {
+    color: '#D1D5DB',
+    fontSize: 13,
+  },
+
+  heroAmount: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+    marginTop: 4,
   },
 
   statusBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 7,
+    borderRadius: 999,
   },
 
-  updateBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  statusText: {
+    fontWeight: '800',
+    fontSize: 12,
   },
 
-  updateBtnText: {
-    color: '#fff',
-    fontWeight: '600',
+  heroDivider: {
+    height: 1,
+    backgroundColor: '#374151',
+    marginVertical: 16,
+  },
+
+  heroGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+
+  heroItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1F2937',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+
+  heroItemText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+
+  primaryAction: {
+    flexGrow: 1,
+    minWidth: 150,
+    backgroundColor: '#2563EB',
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  primaryActionText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+
+  secondaryAction: {
+    flexGrow: 1,
+    minWidth: 140,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  secondaryActionText: {
+    color: '#111827',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+
+  nextStatusButton: {
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  nextStatusText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 12,
+  },
+
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  countBadge: {
+    backgroundColor: '#EEF2FF',
+    color: '#2563EB',
+    fontWeight: '800',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
 
   clientRow: {
     flexDirection: 'row',
-    gap: 12,
     alignItems: 'center',
+    gap: 12,
+  },
+
+  clientImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#E5E7EB',
   },
 
   clientInfo: {
     flex: 1,
   },
 
-  clientImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-
   clientName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#111827',
   },
 
   clientMeta: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 3,
+  },
+
+  infoLine: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+
+  infoText: {
+    flex: 1,
     fontSize: 14,
-    color: '#666',
+    color: '#374151',
+    lineHeight: 20,
+  },
+
+  dishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+
+  dishIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  dishInfo: {
+    flex: 1,
+  },
+
+  dishName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  dishMeta: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  heroSmallLabel: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  itemAmount: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#059669',
+  },
+
+  ingredientRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 9,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+
+  ingredientName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+
+  ingredientQty: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#059669',
+  },
+
+  emptyText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+
+  totalCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
 
   totalLabel: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#065F46',
     fontWeight: '700',
+    marginBottom: 4,
   },
 
   totalValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#2e7d32',
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#047857',
   },
 });

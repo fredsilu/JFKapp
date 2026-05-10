@@ -1,3 +1,4 @@
+//src/services/cateringOrderService.ts
 import {
   collection,
   addDoc,
@@ -179,7 +180,7 @@ export async function createOrderFromProforma(proforma: any) {
     simulationId: proforma.simulationId ?? null,
 
     documentType: "order",
-    status: "draft",
+    status: "En cours",
 
     number: `CMD-${Date.now()}`,
     version: 1,
@@ -239,4 +240,19 @@ export async function createOrderFromProforma(proforma: any) {
     id: ref.id,
     ...order,
   };
+}
+
+/* =========================================
+   UPDATE ORDER STATUS
+========================================= */
+export async function updateOrderStatus(
+  orderId: string,
+  status: CateringOrder['status']
+) {
+  const ref = doc(db, COLLECTION, orderId);
+
+  await updateDoc(ref, {
+    status,
+    updatedAt: serverTimestamp(),
+  });
 }

@@ -80,25 +80,90 @@ export interface OrderIngredient {
 
 export interface Order {
   id: string;
+
+  // Identification
+  number?: string;
+  orderNumber?: string;
+  documentType?: 'order' | 'proforma' | 'invoice';
+  version?: number;
+
+  // Client
   clientId: string;
   client: Client;
-  status: 'En cours' | 'En préparation' | 'Livré';
-  dishes: OrderDish[];
-  additionalIngredients: OrderIngredient[];
-  deliveryAddress: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  address: string;
-  createdAt: string;
-  updatedAt?: Date;
+
+  // Statut opérationnel
+  status:
+    | 'draft'
+    | 'confirmed'
+    | 'converted'
+    | 'En cours'
+    | 'En préparation'
+    | 'Livré'
+    | 'Facturé'
+    | 'Annulé';
+
+  // Liens documents
+  proformaId?: string;
+  proformaNumber?: string;
+  invoiceId?: string | null;
+  fromSimulationId?: string;
+  simulationId?: string;
+
+  // Contenu commande ancien format
+  dishes?: OrderDish[];
+
+  // Contenu commande nouveau format
+  items?: {
+    id?: string;
+    label?: string;
+    name?: string;
+    quantity: number;
+    unitPrice?: number;
+    total?: number;
+    dish?: Dish;
+  }[];
+
+  additionalIngredients?: OrderIngredient[];
+
+  // Livraison / événement
+  deliveryAddress?: string;
+  deliveryDate?: string;
+  deliveryTime?: string;
+  dateLivraison?: string;
+  address?: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+
+  // Informations business
   designation?: string;
+  name?: string;
+  guestCount?: number;
+  comment?: string;
+
+  // Montants
   billedAmount?: number;
+  simulatedAmount?: number;
+  totals?: {
+    subtotal?: number;
+    discount?: number;
+    total?: number;
+    currency?: 'USD' | 'CDF';
+  };
+
+  pricingReference?: {
+    totalHT?: number;
+    totalCost?: number;
+    margin?: number;
+  };
+
+  // Dates système
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  confirmedAt?: any;
+
   invoiceDate?: string;
   paymentDate?: string;
-
-  // 🔥 AJOUTS
-  fromSimulationId?: string;
-  simulatedAmount?: number;
 }
 
 
