@@ -99,7 +99,21 @@ export default function CateringSimulationDetailsScreen() {
         <Text style={styles.sectionTitle}>Résultats financiers</Text>
 
         <View style={styles.resultCard}>
-          <Text style={styles.resultLabel}>Chiffre d’affaires</Text>
+          <Text style={styles.resultLabel}>CA avant remise</Text>
+          <Text style={styles.resultValue}>
+            {formatCurrency((sim.globalTurnover ?? 0) + (sim.discount ?? 0))}
+          </Text>
+        </View>
+
+        <View style={styles.resultCard}>
+          <Text style={styles.resultLabel}>Remise globale</Text>
+          <Text style={styles.resultValue}>
+            -{formatCurrency(sim.discount ?? 0)}
+          </Text>
+        </View>
+
+        <View style={styles.resultCard}>
+          <Text style={styles.resultLabel}>CA après remise</Text>
           <Text style={styles.resultValue}>
             {formatCurrency(sim.globalTurnover ?? 0)}
           </Text>

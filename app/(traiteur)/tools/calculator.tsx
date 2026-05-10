@@ -514,8 +514,13 @@ export default function CateringCalculator() {
           {result.service && (
             <View style={styles.recapRow}>
               <Text style={styles.recapLabel}>👨‍🍳 Service</Text>
+
               <Text style={styles.recapValue}>
-                Coût total service : {result.service.totalServiceCost.toFixed(2)} $
+                CA : {result.service.totalServiceTurnover.toFixed(2)} $
+              </Text>
+
+              <Text style={styles.recapSub}>
+                Coût service : {result.service.totalServiceCost.toFixed(2)} $
               </Text>
             </View>
           )}
@@ -529,10 +534,11 @@ export default function CateringCalculator() {
             CA avant remise : {totalRevenue.toFixed(2)} $
           </Text>
           <Text style={styles.globalText}>
-            Remise globale : -{globalDiscount.toFixed(2)} $
+            * Remise globale : -{globalDiscount.toFixed(2)} $
           </Text>
-          <Text style={styles.totalBreakdown}>
-            Repas : {result.globalTurnover.toFixed(2)} $
+
+          <Text style={styles.globalText}>
+            CA après remise : {finalRevenue.toFixed(2)} $
           </Text>
 
           <Text style={styles.globalText}>
@@ -544,9 +550,7 @@ export default function CateringCalculator() {
             Coût service : {serviceCost.toFixed(2)} $
           </Text>
 
-          <Text style={styles.globalText}>
-            CA final : {finalRevenue.toFixed(2)} $
-          </Text>
+
 
           <Text style={styles.globalText}>
             Marge finale : {finalMargin.toFixed(2)} $
@@ -752,6 +756,8 @@ function renderServiceBlock({
                 ['Gaz / jour', r.gasCost],
                 ['Carburant / jour', r.fuelCost],
                 ['Coût service journalier', r.dailyServiceCost],
+                ['Prix facturé service / jour', r.serviceUnitPrice],
+                ['CA total service', r.totalServiceTurnover],
                 ['Coût service total', r.totalServiceCost],
               ]}
             />

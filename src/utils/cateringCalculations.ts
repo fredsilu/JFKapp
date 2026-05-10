@@ -28,8 +28,13 @@ type ServiceResult = {
   serversCost: number;
   cooksCost: number;
 
+  // Coût réel du service
   dailyServiceCost: number;
   totalServiceCost: number;
+
+  // Prix facturé client
+  serviceUnitPrice: number;
+  totalServiceTurnover: number;
 };
 
 export type CateringSimulationResult = {
@@ -38,8 +43,13 @@ export type CateringSimulationResult = {
   drinks: MealResult | null;
   service: ServiceResult | null;
 
+  // CA brut avant remise
   globalTurnover: number;
+
+  // Coûts réels : matières + service réel
   globalCost: number;
+
+  // Marge = CA brut - remise - coûts réels
   globalMargin: number;
 };
 
@@ -57,6 +67,25 @@ function safeDays(value: unknown): number {
   return days > 0 ? days : 1;
 }
 
+/**
+ * Prix facturé du service à partir du coût réel journalier.
+ *
+ * Exemples :
+ * coût 80  => prix facturé 100
+ * coût 120 => prix facturé 150
+ * coût 180 => prix facturé 200
+ * coût 230 => prix facturé 250
+ */
+function calculateServiceUnitPriceFromCost(cost: number): number {
+  if (cost <= 0) return 0;
+
+  if (cost < 100) {
+    return 100;
+  }
+
+  return Math.ceil(cost / 50) * 50;
+}
+
 /* =========================
    MEALS
 ========================= */
@@ -70,8 +99,10 @@ function calculateMeal(meal?: CateringMealInput): MealResult | null {
   const foodCostRate = toNumber(meal.foodCostRate);
 
   if (numberOfPeople <= 0 || unitPrice <= 0) return null;
+
   const dailyTurnover = numberOfPeople * unitPrice;
   const totalTurnover = dailyTurnover * numberOfDays;
+
   const dailyFoodCost = dailyTurnover * (foodCostRate / 100);
   const totalFoodCost = dailyFoodCost * numberOfDays;
 
@@ -112,7 +143,6 @@ function calculateService(
   const gasDailyCost = toNumber(costs?.gasDailyCost);
   const fuelDailyCost = toNumber(costs?.fuelDailyCost);
 
-
   if (numberOfPeople <= 0) return null;
 
   const numberOfServers =
@@ -128,16 +158,35 @@ function calculateService(
   const gasCost = gasDailyCost;
   const fuelCost = fuelDailyCost;
 
+  /**
+   * Coût réel journalier du service
+   */
   const dailyServiceCost = Math.max(
     serversCost +
-    cooksCost +
-    electricityCost +
-    gasCost +
-    fuelCost,
+      cooksCost +
+      electricityCost +
+      gasCost +
+      fuelCost,
     0
   );
 
+  /**
+   * Coût réel total du service
+   */
   const totalServiceCost = dailyServiceCost * numberOfDays;
+
+  /**
+   * Prix unitaire facturé au client par jour
+   * basé sur le palier commercial.
+   */
+  const serviceUnitPrice =
+    calculateServiceUnitPriceFromCost(dailyServiceCost);
+
+  /**
+   * Chiffre d'affaires total du service
+   */
+  const totalServiceTurnover =
+    serviceUnitPrice * numberOfDays;
 
   return {
     recap: {
@@ -158,6 +207,9 @@ function calculateService(
 
     dailyServiceCost,
     totalServiceCost,
+
+    serviceUnitPrice,
+    totalServiceTurnover,
   };
 }
 
@@ -177,29 +229,52 @@ export function calculateSimulation(
     simulation.serviceCosts
   );
 
+  /**
+   * CA repas avant remise
+   */
   const mealsTurnover =
     toNumber(breakfast?.totalTurnover) +
     toNumber(lunch?.totalTurnover) +
     toNumber(drinks?.totalTurnover);
 
+  /**
+   * CA service facturé selon palier commercial
+   */
   const serviceTurnover =
-    toNumber(service?.totalServiceCost);
+    toNumber(service?.totalServiceTurnover);
 
+  /**
+   * CA brut total avant remise
+   */
   const globalTurnover =
     mealsTurnover + serviceTurnover;
 
+  /**
+   * Coûts réels :
+   * - coût matière repas
+   * - coût réel service
+   */
   const globalCost =
     toNumber(breakfast?.totalFoodCost) +
     toNumber(lunch?.totalFoodCost) +
     toNumber(drinks?.totalFoodCost) +
     toNumber(service?.totalServiceCost);
 
+  /**
+   * Remise globale commerciale
+   */
   const globalDiscount =
     toNumber(simulation.discount);
 
+  /**
+   * CA net après remise
+   */
   const netTurnover =
     Math.max(globalTurnover - globalDiscount, 0);
 
+  /**
+   * Marge finale
+   */
   const globalMargin =
     netTurnover - globalCost;
 

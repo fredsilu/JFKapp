@@ -43,12 +43,22 @@ async function fetchCateringDishes(): Promise<CateringDish[]> {
     .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
+function calculateServiceUnitPriceFromCost(cost: number): number {
+  if (cost <= 0) return 0;
+
+  if (cost < 100) {
+    return 100;
+  }
+
+  return Math.ceil(cost / 50) * 50;
+}
+
 export default function CreateProformaFromSimulationScreen() {
   const params = useLocalSearchParams<{ simulationId?: string }>();
   const simulationId = Array.isArray(params.simulationId)
     ? params.simulationId[0]
     : params.simulationId;
-  
+
 
   const [simulation, setSimulation] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
@@ -156,12 +166,15 @@ export default function CreateProformaFromSimulationScreen() {
       const numberOfServers = Math.ceil(numberOfPeople / serverRate);
       const numberOfCooks = Math.ceil(numberOfPeople / cookRate);
 
-      const unitPrice =
+      const realDailyServiceCost =
         numberOfServers * serverDailyCost +
         numberOfCooks * cookDailyCost +
         electricityDailyCost +
         gasDailyCost +
         fuelDailyCost;
+
+      const unitPrice =
+        calculateServiceUnitPriceFromCost(realDailyServiceCost);
 
       const quantity = 1;
       const total = numberOfDays * quantity * unitPrice;
