@@ -349,14 +349,54 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   // États pour le formulaire
   const [selectedClient, setSelectedClient] = useState<Client | null>(order?.client || null);
-  const [selectedDishes, setSelectedDishes] = useState<OrderDish[]>(order?.dishes || []);
+  const [selectedDishes, setSelectedDishes] = useState<OrderDish[]>(
+    order?.dishes ||
+    ((order as any)?.items || []).map((item: any) => ({
+      dish: item.dish || {
+        id: item.id || item.label,
+        name: item.label || item.name || 'Élément',
+        image: '',
+        ingredients: [],
+        preparationTime: 0,
+        servings: 1,
+        description: '',
+      },
+      quantity: item.quantity || 1,
+      name: item.label || item.name || '',
+      ingredients: [],
+      additionalIngredients: [],
+    }))
+  );
   const [additionalIngredients, setAdditionalIngredients] = useState<OrderIngredient[]>(
     order?.additionalIngredients || []
   );
-  const [deliveryDate, setDeliveryDate] = useState(order?.deliveryDate || '');
-  const [deliveryTime, setDeliveryTime] = useState(order?.deliveryTime || '');
-  const [address, setAddress] = useState(order?.address || '');
-  const [designation, setDesignation] = useState(order?.designation || '');
+  const [deliveryDate, setDeliveryDate] = useState(
+    order?.deliveryDate ||
+    (order as any)?.dateLivraison ||
+    ''
+  );
+
+  const [deliveryTime, setDeliveryTime] = useState(
+    order?.deliveryTime || ''
+  );
+
+  const [address, setAddress] = useState(
+    order?.address ||
+    order?.deliveryAddress ||
+    ''
+  );
+
+  const [designation, setDesignation] = useState(
+    order?.designation ||
+    (order as any)?.name ||
+    ''
+  );
+
+  const [guestCount, setGuestCount] = useState(
+    (order as any)?.guestCount
+      ? String((order as any).guestCount)
+      : ''
+  );
   const [billedAmount, setBilledAmount] = useState(order?.billedAmount ? String(order.billedAmount) : '');
   const [invoiceDate, setInvoiceDate] = useState(order?.invoiceDate || '');
   const [paymentDate, setPaymentDate] = useState(order?.paymentDate || '');
@@ -421,10 +461,31 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
     // On resync les champs simples si jamais order arrive après
     setSelectedDishes(order.dishes || []);
     setAdditionalIngredients(order.additionalIngredients || []);
-    setDeliveryDate(order.deliveryDate || '');
+    setDeliveryDate(
+      order.deliveryDate ||
+      (order as any)?.dateLivraison ||
+      ''
+    );
+
     setDeliveryTime(order.deliveryTime || '');
-    setAddress(order.address || '');
-    setDesignation(order.designation || '');
+
+    setAddress(
+      order.address ||
+      order.deliveryAddress ||
+      ''
+    );
+
+    setDesignation(
+      order.designation ||
+      (order as any)?.name ||
+      ''
+    );
+
+    setGuestCount(
+      (order as any)?.guestCount
+        ? String((order as any).guestCount)
+        : ''
+    );
     setBilledAmount(order.billedAmount ? String(order.billedAmount) : '');
     setInvoiceDate(order.invoiceDate || '');
     setPaymentDate(order.paymentDate || '');
@@ -555,8 +616,20 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       client: selectedClient!,
       status: order?.status || 'En cours',
       dishes: selectedDishes,
+      guestCount: guestCount ? Number(guestCount) : undefined,
+      
+
+      items: selectedDishes.map((d) => ({
+        id: d.dish.id,
+        label: d.dish.name,
+        quantity: d.quantity,
+        unitPrice: 0,
+        total: 0,
+        dish: d.dish,
+      })),
       additionalIngredients,
       deliveryDate,
+      dateLivraison: deliveryDate,
       deliveryTime,
       address,
       deliveryAddress: address,
@@ -758,7 +831,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
         </View>
 
         {/* ====================== */}
-        <Text style={{fontWeight:'bold',marginBottom:8}}>INGRÉDIENTS SUPPLÉMENTAIRES</Text>
+        <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>INGRÉDIENTS SUPPLÉMENTAIRES</Text>
         {/* ====================== */}
         {/* ⚠️ NOTE: tu avais un ScrollView imbriqué dans un ScrollView.
             Je garde ta structure pour ne pas “casser”, mais idéalement on évite un ScrollView vertical dans un autre.
@@ -971,6 +1044,20 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 onChangeText={setAddress}
                 multiline
                 numberOfLines={3}
+              />
+            </View>
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>Nombre de convives</Text>
+            <View style={styles.inputContainer}>
+              <Icon name="groups" size={20} color="#665" />
+              <TextInput
+                style={styles.input}
+                placeholder="Ex : 100"
+                value={guestCount}
+                onChangeText={setGuestCount}
+                keyboardType="numeric"
               />
             </View>
           </View>
