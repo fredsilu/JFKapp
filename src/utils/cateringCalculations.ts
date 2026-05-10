@@ -1,3 +1,4 @@
+//src/utils/cateringCalculations.ts
 import {
   CateringSimulationDraft,
   CateringMealInput,
@@ -67,17 +68,10 @@ function calculateMeal(meal?: CateringMealInput): MealResult | null {
   const unitPrice = toNumber(meal.unitPrice);
   const numberOfDays = safeDays(meal.numberOfDays);
   const foodCostRate = toNumber(meal.foodCostRate);
-  const discount = toNumber((meal as any).discount);
 
   if (numberOfPeople <= 0 || unitPrice <= 0) return null;
-
-  const dailyTurnover = Math.max(
-    numberOfPeople * unitPrice - discount,
-    0
-  );
-
+  const dailyTurnover = numberOfPeople * unitPrice;
   const totalTurnover = dailyTurnover * numberOfDays;
-
   const dailyFoodCost = dailyTurnover * (foodCostRate / 100);
   const totalFoodCost = dailyFoodCost * numberOfDays;
 
@@ -118,7 +112,6 @@ function calculateService(
   const gasDailyCost = toNumber(costs?.gasDailyCost);
   const fuelDailyCost = toNumber(costs?.fuelDailyCost);
 
-  const discount = toNumber((service as any).discount);
 
   if (numberOfPeople <= 0) return null;
 
@@ -137,11 +130,10 @@ function calculateService(
 
   const dailyServiceCost = Math.max(
     serversCost +
-      cooksCost +
-      electricityCost +
-      gasCost +
-      fuelCost -
-      discount,
+    cooksCost +
+    electricityCost +
+    gasCost +
+    fuelCost,
     0
   );
 
@@ -185,10 +177,16 @@ export function calculateSimulation(
     simulation.serviceCosts
   );
 
-  const globalTurnover =
+  const mealsTurnover =
     toNumber(breakfast?.totalTurnover) +
     toNumber(lunch?.totalTurnover) +
     toNumber(drinks?.totalTurnover);
+
+  const serviceTurnover =
+    toNumber(service?.totalServiceCost);
+
+  const globalTurnover =
+    mealsTurnover + serviceTurnover;
 
   const globalCost =
     toNumber(breakfast?.totalFoodCost) +
@@ -196,7 +194,14 @@ export function calculateSimulation(
     toNumber(drinks?.totalFoodCost) +
     toNumber(service?.totalServiceCost);
 
-  const globalMargin = globalTurnover - globalCost;
+  const globalDiscount =
+    toNumber(simulation.discount);
+
+  const netTurnover =
+    Math.max(globalTurnover - globalDiscount, 0);
+
+  const globalMargin =
+    netTurnover - globalCost;
 
   return {
     breakfast,
