@@ -3,35 +3,37 @@ import {
   collection,
   serverTimestamp,
   Timestamp,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 
-import { db } from "@/lib/firebase";
+import { db } from '@/lib/firebase';
 
 import {
   CateringOrder,
-  CateringDocumentItem,
   CateringDocumentClient,
+} from '@/types/catering';
+
+import {
+  CateringDocumentItem,
   CateringDocumentTotals,
-} from "@/types/catering";
+} from '@/types/documents';
 
 /**
  * Type de document
  */
-export type DocumentType = "proforma" | "invoice";
+export type DocumentType = 'proforma' | 'invoice';
 
 /**
  * Statut document
  */
-export type DocumentStatus = "draft" | "sent" | "paid";
+export type DocumentStatus = 'draft' | 'sent' | 'paid';
 
 /**
- * Document unifié (aligné avec Order & Invoice)
+ * Document unifié simplifié pour Firestore
  */
 export interface CateringDocument {
   id?: string;
 
   type: DocumentType;
-
   orderId: string;
 
   number: string;
@@ -40,7 +42,6 @@ export interface CateringDocument {
   client: CateringDocumentClient;
 
   items: CateringDocumentItem[];
-
   totals: CateringDocumentTotals;
 
   status: DocumentStatus;
@@ -49,12 +50,15 @@ export interface CateringDocument {
 }
 
 /**
- * Génération numéro (simple pour l’instant)
+ * Génération numéro simple temporaire
  */
 function generateDocumentNumber(type: DocumentType): string {
   const year = new Date().getFullYear();
-  const prefix = type === "proforma" ? "PF" : "FC";
-  const random = Math.floor(Math.random() * 1000);
+  const prefix = type === 'proforma' ? 'PF' : 'FC';
+
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
 
   return `${prefix}-${year}-${random}`;
 }
@@ -67,18 +71,18 @@ export async function createDocumentFromOrder(
   type: DocumentType
 ): Promise<{ id: string }> {
   if (!order) {
-    throw new Error("Order is required");
+    throw new Error('Order is required');
   }
 
   if (!order.items || order.items.length === 0) {
-    throw new Error("Order has no items");
+    throw new Error('Order has no items');
   }
 
   if (!order.totals) {
-    throw new Error("Order totals missing");
+    throw new Error('Order totals missing');
   }
 
-  const payload: Omit<CateringDocument, "id"> = {
+  const payload: Omit<CateringDocument, 'id'> = {
     type,
     orderId: order.id,
 
@@ -88,19 +92,14 @@ export async function createDocumentFromOrder(
     client: order.client,
 
     items: order.items,
-
-    // 🔥 clé : on garde EXACTEMENT le même format
     totals: order.totals,
 
-    status: "draft",
+    status: 'draft',
 
     createdAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(
-    collection(db, "catering_documents"),
-    payload
-  );
+  const docRef = await addDoc(collection(db, 'catering_documents'), payload);
 
   return {
     id: docRef.id,

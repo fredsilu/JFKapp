@@ -1,4 +1,4 @@
-// src/catering/types/documents.ts
+// types/documents.ts
 
 export type CateringDocumentType = "proforma" | "invoice";
 

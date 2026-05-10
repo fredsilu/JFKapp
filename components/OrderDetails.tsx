@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+//components/OrderDetails.tsx
+
 import {
   View,
   Text,
@@ -21,13 +22,17 @@ import {
   createDocumentFromOrder,
   DocumentType,
 } from '@/src/services/cateringDocumentService';
+import { useState } from 'react';
 
 interface OrderDetailsProps {
+
   order: Order;
   onClose: () => void;
+  onUpdated?: () => void;
 }
 
-export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
+
+export default function OrderDetails({ order, onClose, onUpdated }: OrderDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
   const [loadingDocument, setLoadingDocument] = useState<DocumentType | null>(null);
@@ -68,42 +73,78 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
   ) => {
     try {
       await updateOrder(order.id, updatedOrder);
+
       setShowEditForm(false);
+
+      Alert.alert('Succès', 'Commande modifiée avec succès.');
+
+      onUpdated?.();
     } catch (error) {
       console.error('Erreur mise à jour commande:', error);
       Alert.alert('Erreur', 'Impossible de modifier la commande.');
     }
   };
 
+  const calculateDishUnitPrice = (dish: any) => {
+    if (!dish?.ingredients || dish.ingredients.length === 0) return 0;
+
+    return dish.ingredients.reduce((sum: number, item: any) => {
+      const ingredientPrice = Number(item.ingredient?.price || 0);
+      const quantity = Number(item.quantity || 0);
+
+      return sum + ingredientPrice * quantity;
+    }, 0);
+  };
   const handleCreateDocument = async (type: DocumentType) => {
     try {
       setLoadingDocument(type);
 
-      // 🔥 transformation dishes → items
-      const items = (order.dishes || []).map((d) => ({
-        label: d.dish?.name || "Plat",
-        quantity: d.quantity || 0,
-        unitPrice: d.dish?.price || 0,
-        totalPrice: (d.quantity || 0) * (d.dish?.price || 0),
-      }));
+      const items = (order.dishes || []).map((d) => {
+        const unitPrice = calculateDishUnitPrice(d.dish);
+        const quantity = Number(d.quantity || 0);
+        const total = quantity * unitPrice;
+
+        return {
+          label: d.dish?.name || d.name || 'Plat',
+          quantity,
+          unitPrice,
+          total,
+        };
+      });
+
+      const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+      const additionalCost = calculateOrderTotalCost({
+        ...order,
+        dishes: [],
+        additionalIngredients: order.additionalIngredients || [],
+      });
+
+      const total = subtotal + additionalCost;
 
       const orderForDocument = {
         ...order,
         items,
+        totals: {
+          subtotal: total,
+          discount: 0,
+          total,
+          currency: 'USD',
+        },
       };
 
-      console.log("ORDER FOR DOCUMENT:", orderForDocument);
+      console.log('ORDER FOR DOCUMENT:', orderForDocument);
 
       await createDocumentFromOrder(orderForDocument as any, type);
 
-      alert(
-        type === "proforma"
-          ? "Proforma générée avec succès"
-          : "Facture générée avec succès"
+      Alert.alert(
+        'Succès',
+        type === 'proforma'
+          ? 'Proforma générée avec succès'
+          : 'Facture générée avec succès'
       );
     } catch (error) {
-      console.error("Erreur génération document:", error);
-      alert("Erreur génération document");
+      console.error('Erreur génération document:', error);
+      Alert.alert('Erreur', 'Erreur génération document');
     } finally {
       setLoadingDocument(null);
     }

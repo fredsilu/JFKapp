@@ -97,7 +97,10 @@ export default function ProformaDetailScreen() {
       );
 
       Alert.alert('Succès', 'Commande créée avec succès');
-      router.replace('/(traiteur)/orders');
+      router.replace({
+        pathname: '/(traiteur)/orders/[id]',
+        params: { id: order.id },
+      });
     } catch (e) {
       console.error('❌ create order error:', e);
       Alert.alert('Erreur', 'Impossible de créer la commande');
@@ -459,7 +462,7 @@ export default function ProformaDetailScreen() {
           ))}
         </View>
       ) : null}
-
+      
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -730,4 +733,5 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     fontWeight: '700',
   },
+  
 });

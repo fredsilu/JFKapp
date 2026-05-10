@@ -179,7 +179,7 @@ export async function createOrderFromProforma(proforma: any) {
     simulationId: proforma.simulationId ?? null,
 
     documentType: "order",
-    status: "confirmed",
+    status: "draft",
 
     number: `CMD-${Date.now()}`,
     version: 1,
