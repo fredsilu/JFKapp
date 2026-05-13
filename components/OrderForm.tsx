@@ -391,6 +391,116 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
+  infoItemCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  infoItemTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  infoItemMeta: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+
+  infoItemAmount: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
+  productionDishCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  productionDishHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+
+  productionDishImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
+  },
+
+  productionDishName: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
+  productionDishMeta: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 3,
+    fontWeight: '600',
+  },
+
+  productionQuantityRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  productionQuantityText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  productionIngredientCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  productionIngredientName: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
+  productionIngredientMeta: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 3,
+    fontWeight: '600',
+  },
+
+  productionIngredientTotal: {
+    fontSize: 13,
+    color: '#059669',
+    marginTop: 4,
+    fontWeight: '900',
+  },
 });
 
 export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) {
@@ -402,22 +512,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   // États pour le formulaire
   const [selectedClient, setSelectedClient] = useState<Client | null>(order?.client || null);
   const [selectedDishes, setSelectedDishes] = useState<OrderDish[]>(
-    order?.dishes ||
-    ((order as any)?.items || []).map((item: any) => ({
-      dish: item.dish || {
-        id: item.id || item.label,
-        name: item.label || item.name || 'Élément',
-        image: '',
-        ingredients: [],
-        preparationTime: 0,
-        servings: 1,
-        description: '',
-      },
-      quantity: item.quantity || 1,
-      name: item.label || item.name || '',
-      ingredients: [],
-      additionalIngredients: [],
-    }))
+    order?.dishes || []
   );
   const [editableItems, setEditableItems] = useState<EditableOrderItem[]>(
     ((order as any)?.items || []).map((item: any) => ({
@@ -553,24 +648,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
     );
 
     // On resync les champs simples si jamais order arrive après
-    setSelectedDishes(
-      order.dishes ||
-      ((order as any)?.items || []).map((item: any) => ({
-        dish: item.dish || {
-          id: item.id || item.label,
-          name: item.label || item.name || 'Élément',
-          image: '',
-          ingredients: [],
-          preparationTime: 0,
-          servings: 1,
-          description: '',
-        },
-        quantity: item.quantity || 1,
-        name: item.label || item.name || '',
-        ingredients: [],
-        additionalIngredients: [],
-      }))
-    );
+    setSelectedDishes(order.dishes || []);
     setAdditionalIngredients(order.additionalIngredients || []);
     setDeliveryDate(
       order.deliveryDate ||
@@ -810,6 +888,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
       return {
         id: ingredient?.id,
+        ingredientId: ingredient?.id,
         name: ingredient?.name || 'Ingrédient',
         category: ingredient?.category || '',
         unit: ingredient?.unit || '',
@@ -1021,58 +1100,37 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
         </View>
         {editableItems.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Éléments de la commande</Text>
+            <Text style={styles.sectionTitle}>Éléments facturés / Proforma</Text>
 
-            {editableItems.map((item, index) => (
-              <View key={item.id || index} style={styles.editableItemCard}>
-                <Text style={styles.editableItemTitle}>{item.label}</Text>
+            {editableItems.map((item, index) => {
+              const total =
+                (item.quantity || 0) *
+                (item.numberOfDays || 1) *
+                (item.unitPrice || 0);
 
-                <View style={styles.editableRow}>
-                  <Text style={styles.editableLabel}>Quantité</Text>
+              return (
+                <View key={item.id || index} style={styles.infoItemCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.infoItemTitle}>{item.label}</Text>
+                    <Text style={styles.infoItemMeta}>
+                      Quantité : {item.quantity || 0}
+                      {' '}× {item.numberOfDays || 1} jour(s)
+                    </Text>
+                  </View>
 
-                  <TextInput
-                    style={styles.editableInput}
-                    value={String(item.quantity || 1)}
-                    onChangeText={(value) => {
-                      const parsed = parseInt(value, 10);
-
-                      updateEditableItemQuantity(
-                        index,
-                        isNaN(parsed) ? 1 : parsed
-                      );
-                    }}
-                    submitBehavior="blurAndSubmit"
-                    keyboardType="numeric"
-                  />
+                  <Text style={styles.infoItemAmount}>
+                    {formatCurrency(total)}
+                  </Text>
                 </View>
-
-                <View style={styles.editableRow}>
-                  <Text style={styles.editableLabel}>Jours</Text>
-
-                  <TextInput
-                    style={styles.editableInput}
-                    value={String(item.numberOfDays || 1)}
-                    onChangeText={(value) => {
-                      const parsed = parseInt(value, 10);
-
-                      updateEditableItemDays(
-                        index,
-                        isNaN(parsed) ? 1 : parsed
-                      );
-                    }}
-                    submitBehavior="blurAndSubmit"
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
         {/* ======================
             PLATS
         ====================== */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Plats</Text>
+          <Text style={styles.sectionTitle}>PLATS</Text>
 
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#666" />
@@ -1118,44 +1176,69 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           {selectedDishes.length > 0 && (
             <View style={styles.selectedDishes}>
               <Text style={styles.subsectionTitle}>Plats sélectionnés</Text>
+              {selectedDishes.map(({ dish, quantity }) => {
+                if (!dish || !dish.id) return null;
 
-              {selectedDishes &&
-                Array.isArray(selectedDishes) &&
-                selectedDishes.map(({ dish, quantity }) => {
-                  if (!dish || !dish.id) return null;
-                  return (
-                    <View key={dish.id} style={styles.selectedDishItem}>
+                const operationalDish = operationalDishes.find(
+                  (item) => item.dishId === dish.id
+                );
+
+                const unitCost = operationalDish?.unitProductionCost || 0;
+                const totalCost = operationalDish?.totalProductionCost || 0;
+
+                return (
+                  <View key={dish.id} style={styles.productionDishCard}>
+                    <View style={styles.productionDishHeader}>
                       <Image
-                        source={{
-                          uri: dish.image || 'https://via.placeholder.com/100',
-                        }}
-                        style={styles.selectedDishImage}
+                        source={
+                          dish.image
+                            ? { uri: dish.image }
+                            : require('@/assets/images/no_dishes_picture.jpg')
+                        }
+                        style={styles.productionDishImage}
                       />
-                      <View style={styles.selectedDishInfo}>
-                        <Text style={styles.selectedDishName}>{dish.name}</Text>
-                        <View style={styles.quantityContainer}>
-                          <TouchableOpacity
-                            style={styles.quantityButton}
-                            onPress={() =>
-                              handleUpdateDishQuantity(dish.id, quantity - 1)
-                            }
-                          >
-                            <Text style={styles.quantityButtonText}>-</Text>
-                          </TouchableOpacity>
-                          <Text style={styles.quantityText}>{quantity}</Text>
-                          <TouchableOpacity
-                            style={styles.quantityButton}
-                            onPress={() =>
-                              handleUpdateDishQuantity(dish.id, quantity + 1)
-                            }
-                          >
-                            <Text style={styles.quantityButtonText}>+</Text>
-                          </TouchableOpacity>
-                        </View>
+
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.productionDishName}>
+                          {dish.name}
+                        </Text>
+
+                        <Text style={styles.productionDishMeta}>
+                          Coût unitaire : {formatCurrency(unitCost)}
+                        </Text>
+
+                        <Text style={styles.productionDishMeta}>
+                          Coût total : {formatCurrency(totalCost)}
+                        </Text>
                       </View>
                     </View>
-                  );
-                })}
+
+                    <View style={styles.productionQuantityRow}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() =>
+                          handleUpdateDishQuantity(dish.id, quantity - 1)
+                        }
+                      >
+                        <Text style={styles.quantityButtonText}>-</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.productionQuantityText}>
+                        Quantité : {quantity}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() =>
+                          handleUpdateDishQuantity(dish.id, quantity + 1)
+                        }
+                      >
+                        <Text style={styles.quantityButtonText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>
@@ -1167,8 +1250,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             Je garde ta structure pour ne pas “casser”, mais idéalement on évite un ScrollView vertical dans un autre.
         */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingrédients supplémentaires</Text>
-
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#665" />
             <TextInput
@@ -1222,75 +1303,51 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 Ingrédients sélectionnés
               </Text>
 
-              {additionalIngredients &&
-                Array.isArray(additionalIngredients) &&
-                additionalIngredients.map(({ ingredient, quantity }) => {
-                  if (!ingredient || !ingredient.id) return null;
-                  return (
-                    <View
-                      key={ingredient.id}
-                      style={styles.selectedIngredientItem}
-                    >
-                      <View style={styles.selectedIngredientInfo}>
-                        <Text style={styles.selectedIngredientName}>
-                          {ingredient.name}
-                        </Text>
-                        <Text style={styles.selectedIngredientCategory}>
-                          {ingredient.category}
-                        </Text>
-                      </View>
+              {operationalAdditionalIngredients.map((item: any) => {
+                return (
+                  <View key={item.id} style={styles.productionIngredientCard}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.productionIngredientName}>
+                        {item.name}
+                      </Text>
 
-                      <View style={styles.quantityContainer}>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() =>
-                            handleUpdateIngredientQuantity(
-                              ingredient.id,
-                              quantity - 1
-                            )
-                          }
-                        >
-                          <Text style={styles.quantityButtonText}>-</Text>
-                        </TouchableOpacity>
+                      <Text style={styles.productionIngredientMeta}>
+                        {item.quantity} {item.unit} × {formatCurrency(item.unitPrice)}
+                      </Text>
 
-                        <View style={styles.quantityInputContainer}>
-                          <TextInput
-                            style={styles.quantityInput}
-                            value={quantity.toString()}
-                            onChangeText={(value) =>
-                              handleUpdateIngredientQuantity(
-                                ingredient.id,
-                                parseFloat(value) || 0
-                              )
-                            }
-                            submitBehavior="blurAndSubmit"
-                            keyboardType="decimal-pad"
-                          />
-                          <Text style={styles.unitText}>{ingredient.unit}</Text>
-                        </View>
+                      <Text style={styles.productionIngredientTotal}>
+                        Total : {formatCurrency(item.total)}
+                      </Text>
+                    </View>
 
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() =>
-                            handleUpdateIngredientQuantity(
-                              ingredient.id,
-                              quantity + 1
-                            )
-                          }
-                        >
-                          <Text style={styles.quantityButtonText}>+</Text>
-                        </TouchableOpacity>
-                      </View>
+                    <View style={styles.quantityContainer}>
+                      <TouchableOpacity
+                        style={styles.quantityButton}
+                        onPress={() =>
+                          handleUpdateIngredientQuantity(
+                            item.ingredientId,
+                            item.quantity - 1
+                          )
+                        }
+                      >
+                        <Text style={styles.quantityButtonText}>-</Text>
+                      </TouchableOpacity>
 
                       <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveIngredient(ingredient.id)}
+                        style={styles.quantityButton}
+                        onPress={() =>
+                          handleUpdateIngredientQuantity(
+                            item.ingredientId,
+                            item.quantity + 1
+                          )
+                        }
                       >
-                        <Icon name="close" size={20} color="#FF3B30" />
+                        <Text style={styles.quantityButtonText}>+</Text>
                       </TouchableOpacity>
                     </View>
-                  );
-                })}
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>
