@@ -243,28 +243,45 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    gap: 12,
+    paddingTop: 20,
+    paddingBottom: 30,
   },
   cancelButton: {
-    padding: 12,
-    backgroundColor: '#ddd',
-    borderRadius: 4,
+    flex: 1,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cancelButtonText: {
     fontSize: 14,
-    color: '#333',
+    fontWeight: '800',
+    color: '#374151',
   },
   submitButton: {
-    padding: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 4,
+    flex: 1.4,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 4,
   },
   submitButtonText: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
   selectedIngredients: {
     marginTop: 16,
@@ -503,14 +520,12 @@ const styles = StyleSheet.create({
   },
   blockSubtotal: {
     marginTop: 10,
-    padding: 14,
+    padding: 10,
     borderRadius: 14,
     backgroundColor: '#EEF2FF',
     borderWidth: 1,
     borderColor: '#C7D2FE',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 6,
   },
 
   blockSubtotalLabel: {
@@ -520,9 +535,10 @@ const styles = StyleSheet.create({
   },
 
   blockSubtotalValue: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '900',
     color: '#1E3A8A',
+    textAlign: 'right',
   },
 
   stepper: {
@@ -564,8 +580,21 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     marginBottom: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
+  },
+  operationBlockText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  operationBlockIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EFF6FF',
   },
 
   operationBlockTitle: {
@@ -579,6 +608,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     fontWeight: '600',
+  },
+
+  moneyInput: {
+    fontWeight: '900',
+    fontSize: 16,
+    color: '#111827',
   },
 });
 
@@ -995,6 +1030,42 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       totalProductionCost: dishesCost + additionalIngredientsCost,
     };
   }, [operationalDishes, operationalAdditionalIngredients]);
+
+
+  const serviceTraiteurAmount = useMemo(() => {
+    return editableItems.reduce((sum, item) => {
+      const label = (item.label || '').toLowerCase();
+
+      const isServiceTraiteur =
+        label.includes('service traiteur');
+
+      if (isServiceTraiteur) {
+        return (
+          sum +
+          (
+            (item.quantity || 0) *
+            (item.numberOfDays || 1) *
+            (item.unitPrice || 0)
+          )
+        );
+      }
+
+      return sum;
+    }, 0);
+  }, [editableItems]);
+
+  const billedAmountValue = Number(billedAmount || 0);
+
+  const productionReferenceRevenue =
+    billedAmountValue - serviceTraiteurAmount;
+
+  const productionCostRatio =
+    productionReferenceRevenue > 0
+      ? (
+        operationalCosts.totalProductionCost /
+        productionReferenceRevenue
+      ) * 100
+      : 0;
   const validateForm = () => {
     if (!selectedClient) {
       setFormError('Veuillez sélectionner un client');
@@ -1192,8 +1263,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                   <View style={{ flex: 1 }}>
                     <Text style={styles.infoItemTitle}>{item.label}</Text>
                     <Text style={styles.infoItemMeta}>
-                      Quantité : {item.quantity || 0}
-                      {' '}× {item.numberOfDays || 1} jour(s)
+                      Qté : {item.quantity || 0} × {item.numberOfDays || 1} jour(s)
+                    </Text>
+
+                    <Text style={styles.infoItemMeta}>
+                      PU : {formatCurrency(item.unitPrice || 0)}
                     </Text>
                   </View>
 
@@ -1210,13 +1284,16 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
         ====================== */}
         <View style={styles.section}>
           <View style={styles.operationBlockHeader}>
-            <View>
+            <View style={styles.operationBlockText}>
               <Text style={styles.operationBlockTitle}>Plats à produire</Text>
               <Text style={styles.operationBlockSubtitle}>
                 Sélection cuisine et coût de production
               </Text>
             </View>
-            <Icon name="restaurant" size={22} color="#2563EB" />
+
+            <View style={styles.operationBlockIcon}>
+              <Icon name="restaurant" size={22} color="#2563EB" />
+            </View>
           </View>
 
           <View style={styles.searchContainer}>
@@ -1340,13 +1417,16 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
         {/* ====================== */}
         <View style={styles.operationBlockHeader}>
-          <View>
+          <View style={styles.operationBlockText}>
             <Text style={styles.operationBlockTitle}>Achats complémentaires</Text>
             <Text style={styles.operationBlockSubtitle}>
               Ingrédients ajoutés pour cette commande
             </Text>
           </View>
-          <Icon name="shopping-cart" size={22} color="#059669" />
+
+          <View style={[styles.operationBlockIcon, { backgroundColor: '#ECFDF5' }]}>
+            <Icon name="shopping-cart" size={22} color="#059669" />
+          </View>
         </View>
         {/* ====================== */}
         {/* ⚠️ NOTE: tu avais un ScrollView imbriqué dans un ScrollView.
@@ -1551,20 +1631,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             </View>
           </View>
 
-          <View style={styles.formField}>
-            <Text style={styles.label}>Nombre de convives</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="groups" size={20} color="#665" />
-              <TextInput
-                style={styles.input}
-                placeholder="Ex : 100"
-                value={guestCount}
-                onChangeText={setGuestCount}
-                submitBehavior="blurAndSubmit"
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
 
           {/* Champs supplémentaires */}
           <View style={styles.formField}>
@@ -1586,7 +1652,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             <View style={styles.inputContainer}>
               <Icon name="attach-money" size={20} color="#665" />
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.moneyInput]}
                 placeholder="Montant facturé (USD)"
                 value={billedAmount}
                 onChangeText={setBilledAmount}
@@ -1620,6 +1686,21 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               {formatCurrency(operationalCosts.totalProductionCost)}
             </Text>
           </View>
+          <Text
+            style={{
+              marginTop: 6,
+              fontSize: 13,
+              fontWeight: '800',
+              color:
+                productionCostRatio >= 70
+                  ? '#DC2626'
+                  : productionCostRatio >= 50
+                    ? '#D97706'
+                    : '#059669',
+            }}
+          >
+            Taux de coût de production : {productionCostRatio.toFixed(1)}%
+          </Text>
         </View>
 
         {/* ======================
