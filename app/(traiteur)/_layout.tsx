@@ -195,6 +195,8 @@ export default function TraiteurLayout() {
 
       <Tabs.Screen name="documents" options={{ href: null }} />
       <Tabs.Screen name="documents/editor" options={{ href: null }} />
+
+      <Tabs.Screen name="orders/operational/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

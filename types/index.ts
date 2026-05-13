@@ -1,3 +1,4 @@
+//types/index.ts
 import { RouteProp } from '@react-navigation/native';
 
 // Client types
@@ -93,14 +94,14 @@ export interface Order {
 
   // Statut opérationnel
   status:
-    | 'draft'
-    | 'confirmed'
-    | 'converted'
-    | 'En cours'
-    | 'En préparation'
-    | 'Livré'
-    | 'Facturé'
-    | 'Annulé';
+  | 'draft'
+  | 'confirmed'
+  | 'converted'
+  | 'En cours'
+  | 'En préparation'
+  | 'Livré'
+  | 'Facturé'
+  | 'Annulé';
 
   // Liens documents
   proformaId?: string;
@@ -108,6 +109,14 @@ export interface Order {
   invoiceId?: string | null;
   fromSimulationId?: string;
   simulationId?: string;
+
+  operationalDishes?: any[];
+  operationalAdditionalIngredients?: any[];
+  operationalCosts?: {
+    dishesCost: number;
+    additionalIngredientsCost: number;
+    totalProductionCost: number;
+  };
 
   // Contenu commande ancien format
   dishes?: OrderDish[];
@@ -118,6 +127,7 @@ export interface Order {
     label?: string;
     name?: string;
     quantity: number;
+    numberOfDays?: number;
     unitPrice?: number;
     total?: number;
     dish?: Dish;
@@ -183,7 +193,9 @@ export interface OrderDetailsProps {
 export interface OrderFormProps {
   order?: Order;
   onClose: () => void;
-  onSubmit: (values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (
+    values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> & Record<string, any>
+  ) => void;
 }
 
 interface AnyObject {

@@ -1,5 +1,5 @@
 //components/OrderForm.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -483,8 +483,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   };
 
   const [billedAmount, setBilledAmount] = useState(getInitialBilledAmount());
-  const [invoiceDate, setInvoiceDate] = useState(order?.invoiceDate || '');
-  const [paymentDate, setPaymentDate] = useState(order?.paymentDate || '');
   const [formError, setFormError] = useState<string | null>(null);
 
   // États pour la recherche
@@ -498,8 +496,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState(false);
   const [showDeliveryTimePicker, setShowDeliveryTimePicker] = useState(false);
-  const [showInvoiceDatePicker, setShowInvoiceDatePicker] = useState(false);
-  const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
+
 
   const [deliveryDateObj, setDeliveryDateObj] = useState<Date | null>(
     order?.deliveryDate
@@ -511,13 +508,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   const [deliveryTimeObj, setDeliveryTimeObj] = useState<Date | null>(null);
 
-  const [invoiceDateObj, setInvoiceDateObj] = useState<Date | null>(
-    order?.invoiceDate ? new Date(order.invoiceDate) : null
-  );
-
-  const [paymentDateObj, setPaymentDateObj] = useState<Date | null>(
-    order?.paymentDate ? new Date(order.paymentDate) : null
-  );
 
   /* =========================================================
      ✅ FIX PRINCIPAL : auto-sélection du client via clientId
@@ -618,8 +608,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       0;
 
     setBilledAmount(amount > 0 ? String(amount) : '');
-    setInvoiceDate(order.invoiceDate || '');
-    setPaymentDate(order.paymentDate || '');
+
 
     // Si on a un client complet sur order.client, on le prend
     if (order.client) {
@@ -745,6 +734,109 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       })
     );
   };
+  const getIngredientPrice = (item: any) => {
+    const ingredient = item?.ingredient || item;
+
+    return Number(
+      item?.unitPrice ||
+      item?.price ||
+      item?.cost ||
+      ingredient?.unitPrice ||
+      ingredient?.price ||
+      ingredient?.cost ||
+      0
+    );
+  };
+
+  const getIngredientQuantity = (item: any) => {
+    return Number(
+      item?.quantity ||
+      item?.qty ||
+      item?.amount ||
+      0
+    );
+  };
+
+  const operationalDishes = useMemo(() => {
+    return selectedDishes.map((selectedDish: any) => {
+      const dish = selectedDish.dish;
+      const dishQuantity = Number(selectedDish.quantity || 0);
+      const dishIngredients = Array.isArray(dish?.ingredients)
+        ? dish.ingredients
+        : [];
+
+      const ingredientsCost = dishIngredients.reduce((sum: number, item: any) => {
+        const quantity = getIngredientQuantity(item);
+        const unitPrice = getIngredientPrice(item);
+
+        return sum + quantity * unitPrice;
+      }, 0);
+
+      const totalCost = dishQuantity * ingredientsCost;
+
+      return {
+        dishId: dish?.id,
+        name: dish?.name || selectedDish.name || 'Plat',
+        quantity: dishQuantity,
+        unitProductionCost: ingredientsCost,
+        totalProductionCost: totalCost,
+        ingredients: dishIngredients.map((item: any) => {
+          const ingredient = item?.ingredient || item;
+          const quantity = getIngredientQuantity(item);
+          const unitPrice = getIngredientPrice(item);
+
+          return {
+            id: ingredient?.id,
+            name: ingredient?.name || 'Ingrédient',
+            unit: ingredient?.unit || '',
+            quantity,
+            unitPrice,
+            total: quantity * unitPrice,
+          };
+        }),
+      };
+    });
+  }, [selectedDishes]);
+
+  const operationalAdditionalIngredients = useMemo(() => {
+    return additionalIngredients.map((item: any) => {
+      const ingredient = item.ingredient;
+      const quantity = Number(item.quantity || 0);
+      const unitPrice = Number(
+        ingredient?.price ||
+        ingredient?.unitPrice ||
+        0
+      );
+
+      return {
+        id: ingredient?.id,
+        name: ingredient?.name || 'Ingrédient',
+        category: ingredient?.category || '',
+        unit: ingredient?.unit || '',
+        quantity,
+        unitPrice,
+        total: quantity * unitPrice,
+      };
+    });
+  }, [additionalIngredients]);
+
+  const operationalCosts = useMemo(() => {
+    const dishesCost = operationalDishes.reduce(
+      (sum, dish) => sum + dish.totalProductionCost,
+      0
+    );
+
+    const additionalIngredientsCost = operationalAdditionalIngredients.reduce(
+      (sum, ingredient) => sum + ingredient.total,
+      0
+    );
+
+    return {
+      dishesCost,
+      additionalIngredientsCost,
+      totalProductionCost: dishesCost + additionalIngredientsCost,
+    };
+  }, [operationalDishes, operationalAdditionalIngredients]);
   const validateForm = () => {
     if (!selectedClient) {
       setFormError('Veuillez sélectionner un client');
@@ -758,10 +850,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       setFormError('Veuillez spécifier une date de livraison');
       return false;
     }
-    if (!deliveryTime) {
-      setFormError('Veuillez spécifier une heure de livraison');
-      return false;
-    }
+
     if (!address) {
       setFormError('Veuillez spécifier une adresse de livraison');
       return false;
@@ -803,6 +892,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             dish: d.dish,
           })),
       additionalIngredients,
+      operationalDishes,
+      operationalAdditionalIngredients,
+      operationalCosts,
+
+
       deliveryDate,
       dateLivraison: deliveryDate,
       deliveryTime,
@@ -810,9 +904,9 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       deliveryAddress: address,
       designation: designation || undefined,
       billedAmount: billedAmount ? Number(billedAmount) : undefined,
-      invoiceDate: invoiceDate || undefined,
-      paymentDate: paymentDate || undefined,
-    });
+
+
+    } as any);
   };
 
   if (loadingClients || loadingDishes || loadingIngredients) {
@@ -1331,96 +1425,29 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               />
             </View>
           </View>
-
-          <View style={styles.formField}>
-            <Text style={styles.label}>Date de facture</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="receipt" size={20} color="#665" />
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowInvoiceDatePicker(true)}
-              >
-                <Text style={{ color: invoiceDate ? '#000' : '#9CA3AF' }}>
-                  {invoiceDate || 'Sélectionner une date'}
-                </Text>
-              </TouchableOpacity>
-
-              {showInvoiceDatePicker && (
-                <DateTimePicker
-                  value={invoiceDateObj || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowInvoiceDatePicker(false);
-                    if (selectedDate) {
-                      setInvoiceDateObj(selectedDate);
-                      const iso = selectedDate.toISOString().split('T')[0];
-                      setInvoiceDate(iso);
-                    }
-                  }}
-                />
-              )}
-            </View>
-          </View>
-
-          <View style={styles.formField}>
-            <Text style={styles.label}>Date de paiement</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="payment" size={20} color="#665" />
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowPaymentDatePicker(true)}
-              >
-                <Text style={{ color: paymentDate ? '#000' : '#9CA3AF' }}>
-                  {paymentDate || 'Sélectionner une date'}
-                </Text>
-              </TouchableOpacity>
-
-              {showPaymentDatePicker && (
-                <DateTimePicker
-                  value={paymentDateObj || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowPaymentDatePicker(false);
-                    if (selectedDate) {
-                      setPaymentDateObj(selectedDate);
-                      const iso = selectedDate.toISOString().split('T')[0];
-                      setPaymentDate(iso);
-                    }
-                  }}
-                />
-              )}
-            </View>
-          </View>
         </View>
 
         {/* ======================
             TOTAL
         ====================== */}
         <View style={styles.totalSection}>
-          <Text style={styles.totalLabel}>Coût de la commande</Text>
+          <Text style={styles.totalLabel}>Coût interne de production</Text>
+
+          <Text style={{ color: '#6B7280', marginBottom: 8 }}>
+            Ce montant est destiné aux achats et à la cuisine. Il ne correspond pas au montant facturé au client.
+          </Text>
+
+          <View style={{ marginBottom: 8 }}>
+            <Text>Coût des plats : {formatCurrency(operationalCosts.dishesCost)}</Text>
+            <Text>
+              Ingrédients supplémentaires : {formatCurrency(operationalCosts.additionalIngredientsCost)}
+            </Text>
+          </View>
+
           <View style={styles.totalAmount}>
-            <Icon name="attach-money" size={24} color="#007AFF" />
+            <Icon name="shopping-cart" size={24} color="#007AFF" />
             <Text style={styles.totalValue}>
-              {formatCurrency(
-                editableItems.length > 0
-                  ? editableItems.reduce(
-                    (sum, item) =>
-                      sum +
-                      (
-                        (item.quantity || 0) *
-                        (item.numberOfDays || 1) *
-                        (item.unitPrice || 0)
-                      ),
-                    0
-                  )
-                  : calculateOrderTotalCost({
-                    ...(order as any),
-                    dishes: selectedDishes,
-                    additionalIngredients,
-                  } as Order)
-              )}
+              {formatCurrency(operationalCosts.totalProductionCost)}
             </Text>
           </View>
         </View>
