@@ -1103,7 +1103,8 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       client: selectedClient!,
       status: order?.status || 'En cours',
       dishes: selectedDishes,
-      guestCount: guestCount ? Number(guestCount) : undefined,
+      guestCount: guestCount ? Number(guestCount) : 0,
+      numberOfGuests: guestCount ? Number(guestCount) : 0,
 
 
       items:
@@ -1135,8 +1136,8 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       deliveryTime,
       address,
       deliveryAddress: address,
-      designation: designation || undefined,
-      billedAmount: billedAmount ? Number(billedAmount) : undefined,
+      designation: designation || '',
+      billedAmount: billedAmount ? Number(billedAmount) : 0,
 
 
     } as any);

@@ -1,3 +1,4 @@
+//app/(traiteur)/orders/index.tsx
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -10,11 +11,11 @@ import {
   Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-
 import {
   getOrders,
-  updateOrder,
+  updateOrderStatus,
 } from '@/src/services/cateringOrderService';
+
 import { CateringOrder } from '@/types/catering';
 import { formatCurrency } from '@/src/utils/costs';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
@@ -60,12 +61,22 @@ export default function OrdersScreen() {
   const totalOrders = orders.length;
 
   const completedOrders = useMemo(() => {
-    return orders.filter((o: any) => o.status === 'completed').length;
+    return orders.filter((o: any) => o.status === 'Livré').length;
   }, [orders]);
+
+  function getOrderAmount(order: any) {
+    return (
+      order.billedAmount ??
+      order.totals?.subtotal ??
+      order.totals?.total ??
+      order.pricingReference?.totalHT ??
+      0
+    );
+  }
 
   const totalAmount = useMemo(() => {
     return orders.reduce((sum: number, o: any) => {
-      return sum + (o.totals?.total ?? 0);
+      return sum + getOrderAmount(o);
     }, 0);
   }, [orders]);
 
@@ -81,37 +92,37 @@ export default function OrdersScreen() {
 
   function getStatusLabel(status?: string) {
     switch (status) {
-      case 'confirmed':
-        return 'Confirmée';
-      case 'in_progress':
+      case 'En cours':
+        return 'En cours';
+      case 'En préparation':
         return 'En préparation';
-      case 'completed':
-        return 'Terminée';
-      case 'cancelled':
-        return 'Annulée';
+      case 'Livré':
+        return 'Livré';
+      case 'Annulé':
+        return 'Annulé';
       default:
-        return status || 'Confirmée';
+        return status || 'En cours';
     }
   }
 
   function getStatusStyle(status?: string) {
     switch (status) {
-      case 'confirmed':
+      case 'En cours':
         return {
           backgroundColor: '#DBEAFE',
           color: '#1D4ED8',
         };
-      case 'in_progress':
+      case 'En préparation':
         return {
           backgroundColor: '#FEF3C7',
           color: '#92400E',
         };
-      case 'completed':
+      case 'Livré':
         return {
           backgroundColor: '#DCFCE7',
           color: '#166534',
         };
-      case 'cancelled':
+      case 'Annulé':
         return {
           backgroundColor: '#FEE2E2',
           color: '#991B1B',
@@ -128,7 +139,7 @@ export default function OrdersScreen() {
     if (!orderId || !status) return;
 
     try {
-      await updateOrder(orderId, { status } as any);
+      await updateOrderStatus(orderId, status as any);
       await loadOrders();
     } catch (e) {
       console.error('❌ update order status error:', e);
@@ -257,7 +268,7 @@ export default function OrdersScreen() {
               ) : null}
 
               <Text style={styles.amount}>
-                Total : {formatCurrency(order.totals?.total ?? 0)}
+                Total : {formatCurrency(getOrderAmount(order))}
               </Text>
 
               <View style={styles.actions}>
@@ -275,33 +286,33 @@ export default function OrdersScreen() {
                   <Text style={styles.primaryActionText}>Voir</Text>
                 </TouchableOpacity>
 
-                {order.status === 'confirmed' && (
+                {order.status === 'En cours' && (
                   <TouchableOpacity
                     style={styles.secondaryAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'in_progress')
+                      confirmStatusChange(order.id, 'En préparation')
                     }
                   >
                     <Text style={styles.secondaryActionText}>Préparer</Text>
                   </TouchableOpacity>
                 )}
 
-                {order.status === 'in_progress' && (
+                {order.status === 'En préparation' && (
                   <TouchableOpacity
                     style={styles.successAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'completed')
+                      confirmStatusChange(order.id, 'Livré')
                     }
                   >
                     <Text style={styles.successActionText}>Terminer</Text>
                   </TouchableOpacity>
                 )}
 
-                {order.status !== 'completed' && order.status !== 'cancelled' && (
+                {order.status !== 'Livré' && order.status !== 'Annulé' && (
                   <TouchableOpacity
                     style={styles.deleteAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'cancelled')
+                      confirmStatusChange(order.id, 'Annulé')
                     }
                   >
                     <Text style={styles.deleteActionText}>Annuler</Text>
