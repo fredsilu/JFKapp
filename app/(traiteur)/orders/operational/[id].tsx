@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
+import { shareOperationalOrderPdf } from '@/src/services/operationalPdf.service';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { getOrderById } from '@/src/services/cateringOrderService';
-
+import { shareOperationalManagementPdf } from '@/src/services/operationalManagementPdf.service';
 
 export default function OperationalOrderSheetScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -214,6 +215,23 @@ export default function OperationalOrderSheetScreen() {
     })} $`;
   };
 
+  const handleSharePdf = async () => {
+    if (!order) {
+      Alert.alert('Erreur', 'Aucune commande à partager');
+      return;
+    }
+
+    await shareOperationalOrderPdf(order);
+  };
+  const handleShareManagementPdf = async () => {
+    if (!order) {
+      Alert.alert('Erreur', 'Aucune commande à partager');
+      return;
+    }
+
+    await shareOperationalManagementPdf(order);
+  };
+
   function CostLine({
     label,
     value,
@@ -256,17 +274,32 @@ export default function OperationalOrderSheetScreen() {
           <MaterialIcons name="arrow-back" size={22} color="#111827" />
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={handleSharePdf}
+        >
+          <MaterialIcons name="picture-as-pdf" size={22} color="#DC2626" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={handleShareManagementPdf}
+        >
+          <MaterialIcons name="assessment" size={22} color="#111827" />
+        </TouchableOpacity>
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Fiche équipe</Text>
           <Text style={styles.headerSubtitle}>{orderNumber}</Text>
         </View>
       </View>
 
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.noticeCard}>
           <MaterialIcons name="info" size={20} color="#2563EB" />
           <Text style={styles.noticeText}>
-            Fiche destinée aux équipes cuisine et logistique. Aucun montant financier n’est affiché.
+            Fiche destinée aux équipes cuisine et logistique.
           </Text>
         </View>
 
