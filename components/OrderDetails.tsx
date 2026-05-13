@@ -554,39 +554,7 @@ export default function OrderDetails({
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.secondaryAction}
-              onPress={() => {
-                if (
-                  !hasIngredientsData
-                ) {
-                  Alert.alert(
-                    'Information',
-                    'Aucun ingrédient disponible.'
-                  );
-
-                  return;
-                }
-
-                setShowIngredientsModal(
-                  true
-                );
-              }}
-            >
-              <MaterialIcons
-                name="list-alt"
-                size={20}
-                color="#059669"
-              />
-
-              <Text
-                style={
-                  styles.secondaryActionText
-                }
-              >
-                Ingrédients
-              </Text>
-            </TouchableOpacity>
+          
 
             <TouchableOpacity
               style={styles.secondaryAction}
@@ -930,7 +898,7 @@ export default function OrderDetails({
 
           <View style={styles.totalCard}>
             <Text style={styles.totalLabel}>
-              Total estimé
+              Montant facturé
             </Text>
 
             <Text style={styles.totalValue}>
