@@ -24,7 +24,7 @@ const COLLECTION = 'orders';
 
 function cleanUndefinedValues<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(
-    Object.entries(obj).filter(([_, value]) => value !== undefined)
+    Object.entries(obj).filter(([, value]) => value !== undefined)
   ) as T;
 }
 
@@ -61,10 +61,15 @@ export async function createProformaFromSimulation(simulationId: string) {
     designation: simulation.designation ?? '',
 
     dateLivraison: simulation.dateLivraison ?? '',
+    deliveryDate: simulation.dateLivraison ?? '',
+
     deliveryAddress: simulation.deliveryAddress ?? '',
+    address: simulation.deliveryAddress ?? '',
+
     deliveryTime: simulation.deliveryTime ?? '',
 
     guestCount: simulation.guestCount ?? 0,
+    numberOfGuests: simulation.guestCount ?? 0,
 
     comment: simulation.comment ?? '',
 
@@ -75,6 +80,22 @@ export async function createProformaFromSimulation(simulationId: string) {
     lunch: simulation.lunch ?? null,
     drinks: simulation.drinks ?? null,
     service: simulation.service ?? null,
+
+    dishes: [],
+    additionalIngredients: [],
+    operationalDishes: [],
+    operationalAdditionalIngredients: [],
+    operationalCosts: {
+      dishesCost: 0,
+      additionalIngredientsCost: 0,
+      totalProductionCost: 0,
+    },
+
+    billedAmount:
+      totals?.subtotal ??
+      totals?.total ??
+      simulation.globalTurnover ??
+      0,
 
     pricingReference: {
       totalHT: simulation.globalTurnover ?? 0,
@@ -170,6 +191,18 @@ export async function updateOrder(
     data.address ??
     '';
 
+  const guestCountValue =
+    data.guestCount ??
+    data.numberOfGuests ??
+    0;
+
+  const billedAmountValue =
+    data.billedAmount ??
+    data.totals?.subtotal ??
+    data.totals?.total ??
+    data.pricingReference?.totalHT ??
+    0;
+
   const payload = cleanUndefinedValues({
     ...data,
 
@@ -192,12 +225,10 @@ export async function updateOrder(
     deliveryAddress: deliveryAddressValue,
     address: deliveryAddressValue,
 
-    billedAmount:
-      data.billedAmount ??
-      data.totals?.subtotal ??
-      data.totals?.total ??
-      data.pricingReference?.totalHT ??
-      0,
+    guestCount: guestCountValue,
+    numberOfGuests: guestCountValue,
+
+    billedAmount: billedAmountValue,
 
     updatedAt: serverTimestamp(),
   } as any);
@@ -243,6 +274,18 @@ export async function createOrderFromProforma(proforma: any) {
     proforma.eventLocation ??
     '';
 
+  const guestCountValue =
+    proforma.guestCount ??
+    proforma.numberOfGuests ??
+    0;
+
+  const billedAmountValue =
+    proforma.billedAmount ??
+    proforma.totals?.subtotal ??
+    proforma.totals?.total ??
+    proforma.pricingReference?.totalHT ??
+    0;
+
   const order: Omit<CateringOrder, 'id'> = {
     simulationId: proforma.simulationId ?? null,
 
@@ -263,10 +306,15 @@ export async function createOrderFromProforma(proforma: any) {
     designation: proforma.designation ?? '',
 
     dateLivraison: deliveryDateValue,
+    deliveryDate: deliveryDateValue,
+
     deliveryAddress: deliveryAddressValue,
+    address: deliveryAddressValue,
+
     deliveryTime: proforma.deliveryTime ?? proforma.eventTime ?? '',
 
-    guestCount: proforma.guestCount ?? 0,
+    guestCount: guestCountValue,
+    numberOfGuests: guestCountValue,
 
     comment: proforma.comment ?? '',
 
@@ -278,6 +326,7 @@ export async function createOrderFromProforma(proforma: any) {
     operationalDishes: proforma.operationalDishes ?? [],
     operationalAdditionalIngredients:
       proforma.operationalAdditionalIngredients ?? [],
+
     operationalCosts: proforma.operationalCosts ?? {
       dishesCost: 0,
       additionalIngredientsCost: 0,
@@ -290,12 +339,7 @@ export async function createOrderFromProforma(proforma: any) {
       currency: 'USD',
     },
 
-    billedAmount:
-      proforma.billedAmount ??
-      proforma.totals?.subtotal ??
-      proforma.totals?.total ??
-      proforma.pricingReference?.totalHT ??
-      0,
+    billedAmount: billedAmountValue,
 
     breakfast: proforma.breakfast ?? null,
     lunch: proforma.lunch ?? null,
