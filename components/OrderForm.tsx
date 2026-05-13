@@ -17,7 +17,7 @@ import { Keyboard } from 'react-native';
 
 import { useClients, useDishes } from '@/src/hooks/useFirestore';
 import { Order, Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
-import { calculateOrderTotalCost, formatCurrency } from '@/src/utils/costs';
+import { formatCurrency } from '@/src/utils/costs';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import { useIngredients } from '@/src/hooks/useFirestore';
@@ -500,6 +500,85 @@ const styles = StyleSheet.create({
     color: '#059669',
     marginTop: 4,
     fontWeight: '900',
+  },
+  blockSubtotal: {
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  blockSubtotalLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#3730A3',
+  },
+
+  blockSubtotalValue: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#1E3A8A',
+  },
+
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+
+  stepperButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+  },
+
+  stepperButtonText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
+  stepperValue: {
+    minWidth: 36,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#111827',
+  },
+  operationBlockHeader: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  operationBlockTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#111827',
+  },
+
+  operationBlockSubtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
   },
 });
 
@@ -1130,7 +1209,15 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             PLATS
         ====================== */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PLATS</Text>
+          <View style={styles.operationBlockHeader}>
+            <View>
+              <Text style={styles.operationBlockTitle}>Plats à produire</Text>
+              <Text style={styles.operationBlockSubtitle}>
+                Sélection cuisine et coût de production
+              </Text>
+            </View>
+            <Icon name="restaurant" size={22} color="#2563EB" />
+          </View>
 
           <View style={styles.searchContainer}>
             <Icon name="search" size={20} color="#666" />
@@ -1214,37 +1301,53 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                     </View>
 
                     <View style={styles.productionQuantityRow}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() =>
-                          handleUpdateDishQuantity(dish.id, quantity - 1)
-                        }
-                      >
-                        <Text style={styles.quantityButtonText}>-</Text>
-                      </TouchableOpacity>
-
                       <Text style={styles.productionQuantityText}>
-                        Quantité : {quantity}
+                        Quantité
                       </Text>
 
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() =>
-                          handleUpdateDishQuantity(dish.id, quantity + 1)
-                        }
-                      >
-                        <Text style={styles.quantityButtonText}>+</Text>
-                      </TouchableOpacity>
+                      <View style={styles.stepper}>
+                        <TouchableOpacity
+                          style={styles.stepperButton}
+                          onPress={() => handleUpdateDishQuantity(dish.id, quantity - 1)}
+                        >
+                          <Text style={styles.stepperButtonText}>-</Text>
+                        </TouchableOpacity>
+
+                        <Text style={styles.stepperValue}>{quantity}</Text>
+
+                        <TouchableOpacity
+                          style={styles.stepperButton}
+                          onPress={() => handleUpdateDishQuantity(dish.id, quantity + 1)}
+                        >
+                          <Text style={styles.stepperButtonText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 );
               })}
+
+              <View style={styles.blockSubtotal}>
+                <Text style={styles.blockSubtotalLabel}>Total plats sélectionnés</Text>
+                <Text style={styles.blockSubtotalValue}>
+                  {formatCurrency(operationalCosts.dishesCost)}
+                </Text>
+              </View>
+
             </View>
           )}
         </View>
 
         {/* ====================== */}
-        <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>INGRÉDIENTS SUPPLÉMENTAIRES</Text>
+        <View style={styles.operationBlockHeader}>
+          <View>
+            <Text style={styles.operationBlockTitle}>Achats complémentaires</Text>
+            <Text style={styles.operationBlockSubtitle}>
+              Ingrédients ajoutés pour cette commande
+            </Text>
+          </View>
+          <Icon name="shopping-cart" size={22} color="#059669" />
+        </View>
         {/* ====================== */}
         {/* ⚠️ NOTE: tu avais un ScrollView imbriqué dans un ScrollView.
             Je garde ta structure pour ne pas “casser”, mais idéalement on évite un ScrollView vertical dans un autre.
@@ -1319,10 +1422,9 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                         Total : {formatCurrency(item.total)}
                       </Text>
                     </View>
-
-                    <View style={styles.quantityContainer}>
+                    <View style={styles.stepper}>
                       <TouchableOpacity
-                        style={styles.quantityButton}
+                        style={styles.stepperButton}
                         onPress={() =>
                           handleUpdateIngredientQuantity(
                             item.ingredientId,
@@ -1330,11 +1432,15 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                           )
                         }
                       >
-                        <Text style={styles.quantityButtonText}>-</Text>
+                        <Text style={styles.stepperButtonText}>-</Text>
                       </TouchableOpacity>
 
+                      <Text style={styles.stepperValue}>
+                        {item.quantity}
+                      </Text>
+
                       <TouchableOpacity
-                        style={styles.quantityButton}
+                        style={styles.stepperButton}
                         onPress={() =>
                           handleUpdateIngredientQuantity(
                             item.ingredientId,
@@ -1342,12 +1448,19 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                           )
                         }
                       >
-                        <Text style={styles.quantityButtonText}>+</Text>
+                        <Text style={styles.stepperButtonText}>+</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 );
               })}
+
+              <View style={styles.blockSubtotal}>
+                <Text style={styles.blockSubtotalLabel}>Total ingrédients supplémentaires</Text>
+                <Text style={styles.blockSubtotalValue}>
+                  {formatCurrency(operationalCosts.additionalIngredientsCost)}
+                </Text>
+              </View>
             </View>
           )}
         </View>
