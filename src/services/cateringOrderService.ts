@@ -21,11 +21,47 @@ import { buildDocumentItemsFromSimulation } from '@/src/utils/buildDocumentItems
 import { calculateDocumentTotals } from '@/src/services/calculateDocumentTotals';
 
 const COLLECTION = 'orders';
+function findUndefinedPaths(obj: any, path = ''): string[] {
+  const results: string[] = [];
 
-function cleanUndefinedValues<T extends Record<string, any>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined)
-  ) as T;
+  if (obj === undefined) {
+    results.push(path || 'root');
+    return results;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item, index) => {
+      results.push(...findUndefinedPaths(item, `${path}[${index}]`));
+    });
+    return results;
+  }
+
+  if (obj !== null && typeof obj === 'object') {
+    Object.entries(obj).forEach(([key, value]) => {
+      const nextPath = path ? `${path}.${key}` : key;
+      results.push(...findUndefinedPaths(value, nextPath));
+    });
+  }
+
+  return results;
+}
+
+function cleanUndefinedValues<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => cleanUndefinedValues(item))
+      .filter((item) => item !== undefined) as T;
+  }
+
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, any>)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, cleanUndefinedValues(v)])
+    ) as T;
+  }
+
+  return value;
 }
 
 /* =========================================
@@ -233,7 +269,18 @@ export async function updateOrder(
     updatedAt: serverTimestamp(),
   } as any);
 
+  const undefinedPaths = findUndefinedPaths(payload);
+
+  if (undefinedPaths.length > 0) {
+    console.log('❌ Champs undefined détectés dans updateOrder:', undefinedPaths);
+    throw new Error(
+      `Champs undefined détectés: ${undefinedPaths.join(', ')}`
+    );
+  }
+
   await updateDoc(ref, payload);
+
+
 }
 
 /* =========================================
