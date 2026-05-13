@@ -88,7 +88,15 @@ export default function OrderDetails({
    */
 
   const calculatedTotal = useMemo(() => {
+    if ((order as any)?.billedAmount > 0) {
+      return (order as any).billedAmount;
+    }
+
     const totals = (order as any)?.totals;
+
+    if (totals?.subtotal && totals.subtotal > 0) {
+      return totals.subtotal;
+    }
 
     if (totals?.total && totals.total > 0) {
       return totals.total;
@@ -97,7 +105,11 @@ export default function OrderDetails({
     return items.reduce((sum: number, item: any) => {
       const itemTotal =
         item?.total ||
-        (item?.quantity || 0) * (item?.unitPrice || 0);
+        (
+          (item?.quantity || 0) *
+          (item?.numberOfDays || 1) *
+          (item?.unitPrice || 0)
+        );
 
       return sum + itemTotal;
     }, 0);
@@ -114,7 +126,14 @@ export default function OrderDetails({
       const quantity = item?.quantity || 0;
       const unitPrice = item?.unitPrice || 0;
 
-      return sum + quantity * unitPrice;
+      return (
+        sum +
+        (
+          quantity *
+          (item?.numberOfDays || 1) *
+          unitPrice
+        )
+      );
     }, 0);
   }, [items, order]);
 
@@ -304,7 +323,14 @@ export default function OrderDetails({
 
         return;
       }
+      if ((order as any)?.invoiceId) {
+        Alert.alert(
+          'Information',
+          'Une facture existe déjà pour cette commande.'
+        );
 
+        return;
+      }
       const invoice =
         await createInvoiceFromOrder(order as any);
 
@@ -761,9 +787,11 @@ export default function OrderDetails({
 
                   const total =
                     item?.total ||
-                    quantity *
-                    (item?.unitPrice ||
-                      0);
+                    (
+                      quantity *
+                      (item?.numberOfDays || 1) *
+                      (item?.unitPrice || 0)
+                    );
 
                   return (
                     <View
@@ -801,14 +829,10 @@ export default function OrderDetails({
                           {itemName}
                         </Text>
 
-                        <Text
-                          style={
-                            styles.dishMeta
-                          }
-                        >
-                          Quantité :
-                          {' '}
-                          {quantity}
+                        <Text style={styles.dishMeta}>
+                          Qté : {quantity}
+                          {' • '}
+                          Jours : {item?.numberOfDays || 1}
                         </Text>
                       </View>
 
