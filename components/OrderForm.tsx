@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import { Keyboard } from 'react-native';
 
 import { useClients, useDishes } from '@/src/hooks/useFirestore';
 import { Order, Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
@@ -22,6 +23,16 @@ import LoadingSpinner from '@/src/components/LoadingSpinner';
 import { useIngredients } from '@/src/hooks/useFirestore';
 import { OrderFormProps } from '@/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+type EditableOrderItem = {
+  id?: string;
+  label: string;
+  quantity: number;
+  numberOfDays?: number;
+  unitPrice?: number;
+  total?: number;
+  dish?: Dish;
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -339,6 +350,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#007AFF',
   },
+  editableItemCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  editableItemTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 10,
+  },
+
+  editableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  editableLabel: {
+    fontSize: 13,
+    color: '#4B5563',
+    fontWeight: '700',
+  },
+
+  editableInput: {
+    width: 80,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    textAlign: 'center',
+    minHeight: 42,
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });
 
 export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) {
@@ -367,6 +419,21 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       additionalIngredients: [],
     }))
   );
+  const [editableItems, setEditableItems] = useState<EditableOrderItem[]>(
+    ((order as any)?.items || []).map((item: any) => ({
+      id: item.id,
+      label:
+        item.label ||
+        item.name ||
+        item.dish?.name ||
+        'Élément',
+      quantity: item.quantity || 1,
+      numberOfDays: item.numberOfDays || 1,
+      unitPrice: item.unitPrice || 0,
+      total: item.total || 0,
+      dish: item.dish,
+    }))
+  );
   const [additionalIngredients, setAdditionalIngredients] = useState<OrderIngredient[]>(
     order?.additionalIngredients || []
   );
@@ -392,12 +459,30 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
     ''
   );
 
-  const [guestCount, setGuestCount] = useState(
-    (order as any)?.guestCount
-      ? String((order as any).guestCount)
-      : ''
-  );
-  const [billedAmount, setBilledAmount] = useState(order?.billedAmount ? String(order.billedAmount) : '');
+  const getInitialGuestCount = () => {
+    const count =
+      (order as any)?.guestCount ||
+      (order as any)?.numberOfGuests ||
+      (order as any)?.guests ||
+      (order as any)?.pax ||
+      0;
+
+    return count > 0 ? String(count) : '';
+  };
+
+  const [guestCount, setGuestCount] = useState(getInitialGuestCount());
+  const getInitialBilledAmount = () => {
+    const amount =
+      order?.billedAmount ||
+      (order as any)?.totals?.subtotal ||
+      (order as any)?.pricingReference?.totalHT ||
+      (order as any)?.totals?.total ||
+      0;
+
+    return amount > 0 ? String(amount) : '';
+  };
+
+  const [billedAmount, setBilledAmount] = useState(getInitialBilledAmount());
   const [invoiceDate, setInvoiceDate] = useState(order?.invoiceDate || '');
   const [paymentDate, setPaymentDate] = useState(order?.paymentDate || '');
   const [formError, setFormError] = useState<string | null>(null);
@@ -417,7 +502,11 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
 
   const [deliveryDateObj, setDeliveryDateObj] = useState<Date | null>(
-    order?.deliveryDate ? new Date(order.deliveryDate) : null
+    order?.deliveryDate
+      ? new Date(order.deliveryDate)
+      : (order as any)?.dateLivraison
+        ? new Date((order as any).dateLivraison)
+        : null
   );
 
   const [deliveryTimeObj, setDeliveryTimeObj] = useState<Date | null>(null);
@@ -457,9 +546,41 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   ========================================================= */
   useEffect(() => {
     if (!order) return;
+    setEditableItems(
+      ((order as any)?.items || []).map((item: any) => ({
+        id: item.id,
+        label:
+          item.label ||
+          item.name ||
+          item.dish?.name ||
+          'Élément',
+        quantity: item.quantity || 1,
+        numberOfDays: item.numberOfDays || 1,
+        unitPrice: item.unitPrice || 0,
+        total: item.total || 0,
+        dish: item.dish,
+      }))
+    );
 
     // On resync les champs simples si jamais order arrive après
-    setSelectedDishes(order.dishes || []);
+    setSelectedDishes(
+      order.dishes ||
+      ((order as any)?.items || []).map((item: any) => ({
+        dish: item.dish || {
+          id: item.id || item.label,
+          name: item.label || item.name || 'Élément',
+          image: '',
+          ingredients: [],
+          preparationTime: 0,
+          servings: 1,
+          description: '',
+        },
+        quantity: item.quantity || 1,
+        name: item.label || item.name || '',
+        ingredients: [],
+        additionalIngredients: [],
+      }))
+    );
     setAdditionalIngredients(order.additionalIngredients || []);
     setDeliveryDate(
       order.deliveryDate ||
@@ -481,12 +602,22 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       ''
     );
 
-    setGuestCount(
-      (order as any)?.guestCount
-        ? String((order as any).guestCount)
-        : ''
-    );
-    setBilledAmount(order.billedAmount ? String(order.billedAmount) : '');
+    const count =
+      (order as any)?.guestCount ||
+      (order as any)?.numberOfGuests ||
+      (order as any)?.guests ||
+      (order as any)?.pax ||
+      0;
+
+    setGuestCount(count > 0 ? String(count) : '');
+    const amount =
+      order.billedAmount ||
+      (order as any)?.totals?.subtotal ||
+      (order as any)?.pricingReference?.totalHT ||
+      (order as any)?.totals?.total ||
+      0;
+
+    setBilledAmount(amount > 0 ? String(amount) : '');
     setInvoiceDate(order.invoiceDate || '');
     setPaymentDate(order.paymentDate || '');
 
@@ -579,14 +710,48 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       );
     }
   };
+  const updateEditableItemQuantity = (index: number, quantity: number) => {
+    setEditableItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
 
+        const cleanQuantity = Math.max(1, quantity || 1);
+        const numberOfDays = item.numberOfDays || 1;
+        const unitPrice = item.unitPrice || 0;
+
+        return {
+          ...item,
+          quantity: cleanQuantity,
+          total: cleanQuantity * numberOfDays * unitPrice,
+        };
+      })
+    );
+  };
+
+  const updateEditableItemDays = (index: number, numberOfDays: number) => {
+    setEditableItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+
+        const cleanDays = Math.max(1, numberOfDays || 1);
+        const quantity = item.quantity || 1;
+        const unitPrice = item.unitPrice || 0;
+
+        return {
+          ...item,
+          numberOfDays: cleanDays,
+          total: quantity * cleanDays * unitPrice,
+        };
+      })
+    );
+  };
   const validateForm = () => {
     if (!selectedClient) {
       setFormError('Veuillez sélectionner un client');
       return false;
     }
-    if (selectedDishes.length === 0) {
-      setFormError('Veuillez ajouter au moins un plat');
+    if (selectedDishes.length === 0 && editableItems.length === 0) {
+      setFormError('Veuillez ajouter au moins un élément à la commande');
       return false;
     }
     if (!deliveryDate) {
@@ -610,23 +775,33 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-
+    Keyboard.dismiss();
     onSubmit({
       clientId: selectedClient!.id,
       client: selectedClient!,
       status: order?.status || 'En cours',
       dishes: selectedDishes,
       guestCount: guestCount ? Number(guestCount) : undefined,
-      
 
-      items: selectedDishes.map((d) => ({
-        id: d.dish.id,
-        label: d.dish.name,
-        quantity: d.quantity,
-        unitPrice: 0,
-        total: 0,
-        dish: d.dish,
-      })),
+
+      items:
+        editableItems.length > 0
+          ? editableItems.map((item) => ({
+            ...item,
+            total:
+              (item.quantity || 0) *
+              (item.numberOfDays || 1) *
+              (item.unitPrice || 0),
+          }))
+          : selectedDishes.map((d) => ({
+            id: d.dish.id,
+            label: d.dish.name,
+            quantity: d.quantity,
+            numberOfDays: 1,
+            unitPrice: 0,
+            total: 0,
+            dish: d.dish,
+          })),
       additionalIngredients,
       deliveryDate,
       dateLivraison: deliveryDate,
@@ -646,7 +821,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
       <View style={styles.header}>
@@ -658,7 +833,18 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={{
+          paddingBottom: 140,
+          flexGrow: 1,
+        }}
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="interactive"
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={false}
+      >
         {formError && (
           <View style={styles.errorContainer}>
             <ErrorMessage message={formError} />
@@ -705,6 +891,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                   style={styles.searchInput}
                   placeholder="Rechercher un client..."
                   value={clientSearchQuery}
+                  submitBehavior="blurAndSubmit"
                   onChangeText={setClientSearchQuery}
                 />
               </View>
@@ -738,7 +925,55 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             </View>
           )}
         </View>
+        {editableItems.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Éléments de la commande</Text>
 
+            {editableItems.map((item, index) => (
+              <View key={item.id || index} style={styles.editableItemCard}>
+                <Text style={styles.editableItemTitle}>{item.label}</Text>
+
+                <View style={styles.editableRow}>
+                  <Text style={styles.editableLabel}>Quantité</Text>
+
+                  <TextInput
+                    style={styles.editableInput}
+                    value={String(item.quantity || 1)}
+                    onChangeText={(value) => {
+                      const parsed = parseInt(value, 10);
+
+                      updateEditableItemQuantity(
+                        index,
+                        isNaN(parsed) ? 1 : parsed
+                      );
+                    }}
+                    submitBehavior="blurAndSubmit"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.editableRow}>
+                  <Text style={styles.editableLabel}>Jours</Text>
+
+                  <TextInput
+                    style={styles.editableInput}
+                    value={String(item.numberOfDays || 1)}
+                    onChangeText={(value) => {
+                      const parsed = parseInt(value, 10);
+
+                      updateEditableItemDays(
+                        index,
+                        isNaN(parsed) ? 1 : parsed
+                      );
+                    }}
+                    submitBehavior="blurAndSubmit"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
         {/* ======================
             PLATS
         ====================== */}
@@ -751,6 +986,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               style={styles.searchInput}
               placeholder="Rechercher un plat..."
               value={dishSearchQuery}
+              submitBehavior="blurAndSubmit"
               onChangeText={setDishSearchQuery}
             />
           </View>
@@ -845,6 +1081,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               style={styles.searchInput}
               placeholder="Rechercher un ingrédient..."
               value={ingredientSearchQuery}
+              submitBehavior="blurAndSubmit"
               onChangeText={setIngredientSearchQuery}
             />
           </View>
@@ -932,6 +1169,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                                 parseFloat(value) || 0
                               )
                             }
+                            submitBehavior="blurAndSubmit"
                             keyboardType="decimal-pad"
                           />
                           <Text style={styles.unitText}>{ingredient.unit}</Text>
@@ -1042,6 +1280,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 placeholder="Adresse complète"
                 value={address}
                 onChangeText={setAddress}
+                submitBehavior="blurAndSubmit"
                 multiline
                 numberOfLines={3}
               />
@@ -1057,6 +1296,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 placeholder="Ex : 100"
                 value={guestCount}
                 onChangeText={setGuestCount}
+                submitBehavior="blurAndSubmit"
                 keyboardType="numeric"
               />
             </View>
@@ -1071,6 +1311,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 style={styles.input}
                 placeholder="Désignation de la commande"
                 value={designation}
+                submitBehavior="blurAndSubmit"
                 onChangeText={setDesignation}
               />
             </View>
@@ -1085,6 +1326,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                 placeholder="Montant facturé (USD)"
                 value={billedAmount}
                 onChangeText={setBilledAmount}
+                submitBehavior="blurAndSubmit"
                 keyboardType="decimal-pad"
               />
             </View>
@@ -1162,11 +1404,22 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
             <Icon name="attach-money" size={24} color="#007AFF" />
             <Text style={styles.totalValue}>
               {formatCurrency(
-                calculateOrderTotalCost({
-                  ...(order as any),
-                  dishes: selectedDishes,
-                  additionalIngredients,
-                } as Order)
+                editableItems.length > 0
+                  ? editableItems.reduce(
+                    (sum, item) =>
+                      sum +
+                      (
+                        (item.quantity || 0) *
+                        (item.numberOfDays || 1) *
+                        (item.unitPrice || 0)
+                      ),
+                    0
+                  )
+                  : calculateOrderTotalCost({
+                    ...(order as any),
+                    dishes: selectedDishes,
+                    additionalIngredients,
+                  } as Order)
               )}
             </Text>
           </View>

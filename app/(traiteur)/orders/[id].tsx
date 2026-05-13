@@ -14,7 +14,6 @@ import { getOrderById } from '@/src/services/cateringOrderService';
 
 export default function OrderDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
-
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [order, setOrder] = useState<any>(null);
@@ -39,8 +38,8 @@ export default function OrderDetailScreen() {
       }
 
       setOrder(data);
-    } catch (e) {
-      console.error('❌ load order error:', e);
+    } catch (error) {
+      console.error('❌ load order error:', error);
       Alert.alert('Erreur', 'Impossible de charger la commande');
     } finally {
       setLoading(false);

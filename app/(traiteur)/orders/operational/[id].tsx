@@ -1,3 +1,4 @@
+//app/(traiteur)/orders/operational/[id].tsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -12,6 +13,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { getOrderById } from '@/src/services/cateringOrderService';
+import app from '@/lib/firebase';
 
 export default function OperationalOrderSheetScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
