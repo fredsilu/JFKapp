@@ -263,12 +263,14 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   submitButton: {
-    flex: 1.4,
+    flex: 1.5,
+    minWidth: 0,
     height: 52,
     borderRadius: 14,
     backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 10,
     shadowColor: '#2563EB',
     shadowOpacity: 0.18,
     shadowRadius: 10,
@@ -279,9 +281,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   submitButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
     color: '#FFFFFF',
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   selectedIngredients: {
     marginTop: 16,
@@ -1692,14 +1696,26 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
               fontSize: 13,
               fontWeight: '800',
               color:
-                productionCostRatio >= 70
+                productionCostRatio > 50
                   ? '#DC2626'
-                  : productionCostRatio >= 50
+                  : productionCostRatio >= 35
                     ? '#D97706'
                     : '#059669',
             }}
           >
             Taux de coût de production : {productionCostRatio.toFixed(1)}%
+          </Text>
+          <Text
+            style={{
+              marginTop: 8,
+              fontSize: 11,
+              lineHeight: 18,
+              color: '#6B7280',
+            }}
+          >
+            🟢 &lt; 35% : bon niveau de rentabilité{"\n"}
+            🟠 35% à 50% : attention à la marge{"\n"}
+            🔴 &gt; 50% : coût de production élevé
           </Text>
         </View>
 
