@@ -1,5 +1,5 @@
 //app/(traiteur)/orders/operational/[id].tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { getOrderById } from '@/src/services/cateringOrderService';
-import app from '@/lib/firebase';
+
 
 export default function OperationalOrderSheetScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -49,14 +50,38 @@ export default function OperationalOrderSheetScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+
 
   const items = useMemo(() => {
     if (!order) return [];
-    if (Array.isArray(order.items)) return order.items;
-    if (Array.isArray(order.dishes)) return order.dishes;
+
+    if (
+      Array.isArray(order.operationalDishes) &&
+      order.operationalDishes.length > 0
+    ) {
+      return order.operationalDishes;
+    }
+
+    if (
+      Array.isArray(order.items) &&
+      order.items.length > 0
+    ) {
+      return order.items;
+    }
+
+    if (
+      Array.isArray(order.dishes) &&
+      order.dishes.length > 0
+    ) {
+      return order.dishes;
+    }
+
     return [];
   }, [order]);
 
@@ -81,6 +106,128 @@ export default function OperationalOrderSheetScreen() {
     order?.number ||
     order?.orderNumber ||
     'CMD-XXXX';
+
+
+  const additionalIngredients = useMemo(() => {
+    if (
+      Array.isArray(order?.operationalAdditionalIngredients) &&
+      order.operationalAdditionalIngredients.length > 0
+    ) {
+      return order.operationalAdditionalIngredients;
+    }
+
+    if (
+      Array.isArray(order?.additionalIngredients) &&
+      order.additionalIngredients.length > 0
+    ) {
+      return order.additionalIngredients;
+    }
+
+    return [];
+  }, [order]);
+
+  const productionCostRatio = useMemo(() => {
+    const billedAmount =
+      order?.billedAmount ||
+      order?.totals?.subtotal ||
+      order?.totals?.total ||
+      0;
+
+    const productionCost =
+      order?.operationalCosts?.totalProductionCost || 0;
+
+    if (!billedAmount) return 0;
+
+    return (productionCost / billedAmount) * 100;
+  }, [order]);
+
+  const consolidatedIngredients = useMemo(() => {
+    const map = new Map<string, any>();
+
+    const addIngredient = (
+      id: string,
+      name: string,
+      unit: string,
+      quantity: number,
+      unitPrice: number = 0
+    ) => {
+      const key = id || `${name}-${unit}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          id,
+          name,
+          unit,
+          quantity: 0,
+          unitPrice,
+          total: 0,
+        });
+      }
+
+      const existing = map.get(key);
+
+      existing.quantity = Number((existing.quantity + quantity).toFixed(2));
+      existing.unitPrice = existing.unitPrice || unitPrice;
+      existing.total = Number((existing.quantity * existing.unitPrice).toFixed(2));
+    };
+
+    if (Array.isArray(order?.operationalDishes)) {
+      order.operationalDishes.forEach((dish: any) => {
+        const dishQuantity = Number(dish.quantity || 0);
+
+        if (Array.isArray(dish.ingredients)) {
+          dish.ingredients.forEach((item: any) => {
+            const ingredientQuantityPerDish = Number(item.quantity || 0);
+
+            addIngredient(
+              item.id || item.ingredientId || item.name,
+              item.name || 'Ingrédient',
+              item.unit || '',
+              ingredientQuantityPerDish * dishQuantity,
+              Number(item.unitPrice || item.price || 0)
+            );
+          });
+        }
+      });
+    }
+
+    if (Array.isArray(additionalIngredients)) {
+      additionalIngredients.forEach((item: any) => {
+        addIngredient(
+          item.id || item.ingredientId || item.ingredient?.id || item.name,
+          item.name || item.ingredient?.name || 'Ingrédient',
+          item.unit || item.ingredient?.unit || '',
+          Number(item.quantity || 0),
+          Number(item.unitPrice || item.price || item.ingredient?.price || 0)
+        );
+      });
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [order, additionalIngredients]);
+
+  const formatMoney = (value: number) => {
+    return `${Number(value || 0).toLocaleString('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} $`;
+  };
+
+  function CostLine({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string;
+  }) {
+    return (
+      <View style={styles.costLine}>
+        <Text style={styles.costLabel}>{label}</Text>
+        <Text style={styles.costValue}>{value}</Text>
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -124,18 +271,6 @@ export default function OperationalOrderSheetScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Informations générales</Text>
-
-          <InfoLine icon="event" label="Date" value={deliveryDate} />
-          <InfoLine icon="schedule" label="Heure" value={deliveryTime} />
-          <InfoLine icon="location-on" label="Lieu" value={deliveryAddress} />
-          <InfoLine icon="groups" label="Convives" value={`${order.guestCount || '-'} personne(s)`} />
-          <InfoLine icon="flag" label="Statut" value={order.status || '-'} />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Client / événement</Text>
-
           <Text style={styles.mainText}>
             {order.client?.name || order.name || 'Client non défini'}
           </Text>
@@ -153,8 +288,20 @@ export default function OperationalOrderSheetScreen() {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Informations générales</Text>
+
+          <InfoLine icon="event" label="Date" value={deliveryDate} />
+          <InfoLine icon="schedule" label="Heure" value={deliveryTime} />
+          <InfoLine icon="location-on" label="Lieu" value={deliveryAddress} />
+          <InfoLine icon="groups" label="Convives" value={`${order.guestCount || '-'} personne(s)`} />
+          <InfoLine icon="flag" label="Statut" value={order.status || '-'} />
+        </View>
+
+
+
+        <View style={styles.card}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Éléments à préparer</Text>
+            <Text style={styles.sectionTitleInline}>Éléments à préparer</Text>
             <Text style={styles.badge}>{items.length}</Text>
           </View>
 
@@ -191,27 +338,139 @@ export default function OperationalOrderSheetScreen() {
           )}
         </View>
 
-        {Array.isArray(order.additionalIngredients) &&
-          order.additionalIngredients.length > 0 && (
+        {Array.isArray(additionalIngredients) &&
+          additionalIngredients.length > 0 && (
             <View style={styles.card}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Ingrédients supplémentaires</Text>
-                <Text style={styles.badge}>{order.additionalIngredients.length}</Text>
+                <Text style={styles.sectionTitleInline}>Ingrédients supplémentaires</Text>
+                <Text style={styles.badge}>{additionalIngredients.length}</Text>
               </View>
 
-              {order.additionalIngredients.map((item: any, index: number) => (
-                <View key={item?.ingredient?.id || index} style={styles.ingredientRow}>
-                  <Text style={styles.ingredientName}>
-                    {item?.ingredient?.name || 'Ingrédient'}
-                  </Text>
+              {additionalIngredients.map((item: any, index: number) => {
+                const name =
+                  item?.name ||
+                  item?.ingredient?.name ||
+                  'Ingrédient';
 
-                  <Text style={styles.ingredientQty}>
-                    {item?.quantity || 0} {item?.ingredient?.unit || ''}
-                  </Text>
-                </View>
-              ))}
+                const quantity =
+                  item?.quantity || 0;
+
+                const unit =
+                  item?.unit ||
+                  item?.ingredient?.unit ||
+                  '';
+
+                return (
+                  <View
+                    key={item?.id || item?.ingredientId || item?.ingredient?.id || index}
+                    style={styles.ingredientRow}
+                  >
+                    <Text style={styles.ingredientName}>
+                      {name}
+                    </Text>
+
+                    <Text style={styles.ingredientQty}>
+                      {quantity} {unit}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           )}
+        {consolidatedIngredients.length > 0 && (
+          <View style={styles.card}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitleInline}>
+                Liste consolidée des ingrédients
+              </Text>
+              <Text style={styles.badge}>
+                {consolidatedIngredients.length}
+              </Text>
+            </View>
+
+            {consolidatedIngredients.map((item: any, index: number) => (
+              <View key={item.id || index} style={styles.consolidatedRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ingredientName}>{item.name}</Text>
+                  <Text style={styles.ingredientMeta}>
+                    {item.quantity} {item.unit} × {formatMoney(item.unitPrice)}
+                  </Text>
+                </View>
+
+                <Text style={styles.ingredientTotal}>
+                  {formatMoney(item.total)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {order.operationalCosts && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>
+              Coûts opérationnels
+            </Text>
+
+            <CostLine
+              label="Coût des plats"
+              value={formatMoney(order.operationalCosts.dishesCost)}
+            />
+
+            <CostLine
+              label="Ingrédients supp."
+              value={formatMoney(order.operationalCosts.additionalIngredientsCost)}
+            />
+
+            <View style={styles.totalCostBox}>
+              <Text style={styles.totalCostLabel}>Total</Text>
+              <Text style={styles.totalCostValue}>
+                {formatMoney(order.operationalCosts.totalProductionCost)}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            Performance production
+          </Text>
+
+          <View
+            style={[
+              styles.ratioBadge,
+              {
+                backgroundColor:
+                  productionCostRatio < 35
+                    ? '#DCFCE7'
+                    : productionCostRatio <= 50
+                      ? '#FEF3C7'
+                      : '#FEE2E2',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.ratioText,
+                {
+                  color:
+                    productionCostRatio < 35
+                      ? '#166534'
+                      : productionCostRatio <= 50
+                        ? '#92400E'
+                        : '#991B1B',
+                },
+              ]}
+            >
+              Taux coût production :
+              {' '}
+              {productionCostRatio.toFixed(1)}%
+            </Text>
+          </View>
+
+          <Text style={styles.ratioLegend}>
+            {'< 35% : bon • 35–50% : attention • > 50% : dangereux'}
+          </Text>
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Instructions équipe</Text>
@@ -349,17 +608,30 @@ const styles = StyleSheet.create({
 
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  sectionTitleInline: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
   },
 
   badge: {
+    minWidth: 32,
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 999,
     backgroundColor: '#EEF2FF',
     color: '#2563EB',
-    fontWeight: '800',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center',
+    textAlignVertical: 'center',
     overflow: 'hidden',
   },
 
@@ -490,5 +762,90 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#6B7280',
     fontSize: 14,
+  },
+
+  ratioBadge: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+  },
+
+  ratioText: {
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  ratioLegend: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+
+  ingredientMeta: {
+    marginTop: 3,
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+
+  consolidatedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 12,
+  },
+
+  ingredientTotal: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#047857',
+  },
+
+  totalCostBox: {
+    marginTop: 12,
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    padding: 16,
+  },
+
+  totalCostLabel: {
+    color: '#D1D5DB',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  totalCostValue: {
+    marginTop: 4,
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  costLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+
+  costLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+  },
+
+  costValue: {
+    flexShrink: 0,
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#111827',
+    textAlign: 'right',
   },
 });
