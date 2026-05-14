@@ -14,7 +14,9 @@
     "android:test": "dotenv -e .env.test -- expo run:android",
     "android:production": "dotenv -e .env.production -- expo run:android",
     "web:test": "dotenv -e .env.test -- expo start --web",
-    "web:production": "dotenv -e .env.production -- expo start --web"
+    "web:production": "dotenv -e .env.production -- expo start --web",
+    "build:web:test": "dotenv -e .env.test -- expo export --platform web",
+    "build:web:production": "dotenv -e .env.production -- expo export --platform web"
   },
   "expo": {
     "doctor": {

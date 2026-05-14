@@ -1,3 +1,4 @@
+//app/(finance)/[entity]/journal.tsx
 import {
   View,
   FlatList,

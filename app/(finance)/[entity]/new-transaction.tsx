@@ -1,10 +1,11 @@
+//app/(finance)/[entity]/new-transaction.tsx
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  Alert, ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -67,6 +68,8 @@ const CATEGORY_MAP: Record<
     ],
   },
 };
+
+const [saving, setSaving] = useState(false);
 
 /* ===================================================== */
 
@@ -139,6 +142,8 @@ export default function NewTransaction() {
   /* ============================= */
 
   async function handleSave() {
+    if (saving) return;
+
     const numericAmount = parseFloat(amount);
 
     if (!numericAmount || numericAmount <= 0) {
@@ -152,19 +157,21 @@ export default function NewTransaction() {
     }
 
     try {
-      if (transactionId) {
-        const id: string = transactionId;
+      setSaving(true);
 
-        doc(db, "finance", currentEntity, "transactions", transactionId)
-        await updateDoc(doc(db, "finance", transactionId), {
-          type,
-          amount: numericAmount,
-          currency: "USD",
-          date,
-          accountId,
-          category,
-          description,
-        });
+      if (transactionId) {
+        await updateDoc(
+          doc(db, "finance", currentEntity, "transactions", transactionId),
+          {
+            type,
+            amount: numericAmount,
+            currency: "USD",
+            date,
+            accountId,
+            category,
+            description,
+          }
+        );
       } else {
         await createTransaction(currentEntity, {
           type,
@@ -182,6 +189,8 @@ export default function NewTransaction() {
     } catch (error) {
       console.log(error);
       Alert.alert("Erreur", "Impossible d'enregistrer");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -300,10 +309,20 @@ export default function NewTransaction() {
         {/* SAVE */}
 
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[
+            styles.saveButton,
+            saving && styles.saveButtonDisabled,
+          ]}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text style={styles.saveText}>Enregistrer</Text>
+          {saving ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.saveText}>
+              {transactionId ? "Mettre à jour" : "Enregistrer"}
+            </Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -343,6 +362,10 @@ const styles = StyleSheet.create({
   },
 
   label: { fontWeight: "600", marginBottom: 8 },
+
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
 
   chip: {
     backgroundColor: "white",
