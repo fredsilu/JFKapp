@@ -1,25 +1,10 @@
-//types/index.ts
+// types/index.ts
 import { RouteProp } from '@react-navigation/native';
 
-// Client types
-export interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  rccm?: string;
-  idnat?: string;
-  city?: string;
-  notes?: string;
-  totalOrders: number;
-  lastOrderDate?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-  profilePicture?: string; // URL to the profile picture
-}
-export type IngredientDetailsRouteProp = RouteProp<RootStackParamList, 'IngredientDetails'>;
-// Navigation types
+/* =========================
+   NAVIGATION
+========================= */
+
 export type RootStackParamList = {
   Home: undefined;
   ClientDetails: { clientId: string };
@@ -29,55 +14,139 @@ export type RootStackParamList = {
   OrderForm: undefined;
 };
 
-// Ingredient types
+export type IngredientDetailsRouteProp = RouteProp<
+  RootStackParamList,
+  'IngredientDetails'
+>;
+
+/* =========================
+   CLIENT
+========================= */
+
+export interface Client {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  rccm?: string;
+  idnat?: string;
+  city?: string;
+  notes?: string;
+  totalOrders?: number;
+  lastOrderDate?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  profilePicture?: string;
+}
+
+/* =========================
+   INGREDIENT
+========================= */
+
 export interface Ingredient {
   id: string;
   name: string;
   price: number;
   unit: string;
-  quantity: number;
-  description: string; // Add this line
-  stock: number;
-  category: string;
+  quantity?: number;
+  description?: string;
+  stock?: number;
+  category?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// Dish ingredient with quantity
+/* =========================
+   DISH
+========================= */
+
 export interface DishIngredient {
   ingredient: Ingredient;
   quantity: number;
 }
 
-// Dish types
 export interface Dish {
   id: string;
   name: string;
-  description: string;
-  image: string;
-  ingredients: DishIngredient[];
-  preparationTime: number;
-  servings: number;
+  description?: string;
+  image?: string;
+  ingredients?: DishIngredient[];
+  preparationTime?: number;
+  servings?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// Order types
+/* =========================
+   ORDER ITEMS
+========================= */
+
 export interface OrderDish {
-  name: string;
+  name?: string;
   dish: Dish;
   quantity: number;
-  ingredients: DishIngredient[];
-  additionalIngredients: DishIngredient[];
+  ingredients?: DishIngredient[];
+  additionalIngredients?: DishIngredient[];
 }
-
-
 
 export interface OrderIngredient {
   ingredient: Ingredient;
   quantity: number;
 }
 
+export interface OrderItem {
+  id?: string;
+  label?: string;
+  name?: string;
+  quantity: number;
+  numberOfDays?: number;
+  unitPrice?: number;
+  total?: number;
+  dish?: Dish;
+}
+
+/* =========================
+   OPERATIONAL
+========================= */
+
+export interface OperationalDish {
+  dishId?: string;
+  name: string;
+  quantity: number;
+  unitProductionCost?: number;
+  totalProductionCost?: number;
+  ingredients?: {
+    id?: string;
+    name: string;
+    unit?: string;
+    quantity: number;
+    unitPrice?: number;
+    total?: number;
+  }[];
+}
+
+export interface OperationalIngredient {
+  id?: string;
+  ingredientId?: string;
+  name?: string;
+  ingredient?: Ingredient;
+  unit?: string;
+  quantity: number;
+  unitPrice?: number;
+  price?: number;
+  total?: number;
+}
+
+export interface OperationalCosts {
+  dishesCost: number;
+  additionalIngredientsCost: number;
+  totalProductionCost: number;
+}
+
+/* =========================
+   ORDER
+========================= */
 
 export interface Order {
   id: string;
@@ -89,51 +158,45 @@ export interface Order {
   version?: number;
 
   // Client
-  clientId: string;
-  client: Client;
+  clientId?: string;
+  client?: Client;
 
-  // Statut opérationnel
-  status:
-  | 'draft'
-  | 'confirmed'
-  | 'converted'
-  | 'En cours'
-  | 'En préparation'
-  | 'Livré'
-  | 'Facturé'
-  | 'Annulé';
+  // Statut
+  status?:
+    | 'draft'
+    | 'sent'
+    | 'confirmed'
+    | 'converted'
+    | 'in-production'
+    | 'delivered'
+    | 'cancelled'
+    | 'En cours'
+    | 'En préparation'
+    | 'Livré'
+    | 'Facturé'
+    | 'Annulé';
 
   // Liens documents
   proformaId?: string;
+  sourceProformaId?: string;
   proformaNumber?: string;
   invoiceId?: string | null;
   fromSimulationId?: string;
-  simulationId?: string;
+  simulationId?: string | null;
 
-  operationalDishes?: any[];
-  operationalAdditionalIngredients?: any[];
-  operationalCosts?: {
-    dishesCost: number;
-    additionalIngredientsCost: number;
-    totalProductionCost: number;
-  };
-
-  // Contenu commande ancien format
+  // Ancien format
   dishes?: OrderDish[];
 
-  // Contenu commande nouveau format
-  items?: {
-    id?: string;
-    label?: string;
-    name?: string;
-    quantity: number;
-    numberOfDays?: number;
-    unitPrice?: number;
-    total?: number;
-    dish?: Dish;
-  }[];
+  // Nouveau format commercial
+  items?: OrderItem[];
 
+  // Ingrédients
   additionalIngredients?: OrderIngredient[];
+
+  // Données opérationnelles
+  operationalDishes?: OperationalDish[];
+  operationalAdditionalIngredients?: OperationalIngredient[];
+  operationalCosts?: OperationalCosts;
 
   // Livraison / événement
   deliveryAddress?: string;
@@ -149,11 +212,16 @@ export interface Order {
   designation?: string;
   name?: string;
   guestCount?: number;
+  numberOfGuests?: number;
+  guests?: number;
+  pax?: number;
   comment?: string;
+  instructions?: string;
 
   // Montants
   billedAmount?: number;
   simulatedAmount?: number;
+
   totals?: {
     subtotal?: number;
     discount?: number;
@@ -167,17 +235,24 @@ export interface Order {
     margin?: number;
   };
 
+  // Infos terrain
+  lieu?: string;
+  heureLivraison?: string;
+  contactSurSite?: string;
+  telephoneContact?: string;
+
   // Dates système
-  createdAt: string | Date;
-  updatedAt?: string | Date;
-  confirmedAt?: any;
+  createdAt?: string | Date | any;
+  updatedAt?: string | Date | any;
+  confirmedAt?: string | Date | any;
 
   invoiceDate?: string;
   paymentDate?: string;
 }
 
-
-
+/* =========================
+   PROPS
+========================= */
 
 export type DishDetailsProps = {
   dish: Dish;
@@ -187,16 +262,38 @@ export type DishDetailsProps = {
 export interface OrderDetailsProps {
   order: Order;
   onClose: () => void;
+  onUpdated?: () => void;
 }
 
-// Ensure OrderForm is a valid React component
 export interface OrderFormProps {
   order?: Order;
   onClose: () => void;
   onSubmit: (
-    values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> & Record<string, any>
+    values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> &
+      Record<string, any>
+  ) => void | Promise<void>;
+}
+
+export interface ClientDetailsProps {
+  client: Client;
+  onClose: () => void;
+}
+
+export interface IngredientDetailsProps {
+  ingredient: Ingredient;
+  ingredientId: string;
+  name: string;
+  quantity: number;
+  description: string;
+  onClose: () => void;
+  onSubmit: (
+    values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
   ) => void;
 }
+
+/* =========================
+   UTILS
+========================= */
 
 interface AnyObject {
   [key: string]: any;
@@ -211,20 +308,3 @@ export const cleanObject: CleanObjectFunction = (obj) => {
     Object.entries(obj).filter(([_, value]) => value !== undefined)
   );
 };
-
-export interface ClientDetailsProps {
-  client: Client;
-  onClose: () => void;
-}
-
-
-export interface IngredientDetailsProps {
-  ingredient: Ingredient;
-  ingredientId: string;
-  name: string;
-  quantity: number;
-  description: string;
-  onClose: () => void;
-  // Removed duplicate OrderFormProps interfacenClose: () => void;
-  onSubmit: (values: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) => void;
-}
