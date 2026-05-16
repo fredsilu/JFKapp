@@ -68,6 +68,22 @@ export default function OrderDetails({
     return [];
   }, [order]);
 
+
+
+  const openInvoice = () => {
+    const invoiceId = (order as any)?.invoiceId;
+
+    if (!invoiceId) {
+      Alert.alert('Information', 'Aucune facture liée à cette commande.');
+      return;
+    }
+
+    router.push({
+      pathname: '/(traiteur)/invoices/[id]',
+      params: { id: invoiceId },
+    } as any);
+  };
+
   /**
    * =========================
    * INGREDIENTS
@@ -502,36 +518,44 @@ export default function OrderDetails({
           {/* ACTIONS */}
 
           <View style={styles.actionsGrid}>
-            <TouchableOpacity
-              style={styles.primaryAction}
-              onPress={
-                handleCreateInvoice
-              }
-              disabled={loadingInvoice}
-            >
-              {loadingInvoice ? (
-                <ActivityIndicator
-                  size="small"
-                  color="#fff"
+            {(order as any)?.invoiceId ? (
+              <TouchableOpacity
+                style={styles.secondaryAction}
+                onPress={openInvoice}
+              >
+                <MaterialIcons
+                  name="receipt-long"
+                  size={20}
+                  color="#059669"
                 />
-              ) : (
-                <>
-                  <MaterialIcons
-                    name="receipt-long"
-                    size={20}
-                    color="#fff"
-                  />
 
-                  <Text
-                    style={
-                      styles.primaryActionText
-                    }
-                  >
-                    Créer facture
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                <Text style={styles.secondaryActionText}>
+                  Voir facture
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.primaryAction}
+                onPress={handleCreateInvoice}
+                disabled={loadingInvoice}
+              >
+                {loadingInvoice ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <MaterialIcons
+                      name="receipt-long"
+                      size={20}
+                      color="#fff"
+                    />
+
+                    <Text style={styles.primaryActionText}>
+                      Créer facture
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.secondaryAction}
@@ -554,7 +578,7 @@ export default function OrderDetails({
               </Text>
             </TouchableOpacity>
 
-          
+
 
             <TouchableOpacity
               style={styles.secondaryAction}
@@ -823,6 +847,49 @@ export default function OrderDetails({
               </Text>
             )}
           </View>
+          {/* PLATS COMMANDES */}
+          {Array.isArray((order as any).operationalDishes) &&
+            (order as any).operationalDishes.length > 0 && (
+              <View style={styles.card}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionTitle}>
+                    Plats à produire
+                  </Text>
+
+                  <Text style={styles.countBadge}>
+                    {(order as any).operationalDishes.length}
+                  </Text>
+                </View>
+
+                {(order as any).operationalDishes.map((dish: any, index: number) => (
+                  <View
+                    key={dish?.dishId || dish?.id || index}
+                    style={styles.dishRow}
+                  >
+                    <View style={styles.dishIcon}>
+                      <MaterialIcons
+                        name="restaurant-menu"
+                        size={18}
+                        color="#059669"
+                      />
+                    </View>
+
+                    <View style={styles.dishInfo}>
+                      <Text style={styles.dishName}>
+                        {dish?.name || 'Plat'}
+                      </Text>
+
+                     
+                    </View>
+
+                    <Text style={styles.quantityBadge}>
+                       x {dish?.quantity || 0}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
 
           {/* INGREDIENTS */}
 
@@ -1122,17 +1189,22 @@ const styles = StyleSheet.create({
 
   sectionHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
 
   countBadge: {
+    minWidth: 28,
+    height: 28,
+    paddingHorizontal: 8,
+    borderRadius: 14,
     backgroundColor: '#EEF2FF',
-    color: '#2563EB',
-    fontWeight: '800',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    color: '#3730A3',
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center',
+    lineHeight: 28,
     overflow: 'hidden',
   },
 
@@ -1269,5 +1341,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     color: '#047857',
+  },
+  quantityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#ECFDF5',
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '900',
+    overflow: 'hidden',
   },
 });

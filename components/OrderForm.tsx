@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Image,
   KeyboardAvoidingView,
+  ActivityIndicator,
   Platform,
 } from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -620,6 +621,8 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
   const { data: dishes = [], loading: loadingDishes } = useDishes();
   const { data: ingredients = [], loading: loadingIngredients } = useIngredients();
 
+  const [saving, setSaving] = useState(false);
+
   // États pour le formulaire
   const [selectedClient, setSelectedClient] = useState<Client | null>(order?.client || null);
   const [selectedDishes, setSelectedDishes] = useState<OrderDish[]>(
@@ -1088,98 +1091,56 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    Keyboard.dismiss();
+    try {
+      setSaving(true);
+      Keyboard.dismiss();
 
-    const cleanItems =
-      editableItems.length > 0
-        ? editableItems.map((item) => {
-          const quantity = Number(item.quantity || 0);
-          const numberOfDays = Number(item.numberOfDays || 1);
-          const unitPrice = Number(item.unitPrice || 0);
+      await onSubmit({
+        clientId: selectedClient!.id,
+        client: selectedClient!,
+        status: order?.status || 'En cours',
+        dishes: selectedDishes,
+        guestCount: guestCount ? Number(guestCount) : 0,
+        numberOfGuests: guestCount ? Number(guestCount) : 0,
 
-          return {
-            id: item.id || '',
-            label: item.label || item.name || item.dish?.name || 'Élément',
-            name: item.name || item.label || item.dish?.name || 'Élément',
-            quantity,
-            numberOfDays,
-            unitPrice,
-            total: quantity * numberOfDays * unitPrice,
-            dish: item.dish || null,
-          };
-        })
-        : selectedDishes.map((d) => ({
-          id: d.dish.id,
-          label: d.dish.name,
-          name: d.dish.name,
-          quantity: Number(d.quantity || 0),
-          numberOfDays: 1,
-          unitPrice: 0,
-          total: 0,
-          dish: d.dish,
-        }));
+        items:
+          editableItems.length > 0
+            ? editableItems.map((item) => ({
+              ...item,
+              total:
+                (item.quantity || 0) *
+                (item.numberOfDays || 1) *
+                (item.unitPrice || 0),
+            }))
+            : selectedDishes.map((d) => ({
+              id: d.dish.id,
+              label: d.dish.name,
+              quantity: d.quantity,
+              numberOfDays: 1,
+              unitPrice: 0,
+              total: 0,
+              dish: d.dish,
+            })),
 
-    const cleanGuestCount = guestCount ? Number(guestCount) : 0;
-    const cleanBilledAmount = billedAmount ? Number(billedAmount) : 0;
+        additionalIngredients,
+        operationalDishes,
+        operationalAdditionalIngredients,
+        operationalCosts,
 
-    onSubmit({
-      clientId: selectedClient?.id || '',
-      client: selectedClient!,
-
-      documentType: order?.documentType || 'order',
-      status: order?.status || 'En cours',
-
-      number: order?.number,
-      orderNumber: order?.orderNumber,
-      version: order?.version || 1,
-
-      proformaId: order?.proformaId,
-      proformaNumber: order?.proformaNumber,
-      invoiceId: order?.invoiceId ?? null,
-      simulationId: order?.simulationId ?? null,
-
-      name: designation || order?.name || 'Commande traiteur',
-      designation: designation || '',
-
-      guestCount: cleanGuestCount,
-      numberOfGuests: cleanGuestCount,
-
-      items: cleanItems,
-      dishes: selectedDishes,
-      additionalIngredients,
-
-      operationalDishes,
-      operationalAdditionalIngredients,
-      operationalCosts,
-
-      deliveryDate,
-      dateLivraison: deliveryDate,
-      deliveryTime,
-      address,
-      deliveryAddress: address,
-
-      billedAmount: cleanBilledAmount,
-
-      totals: {
-        subtotal: cleanBilledAmount,
-        discount: order?.totals?.discount || 0,
-        total: cleanBilledAmount,
-        currency: order?.totals?.currency || 'USD',
-      },
-
-      pricingReference: {
-        totalHT: cleanBilledAmount,
-        totalCost: operationalCosts.totalProductionCost || 0,
-        margin:
-          cleanBilledAmount -
-          (operationalCosts.totalProductionCost || 0),
-      },
-
-      comment: order?.comment || '',
-    } as any);
+        deliveryDate,
+        dateLivraison: deliveryDate,
+        deliveryTime,
+        address,
+        deliveryAddress: address,
+        designation: designation || '',
+        billedAmount: billedAmount ? Number(billedAmount) : 0,
+      } as any);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loadingClients || loadingDishes || loadingIngredients) {
@@ -1271,7 +1232,7 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
                     onPress={() => {
                       setSelectedClient(client);
                       setShowClientSearch(false);
-                      setAddress(client.address);
+                      setAddress(client.address || '');
                     }}
                   >
                     <Image
@@ -1766,10 +1727,18 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
             <Text style={styles.cancelButtonText}>Annuler</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>
-              {order ? 'Modifier la commande' : 'Créer la commande'}
-            </Text>
+          <TouchableOpacity
+            style={[styles.submitButton, saving && { opacity: 0.7 }]}
+            onPress={handleSubmit}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {order ? 'Modifier la commande' : 'Créer la commande'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
