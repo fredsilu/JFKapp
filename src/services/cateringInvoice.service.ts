@@ -1,3 +1,4 @@
+//src/services/cateringInvoice.service.ts
 import {
   addDoc,
   collection,
@@ -207,6 +208,13 @@ export async function createInvoiceFromOrder(
   };
 
   const ref = await addDoc(collection(db, COLLECTION), invoice);
+  await updateDoc(
+  doc(db, 'orders', order.id),
+  {
+    invoiceId: ref.id,
+    updatedAt: serverTimestamp(),
+  }
+);
 
   return {
     id: ref.id,
