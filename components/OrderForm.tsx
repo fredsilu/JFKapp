@@ -14,6 +14,7 @@ import {
 //import Icon from 'react-native-vector-icons/MaterialIcons';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import { Keyboard } from 'react-native';
+import { EditableOrderItem } from '@/types/catering';
 
 import { useClients, useDishes } from '@/src/hooks/useFirestore';
 import { Order, Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
@@ -24,15 +25,7 @@ import { useIngredients } from '@/src/hooks/useFirestore';
 import { OrderFormProps } from '@/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-type EditableOrderItem = {
-  id?: string;
-  label: string;
-  quantity: number;
-  numberOfDays?: number;
-  unitPrice?: number;
-  total?: number;
-  dish?: Dish;
-};
+
 
 const styles = StyleSheet.create({
   container: {
@@ -1097,49 +1090,95 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
   const handleSubmit = () => {
     if (!validateForm()) return;
+
     Keyboard.dismiss();
+
+    const cleanItems =
+      editableItems.length > 0
+        ? editableItems.map((item) => {
+          const quantity = Number(item.quantity || 0);
+          const numberOfDays = Number(item.numberOfDays || 1);
+          const unitPrice = Number(item.unitPrice || 0);
+
+          return {
+            id: item.id || '',
+            label: item.label || item.name || item.dish?.name || 'Élément',
+            name: item.name || item.label || item.dish?.name || 'Élément',
+            quantity,
+            numberOfDays,
+            unitPrice,
+            total: quantity * numberOfDays * unitPrice,
+            dish: item.dish || null,
+          };
+        })
+        : selectedDishes.map((d) => ({
+          id: d.dish.id,
+          label: d.dish.name,
+          name: d.dish.name,
+          quantity: Number(d.quantity || 0),
+          numberOfDays: 1,
+          unitPrice: 0,
+          total: 0,
+          dish: d.dish,
+        }));
+
+    const cleanGuestCount = guestCount ? Number(guestCount) : 0;
+    const cleanBilledAmount = billedAmount ? Number(billedAmount) : 0;
+
     onSubmit({
-      clientId: selectedClient!.id,
+      clientId: selectedClient?.id || '',
       client: selectedClient!,
+
+      documentType: order?.documentType || 'order',
       status: order?.status || 'En cours',
+
+      number: order?.number,
+      orderNumber: order?.orderNumber,
+      version: order?.version || 1,
+
+      proformaId: order?.proformaId,
+      proformaNumber: order?.proformaNumber,
+      invoiceId: order?.invoiceId ?? null,
+      simulationId: order?.simulationId ?? null,
+
+      name: designation || order?.name || 'Commande traiteur',
+      designation: designation || '',
+
+      guestCount: cleanGuestCount,
+      numberOfGuests: cleanGuestCount,
+
+      items: cleanItems,
       dishes: selectedDishes,
-      guestCount: guestCount ? Number(guestCount) : 0,
-      numberOfGuests: guestCount ? Number(guestCount) : 0,
-
-
-      items:
-        editableItems.length > 0
-          ? editableItems.map((item) => ({
-            ...item,
-            total:
-              (item.quantity || 0) *
-              (item.numberOfDays || 1) *
-              (item.unitPrice || 0),
-          }))
-          : selectedDishes.map((d) => ({
-            id: d.dish.id,
-            label: d.dish.name,
-            quantity: d.quantity,
-            numberOfDays: 1,
-            unitPrice: 0,
-            total: 0,
-            dish: d.dish,
-          })),
       additionalIngredients,
+
       operationalDishes,
       operationalAdditionalIngredients,
       operationalCosts,
-
 
       deliveryDate,
       dateLivraison: deliveryDate,
       deliveryTime,
       address,
       deliveryAddress: address,
-      designation: designation || '',
-      billedAmount: billedAmount ? Number(billedAmount) : 0,
 
+      billedAmount: cleanBilledAmount,
 
+      totals: {
+        subtotal: cleanBilledAmount,
+        discount: order?.totals?.discount || 0,
+        total: cleanBilledAmount,
+        currency: order?.totals?.currency || 'USD',
+      },
+
+      pricingReference: {
+        totalHT: cleanBilledAmount,
+        totalCost: operationalCosts.totalProductionCost || 0,
+        margin:
+          cleanBilledAmount -
+          (operationalCosts.totalProductionCost || 0),
+      },
+
+      comment: order?.comment || '',
     } as any);
   };
 

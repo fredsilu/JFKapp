@@ -4,6 +4,7 @@ import {
   CateringDocumentTotals,
   CateringDocumentType,
 } from "@/types/documents";
+import { Dish } from ".";
 
 /**
  * =========================
@@ -58,6 +59,17 @@ export interface CateringServiceResult {
   dailyServiceCost: number;
   totalServiceCost: number;
 }
+
+export type EditableOrderItem = {
+  id?: string;
+  label: string;
+  name?: string;
+  quantity: number;
+  numberOfDays?: number;
+  unitPrice?: number;
+  total?: number;
+  dish?: Dish;
+};
 
 /**
  * =========================
