@@ -360,6 +360,38 @@ export default function InvoiceDetailScreen() {
         </View>
       </View>
 
+      {invoice.creditNoteSummary ? (
+        <View style={styles.creditSummaryCard}>
+          <Text style={styles.sectionTitle}>Avoirs</Text>
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total des avoirs</Text>
+            <Text style={styles.creditSummaryValue}>
+              - {formatCurrency(invoice.creditNoteSummary.totalCredited ?? 0)}
+            </Text>
+          </View>
+
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Solde créditable</Text>
+            <Text style={styles.totalValue}>
+              {formatCurrency(invoice.creditNoteSummary.remainingCreditableAmount ?? 0)}
+            </Text>
+          </View>
+
+          {invoice.creditNoteSummary.lastCreditNoteNumber ? (
+            <Text style={styles.line}>
+              Dernier avoir : {invoice.creditNoteSummary.lastCreditNoteNumber}
+            </Text>
+          ) : null}
+
+          {invoice.creditNoteSummary.isFullyCredited ? (
+            <Text style={styles.auditWarning}>
+              Cette facture est totalement couverte par un avoir.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -372,7 +404,8 @@ export default function InvoiceDetailScreen() {
         )}
       </TouchableOpacity>
 
-      {invoice.status === "issued" ? (
+      {invoice.status === "issued" &&
+        !invoice.creditNoteSummary?.isFullyCredited ? (
         <>
           <TouchableOpacity
             style={styles.cancelButton}
@@ -578,5 +611,26 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 15,
   },
-  
+  creditSummaryCard: {
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  creditSummaryValue: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#D97706",
+  },
+  auditWarning: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#92400E",
+    fontWeight: "800",
+    lineHeight: 18,
+  },
+
 });

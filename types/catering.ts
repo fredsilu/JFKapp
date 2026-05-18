@@ -333,6 +333,8 @@ export type CateringInvoice = {
   sourceProformaId?: string | null;
   sourceProformaNumber?: string;
 
+  
+
   /**
    * Numéro officiel de la facture.
    * Ne doit jamais être modifié après émission.
@@ -375,6 +377,7 @@ export type CateringInvoice = {
    * Informations d’annulation éventuelle.
    */
   cancellation?: CateringInvoiceCancellation | null;
+  creditNoteSummary?: CateringInvoiceCreditNoteSummary;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -413,3 +416,14 @@ export type MoneyTotals = {
   totalCost: number;
   margin: number;
 };
+
+export type CateringInvoiceCreditNoteSummary = {
+  totalCredited: number;
+  remainingCreditableAmount: number;
+  lastCreditNoteId?: string | null;
+  lastCreditNoteNumber?: string | null;
+  lastCreditNoteAmount?: number;
+  lastCreditNoteAt?: Timestamp | null;
+  isFullyCredited: boolean;
+};
+

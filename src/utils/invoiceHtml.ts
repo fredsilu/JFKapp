@@ -72,18 +72,33 @@ function formatClientCity(value?: string | null) {
   return `${city} / RDC`;
 }
 
-function getStatusLabel(status?: string) {
+function getStatusLabel(
+  status?: string,
+  documentType?: string
+) {
+  if (documentType === 'CREDIT_NOTE') {
+    return 'FACTURE D’AVOIR';
+  }
+
   switch (status) {
     case 'draft':
       return 'BROUILLON';
+
     case 'issued':
       return 'FACTURE ÉMISE';
+
     case 'cancelled':
       return 'FACTURE ANNULÉE';
-    case 'credited':
-      return 'AVOIR TOTAL';
-    case 'partially_credited':
-      return 'AVOIR PARTIEL';
+
+    case 'replaced':
+      return 'FACTURE REMPLACÉE';
+
+    case 'partial':
+      return 'FACTURE PARTIELLEMENT PAYÉE';
+
+    case 'paid':
+      return 'FACTURE PAYÉE';
+
     default:
       return 'FACTURE';
   }
@@ -134,10 +149,9 @@ export function buildInvoiceHTML(
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${
-      assets?.logoBase64
-        ? `<img src="${assets.logoBase64}" />`
-        : `<div class="logo-text">CREPOLIA</div>`
+    ${assets?.logoBase64
+      ? `<img src="${assets.logoBase64}" />`
+      : `<div class="logo-text">CREPOLIA</div>`
     }
   </div>
 
@@ -448,10 +462,19 @@ body {
   color: #dc2626;
 }
 
-.status-credited,
-.status-partially_credited {
+.status-replaced {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.status-partial {
   background: #fef3c7;
   color: #d97706;
+}
+
+.status-paid {
+  background: #dcfce7;
+  color: #16a34a;
 }
 
 .status-draft {
@@ -476,21 +499,36 @@ body {
 <body>
 <div class="pdf-page">
 
-${
-  status === 'cancelled'
-    ? `
+${status === 'cancelled'
+      ? `
 <div class="watermark">ANNULÉE</div>
 `
-    : ''
-}
+      : status === 'replaced'
+        ? `
+<div class="watermark">REMPLACÉE</div>
+`
+        : (invoice as any).documentType === 'CREDIT_NOTE'
+          ? `
+<div class="watermark">AVOIR</div>
+`
+          : ''
+    }
 
 ${headerHTML}
 
-<div class="title">FACTURE</div>
+<div class="title">
+  ${(invoice as any).documentType === 'CREDIT_NOTE'
+      ? 'FACTURE D’AVOIR'
+      : 'FACTURE'
+    }
+</div>
 <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
 
 <div class="status-banner status-${status}">
-  ${getStatusLabel(status)}
+  ${getStatusLabel(
+      status,
+      (invoice as any).documentType
+    )}
 </div>
 
 <div class="client-block">
@@ -554,8 +592,7 @@ ${headerHTML}
     <div style="text-align:right;">${money(subtotal)}</div>
   </div>
 
-  ${
-    discountAmount > 0
+  ${discountAmount > 0
       ? `
   <div class="subtotal">
     <div>Remise :</div>
@@ -564,7 +601,7 @@ ${headerHTML}
   </div>
   `
       : ''
-  }
+    }
 
   <div class="grand-total">
     <div>Total à payer :</div>
@@ -586,11 +623,10 @@ ${headerHTML}
     ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
   </div>
 
-  ${
-    !assets?.stampBase64 && !assets?.signatureBase64
+  ${!assets?.stampBase64 && !assets?.signatureBase64
       ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
       : ''
-  }
+    }
 </div>
 
 ${footerHTML}
