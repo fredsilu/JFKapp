@@ -17,6 +17,7 @@ import { getNextInvoiceNumber } from "@/src/services/invoiceNumber.service";
 import {
   CateringInvoice,
   isCateringInvoiceLocked,
+  CateringInvoiceHistoryType,
 } from "@/types/catering";
 
 const COLLECTION = "catering_invoices";
@@ -79,14 +80,16 @@ function normalizeTotals(
 async function addInvoiceHistory(
   invoiceId: string,
   payload: {
-    type: string;
+    type: CateringInvoiceHistoryType
     message: string;
+    createdBy?: string | null;
     snapshot?: any;
   }
 ) {
   await addDoc(collection(db, COLLECTION, invoiceId, "history"), {
     type: payload.type,
     message: payload.message,
+    createdBy: payload.createdBy ?? null,
     createdAt: serverTimestamp(),
     snapshot: payload.snapshot ?? null,
   });
