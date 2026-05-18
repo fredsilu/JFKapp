@@ -365,7 +365,7 @@ export type CateringInvoice = {
   /**
    * Informations d’annulation éventuelle.
    */
-  cancellation?: CateringInvoiceCancellation;
+  cancellation?: CateringInvoiceCancellation | null;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;

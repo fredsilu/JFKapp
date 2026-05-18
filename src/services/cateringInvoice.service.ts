@@ -175,7 +175,7 @@ export async function createInvoiceFromOrder(
       correctionType: null,
     },
 
-    cancellation: undefined,
+    cancellation: null,
 
     createdAt: serverTimestamp() as any,
     updatedAt: serverTimestamp() as any,

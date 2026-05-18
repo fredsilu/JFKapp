@@ -134,6 +134,21 @@ export default function OrdersScreen() {
         };
     }
   }
+  function getInvoiceBadge(order: CateringOrder) {
+    if (order.invoiceId) {
+      return {
+        label: 'Facturée',
+        backgroundColor: '#DCFCE7',
+        color: '#166534',
+      };
+    }
+
+    return {
+      label: 'Non facturée',
+      backgroundColor: '#FEF3C7',
+      color: '#92400E',
+    };
+  }
 
   async function handleChangeStatus(orderId?: string, status?: string) {
     if (!orderId || !status) return;
@@ -216,6 +231,7 @@ export default function OrdersScreen() {
       ) : (
         orders.map((order: any) => {
           const statusStyle = getStatusStyle(order.status);
+          const invoiceBadge = getInvoiceBadge(order);
 
           return (
             <View key={order.id} style={styles.card}>
@@ -267,9 +283,31 @@ export default function OrdersScreen() {
                 <Text style={styles.line}>Invités : {order.guestCount}</Text>
               ) : null}
 
-              <Text style={styles.amount}>
-                Total : {formatCurrency(getOrderAmount(order))}
-              </Text>
+              <View style={styles.amountRow}>
+                <Text style={styles.amount}>
+                  Total : {formatCurrency(getOrderAmount(order))}
+                </Text>
+
+                <View
+                  style={[
+                    styles.invoiceBadge,
+                    {
+                      backgroundColor: invoiceBadge.backgroundColor,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.invoiceBadgeText,
+                      {
+                        color: invoiceBadge.color,
+                      },
+                    ]}
+                  >
+                    {invoiceBadge.label}
+                  </Text>
+                </View>
+              </View>
 
               <View style={styles.actions}>
                 <TouchableOpacity
@@ -420,7 +458,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#111827',
-    marginTop: 6,
+  
   },
   actions: {
     flexDirection: 'row',
@@ -516,5 +554,29 @@ const styles = StyleSheet.create({
     color: '#0F4C81',
     fontSize: 14,
     fontWeight: '700',
+  },
+
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    gap: 10,
+  },
+
+  invoiceBadge: {
+    minHeight: 28,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  invoiceBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    lineHeight: 14,
+    textAlignVertical: 'center',
   },
 });
