@@ -312,7 +312,7 @@ export interface CateringInvoiceHistory {
 
 
 export type CateringInvoice = {
-  id: string;
+  id?: string;
 
   /**
    * Type de document comptable
@@ -321,8 +321,17 @@ export type CateringInvoice = {
    */
   documentType: CateringInvoiceDocumentType;
 
-  orderId: string;
+  /**
+   * Références commerciales liées à la facture
+   */
+  orderId?: string | null;
+  orderNumber?: string;
+
+  proformaId?: string | null;
+  proformaNumber?: string;
+
   sourceProformaId?: string | null;
+  sourceProformaNumber?: string;
 
   /**
    * Numéro officiel de la facture.
@@ -381,8 +390,8 @@ export type CateringInvoice = {
   version?: number;
 
   /**
-   * Sécurité UI/métier.
-   * Une facture est verrouillée dès qu’elle n’est plus en draft.
+   * Conservé temporairement pour compatibilité Firestore/UI.
+   * La vraie règle métier reste dérivée du status via isCateringInvoiceLocked().
    */
   isLocked?: boolean;
 };

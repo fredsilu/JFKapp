@@ -141,6 +141,17 @@ export async function createInvoiceFromOrder(
     documentType: "INVOICE",
 
     orderId: order.id,
+    orderNumber:
+      order.number ??
+      order.orderNumber ??
+      order.reference ??
+      "",
+
+    proformaId: order.proformaId ?? order.sourceProformaId ?? null,
+    proformaNumber:
+      order.proformaNumber ??
+      order.sourceProformaNumber ??
+      "",
     sourceProformaId: order.proformaId ?? order.sourceProformaId ?? null,
 
     number: invoiceNumber,
