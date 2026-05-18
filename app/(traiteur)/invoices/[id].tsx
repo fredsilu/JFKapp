@@ -197,6 +197,18 @@ export default function InvoiceDetailScreen() {
     });
   }
 
+  function goToInvoiceHistory() {
+  if (!invoice?.id) {
+    Alert.alert("Erreur", "Identifiant facture introuvable");
+    return;
+  }
+
+  router.push({
+    pathname: "/(traiteur)/invoices/history/[id]",
+    params: { id: invoice.id },
+  });
+}
+
   function goToCreditNote() {
     if (!invoice?.id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
@@ -246,6 +258,38 @@ export default function InvoiceDetailScreen() {
           {invoice.client?.name || "Client non défini"}
         </Text>
       </View>
+
+      {invoice.correction?.replacesInvoiceNumber ? (
+        <View style={styles.relationCard}>
+          <Text style={styles.relationLabel}>
+            Facture remplacée
+          </Text>
+
+          <Text style={styles.relationValue}>
+            Cette facture annule et remplace :
+          </Text>
+
+          <Text style={styles.relationNumber}>
+            {invoice.correction.replacesInvoiceNumber}
+          </Text>
+        </View>
+      ) : null}
+
+      {invoice.correction?.replacedByInvoiceNumber ? (
+        <View style={styles.relationCard}>
+          <Text style={styles.relationLabel}>
+            Facture remplacée
+          </Text>
+
+          <Text style={styles.relationValue}>
+            Cette facture a été remplacée par :
+          </Text>
+
+          <Text style={styles.relationNumber}>
+            {invoice.correction.replacedByInvoiceNumber}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Informations client</Text>
@@ -343,6 +387,13 @@ export default function InvoiceDetailScreen() {
           >
             <Text style={styles.creditButtonText}>Créer un avoir</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+  style={styles.historyButton}
+  onPress={goToInvoiceHistory}
+>
+  <Text style={styles.historyButtonText}>Voir historique</Text>
+</TouchableOpacity>
         </>
       ) : null}
 
@@ -485,5 +536,33 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "900",
     fontSize: 15,
+  },
+  relationCard: {
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  relationLabel: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#4338CA",
+    marginBottom: 4,
+    textTransform: "uppercase",
+  },
+
+  relationValue: {
+    fontSize: 14,
+    color: "#312E81",
+  },
+
+  relationNumber: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
+    marginTop: 6,
   },
 });

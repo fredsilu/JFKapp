@@ -1,4 +1,5 @@
-//app(traiteur)/invoices/index.tsx
+// app/(traiteur)/invoices/index.tsx
+
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -8,25 +9,42 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+
+import { createCreditNote } from '@/src/services/creditNote.service';
+
+import { CateringInvoice } from '@/types/catering';
+
 import {
+  getCateringInvoices,
   cancelCateringInvoice,
 } from '@/src/services/cateringInvoice.service';
 
-import {
-  createCreditNote,
-} from '@/src/services/creditNote.service';
-
-import {
-  CateringInvoice,
-  getCateringInvoices,
-} from '@/src/services/cateringInvoice.service';
 import { formatCurrency } from '@/src/utils/costs';
+
+type InvoiceStatus =
+  | 'draft'
+  | 'issued'
+  | 'paid'
+  | 'cancelled'
+  | 'partial'
+  | 'replaced';
 
 export default function InvoicesScreen() {
   const [invoices, setInvoices] = useState<CateringInvoice[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [creditModalVisible, setCreditModalVisible] = useState(false);
+
+  const [selectedInvoice, setSelectedInvoice] =
+    useState<CateringInvoice | null>(null);
+
+  const [cancelReason, setCancelReason] = useState('');
+  const [creditAmount, setCreditAmount] = useState('');
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -34,15 +52,15 @@ export default function InvoicesScreen() {
 
       const data = await getCateringInvoices();
 
-      const sorted = [...data].sort((a: any, b: any) => {
+      const sorted = [...data].sort((a, b) => {
         const aTime =
           a.createdAt?.toMillis?.() ||
-          new Date(a.issueDate || '').getTime() ||
+          a.issuedAt?.toMillis?.() ||
           0;
 
         const bTime =
           b.createdAt?.toMillis?.() ||
-          new Date(b.issueDate || '').getTime() ||
+          b.issuedAt?.toMillis?.() ||
           0;
 
         return bTime - aTime;
@@ -63,44 +81,172 @@ export default function InvoicesScreen() {
     }, [loadInvoices])
   );
 
-  const totalAmount = useMemo(() => {
-    return invoices.reduce((sum, invoice) => {
-      return sum + (invoice.totals?.total ?? 0);
-    }, 0);
+  const activeInvoices = useMemo(() => {
+    return invoices.filter(
+      (invoice) =>
+        invoice.status !== 'cancelled' &&
+        invoice.status !== 'replaced'
+    );
   }, [invoices]);
 
-  function formatDate(date?: string) {
+  const totalAmount = useMemo(() => {
+    return activeInvoices.reduce((sum, invoice) => {
+      return sum + (invoice.totals?.total ?? 0);
+    }, 0);
+  }, [activeInvoices]);
+
+  function formatDateFromTimestamp(dateValue?: any) {
+    const date = dateValue?.toDate?.();
+
     if (!date) return '—';
 
-    const d = new Date(date);
-
-    if (Number.isNaN(d.getTime())) return date;
-
-    return d.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString('fr-FR');
   }
 
   function getStatusLabel(status?: string) {
     switch (status) {
       case 'draft':
         return 'Brouillon';
-
       case 'issued':
         return 'Émise';
-
       case 'paid':
         return 'Payée';
-
       case 'cancelled':
         return 'Annulée';
-
-      case 'credited':
-        return 'Avoir total';
-
-      case 'partially_credited':
-        return 'Avoir partiel';
-
+      case 'partial':
+        return 'Partiellement payée';
+      case 'replaced':
+        return 'Annulée et remplacée';
       default:
         return status || 'Émise';
+    }
+  }
+
+  function getStatusColors(status?: string) {
+    switch (status as InvoiceStatus) {
+      case 'draft':
+        return {
+          backgroundColor: '#E5E7EB',
+          color: '#374151',
+        };
+
+      case 'issued':
+        return {
+          backgroundColor: '#DBEAFE',
+          color: '#1D4ED8',
+        };
+
+      case 'paid':
+        return {
+          backgroundColor: '#D1FAE5',
+          color: '#065F46',
+        };
+
+      case 'partial':
+        return {
+          backgroundColor: '#FEF3C7',
+          color: '#92400E',
+        };
+
+      case 'cancelled':
+        return {
+          backgroundColor: '#FEE2E2',
+          color: '#991B1B',
+        };
+
+      case 'replaced':
+        return {
+          backgroundColor: '#F3E8FF',
+          color: '#6B21A8',
+        };
+
+      default:
+        return {
+          backgroundColor: '#E5E7EB',
+          color: '#374151',
+        };
+    }
+  }
+
+  function canCancel(invoice: CateringInvoice) {
+    return invoice.status === 'issued';
+  }
+
+  function canCredit(invoice: CateringInvoice) {
+    return invoice.status === 'issued';
+  }
+
+  function openCancelModal(invoice: CateringInvoice) {
+    setSelectedInvoice(invoice);
+    setCancelReason('');
+    setCancelModalVisible(true);
+  }
+
+  function openCreditModal(invoice: CateringInvoice) {
+    setSelectedInvoice(invoice);
+    setCreditAmount('');
+    setCreditModalVisible(true);
+  }
+
+  async function handleCancelInvoice() {
+    try {
+      if (!selectedInvoice?.id) return;
+
+      if (!cancelReason || cancelReason.trim().length < 3) {
+        Alert.alert('Erreur', 'Veuillez saisir un motif valide');
+        return;
+      }
+
+      await cancelCateringInvoice(
+        selectedInvoice.id,
+        cancelReason.trim()
+      );
+
+      setCancelModalVisible(false);
+      setSelectedInvoice(null);
+      setCancelReason('');
+
+      Alert.alert('Succès', 'Facture annulée');
+
+      loadInvoices();
+    } catch (e: any) {
+      Alert.alert(
+        'Erreur',
+        e?.message || 'Erreur lors de l’annulation'
+      );
+    }
+  }
+
+  async function handleCreateCreditNote() {
+    try {
+      if (!selectedInvoice?.id) return;
+
+      const normalizedValue = creditAmount.replace(',', '.');
+      const amount = Number(normalizedValue);
+
+      if (!amount || amount <= 0) {
+        Alert.alert('Erreur', 'Montant invalide');
+        return;
+      }
+
+      await createCreditNote(
+        selectedInvoice.id,
+        amount,
+        'Avoir manuel'
+      );
+
+      setCreditModalVisible(false);
+      setSelectedInvoice(null);
+      setCreditAmount('');
+
+      Alert.alert('Succès', 'Avoir créé');
+
+      loadInvoices();
+    } catch (e: any) {
+      Alert.alert(
+        'Erreur',
+        e?.message || 'Erreur lors de la création de l’avoir'
+      );
     }
   }
 
@@ -113,195 +259,246 @@ export default function InvoicesScreen() {
     );
   }
 
-  function canCancel(invoice: any) {
-    return invoice.status === 'issued';
-  }
-
-  function canCredit(invoice: any) {
-    return invoice.status === 'issued';
-  }
-
   return (
-    <ScrollView style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.replace('/(traiteur)/sales')}
-        style={styles.backButton}
+    <>
+      <ScrollView style={styles.container}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(traiteur)/sales')}
+          style={styles.topBackButton}
+        >
+          <Text style={styles.backIcon}>←</Text>
+          <Text style={styles.backText}>Retour Sales</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Factures</Text>
+
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Nombre total de factures</Text>
+          <Text style={styles.summaryValue}>{invoices.length}</Text>
+
+          <Text style={styles.summaryLabel}>Factures actives</Text>
+          <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
+
+          <Text style={styles.summaryLabel}>
+            Chiffre d’affaires facturé actif
+          </Text>
+          <Text style={styles.summaryAmount}>
+            {formatCurrency(totalAmount)}
+          </Text>
+
+          <Text style={styles.summaryHint}>
+            Les factures annulées ou remplacées ne sont pas incluses.
+          </Text>
+        </View>
+
+        {invoices.length === 0 ? (
+          <Text style={styles.empty}>Aucune facture créée</Text>
+        ) : (
+          invoices.map((invoice) => {
+            const statusColors = getStatusColors(invoice.status);
+
+            return (
+              <View key={invoice.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>
+                      {invoice.number || 'Facture sans numéro'}
+                    </Text>
+
+                    <Text style={styles.client}>
+                      {invoice.client?.name || 'Client non défini'}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: statusColors.backgroundColor },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: statusColors.color },
+                      ]}
+                    >
+                      {getStatusLabel(invoice.status)}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.line}>
+                  Date facture : {formatDateFromTimestamp(invoice.issuedAt)}
+                </Text>
+
+                {invoice.orderNumber ? (
+                  <Text style={styles.line}>
+                    Commande : {invoice.orderNumber}
+                  </Text>
+                ) : null}
+
+                {invoice.proformaNumber ? (
+                  <Text style={styles.line}>
+                    Proforma : {invoice.proformaNumber}
+                  </Text>
+                ) : null}
+
+                <Text style={styles.amount}>
+                  Total : {formatCurrency(invoice.totals?.total ?? 0)}
+                </Text>
+
+                {invoice.status === 'cancelled' ? (
+                  <Text style={styles.auditWarning}>
+                    Facture annulée — exclue du chiffre d’affaires actif.
+                  </Text>
+                ) : null}
+
+                {invoice.status === 'replaced' ? (
+                  <Text style={styles.auditWarning}>
+                    Facture remplacée — exclue du chiffre d’affaires actif.
+                  </Text>
+                ) : null}
+
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={styles.primaryAction}
+                    onPress={() => {
+                      if (!invoice.id) return;
+
+                      router.push({
+                        pathname: '/(traiteur)/invoices/[id]',
+                        params: { id: invoice.id },
+                      });
+                    }}
+                  >
+                    <Text style={styles.primaryActionText}>Voir</Text>
+                  </TouchableOpacity>
+
+                  {canCancel(invoice) ? (
+                    <TouchableOpacity
+                      style={styles.cancelAction}
+                      onPress={() => openCancelModal(invoice)}
+                    >
+                      <Text style={styles.cancelActionText}>
+                        Annuler
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+
+                  {canCredit(invoice) ? (
+                    <TouchableOpacity
+                      style={styles.creditAction}
+                      onPress={() => openCreditModal(invoice)}
+                    >
+                      <Text style={styles.creditActionText}>
+                        Avoir
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        <TouchableOpacity
+          style={styles.bottomBackButton}
+          onPress={() => router.replace('/(traiteur)/sales')}
+        >
+          <Text style={styles.backButtonText}>Retour Sales</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+
+      <Modal
+        visible={cancelModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCancelModalVisible(false)}
       >
-        <Text style={styles.backIcon}>←</Text>
-        <Text style={styles.backText}>Factures</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Factures</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Annuler la facture</Text>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Nombre de factures</Text>
-        <Text style={styles.summaryValue}>{invoices.length}</Text>
-
-        <Text style={styles.summaryLabel}>Chiffre d’affaires facturé</Text>
-        <Text style={styles.summaryAmount}>
-          {formatCurrency(totalAmount)}
-        </Text>
-      </View>
-
-      {invoices.length === 0 ? (
-        <Text style={styles.empty}>Aucune facture créée</Text>
-      ) : (
-        invoices.map((invoice: any) => (
-          <View key={invoice.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>
-                  {invoice.number || 'Facture sans numéro'}
-                </Text>
-
-                <Text style={styles.client}>
-                  {invoice.clientName || 'Client non défini'}
-                </Text>
-              </View>
-
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>
-                  {getStatusLabel(invoice.status)}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.line}>
-              Date facture : {formatDate(invoice.issueDate)}
+            <Text style={styles.modalText}>
+              Motif obligatoire de l’annulation
             </Text>
 
-            {invoice.orderNumber ? (
-              <Text style={styles.line}>Commande : {invoice.orderNumber}</Text>
-            ) : null}
+            <TextInput
+              style={styles.input}
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              placeholder="Ex : erreur de montant, facture remplacée..."
+              multiline
+            />
 
-            {invoice.proformaNumber ? (
-              <Text style={styles.line}>Proforma : {invoice.proformaNumber}</Text>
-            ) : null}
-
-            <Text style={styles.amount}>
-              Total : {formatCurrency(invoice.totals?.total ?? 0)}
-            </Text>
-
-            <View style={styles.actions}>
+            <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.primaryAction}
-                onPress={() => {
-                  if (!invoice.id) return;
-
-                  router.push({
-                    pathname: '/(traiteur)/invoices/[id]',
-                    params: { id: invoice.id },
-                  });
-                }}
+                style={styles.secondaryModalButton}
+                onPress={() => setCancelModalVisible(false)}
               >
-                <Text style={styles.primaryActionText}>Voir</Text>
+                <Text style={styles.secondaryModalButtonText}>
+                  Fermer
+                </Text>
               </TouchableOpacity>
-              {canCancel(invoice) ? (
-                <TouchableOpacity
-                  style={styles.cancelAction}
-                  onPress={() => {
-                    Alert.prompt(
-                      'Annuler la facture',
-                      "Motif obligatoire de l'annulation",
-                      async (reason) => {
-                        try {
-                          if (!reason || reason.trim().length < 3) {
-                            Alert.alert(
-                              'Erreur',
-                              "Veuillez saisir un motif valide"
-                            );
-                            return;
-                          }
 
-                          await cancelCateringInvoice(
-                            invoice.id,
-                            reason
-                          );
-
-                          Alert.alert(
-                            'Succès',
-                            'Facture annulée'
-                          );
-
-                          loadInvoices();
-                        } catch (e: any) {
-                          Alert.alert(
-                            'Erreur',
-                            e?.message || 'Erreur annulation'
-                          );
-                        }
-                      }
-                    );
-                  }}
-                >
-                  <Text style={styles.cancelActionText}>
-                    Annuler
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-
-              {canCredit(invoice) ? (
-                <TouchableOpacity
-                  style={styles.creditAction}
-                  onPress={() => {
-                    Alert.prompt(
-                      'Créer un avoir',
-                      "Montant de l'avoir",
-                      async (value) => {
-                        try {
-                          const amount = Number(value);
-
-                          if (!amount || amount <= 0) {
-                            Alert.alert(
-                              'Erreur',
-                              'Montant invalide'
-                            );
-                            return;
-                          }
-
-                          await createCreditNote(
-                            invoice.id,
-                            amount,
-                            'Avoir manuel'
-                          );
-
-                          Alert.alert(
-                            'Succès',
-                            'Avoir créé'
-                          );
-
-                          loadInvoices();
-                        } catch (e: any) {
-                          Alert.alert(
-                            'Erreur',
-                            e?.message || 'Erreur avoir'
-                          );
-                        }
-                      }
-                    );
-                  }}
-                >
-                  <Text style={styles.creditActionText}>
-                    Avoir
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-
-
-
+              <TouchableOpacity
+                style={styles.dangerModalButton}
+                onPress={handleCancelInvoice}
+              >
+                <Text style={styles.primaryModalButtonText}>
+                  Confirmer
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
-        ))
-      )}
+        </View>
+      </Modal>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.push('/(traiteur)/orders')}
+      <Modal
+        visible={creditModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCreditModalVisible(false)}
       >
-        <Text style={styles.backButtonText}>Retour aux commandes</Text>
-      </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Créer un avoir</Text>
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+            <Text style={styles.modalText}>Montant de l’avoir</Text>
+
+            <TextInput
+              style={styles.input}
+              value={creditAmount}
+              onChangeText={setCreditAmount}
+              placeholder="Ex : 150"
+              keyboardType="numeric"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.secondaryModalButton}
+                onPress={() => setCreditModalVisible(false)}
+              >
+                <Text style={styles.secondaryModalButtonText}>
+                  Fermer
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.warningModalButton}
+                onPress={handleCreateCreditNote}
+              >
+                <Text style={styles.primaryModalButtonText}>
+                  Créer
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -350,6 +547,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
   },
+  summaryHint: {
+    color: '#D1FAE5',
+    fontSize: 12,
+    marginTop: 8,
+  },
   empty: {
     textAlign: 'center',
     color: '#6B7280',
@@ -380,13 +582,11 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   statusBadge: {
-    backgroundColor: '#D1FAE5',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
   },
   statusText: {
-    color: '#065F46',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -400,6 +600,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#111827',
     marginTop: 6,
+  },
+  auditWarning: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#991B1B',
+    fontWeight: '700',
   },
   actions: {
     flexDirection: 'row',
@@ -417,36 +623,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
   },
-
-
-  backButtonText: {
-    color: '#111827',
-    fontWeight: '800',
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 13,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-
-
-  backIcon: {
-    fontSize: 24,
-    marginRight: 10,
-    color: '#111827',
-  },
-
-  backText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
   cancelAction: {
     flex: 1,
     backgroundColor: '#DC2626',
@@ -455,13 +631,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-
   cancelActionText: {
     color: '#fff',
     fontWeight: '800',
     fontSize: 13,
   },
-
   creditAction: {
     flex: 1,
     backgroundColor: '#D97706',
@@ -470,10 +644,110 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-
   creditActionText: {
     color: '#fff',
     fontWeight: '800',
     fontSize: 13,
+  },
+  topBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 13,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  bottomBackButton: {
+    alignItems: 'center',
+    marginTop: 10,
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 13,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  backButtonText: {
+    color: '#111827',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  backIcon: {
+    fontSize: 24,
+    marginRight: 10,
+    color: '#111827',
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  modalText: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginBottom: 10,
+  },
+  input: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#F9FAFB',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    marginTop: 16,
+  },
+  secondaryModalButton: {
+    flex: 1,
+    backgroundColor: '#E5E7EB',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  secondaryModalButtonText: {
+    color: '#111827',
+    fontWeight: '800',
+  },
+  dangerModalButton: {
+    flex: 1,
+    backgroundColor: '#DC2626',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  warningModalButton: {
+    flex: 1,
+    backgroundColor: '#D97706',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  primaryModalButtonText: {
+    color: '#fff',
+    fontWeight: '800',
   },
 });

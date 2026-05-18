@@ -295,3 +295,197 @@ export async function cancelCateringInvoice(
 
   return true;
 }
+
+/* =========================================
+   ANNULER ET REMPLACER UNE FACTURE
+========================================= */
+export async function replaceInvoice(
+  invoiceId: string,
+  updatedData: {
+    items?: any[];
+    totals?: any;
+    comment?: string;
+    designation?: string;
+  }
+): Promise<CateringInvoice> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
+  const ref = doc(db, COLLECTION, invoiceId);
+
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error("Facture introuvable");
+  }
+
+  const oldInvoice = {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (oldInvoice.status === "paid") {
+    throw new Error(
+      "Une facture payée doit être corrigée par une facture d'avoir"
+    );
+  }
+
+  if (oldInvoice.status === "cancelled") {
+    throw new Error(
+      "Impossible de remplacer une facture annulée"
+    );
+  }
+
+  if (oldInvoice.status === "replaced") {
+    throw new Error(
+      "Cette facture a déjà été remplacée"
+    );
+  }
+
+  /*
+   * Nouveau numéro officiel
+   */
+  const newInvoiceNumber =
+    await getNextInvoiceNumber();
+
+  /*
+   * Nouvelle facture corrigée
+   */
+  const newInvoice: Omit<CateringInvoice, "id"> = {
+    ...oldInvoice,
+
+    number: newInvoiceNumber,
+
+    status: "issued",
+
+    correction: {
+      correctionType: "ANNULLE_ET_REMPLACE",
+
+      replacesInvoiceId: oldInvoice.id,
+      replacesInvoiceNumber: oldInvoice.number,
+    },
+
+    items:
+      updatedData.items ??
+      oldInvoice.items,
+
+    totals:
+      updatedData.totals ??
+      oldInvoice.totals,
+
+    designation:
+      updatedData.designation ??
+      oldInvoice.designation,
+
+    comment:
+      updatedData.comment ??
+      oldInvoice.comment,
+
+    createdAt: serverTimestamp() as any,
+    updatedAt: serverTimestamp() as any,
+    issuedAt: serverTimestamp() as any,
+
+    version:
+      Number(oldInvoice.version ?? 1) + 1,
+
+    isLocked: true,
+  };
+
+  /*
+   * Création nouvelle facture
+   */
+  const newRef = await addDoc(
+    collection(db, COLLECTION),
+    newInvoice
+  );
+
+  /*
+   * Ancienne facture => replaced
+   */
+  await updateDoc(ref, {
+    status: "replaced",
+
+    correction: {
+      ...(oldInvoice.correction ?? {}),
+
+      correctionType: "ANNULLE_ET_REMPLACE",
+
+      replacedByInvoiceId: newRef.id,
+      replacedByInvoiceNumber:
+        newInvoiceNumber,
+    },
+
+    updatedAt: serverTimestamp(),
+  });
+
+  /*
+   * Historique ancienne facture
+   */
+  await addInvoiceHistory(invoiceId, {
+    type: "REPLACED",
+    message:
+      "Facture annulée et remplacée",
+
+    snapshot: {
+      oldInvoiceNumber:
+        oldInvoice.number,
+
+      replacedBy:
+        newInvoiceNumber,
+    },
+  });
+
+  /*
+   * Historique nouvelle facture
+   */
+  await addInvoiceHistory(newRef.id, {
+    type: "CREATED",
+    message:
+      "Facture créée par annule et remplace",
+
+    snapshot: {
+      number: newInvoiceNumber,
+      replaces:
+        oldInvoice.number,
+    },
+  });
+
+  await addInvoiceHistory(newRef.id, {
+    type: "ISSUED",
+    message:
+      "Nouvelle facture émise",
+
+    snapshot: {
+      status: "issued",
+    },
+  });
+
+  return {
+    id: newRef.id,
+    ...newInvoice,
+  };
+}
+
+/* =========================================
+   GET INVOICE HISTORY
+========================================= */
+export async function getInvoiceHistory(
+  invoiceId: string
+): Promise<any[]> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
+  const q = query(
+    collection(db, COLLECTION, invoiceId, "history"),
+    orderBy("createdAt", "asc")
+  );
+
+  const snap = await getDocs(q);
+
+  return snap.docs.map((document) => ({
+    id: document.id,
+    ...document.data(),
+  }));
+}
