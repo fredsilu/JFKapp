@@ -78,7 +78,7 @@ export default function ReplaceInvoiceScreen() {
       `Cette action va remplacer la facture ${invoice.number} par une nouvelle facture avec un nouveau numéro. ` +
       "La facture initiale restera conservée dans l’historique.";
 
-    if (Platform.OS === "web") {
+    if (Platform.OS === "web" && typeof window !== "undefined") {
       const confirmed = window.confirm(confirmMessage);
       if (!confirmed) return;
     }
@@ -97,7 +97,7 @@ export default function ReplaceInvoiceScreen() {
 
       router.replace({
         pathname: "/(traiteur)/invoices/[id]",
-        params: { id: newInvoice.id },
+        params: { id: newInvoice.id ?? "" },
       });
     } catch (error: any) {
       console.error("❌ replace invoice error:", error);
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 14,
   },
- 
+
   disabledButton: {
     opacity: 0.7,
   },
@@ -279,19 +279,19 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 14,
   },
- replaceButton: {
-  backgroundColor: "#7C3AED",
-  paddingVertical: 14,
-  borderRadius: 10,
-  alignItems: "center",
-  marginBottom: 10,
-},
+  replaceButton: {
+    backgroundColor: "#7C3AED",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
 
-replaceButtonText: {
-  color: "#fff",
-  fontWeight: "900",
-  fontSize: 15,
-},
+  replaceButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
 
 
 });

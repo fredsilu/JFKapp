@@ -198,16 +198,16 @@ export default function InvoiceDetailScreen() {
   }
 
   function goToInvoiceHistory() {
-  if (!invoice?.id) {
-    Alert.alert("Erreur", "Identifiant facture introuvable");
-    return;
-  }
+    if (!invoice?.id) {
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      return;
+    }
 
-  router.push({
-    pathname: "/(traiteur)/invoices/history/[id]",
-    params: { id: invoice.id },
-  });
-}
+    router.push({
+      pathname: "/(traiteur)/invoices/history/[id]",
+      params: { id: invoice.id },
+    });
+  }
 
   function goToCreditNote() {
     if (!invoice?.id) {
@@ -389,17 +389,17 @@ export default function InvoiceDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-  style={styles.historyButton}
-  onPress={goToInvoiceHistory}
->
-  <Text style={styles.historyButtonText}>Voir historique</Text>
-</TouchableOpacity>
+            style={styles.historyButton}
+            onPress={goToInvoiceHistory}
+          >
+            <Text style={styles.historyButtonText}>Voir historique</Text>
+          </TouchableOpacity>
         </>
       ) : null}
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push("/(traiteur)/invoices/index")}
+        onPress={() => router.replace("/(traiteur)/invoices")}
       >
         <Text style={styles.backButtonText}>Retour aux factures</Text>
       </TouchableOpacity>
@@ -565,4 +565,18 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginTop: 6,
   },
+  historyButton: {
+    backgroundColor: "#374151",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  historyButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  
 });

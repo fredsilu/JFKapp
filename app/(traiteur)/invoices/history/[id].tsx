@@ -81,6 +81,12 @@ export default function InvoiceHistoryScreen() {
       setLoading(true);
 
       const invoiceData = await getCateringInvoiceById(id);
+      if (!invoiceData) {
+        Alert.alert("Erreur", "Facture introuvable");
+        router.back();
+        return;
+      }
+
       const historyData = await getInvoiceHistory(id);
 
       setInvoice(invoiceData);
@@ -262,17 +268,4 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 14,
   },
-  historyButton: {
-  backgroundColor: "#111827",
-  paddingVertical: 14,
-  borderRadius: 10,
-  alignItems: "center",
-  marginBottom: 10,
-},
-
-historyButtonText: {
-  color: "#fff",
-  fontWeight: "900",
-  fontSize: 15,
-},
 });
