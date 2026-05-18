@@ -10,6 +10,10 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import {
+  CreditNote,
+  getCreditNotesByInvoiceId,
+} from "@/src/services/creditNote.service";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import InvoiceAccountingNotice from "@/src/components/invoices/InvoiceAccountingNotice";
@@ -80,6 +84,7 @@ function getItemTotal(item: InvoiceItem): number {
 export default function InvoiceDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
 
   const [invoice, setInvoice] = useState<CateringInvoice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +109,8 @@ export default function InvoiceDetailScreen() {
       }
 
       setInvoice(data);
+      const notes = await getCreditNotesByInvoiceId(data.id ?? id);
+      setCreditNotes(notes);
     } catch (error) {
       console.error("❌ load invoice detail error:", error);
       Alert.alert("Erreur", "Impossible de charger la facture");
@@ -392,6 +399,30 @@ export default function InvoiceDetailScreen() {
         </View>
       ) : null}
 
+      {creditNotes.length > 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Liste des avoirs</Text>
+
+          {creditNotes.map((note) => (
+            <View key={note.id} style={styles.creditNoteRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.creditNoteNumber}>{note.number}</Text>
+                <Text style={styles.creditNoteReason}>
+                  {note.reason || "Avoir"}
+                </Text>
+                <Text style={styles.creditNoteType}>
+                  {note.type === "full" ? "Avoir total" : "Avoir partiel"}
+                </Text>
+              </View>
+
+              <Text style={styles.creditNoteAmount}>
+                - {formatCurrency(note.amount)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -631,6 +662,39 @@ const styles = StyleSheet.create({
     color: "#92400E",
     fontWeight: "800",
     lineHeight: 18,
+  },
+  creditNoteRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    paddingVertical: 10,
+  },
+
+  creditNoteNumber: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  creditNoteReason: {
+    fontSize: 13,
+    color: "#4B5563",
+    marginTop: 3,
+  },
+
+  creditNoteType: {
+    fontSize: 12,
+    color: "#92400E",
+    fontWeight: "800",
+    marginTop: 3,
+  },
+
+  creditNoteAmount: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#D97706",
+    marginLeft: 10,
   },
 
 });

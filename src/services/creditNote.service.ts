@@ -6,7 +6,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,
+  updateDoc,orderBy,
   where,
 } from "firebase/firestore";
 
@@ -222,4 +222,25 @@ export async function createCreditNote(
     id: ref.id,
     ...creditNote,
   };
+}
+
+export async function getCreditNotesByInvoiceId(
+  invoiceId: string
+): Promise<CreditNote[]> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
+  const q = query(
+    collection(db, CREDIT_NOTES_COLLECTION),
+    where("invoiceId", "==", invoiceId),
+    orderBy("createdAt", "desc")
+  );
+
+  const snap = await getDocs(q);
+
+  return snap.docs.map((document) => ({
+    id: document.id,
+    ...(document.data() as Omit<CreditNote, "id">),
+  }));
 }
