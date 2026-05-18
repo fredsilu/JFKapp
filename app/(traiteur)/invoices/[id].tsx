@@ -420,15 +420,15 @@ export default function InvoiceDetailScreen() {
           >
             <Text style={styles.creditButtonText}>Créer un avoir</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.historyButton}
-            onPress={goToInvoiceHistory}
-          >
-            <Text style={styles.historyButtonText}>Voir historique</Text>
-          </TouchableOpacity>
         </>
       ) : null}
+      <TouchableOpacity
+        style={styles.historyButton}
+        onPress={goToInvoiceHistory}
+      >
+        <Text style={styles.historyButtonText}>Voir historique</Text>
+      </TouchableOpacity>
+
 
       <TouchableOpacity
         style={styles.backButton}

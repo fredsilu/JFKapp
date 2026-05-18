@@ -1,149 +1,238 @@
-import React, { useState } from 'react';
-
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
-} from 'react-native';
+  Alert,
+} from "react-native";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
-import {
-  router,
-  useLocalSearchParams,
-} from 'expo-router';
+import { CateringInvoice } from "@/types/catering";
+import { getCateringInvoiceById } from "@/src/services/cateringInvoice.service";
+import { createCreditNote } from "@/src/services/creditNote.service";
+import { formatCurrency } from "@/src/utils/costs";
 
-import {
-  createCreditNote,
-} from '@/src/services/creditNote.service';
+export default function CreateCreditNoteScreen() {
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-export default function CreditNoteScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const [invoice, setInvoice] = useState<CateringInvoice | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const id = Array.isArray(params.id)
-    ? params.id[0]
-    : params.id;
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
 
-  const [amount, setAmount] = useState('');
-  const [reason, setReason] = useState('');
-
-  const [loading, setLoading] = useState(false);
-
-  async function handleCreateCreditNote() {
+  const loadInvoice = useCallback(async () => {
     if (!id) {
-      Alert.alert('Erreur', 'Facture invalide');
-      return;
-    }
-
-    const parsedAmount = Number(amount);
-
-    if (!parsedAmount || parsedAmount <= 0) {
-      Alert.alert(
-        'Erreur',
-        'Veuillez saisir un montant valide'
-      );
-      return;
-    }
-
-    if (reason.trim().length < 3) {
-      Alert.alert(
-        'Erreur',
-        'Veuillez saisir un motif'
-      );
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      router.back();
       return;
     }
 
     try {
       setLoading(true);
 
-      await createCreditNote(
-        id,
-        parsedAmount,
-        reason.trim()
-      );
+      const data = await getCateringInvoiceById(id);
 
-      Alert.alert(
-        'Succès',
-        'Avoir créé avec succès',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.replace(
-                '/(traiteur)/invoices'
-              );
-            },
-          },
-        ]
-      );
-    } catch (e: any) {
-      Alert.alert(
-        'Erreur',
-        e?.message ||
-          "Impossible de créer l'avoir"
-      );
+      if (!data) {
+        Alert.alert("Erreur", "Facture introuvable");
+        router.back();
+        return;
+      }
+
+      setInvoice(data);
+    } catch (error) {
+      console.error("❌ load invoice credit-note error:", error);
+      Alert.alert("Erreur", "Impossible de charger la facture");
     } finally {
       setLoading(false);
     }
+  }, [id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadInvoice();
+    }, [loadInvoice])
+  );
+
+  const invoiceTotal = Number(invoice?.totals?.total ?? 0);
+
+  const alreadyCredited = Number(
+    invoice?.creditNoteSummary?.totalCredited ?? 0
+  );
+
+  const remainingCreditableAmount = Number(
+    invoice?.creditNoteSummary?.remainingCreditableAmount ??
+      Math.max(invoiceTotal - alreadyCredited, 0)
+  );
+
+  async function handleCreateCreditNote() {
+    if (!invoice?.id) return;
+
+    const cleanReason = reason.trim();
+    const cleanAmount = Number(amount.replace(",", "."));
+
+    if (!cleanAmount || cleanAmount <= 0) {
+      Alert.alert("Erreur", "Montant invalide");
+      return;
+    }
+
+    if (cleanAmount > remainingCreditableAmount) {
+      Alert.alert(
+        "Erreur",
+        `Le montant dépasse le solde créditable : ${formatCurrency(
+          remainingCreditableAmount
+        )}`
+      );
+      return;
+    }
+
+    if (cleanReason.length < 3) {
+      Alert.alert("Erreur", "Motif obligatoire");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const creditNote = await createCreditNote(
+        invoice.id,
+        cleanAmount,
+        cleanReason
+      );
+
+      Alert.alert(
+        "Avoir créé",
+        `Avoir ${creditNote.number} créé avec succès`
+      );
+
+      router.replace({
+        pathname: "/(traiteur)/invoices/[id]",
+        params: { id: invoice.id },
+      });
+    } catch (error: any) {
+      console.error("❌ create credit note error:", error);
+      Alert.alert(
+        "Erreur",
+        error?.message || "Impossible de créer l’avoir"
+      );
+    } finally {
+      setSaving(false);
+    }
   }
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+        <Text style={styles.loadingText}>Chargement...</Text>
+      </View>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <View style={styles.center}>
+        <Text>Facture introuvable</Text>
+      </View>
+    );
+  }
+
+  const isFullyCredited =
+    invoice.creditNoteSummary?.isFullyCredited ||
+    remainingCreditableAmount <= 0;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Créer un avoir
-      </Text>
+      <Text style={styles.title}>Créer un avoir</Text>
 
-      <Text style={styles.label}>
-        Montant de l'avoir
-      </Text>
+      <View style={styles.notice}>
+        <Text style={styles.noticeTitle}>Règle comptable</Text>
+        <Text style={styles.noticeText}>
+          Un avoir ne supprime pas la facture initiale. Il crée une pièce
+          comptable liée à la facture et réduit le montant net facturable.
+        </Text>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        placeholder="0"
-        value={amount}
-        onChangeText={setAmount}
-      />
+      <View style={styles.card}>
+        <Text style={styles.label}>Facture concernée</Text>
+        <Text style={styles.value}>{invoice.number}</Text>
 
-      <Text style={styles.label}>
-        Motif
-      </Text>
+        <Text style={styles.label}>Client</Text>
+        <Text style={styles.value}>
+          {invoice.client?.name || "Client non défini"}
+        </Text>
 
-      <TextInput
-        style={styles.textArea}
-        multiline
-        numberOfLines={5}
-        placeholder="Exemple : réduction exceptionnelle, erreur facturation..."
-        value={reason}
-        onChangeText={setReason}
-      />
+        <View style={styles.separator} />
 
-      <TouchableOpacity
-        style={[
-          styles.button,
-          loading && styles.disabledButton,
-        ]}
-        disabled={loading}
-        onPress={handleCreateCreditNote}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>
-            Confirmer avoir
+        <Text style={styles.label}>Total facture</Text>
+        <Text style={styles.value}>{formatCurrency(invoiceTotal)}</Text>
+
+        <Text style={styles.label}>Déjà crédité</Text>
+        <Text style={styles.creditValue}>
+          - {formatCurrency(alreadyCredited)}
+        </Text>
+
+        <Text style={styles.label}>Solde créditable</Text>
+        <Text style={styles.remainingValue}>
+          {formatCurrency(remainingCreditableAmount)}
+        </Text>
+      </View>
+
+      {isFullyCredited ? (
+        <View style={styles.blockedCard}>
+          <Text style={styles.blockedText}>
+            Cette facture est déjà totalement couverte par un avoir.
           </Text>
-        )}
-      </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.inputLabel}>Montant de l’avoir</Text>
+
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Ex : 150"
+            keyboardType="numeric"
+            style={styles.input}
+          />
+
+          <Text style={styles.inputLabel}>Motif de l’avoir</Text>
+
+          <TextInput
+            value={reason}
+            onChangeText={setReason}
+            placeholder="Ex : correction montant, remise commerciale..."
+            style={styles.textArea}
+            multiline
+            numberOfLines={5}
+            textAlignVertical="top"
+          />
+
+          <TouchableOpacity
+            style={[styles.createButton, saving && styles.disabledButton]}
+            onPress={handleCreateCreditNote}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.createButtonText}>Créer l’avoir</Text>
+            )}
+          </TouchableOpacity>
+        </>
+      )}
 
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.back()}
+        disabled={saving}
       >
-        <Text style={styles.backButtonText}>
-          Retour
-        </Text>
+        <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
     </View>
   );
@@ -152,71 +241,145 @@ export default function CreditNoteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F8',
+    backgroundColor: "#F4F6F8",
     padding: 16,
   },
-
+  center: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#4B5563",
+  },
   title: {
     fontSize: 24,
-    fontWeight: '900',
-    color: '#111827',
-    marginBottom: 20,
+    fontWeight: "900",
+    color: "#111827",
+    marginBottom: 16,
   },
-
+  notice: {
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#F59E0B",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
+  noticeTitle: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#92400E",
+    marginBottom: 6,
+  },
+  noticeText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#78350F",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
   label: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#6B7280",
+    marginTop: 6,
+  },
+  value: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    marginTop: 2,
+  },
+  creditValue: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#D97706",
+    marginTop: 2,
+  },
+  remainingValue: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#065F46",
+    marginTop: 2,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginVertical: 10,
+  },
+  inputLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "800",
+    color: "#111827",
     marginBottom: 8,
-    color: '#374151',
   },
-
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 20,
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: "#111827",
+    marginBottom: 14,
   },
-
   textArea: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    minHeight: 120,
-    textAlignVertical: 'top',
-    marginBottom: 20,
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-
-  button: {
-    backgroundColor: '#D97706',
-    paddingVertical: 15,
+    borderColor: "#D1D5DB",
     borderRadius: 10,
-    alignItems: 'center',
+    minHeight: 120,
+    padding: 12,
+    fontSize: 14,
+    color: "#111827",
+    marginBottom: 14,
   },
-
-  buttonText: {
-    color: '#fff',
-    fontWeight: '900',
+  createButton: {
+    backgroundColor: "#D97706",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  createButtonText: {
+    color: "#fff",
+    fontWeight: "900",
     fontSize: 15,
   },
-
   disabledButton: {
     opacity: 0.7,
   },
-
-  backButton: {
-    marginTop: 12,
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
+  blockedCard: {
+    backgroundColor: "#FEE2E2",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
   },
-
+  blockedText: {
+    color: "#991B1B",
+    fontWeight: "800",
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  backButton: {
+    backgroundColor: "#E5E7EB",
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: "center",
+  },
   backButtonText: {
-    color: '#111827',
-    fontWeight: '800',
+    color: "#111827",
+    fontWeight: "800",
+    fontSize: 14,
   },
 });
