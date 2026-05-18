@@ -1,4 +1,4 @@
-//src/services/cateringInvoice.service.ts
+// src/services/cateringInvoice.service.ts
 import {
   addDoc,
   collection,
@@ -9,21 +9,19 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-import { db } from '@/lib/firebase';
-import { getNextInvoiceNumber } from '@/src/services/invoiceNumber.service';
+import { db } from "@/lib/firebase";
+import { getNextInvoiceNumber } from "@/src/services/invoiceNumber.service";
 
-const COLLECTION = 'catering_invoices';
+import {
+  CateringInvoice,
+  isCateringInvoiceLocked,
+} from "@/types/catering";
 
-export type InvoiceStatus =
-  | 'draft'
-  | 'issued'
-  | 'cancelled'
-  | 'credited'
-  | 'partially_credited';
+const COLLECTION = "catering_invoices";
 
-export type DiscountType = 'none' | 'percentage' | 'fixed';
+export type DiscountType = "none" | "percentage" | "fixed";
 
 export type InvoiceDiscount = {
   type: DiscountType;
@@ -31,60 +29,18 @@ export type InvoiceDiscount = {
   reason?: string;
 };
 
-export type CateringInvoice = {
-  id?: string;
-
-  proformaId?: string;
-  orderId?: string;
-  orderNumber?: string;
-
-  number: string;
-
-  clientId?: string;
-  clientName?: string;
-  clientRccm?: string;
-  clientIdnat?: string;
-  clientAddress?: string;
-  clientCity?: string;
-
-  issueDate: string;
-
-  items: any[];
-
-  discount?: InvoiceDiscount;
-
-  totals: {
-    subtotal: number;
-    discount?: number;
-    tax?: number;
-    discountAmount?: number;
-    totalAfterDiscount?: number;
-    total: number;
-    currency: 'USD' | 'CDF';
-  };
-
-  status: InvoiceStatus;
-
-  cancellationReason?: string;
-  cancelledAt?: any;
-
-  createdAt?: any;
-  updatedAt?: any;
-};
-
 function calculateDiscountAmount(
   subtotal: number,
   discount?: InvoiceDiscount
 ): number {
-  if (!discount || discount.type === 'none') return 0;
-
+  if (!discount || discount.type === "none") return 0;
   if (discount.value <= 0) return 0;
 
-  if (discount.type === 'percentage') {
+  if (discount.type === "percentage") {
     return Math.min(subtotal * (discount.value / 100), subtotal);
   }
 
-  if (discount.type === 'fixed') {
+  if (discount.type === "fixed") {
     return Math.min(discount.value, subtotal);
   }
 
@@ -94,25 +50,22 @@ function calculateDiscountAmount(
 function normalizeTotals(
   totals: any,
   discount?: InvoiceDiscount
-): CateringInvoice['totals'] {
-  const subtotal = Number(totals?.subtotal ?? 0);
+): CateringInvoice["totals"] {
+  const subtotal = Number(totals?.subtotal ?? totals?.totalHT ?? 0);
   const tax = Number(totals?.tax ?? 0);
-  const currency = totals?.currency ?? 'USD';
+  const currency = totals?.currency ?? "USD";
 
-  const existingDiscount =
-    Number(totals?.discount ?? 0);
-
-  const calculatedDiscount =
-    calculateDiscountAmount(subtotal, discount);
+  const existingDiscount = Number(totals?.discount ?? 0);
+  const calculatedDiscount = calculateDiscountAmount(subtotal, discount);
 
   const discountAmount =
-    existingDiscount > 0
-      ? existingDiscount
-      : calculatedDiscount;
+    existingDiscount > 0 ? existingDiscount : calculatedDiscount;
+
   const totalAfterDiscount = Math.max(subtotal - discountAmount, 0);
   const total = totalAfterDiscount + tax;
 
   return {
+    ...totals,
     subtotal,
     discount: discountAmount,
     tax,
@@ -121,6 +74,22 @@ function normalizeTotals(
     total,
     currency,
   };
+}
+
+async function addInvoiceHistory(
+  invoiceId: string,
+  payload: {
+    type: string;
+    message: string;
+    snapshot?: any;
+  }
+) {
+  await addDoc(collection(db, COLLECTION, invoiceId, "history"), {
+    type: payload.type,
+    message: payload.message,
+    createdAt: serverTimestamp(),
+    snapshot: payload.snapshot ?? null,
+  });
 }
 
 export async function getCateringInvoiceById(
@@ -133,32 +102,18 @@ export async function getCateringInvoiceById(
 
   return {
     id: snap.id,
-    ...(snap.data() as Omit<CateringInvoice, 'id'>),
+    ...(snap.data() as Omit<CateringInvoice, "id">),
   };
 }
 
 export async function getCateringInvoices(): Promise<CateringInvoice[]> {
-  const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, COLLECTION), orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
 
-  return snap.docs
-    .map((document) => ({
-      id: document.id,
-      ...(document.data() as Omit<CateringInvoice, 'id'>),
-    }))
-    .sort((a, b) => {
-      const aTime =
-        a.createdAt?.toMillis?.() ||
-        new Date(a.issueDate || '').getTime() ||
-        0;
-
-      const bTime =
-        b.createdAt?.toMillis?.() ||
-        new Date(b.issueDate || '').getTime() ||
-        0;
-
-      return bTime - aTime;
-    });
+  return snap.docs.map((document) => ({
+    id: document.id,
+    ...(document.data() as Omit<CateringInvoice, "id">),
+  }));
 }
 
 /* =========================================
@@ -167,105 +122,100 @@ export async function getCateringInvoices(): Promise<CateringInvoice[]> {
 export async function createInvoiceFromOrder(
   order: any,
   discount?: InvoiceDiscount
-) {
+): Promise<CateringInvoice> {
   if (!order?.id) {
-    throw new Error('Commande invalide');
+    throw new Error("Commande invalide");
+  }
+
+  if (order.invoiceId) {
+    throw new Error("Cette commande possède déjà une facture");
   }
 
   const invoiceNumber = await getNextInvoiceNumber();
   const totals = normalizeTotals(order.totals, discount);
 
-  const invoice: Omit<CateringInvoice, 'id'> = {
-    orderId: order.id,
-    orderNumber: order.number ?? '',
+  const invoice: Omit<CateringInvoice, "id"> = {
+    documentType: "INVOICE",
 
-    proformaId: order.proformaId ?? '',
+    orderId: order.id,
+    sourceProformaId: order.proformaId ?? order.sourceProformaId ?? null,
 
     number: invoiceNumber,
+    status: "issued",
 
-    clientId: order.clientId ?? '',
-    clientName: order.client?.name ?? order.clientName ?? '',
-    clientRccm: order.client?.rccm ?? order.clientRccm ?? '',
-    clientIdnat: order.client?.idnat ?? order.clientIdnat ?? '',
-    clientAddress: order.client?.address ?? order.clientAddress ?? '',
-    clientCity: order.client?.city ?? order.clientCity ?? 'Kinshasa / RDC',
+    clientId: order.clientId ?? "",
+    client: {
+      name: order.client?.name ?? order.clientName ?? "",
+      address: order.client?.address ?? order.clientAddress ?? "",
+      cityCountry:
+        order.client?.cityCountry ??
+        order.client?.city ??
+        order.clientCity ??
+        "Kinshasa / RDC",
+      phone: order.client?.phone ?? "",
+      notes: order.client?.notes ?? "",
+      rccm: order.client?.rccm ?? order.clientRccm ?? "",
+      idNat: order.client?.idNat ?? order.client?.idnat ?? order.clientIdnat ?? "",
+    },
 
-    issueDate: new Date().toISOString(),
+    designation: order.designation ?? order.name ?? "Prestation traiteur",
+
+    dateLivraison: order.dateLivraison ?? "",
+    deliveryTime: order.deliveryTime ?? order.heureLivraison ?? "",
+    deliveryAddress: order.deliveryAddress ?? order.lieu ?? "",
+
+    guestCount: order.guestCount ?? 0,
+
+    comment: order.comment ?? "",
 
     items: order.items ?? [],
-
-    discount: discount ?? {
-      type: 'none',
-      value: 0,
-    },
-
     totals,
 
-    status: 'issued',
+    correction: {
+      correctionType: null,
+    },
 
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    cancellation: undefined,
+
+    createdAt: serverTimestamp() as any,
+    updatedAt: serverTimestamp() as any,
+
+    issuedAt: serverTimestamp() as any,
+
+    createdBy: null,
+    issuedBy: null,
+
+    version: 1,
+    isLocked: true,
   };
 
   const ref = await addDoc(collection(db, COLLECTION), invoice);
-  await updateDoc(
-  doc(db, 'orders', order.id),
-  {
+
+  await updateDoc(doc(db, "orders", order.id), {
     invoiceId: ref.id,
     updatedAt: serverTimestamp(),
-  }
-);
+  });
 
-  return {
-    id: ref.id,
-    ...invoice,
-  };
-}
-
-/* =========================================
-   CREATE INVOICE FROM PROFORMA
-========================================= */
-export async function createInvoiceFromProforma(
-  proforma: any,
-  discount?: InvoiceDiscount
-) {
-  if (!proforma?.id) {
-    throw new Error('Proforma invalide');
-  }
-
-  const invoiceNumber = await getNextInvoiceNumber();
-  const totals = normalizeTotals(proforma.totals, discount);
-
-  const invoice: Omit<CateringInvoice, 'id'> = {
-    proformaId: proforma.id,
-
-    number: invoiceNumber,
-
-    clientId: proforma.clientId ?? '',
-    clientName: proforma.clientName ?? '',
-    clientRccm: proforma.clientRccm ?? '',
-    clientIdnat: proforma.clientIdnat ?? '',
-    clientAddress: proforma.clientAddress ?? '',
-    clientCity: proforma.clientCity ?? 'Kinshasa / RDC',
-
-    issueDate: new Date().toISOString(),
-
-    items: proforma.items ?? [],
-
-    discount: discount ?? {
-      type: 'none',
-      value: 0,
+  await addInvoiceHistory(ref.id, {
+    type: "CREATED",
+    message: "Facture créée depuis la commande",
+    snapshot: {
+      number: invoice.number,
+      status: invoice.status,
+      documentType: invoice.documentType,
+      total: invoice.totals?.total,
     },
+  });
 
-    totals,
-
-    status: 'issued',
-
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-
-  const ref = await addDoc(collection(db, COLLECTION), invoice);
+  await addInvoiceHistory(ref.id, {
+    type: "ISSUED",
+    message: "Facture émise et verrouillée",
+    snapshot: {
+      number: invoice.number,
+      status: invoice.status,
+      isLocked: true,
+    },
+  });
 
   return {
     id: ref.id,
@@ -275,18 +225,18 @@ export async function createInvoiceFromProforma(
 
 /* =========================================
    CANCEL INVOICE
-   Une facture émise ne doit pas être supprimée.
-   Elle est annulée avec une raison.
 ========================================= */
 export async function cancelCateringInvoice(
   invoiceId: string,
   reason: string
-) {
+): Promise<boolean> {
   if (!invoiceId) {
-    throw new Error('Facture invalide');
+    throw new Error("Facture invalide");
   }
 
-  if (!reason || reason.trim().length < 3) {
+  const cleanReason = reason?.trim();
+
+  if (!cleanReason || cleanReason.length < 3) {
     throw new Error("La raison d'annulation est obligatoire");
   }
 
@@ -294,24 +244,50 @@ export async function cancelCateringInvoice(
   const snap = await getDoc(ref);
 
   if (!snap.exists()) {
-    throw new Error('Facture introuvable');
+    throw new Error("Facture introuvable");
   }
 
-  const invoice = snap.data() as CateringInvoice;
+  const invoice = {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringInvoice, "id">),
+  };
 
-  if (invoice.status === 'cancelled') {
-    throw new Error('Cette facture est déjà annulée');
+  if (invoice.status === "cancelled") {
+    throw new Error("Cette facture est déjà annulée");
   }
 
-  if (invoice.status === 'credited' || invoice.status === 'partially_credited') {
-    throw new Error('Cette facture a déjà un avoir associé');
+  if (invoice.status === "paid" || invoice.status === "partial") {
+    throw new Error(
+      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir"
+    );
+  }
+
+  if (!isCateringInvoiceLocked(invoice)) {
+    throw new Error(
+      "Une facture en brouillon doit être modifiée ou supprimée avant émission"
+    );
   }
 
   await updateDoc(ref, {
-    status: 'cancelled',
-    cancellationReason: reason.trim(),
-    cancelledAt: serverTimestamp(),
+    status: "cancelled",
+    isLocked: true,
+    cancellation: {
+      reason: cleanReason,
+      cancelledAt: serverTimestamp(),
+      cancelledBy: null,
+    },
     updatedAt: serverTimestamp(),
+  });
+
+  await addInvoiceHistory(invoiceId, {
+    type: "CANCELLED",
+    message: "Facture annulée",
+    snapshot: {
+      number: invoice.number,
+      previousStatus: invoice.status,
+      newStatus: "cancelled",
+      reason: cleanReason,
+    },
   });
 
   return true;

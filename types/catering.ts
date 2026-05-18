@@ -1,8 +1,8 @@
+//types/catering.ts
 import { Timestamp } from "firebase/firestore";
 import {
   CateringDocumentItem,
   CateringDocumentTotals,
-  CateringDocumentType,
 } from "@/types/documents";
 import { Dish } from ".";
 
@@ -256,17 +256,84 @@ export type CateringOrder = {
 export type CateringInvoiceStatus =
   | "draft"
   | "issued"
+  | "partial"
   | "paid"
+  | "replaced"
   | "cancelled";
+
+export type CateringInvoiceDocumentType =
+  | "INVOICE"
+  | "CREDIT_NOTE";
+
+export type CateringInvoiceCorrectionType =
+  | null
+  | "ANNULLE_ET_REMPLACE"
+  | "CREDIT_NOTE";
+
+export type CateringInvoiceHistoryType =
+  | "CREATED"
+  | "ISSUED"
+  | "CANCELLED"
+  | "REPLACED"
+  | "CREDIT_NOTE_CREATED"
+  | "PAYMENT_ADDED"
+  | "PDF_GENERATED"
+  | "SENT_TO_CLIENT";
+
+export interface CateringInvoiceCancellation {
+  cancelledAt?: Timestamp | null;
+  cancelledBy?: string | null;
+  reason?: string;
+}
+
+export interface CateringInvoiceCorrection {
+  correctionType: CateringInvoiceCorrectionType;
+
+  replacesInvoiceId?: string | null;
+  replacesInvoiceNumber?: string | null;
+
+  replacedByInvoiceId?: string | null;
+  replacedByInvoiceNumber?: string | null;
+
+  relatedInvoiceId?: string | null;
+  relatedInvoiceNumber?: string | null;
+}
+
+export interface CateringInvoiceHistory {
+  id?: string;
+  invoiceId: string;
+  type: CateringInvoiceHistoryType;
+  message: string;
+  createdAt: Timestamp;
+  createdBy?: string | null;
+  snapshot?: Partial<CateringInvoice>;
+}
+
+
 
 export type CateringInvoice = {
   id: string;
 
+  /**
+   * Type de document comptable
+   * INVOICE = facture normale
+   * CREDIT_NOTE = facture d'avoir
+   */
+  documentType: CateringInvoiceDocumentType;
+
   orderId: string;
   sourceProformaId?: string | null;
 
+  /**
+   * Numéro officiel de la facture.
+   * Ne doit jamais être modifié après émission.
+   */
   number: string;
 
+  /**
+   * Statut métier de la facture.
+   * Seul "draft" est modifiable.
+   */
   status: CateringInvoiceStatus;
 
   clientId: string;
@@ -282,14 +349,49 @@ export type CateringInvoice = {
 
   comment?: string;
 
+  /**
+   * Snapshot commercial figé au moment de l’émission.
+   */
   items: CateringDocumentItem[];
   totals: CateringDocumentTotals;
+
+  /**
+   * Correction comptable :
+   * - Annule et remplace
+   * - Facture d’avoir
+   */
+  correction?: CateringInvoiceCorrection;
+
+  /**
+   * Informations d’annulation éventuelle.
+   */
+  cancellation?: CateringInvoiceCancellation;
 
   createdAt: Timestamp;
   updatedAt: Timestamp;
 
   issuedAt?: Timestamp | null;
+
+  createdBy?: string | null;
+  issuedBy?: string | null;
+
+  /**
+   * Version interne du modèle de facture.
+   */
+  version?: number;
+
+  /**
+   * Sécurité UI/métier.
+   * Une facture est verrouillée dès qu’elle n’est plus en draft.
+   */
+  isLocked?: boolean;
 };
+
+export function isCateringInvoiceLocked(
+  invoice: CateringInvoice
+): boolean {
+  return invoice.status !== "draft";
+}
 
 /**
  * =========================
