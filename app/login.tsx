@@ -18,7 +18,7 @@ import { useAuth } from '@/src/contexts/AuthContext';
 export default function LoginScreen() {
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('admin@crepolia.com');
+  const [email, setEmail] = useState('contact@crepolia.com');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
