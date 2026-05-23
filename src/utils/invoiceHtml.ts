@@ -99,6 +99,9 @@ function getStatusLabel(
     case 'paid':
       return 'FACTURE PAYÉE';
 
+    case 'credited':
+      return 'FACTURE CRÉDITÉE';
+
     default:
       return 'FACTURE';
   }
@@ -217,6 +220,10 @@ body {
   padding: 0;
   color: #5f6368;
   font-size: 10px;
+}
+  .status-credited {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .pdf-page {
@@ -684,6 +691,18 @@ ${(invoice as any).creditNoteForInvoiceNumber
     <div style="text-align:right;">${money(totalAfterDiscount)}</div>
   </div>
 </div>
+
+${(invoice as any).cancellation?.reason
+      ? `
+<div class="relation-box relation-replaced">
+  Motif d’annulation :
+  <strong>
+    ${(invoice as any).cancellation.reason}
+  </strong>
+</div>
+`
+      : ''
+    }
 
 <div class="payment">
   La totalité de la facture est payable conformément aux conditions convenues.
