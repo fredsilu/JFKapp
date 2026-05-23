@@ -850,7 +850,7 @@ git checkout -b feature/invoice
 # Travail
 git add .
 git commit -m "feat: add catering invoice workflow"
-git push origin feature/invoice
+git push origin feature/invoices
 
 # Intégrer dans develop
 git checkout develop
