@@ -1,6 +1,5 @@
 //components/ClientForm.tsx
 import React, { useEffect, useState } from 'react';
-import { normalizeText } from '@/src/utils/search';
 import {
   View,
   Text,
@@ -115,11 +114,6 @@ export default function ClientForm({
       console.log('CLIENT FORM PAYLOAD:', payload);
 
       await onSubmit(payload);
-
-      Alert.alert(
-        'Succès',
-        client ? 'Client modifié avec succès' : 'Client créé avec succès'
-      );
     } catch (err) {
       console.error('ClientForm submit error:', err);
       Alert.alert(

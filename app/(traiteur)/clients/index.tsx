@@ -51,7 +51,7 @@ export default function ClientsScreen() {
   const filteredClients = clients.filter(client =>
     (client.name && normalizeText(client.name).includes(normalizedQuery)) ||
     (client.email && normalizeText(client.email).includes(normalizedQuery)) ||
-    (client.phone && normalizeText(client.phone.toString()).includes(normalizedQuery)) ||
+    (client.phone && normalizeText(String(client.phone || '')).includes(normalizedQuery)) ||
     (client.rccm && normalizeText(client.rccm).includes(normalizedQuery)) ||
     (client.idnat && normalizeText(client.idnat).includes(normalizedQuery)) ||
     (client.nif && normalizeText(client.nif).includes(normalizedQuery))
@@ -182,7 +182,7 @@ export default function ClientsScreen() {
                       <View style={styles.contactItem}>
                         <Icon name="phone" size={14} color="#666" />
                         <Text style={styles.contactText}>
-                          {client.phone ? client.phone.toString() : 'N/A'}
+                          {client.phone ? String(client.phone || '') : 'N/A'}
                         </Text>
                       </View>
                     </View>

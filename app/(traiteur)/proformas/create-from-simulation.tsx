@@ -272,6 +272,7 @@ export default function CreateProformaFromSimulationScreen() {
         clientName: getClientName(),
         clientRccm: getClientRccm(),
         clientIdnat: getClientIdnat(),
+        clientNif: client?.nif || '',
         clientAddress: getClientAddress(),
         clientCity: getClientCity(),
 

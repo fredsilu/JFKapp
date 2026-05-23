@@ -175,7 +175,7 @@ export default function ClientDetails({
 
           <InfoRow label="RCCM" value={client.rccm} icon="badge" />
           <InfoRow label="IDNAT" value={client.idnat} icon="assignment-ind" />
-          <InfoRow label="NIF" value={(client as any).nif} icon="receipt-long" />
+          <InfoRow label="NIF" value={client.nif} icon="receipt-long" />
         </View>
 
         {/* Autres informations */}
@@ -194,7 +194,7 @@ export default function ClientDetails({
           />
           <InfoRow
             label="Notes"
-            value={(client as any).notes}
+            value={client.notes}
             icon="notes"
             multiline
           />

@@ -99,6 +99,7 @@ export function buildProformaHTML(
   const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
   const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
   const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');
+  const clientNif = safe(proforma.clientNif);
 
   const menuRows =
     proforma.menu && proforma.menu.length > 0
@@ -514,6 +515,7 @@ body {
 
     <div>RCCM : ${clientRccm || '—'}</div>
     <div>IDNAT : ${clientIdnat || '—'}</div>
+    <div>NIF : ${clientNif || '—'}</div>
     <div>${clientAddress || '—'}</div>
     <div><u>${clientCity} / RDC</u></div>
 
