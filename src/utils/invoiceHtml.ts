@@ -104,6 +104,25 @@ function getStatusLabel(
   }
 }
 
+function getDocumentTitle(
+  status?: string,
+  documentType?: string
+) {
+  if (documentType === 'CREDIT_NOTE') {
+    return 'FACTURE D’AVOIR';
+  }
+
+  if (status === 'cancelled') {
+    return 'FACTURE ANNULÉE';
+  }
+
+  if (status === 'replaced') {
+    return 'FACTURE ANNULÉE ET REMPLACÉE';
+  }
+
+  return 'FACTURE';
+}
+
 export function buildInvoiceHTML(
   invoice: InvoicePdfData,
   assets?: InvoicePdfAssets
@@ -481,9 +500,31 @@ body {
   background: #e5e7eb;
   color: #374151;
 }
+  .relation-box {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.relation-replace {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.relation-replaced {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.relation-credit {
+  background: #fef3c7;
+  color: #92400e;
+}
 
 .watermark {
-  position: absolute;
+  position: fixed;
   top: 45%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-30deg);
@@ -517,10 +558,10 @@ ${status === 'cancelled'
 ${headerHTML}
 
 <div class="title">
-  ${(invoice as any).documentType === 'CREDIT_NOTE'
-      ? 'FACTURE D’AVOIR'
-      : 'FACTURE'
-    }
+  ${getDocumentTitle(
+      status,
+      (invoice as any).documentType
+    )}
 </div>
 <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
 
@@ -542,7 +583,41 @@ ${headerHTML}
     ${invoiceDateFormatted}
   </div>
 </div>
+${(invoice as any).correction?.replacesInvoiceNumber
+      ? `
+<div class="relation-box relation-replace">
+  Cette facture annule et remplace la facture :
+  <strong>
+    ${(invoice as any).correction.replacesInvoiceNumber}
+  </strong>
+</div>
+`
+      : ''
+    }
 
+${(invoice as any).correction?.replacedByInvoiceNumber
+      ? `
+<div class="relation-box relation-replaced">
+  Cette facture a été remplacée par :
+  <strong>
+    ${(invoice as any).correction.replacedByInvoiceNumber}
+  </strong>
+</div>
+`
+      : ''
+    }
+
+${(invoice as any).creditNoteForInvoiceNumber
+      ? `
+<div class="relation-box relation-credit">
+  Avoir relatif à la facture :
+  <strong>
+    ${(invoice as any).creditNoteForInvoiceNumber}
+  </strong>
+</div>
+`
+      : ''
+    }
 <div class="intro">
   Vous trouverez ci-dessous la facture relative aux prestations convenues :
 </div>
