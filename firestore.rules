@@ -1,0 +1,114 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /*
+     * =========================
+     * AUTH
+     * =========================
+     */
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /*
+     * =========================
+     * FACTURES
+     * =========================
+     */
+
+    match /catering_invoices/{invoiceId} {
+
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated();
+
+      allow update: if isAuthenticated()
+        && (
+          resource.data.status == "draft"
+          || request.resource.data.status == "issued"
+        )
+        && (
+          request.resource.data.status == "issued"
+          || request.resource.data.status == "cancelled"
+          || request.resource.data.status == "replaced"
+        );
+
+      allow delete: if false;
+
+      match /history/{historyId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+    }
+
+    /*
+     * =========================
+     * AVOIRS
+     * =========================
+     */
+
+    match /credit_notes/{creditNoteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    /*
+     * =========================
+     * COMMANDES
+     * =========================
+     */
+
+    match /orders/{orderId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    /*
+     * =========================
+     * PROFORMAS
+     * =========================
+     */
+
+    match /proformas/{proformaId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    /*
+     * =========================
+     * CLIENTS
+     * =========================
+     */
+
+    match /clients/{clientId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    /*
+     * =========================
+     * PLATS
+     * =========================
+     */
+
+    match /dishes/{dishId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    /*
+     * =========================
+     * BLOQUER TOUT LE RESTE
+     * =========================
+     */
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,3 +1,4 @@
+//app/(traiteur)/invoices/credit-note/[id].tsx
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -67,7 +68,7 @@ export default function CreateCreditNoteScreen() {
 
   const remainingCreditableAmount = Number(
     invoice?.creditNoteSummary?.remainingCreditableAmount ??
-      Math.max(invoiceTotal - alreadyCredited, 0)
+    Math.max(invoiceTotal - alreadyCredited, 0)
   );
 
   async function handleCreateCreditNote() {
@@ -145,6 +146,10 @@ export default function CreateCreditNoteScreen() {
   const isFullyCredited =
     invoice.creditNoteSummary?.isFullyCredited ||
     remainingCreditableAmount <= 0;
+  const isBlockedInvoice =
+    invoice.status === "cancelled" ||
+    invoice.status === "replaced" ||
+    invoice.documentType === "CREDIT_NOTE";
 
   return (
     <View style={styles.container}>
@@ -183,10 +188,12 @@ export default function CreateCreditNoteScreen() {
         </Text>
       </View>
 
-      {isFullyCredited ? (
+      {isFullyCredited || isBlockedInvoice ? (
         <View style={styles.blockedCard}>
           <Text style={styles.blockedText}>
-            Cette facture est déjà totalement couverte par un avoir.
+            {isBlockedInvoice
+              ? "Cette facture ne peut pas recevoir d’avoir."
+              : "Cette facture est déjà totalement couverte par un avoir."}
           </Text>
         </View>
       ) : (
