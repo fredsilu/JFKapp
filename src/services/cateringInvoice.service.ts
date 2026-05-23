@@ -134,6 +134,22 @@ export async function createInvoiceFromOrder(
     throw new Error("Cette commande possède déjà une facture");
   }
 
+  const freshOrderRef = doc(db, "orders", order.id);
+
+  const freshOrderSnap = await getDoc(freshOrderRef);
+
+  if (!freshOrderSnap.exists()) {
+    throw new Error("Commande introuvable");
+  }
+
+  const freshOrder = freshOrderSnap.data();
+
+  if (freshOrder?.invoiceId) {
+    throw new Error(
+      "Cette commande possède déjà une facture"
+    );
+  }
+
   const invoiceNumber = await getNextInvoiceNumber();
   const totals = normalizeTotals(order.totals, discount);
 
@@ -257,6 +273,8 @@ export async function cancelCateringInvoice(
   const ref = doc(db, COLLECTION, invoiceId);
   const snap = await getDoc(ref);
 
+
+
   if (!snap.exists()) {
     throw new Error("Facture introuvable");
   }
@@ -265,6 +283,18 @@ export async function cancelCateringInvoice(
     id: snap.id,
     ...(snap.data() as Omit<CateringInvoice, "id">),
   };
+
+  if (invoice.status === "replaced") {
+    throw new Error(
+      "Cette facture ne peut plus être annulée"
+    );
+  }
+
+  if (invoice.creditNoteSummary?.isFullyCredited === true) {
+    throw new Error(
+      "Cette facture est déjà totalement couverte par un avoir"
+    );
+  }
 
   if (invoice.status === "cancelled") {
     throw new Error("Cette facture est déjà annulée");
@@ -397,6 +427,10 @@ export async function replaceInvoice(
     updatedAt: serverTimestamp() as any,
     issuedAt: serverTimestamp() as any,
 
+    cancellation: null,
+    creditNoteSummary: undefined,
+
+
     version:
       Number(oldInvoice.version ?? 1) + 1,
 
@@ -416,6 +450,7 @@ export async function replaceInvoice(
    */
   await updateDoc(ref, {
     status: "replaced",
+    isLocked: true,
 
     correction: {
       ...(oldInvoice.correction ?? {}),

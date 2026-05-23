@@ -352,10 +352,27 @@ export default function OrderDetails({
 
       Alert.alert(
         'Succès',
-        `Facture ${invoice.number} créée avec succès.`
+        `Facture ${invoice.number} créée avec succès.`,
+        [
+          {
+            text: 'Ouvrir',
+            onPress: () => {
+              router.push({
+                pathname: '/(traiteur)/invoices/[id]',
+                params: { id: invoice.id },
+              } as any);
+            },
+          },
+        ]
       );
 
       await onUpdated?.();
+
+      router.replace({
+        pathname: '/(traiteur)/orders/[id]',
+        params: { id: order.id },
+      } as any);
+
     } catch (error: any) {
       console.error(error);
 
@@ -879,11 +896,11 @@ export default function OrderDetails({
                         {dish?.name || 'Plat'}
                       </Text>
 
-                     
+
                     </View>
 
                     <Text style={styles.quantityBadge}>
-                       x {dish?.quantity || 0}
+                      x {dish?.quantity || 0}
                     </Text>
                   </View>
                 ))}
