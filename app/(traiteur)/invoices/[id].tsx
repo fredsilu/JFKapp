@@ -125,6 +125,19 @@ export default function InvoiceDetailScreen() {
     }, [loadInvoice])
   );
 
+
+  const isFullyCredited =
+    invoice?.creditNoteSummary?.isFullyCredited === true;
+
+  const canCancel =
+    invoice?.status === "issued" && !isFullyCredited;
+
+  const canCreateCreditNote =
+    invoice?.status === "issued" && !isFullyCredited;
+
+  const canReplace =
+    invoice?.status === "issued" && !isFullyCredited;
+
   async function handleGeneratePDF() {
     if (!invoice) return;
 
@@ -190,6 +203,18 @@ export default function InvoiceDetailScreen() {
     } finally {
       setPdfLoading(false);
     }
+  }
+
+  function goToReplaceInvoice() {
+    if (!invoice?.id) {
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      return;
+    }
+
+    router.push({
+      pathname: "/(traiteur)/invoices/replace/[id]",
+      params: { id: invoice.id },
+    });
   }
 
   function goToCancelInvoice() {
@@ -294,6 +319,25 @@ export default function InvoiceDetailScreen() {
 
           <Text style={styles.relationNumber}>
             {invoice.correction.replacedByInvoiceNumber}
+          </Text>
+        </View>
+      ) : null}
+
+
+      {invoice.cancellation ? (
+        <View style={styles.auditCard}>
+          <Text style={styles.auditTitle}>
+            Informations d’annulation
+          </Text>
+
+          <Text style={styles.line}>
+            Motif : {invoice.cancellation.reason || "—"}
+          </Text>
+
+          <Text style={styles.line}>
+            Date :
+            {" "}
+            {formatDate(invoice.cancellation.cancelledAt)}
           </Text>
         </View>
       ) : null}
@@ -435,24 +479,40 @@ export default function InvoiceDetailScreen() {
         )}
       </TouchableOpacity>
 
-      {invoice.status === "issued" &&
-        !invoice.creditNoteSummary?.isFullyCredited ? (
-        <>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={goToCancelInvoice}
-          >
-            <Text style={styles.cancelButtonText}>Annuler facture</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.creditButton}
-            onPress={goToCreditNote}
-          >
-            <Text style={styles.creditButtonText}>Créer un avoir</Text>
-          </TouchableOpacity>
-        </>
+      {canCancel ? (
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={goToCancelInvoice}
+        >
+          <Text style={styles.cancelButtonText}>
+            Annuler facture
+          </Text>
+        </TouchableOpacity>
       ) : null}
+
+      {canReplace ? (
+        <TouchableOpacity
+          style={styles.replaceButton}
+          onPress={goToReplaceInvoice}
+        >
+          <Text style={styles.replaceButtonText}>
+            Annule et remplace
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {canCreateCreditNote ? (
+        <TouchableOpacity
+          style={styles.creditButton}
+          onPress={goToCreditNote}
+        >
+          <Text style={styles.creditButtonText}>
+            Créer un avoir
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
+
       <TouchableOpacity
         style={styles.historyButton}
         onPress={goToInvoiceHistory}
@@ -695,6 +755,34 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#D97706",
     marginLeft: 10,
+  },
+  replaceButton: {
+    backgroundColor: "#7C3AED",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  replaceButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  auditCard: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+  },
+
+  auditTitle: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#991B1B",
+    marginBottom: 8,
   },
 
 });
