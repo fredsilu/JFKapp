@@ -633,7 +633,7 @@ export default function OrderDetails({
                   styles.nextStatusText
                 }
               >
-                Passer à :
+                Passer au statut :
                 {' '}
                 {
                   getNextStatus(order.status as any) as any

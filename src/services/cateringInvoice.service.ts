@@ -175,17 +175,46 @@ export async function createInvoiceFromOrder(
 
     clientId: order.clientId ?? "",
     client: {
-      name: order.client?.name ?? order.clientName ?? "",
-      address: order.client?.address ?? order.clientAddress ?? "",
+      name:
+        order.client?.name ??
+        order.clientName ??
+        "",
+
+      address:
+        order.client?.address ??
+        order.clientAddress ??
+        "",
+
       cityCountry:
         order.client?.cityCountry ??
         order.client?.city ??
         order.clientCity ??
         "Kinshasa / RDC",
-      phone: order.client?.phone ?? "",
-      notes: order.client?.notes ?? "",
-      rccm: order.client?.rccm ?? order.clientRccm ?? "",
-      idNat: order.client?.idNat ?? order.client?.idnat ?? order.clientIdnat ?? "",
+
+      phone:
+        order.client?.phone ??
+        order.clientPhone ??
+        "",
+
+      notes:
+        order.client?.notes ??
+        "",
+
+      rccm:
+        order.client?.rccm ??
+        order.client?.RCCM ??
+        order.clientRccm ??
+        order.rccm ??
+        "",
+
+      idNat:
+        order.client?.idNat ??
+        order.client?.idnat ??
+        order.client?.IDNAT ??
+        order.clientIdnat ??
+        order.idNat ??
+        order.idnat ??
+        "",
     },
 
     designation: order.designation ?? order.name ?? "Prestation traiteur",
@@ -247,9 +276,11 @@ export async function createInvoiceFromOrder(
     },
   });
 
+  const createdInvoiceSnap = await getDoc(ref);
+
   return {
-    id: ref.id,
-    ...invoice,
+    id: createdInvoiceSnap.id,
+    ...(createdInvoiceSnap.data() as Omit<CateringInvoice, 'id'>),
   };
 }
 
@@ -428,9 +459,7 @@ export async function replaceInvoice(
     issuedAt: serverTimestamp() as any,
 
     cancellation: null,
-    creditNoteSummary: undefined,
-
-
+  
     version:
       Number(oldInvoice.version ?? 1) + 1,
 

@@ -55,6 +55,10 @@ export default function OrdersScreen() {
   useFocusEffect(
     useCallback(() => {
       loadOrders();
+
+      return () => {
+        setOrders([]);
+      };
     }, [loadOrders])
   );
 
@@ -150,11 +154,26 @@ export default function OrdersScreen() {
     };
   }
 
-  async function handleChangeStatus(orderId?: string, status?: string) {
+  async function handleChangeStatus(
+    orderId?: string,
+    status?: CateringOrder['status']
+  ) {
     if (!orderId || !status) return;
 
     try {
-      await updateOrderStatus(orderId, status as any);
+      await updateOrderStatus(orderId, status);
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId
+            ? {
+              ...order,
+              status,
+            }
+            : order
+        )
+      );
+
       await loadOrders();
     } catch (e) {
       console.error('❌ update order status error:', e);
@@ -162,7 +181,10 @@ export default function OrdersScreen() {
     }
   }
 
-  function confirmStatusChange(orderId?: string, status?: string) {
+  function confirmStatusChange(
+    orderId?: string,
+    status?: CateringOrder['status']
+  ) {
     if (!orderId || !status) return;
 
     const message = `Confirmer le changement vers "${getStatusLabel(status)}" ?`;
@@ -328,7 +350,10 @@ export default function OrdersScreen() {
                   <TouchableOpacity
                     style={styles.secondaryAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'En préparation')
+                      confirmStatusChange(
+                        order.id,
+                        'En préparation' as CateringOrder['status']
+                      )
                     }
                   >
                     <Text style={styles.secondaryActionText}>Préparer</Text>
@@ -339,7 +364,10 @@ export default function OrdersScreen() {
                   <TouchableOpacity
                     style={styles.successAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'Livré')
+                      confirmStatusChange(
+                        order.id,
+                        'Livré' as CateringOrder['status']
+                      )
                     }
                   >
                     <Text style={styles.successActionText}>Terminer</Text>
@@ -350,7 +378,10 @@ export default function OrdersScreen() {
                   <TouchableOpacity
                     style={styles.deleteAction}
                     onPress={() =>
-                      confirmStatusChange(order.id, 'Annulé')
+                      confirmStatusChange(
+                        order.id,
+                        'Annulé' as CateringOrder['status']
+                      )
                     }
                   >
                     <Text style={styles.deleteActionText}>Annuler</Text>
@@ -458,7 +489,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#111827',
-  
+
   },
   actions: {
     flexDirection: 'row',
