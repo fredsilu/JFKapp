@@ -1,3 +1,6 @@
+//app/(traiteur)/proformas/index.tsx
+// app/(traiteur)/proformas/index.tsx
+
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
@@ -13,7 +16,6 @@ import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import {
   CateringProforma,
-  deleteCateringProforma,
   getCateringProformas,
 } from '@/src/services/cateringProforma.service';
 import { formatCurrency } from '@/src/utils/costs';
@@ -26,6 +28,7 @@ type ProformaStatus =
   | 'approved'
   | 'rejected'
   | 'converted'
+  | 'invoiced'
   | 'expired';
 
 const ACTIVE_STATUSES: ProformaStatus[] = ['draft', 'sent', 'approved'];
@@ -44,9 +47,10 @@ export default function ProformasScreen() {
       const visibleData = data.filter((p) => p.isDeleted !== true);
 
       const sortedData = [...visibleData].sort((a, b) => {
-        const dateA = a.issueDate || '';
-        const dateB = b.issueDate || '';
-        return dateB.localeCompare(dateA);
+        const dateA = a.createdAt?.toMillis?.() || new Date(a.issueDate || '').getTime() || 0;
+        const dateB = b.createdAt?.toMillis?.() || new Date(b.issueDate || '').getTime() || 0;
+
+        return dateB - dateA;
       });
 
       setProformas(sortedData);
@@ -71,6 +75,7 @@ export default function ProformasScreen() {
       status === 'approved' ||
       status === 'rejected' ||
       status === 'converted' ||
+      status === 'invoiced' ||
       status === 'expired'
     ) {
       return status;
@@ -79,15 +84,35 @@ export default function ProformasScreen() {
     return 'draft';
   }
 
+  function isInvoicedProforma(p: CateringProforma) {
+    return normalizeStatus(p.status) === 'invoiced' || p.isInvoiced === true;
+  }
+
   function isConvertedProforma(p: CateringProforma) {
     const status = normalizeStatus(p.status);
-    return status === 'converted' || p.isInvoiced === true;
+
+    return (
+      status === 'converted' ||
+      status === 'invoiced' ||
+      p.isInvoiced === true ||
+      Boolean(p.orderId) ||
+      Boolean(p.invoiceId)
+    );
   }
 
   const activeProformas = useMemo(() => {
     return proformas.filter((p) => {
       const status = normalizeStatus(p.status);
+
       return ACTIVE_STATUSES.includes(status) && !isConvertedProforma(p);
+    });
+  }, [proformas]);
+
+  const approvedProformas = useMemo(() => {
+    return proformas.filter((p) => {
+      const status = normalizeStatus(p.status);
+
+      return status === 'approved' && !isConvertedProforma(p);
     });
   }, [proformas]);
 
@@ -95,26 +120,44 @@ export default function ProformasScreen() {
     return proformas.filter((p) => isConvertedProforma(p));
   }, [proformas]);
 
+  const invoicedProformas = useMemo(() => {
+    return proformas.filter((p) => isInvoicedProforma(p));
+  }, [proformas]);
+
   const displayedProformas = useMemo(() => {
     if (view === 'active') return activeProformas;
     if (view === 'converted') return convertedProformas;
+
     return proformas;
   }, [view, activeProformas, convertedProformas, proformas]);
 
   const activeTotal = useMemo(() => {
-    return activeProformas.reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
+    return activeProformas.reduce(
+      (sum, p) => sum + Number(p.totals?.total || 0),
+      0
+    );
   }, [activeProformas]);
 
   const approvedTotal = useMemo(() => {
-    return proformas
-      .filter((p) => normalizeStatus(p.status) === 'approved')
-      .filter((p) => !isConvertedProforma(p))
-      .reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
-  }, [proformas]);
+    return approvedProformas.reduce(
+      (sum, p) => sum + Number(p.totals?.total || 0),
+      0
+    );
+  }, [approvedProformas]);
 
   const convertedTotal = useMemo(() => {
-    return convertedProformas.reduce((sum, p) => sum + (p.totals?.total ?? 0), 0);
+    return convertedProformas.reduce(
+      (sum, p) => sum + Number(p.totals?.total || 0),
+      0
+    );
   }, [convertedProformas]);
+
+  const invoicedTotal = useMemo(() => {
+    return invoicedProformas.reduce(
+      (sum, p) => sum + Number(p.totals?.total || 0),
+      0
+    );
+  }, [invoicedProformas]);
 
   function formatDate(date?: string) {
     if (!date) return '—';
@@ -128,10 +171,16 @@ export default function ProformasScreen() {
     return d.toLocaleDateString('fr-FR');
   }
 
-  function getStatusLabel(status?: string, isInvoiced?: boolean) {
-    if (isInvoiced) return 'Convertie';
+  function getClientLabel(p: CateringProforma) {
+    return p.clientName || p.clientId || 'Client non défini';
+  }
 
-    switch (normalizeStatus(status)) {
+  function getStatusLabel(p: CateringProforma) {
+    const status = normalizeStatus(p.status);
+
+    if (isInvoicedProforma(p)) return 'Facturée';
+
+    switch (status) {
       case 'draft':
         return 'Brouillon';
       case 'sent':
@@ -142,6 +191,8 @@ export default function ProformasScreen() {
         return 'Rejetée';
       case 'converted':
         return 'Convertie';
+      case 'invoiced':
+        return 'Facturée';
       case 'expired':
         return 'Expirée';
       default:
@@ -152,7 +203,14 @@ export default function ProformasScreen() {
   function getStatusStyle(p: CateringProforma) {
     const status = normalizeStatus(p.status);
 
-    if (isConvertedProforma(p)) {
+    if (isInvoicedProforma(p)) {
+      return {
+        badge: styles.invoicedBadge,
+        text: styles.invoicedBadgeText,
+      };
+    }
+
+    if (status === 'converted' || Boolean(p.orderId)) {
       return {
         badge: styles.convertedBadge,
         text: styles.convertedBadgeText,
@@ -179,30 +237,14 @@ export default function ProformasScreen() {
     };
   }
 
-  const handleDelete = async (id?: string) => {
+  function openProforma(id?: string) {
     if (!id) return;
 
-    Alert.alert(
-      'Supprimer proforma',
-      'Voulez-vous vraiment supprimer cette proforma ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCateringProforma(id);
-              await loadProformas();
-            } catch (e) {
-              console.error('❌ delete proforma error:', e);
-              Alert.alert('Erreur', 'Impossible de supprimer la proforma');
-            }
-          },
-        },
-      ]
-    );
-  };
+    router.push({
+      pathname: '/(traiteur)/proformas/[id]',
+      params: { id },
+    });
+  }
 
   if (loading) {
     return (
@@ -234,14 +276,28 @@ export default function ProformasScreen() {
         <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
       </View>
 
-      <View style={[styles.summaryCard, { backgroundColor: '#92400E' }]}>
+      <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
         <Text style={styles.summaryLabel}>Proformas acceptées non converties</Text>
+        <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
+
+        <Text style={styles.summaryLabel}>Total accepté</Text>
         <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
       </View>
 
-      <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
+      <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
         <Text style={styles.summaryLabel}>Proformas converties</Text>
+        <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
+
+        <Text style={styles.summaryLabel}>Total converti</Text>
         <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
+      </View>
+
+      <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
+        <Text style={styles.summaryLabel}>Proformas facturées</Text>
+        <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
+
+        <Text style={styles.summaryLabel}>Total facturé</Text>
+        <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
       </View>
 
       <View style={styles.tabs}>
@@ -280,71 +336,62 @@ export default function ProformasScreen() {
           const statusStyle = getStatusStyle(p);
 
           return (
-            <View key={p.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>
-                    {p.number || 'Proforma sans numéro'}
-                  </Text>
+            <View key={p.id || p.number} style={styles.card}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => openProforma(p.id)}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>
+                      {p.number || 'Proforma sans numéro'}
+                    </Text>
 
-                  <Text style={styles.client}>
-                    {p.clientName || p.clientId || 'Client non défini'}
-                  </Text>
+                    <Text style={styles.client}>{getClientLabel(p)}</Text>
+                  </View>
+
+                  <View style={[styles.statusBadge, statusStyle.badge]}>
+                    <Text style={[styles.statusText, statusStyle.text]}>
+                      {getStatusLabel(p)}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={[styles.statusBadge, statusStyle.badge]}>
-                  <Text style={[styles.statusText, statusStyle.text]}>
-                    {getStatusLabel(p.status, p.isInvoiced)}
+                <Text style={styles.line}>Date : {formatDate(p.issueDate)}</Text>
+
+                {p.eventDate ? (
+                  <Text style={styles.line}>
+                    Événement : {formatDate(p.eventDate)}
                   </Text>
-                </View>
-              </View>
+                ) : null}
 
-              <Text style={styles.line}>Date : {formatDate(p.issueDate)}</Text>
+                {p.orderNumber ? (
+                  <Text style={styles.line}>Commande : {p.orderNumber}</Text>
+                ) : null}
 
-              {p.eventDate ? (
-                <Text style={styles.line}>
-                  Événement : {formatDate(p.eventDate)}
+                {p.invoiceNumber ? (
+                  <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
+                ) : null}
+
+                <Text style={styles.amount}>
+                  Total : {formatCurrency(Number(p.totals?.total || 0))}
                 </Text>
-              ) : null}
-
-              {p.invoiceNumber ? (
-                <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
-              ) : null}
-
-              <Text style={styles.amount}>
-                Total : {formatCurrency(p.totals?.total ?? 0)}
-              </Text>
+              </TouchableOpacity>
 
               <View style={styles.actions}>
                 <TouchableOpacity
                   style={styles.primaryAction}
-                  onPress={() => {
-                    if (!p.id) return;
-
-                    router.push({
-                      pathname: '/(traiteur)/proformas/[id]',
-                      params: { id: p.id },
-                    });
-                  }}
+                  onPress={() => openProforma(p.id)}
                 >
                   <Text style={styles.primaryActionText}>Voir</Text>
                 </TouchableOpacity>
 
-                {!isConvertedProforma(p) && (
-                  <TouchableOpacity
-                    style={styles.secondaryAction}
-                    onPress={() => {
-                      if (!p.id) return;
-
-                      router.push({
-                        pathname: '/(traiteur)/proformas/[id]',
-                        params: { id: p.id },
-                      });
-                    }}
-                  >
-                    <Text style={styles.secondaryActionText}>Modifier</Text>
-                  </TouchableOpacity>
-                )}
+                <View style={styles.readOnlyBadge}>
+                  <Icon name="lock-outline" size={14} color="#6B7280" />
+                  <Text style={styles.readOnlyText}>
+                    Suppression désactivée
+                  </Text>
+                </View>
               </View>
             </View>
           );
@@ -388,6 +435,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
+  },
+
+  approvedSummaryCard: {
+    backgroundColor: '#92400E',
+  },
+
+  convertedSummaryCard: {
+    backgroundColor: '#065F46',
+  },
+
+  invoicedSummaryCard: {
+    backgroundColor: '#1E3A8A',
   },
 
   summaryLabel: {
@@ -501,6 +560,14 @@ const styles = StyleSheet.create({
     color: '#166534',
   },
 
+  invoicedBadge: {
+    backgroundColor: '#DBEAFE',
+  },
+
+  invoicedBadgeText: {
+    color: '#1E40AF',
+  },
+
   closedBadge: {
     backgroundColor: '#FEE2E2',
   },
@@ -525,6 +592,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 14,
     gap: 8,
   },
@@ -543,18 +611,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  secondaryAction: {
+  readOnlyBadge: {
     flex: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#F3F4F6',
     paddingVertical: 9,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
 
-  secondaryActionText: {
-    color: '#111827',
-    fontWeight: '800',
-    fontSize: 13,
+  readOnlyText: {
+    color: '#6B7280',
+    fontWeight: '700',
+    fontSize: 12,
   },
 
   backPill: {
