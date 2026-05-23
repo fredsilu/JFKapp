@@ -137,6 +137,29 @@ export default function InvoiceDetailScreen() {
 
   const canReplace =
     invoice?.status === "issued" && !isFullyCredited;
+  function getInvoicePdfFileName(invoice: CateringInvoice) {
+    const documentType = (invoice as any)?.documentType;
+    const status = invoice?.status;
+
+    const number =
+      invoice?.number ||
+      invoice?.id ||
+      "document";
+
+    if (documentType === "CREDIT_NOTE") {
+      return `Avoir-${number}.pdf`;
+    }
+
+    if (status === "cancelled") {
+      return `Facture-ANNULEE-${number}.pdf`;
+    }
+
+    if (status === "replaced") {
+      return `Facture-REMPLACEE-${number}.pdf`;
+    }
+
+    return `Facture-${number}.pdf`;
+  }
 
   async function handleGeneratePDF() {
     if (!invoice) return;
@@ -188,7 +211,7 @@ export default function InvoiceDetailScreen() {
           })) ?? [],
       };
 
-      const filename = `Facture-${invoice.number || invoice.id || "client"}.pdf`;
+      const filename = getInvoicePdfFileName(invoice);
 
       if (Platform.OS === "web") {
         const html = buildInvoiceHTML(invoicePdfData);
