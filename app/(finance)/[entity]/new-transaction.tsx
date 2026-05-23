@@ -69,13 +69,15 @@ const CATEGORY_MAP: Record<
   },
 };
 
-const [saving, setSaving] = useState(false);
+
 
 /* ===================================================== */
 
 export default function NewTransaction() {
   const router = useRouter();
   const params = useLocalSearchParams();
+
+  const [saving, setSaving] = useState(false);
 
   const currentEntity = getEntity(params);
 
