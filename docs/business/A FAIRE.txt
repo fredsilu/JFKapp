@@ -865,11 +865,11 @@ git push origin release/v2.2.0
 # Beta / le tag ne change pas la branche
 git tag v2.2.0-beta.1
 git push origin v2.2.0-beta.1
-eas build -p android --profile beta
+eas build -p android --profile beta / npm run build:web:test 
 
 # Correction bug sur release
 git add .
-git commit -m "fix: invoice creation crash"
+git commit -m "fix(v3.1.0): correct production testing issues"
 git push origin release/v2.2.0
 
 # Nouvelle beta
@@ -886,7 +886,7 @@ git push origin main
 # Tag production
 git tag v2.2.0
 git push origin v2.2.0
-eas build -p android --profile production
+eas build -p android --profile production / npm run build:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
 
 # Ramener les corrections dans develop
 git checkout develop
