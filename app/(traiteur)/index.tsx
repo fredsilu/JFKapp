@@ -1,3 +1,4 @@
+//app/(traiteur)/index.tsx
 import React from 'react';
 import {
   View,
