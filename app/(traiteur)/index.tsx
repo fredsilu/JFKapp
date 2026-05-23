@@ -156,45 +156,59 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          {orders.slice(0, 5).map(order => (
-            <View key={order.id} style={styles.orderCard}>
-              <Image
-                source={
-                  order.client.profilePicture
-                    ? { uri: order.client.profilePicture }
-                    : require('@/assets/images/no_client_picture.jpg')
-                }
-                style={styles.clientImage}
-              />
+          {orders.slice(0, 5).map(order => {
+            const clientName =
+              order.client?.name ||
+              order.name ||
+              order.clientId ||
+              'Client inconnu';
 
-              <View style={styles.orderInfo}>
-                <Text style={styles.clientName}>{order.client.name}</Text>
-                <Text style={styles.orderMeta}>
-                  {(order.dishes || []).reduce(
-                    (t, d) => t + (d.quantity || 0),
-                    0
-                  )}{' '}
-                  items • {order.deliveryDate} at {order.deliveryTime}
-                </Text>
-              </View>
+            const clientProfilePicture =
+              order.client?.profilePicture || '';
 
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(order.status) + '15' },
-                ]}
-              >
-                <Text
+            const status = order.status || 'En cours';
+
+            return (
+              <View key={order.id} style={styles.orderCard}>
+                <Image
+                  source={
+                    clientProfilePicture
+                      ? { uri: clientProfilePicture }
+                      : require('@/assets/images/no_client_picture.jpg')
+                  }
+                  style={styles.clientImage}
+                />
+
+                <View style={styles.orderInfo}>
+                  <Text style={styles.clientName}>{clientName}</Text>
+                  <Text style={styles.orderMeta}>
+                    {(order.dishes || []).reduce(
+                      (t, d) => t + (d.quantity || 0),
+                      0
+                    )}{' '}
+                    items • {order.deliveryDate || '—'} at{' '}
+                    {order.deliveryTime || '—'}
+                  </Text>
+                </View>
+
+                <View
                   style={[
-                    styles.statusText,
-                    { color: getStatusColor(order.status) },
+                    styles.statusBadge,
+                    { backgroundColor: getStatusColor(status) + '15' },
                   ]}
                 >
-                  {order.status}
-                </Text>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(status) },
+                    ]}
+                  >
+                    {status}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Popular Dishes */}
