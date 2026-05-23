@@ -1,4 +1,6 @@
+//components/ClientForm.tsx
 import React, { useEffect, useState } from 'react';
+import { normalizeText } from '@/src/utils/search';
 import {
   View,
   Text,
@@ -38,18 +40,20 @@ export default function ClientForm({
   const [profilePicture, setProfilePicture] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [nif, setNif] = useState('');
 
   useEffect(() => {
     if (client) {
       setName(client.name || '');
       setEmail(client.email || '');
-      setPhone(client.phone ? client.phone.toString() : '');
+      setPhone(client.phone ? String(client.phone) : '');
       setAddress(client.address || '');
       setRccm(client.rccm || '');
       setIdnat(client.idnat || '');
       setCity(client.city || '');
       setNotes((client as any).notes || '');
       setProfilePicture(client.profilePicture || '');
+      setNif(client.nif || '');
     }
   }, [client]);
 
@@ -101,6 +105,7 @@ export default function ClientForm({
       idnat: idnat.trim(),
       city: city.trim(),
       notes: notes.trim(),
+      nif: nif.trim(),
       profilePicture: profilePicture.trim(),
     } as Partial<Client>;
 
@@ -212,6 +217,10 @@ export default function ClientForm({
 
           <View style={styles.formField}>
             <Text style={styles.label}>RCCM</Text>
+            <Text style={styles.helperText}>
+              Registre de Commerce et du Crédit Mobilier.
+              Exemple : CD/KIN/RCCM/24-B-1234
+            </Text>
             <TextInput
               style={styles.input}
               value={rccm}
@@ -223,11 +232,32 @@ export default function ClientForm({
 
           <View style={styles.formField}>
             <Text style={styles.label}>IDNAT</Text>
+            <Text style={styles.helperText}>
+              Numéro d’identification nationale de l’entreprise.
+              Exemple : 01-83-N12345P
+            </Text>
             <TextInput
               style={styles.input}
               value={idnat}
               onChangeText={setIdnat}
               placeholder="ID.NAT..."
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Text style={styles.label}>NIF</Text>
+
+            <Text style={styles.helperText}>
+              Numéro d’Identification Fiscale attribué par la DGI.
+              Exemple : A0700001X
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              value={nif}
+              onChangeText={setNif}
+              placeholder="A0700001X"
               autoCapitalize="characters"
             />
           </View>
@@ -388,5 +418,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
   },
 });

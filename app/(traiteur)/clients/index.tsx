@@ -1,3 +1,4 @@
+//app/(trauteur)/clients/index.tsx
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -52,7 +53,8 @@ export default function ClientsScreen() {
     (client.email && normalizeText(client.email).includes(normalizedQuery)) ||
     (client.phone && normalizeText(client.phone.toString()).includes(normalizedQuery)) ||
     (client.rccm && normalizeText(client.rccm).includes(normalizedQuery)) ||
-    (client.idnat && normalizeText(client.idnat).includes(normalizedQuery))
+    (client.idnat && normalizeText(client.idnat).includes(normalizedQuery)) ||
+    (client.nif && normalizeText(client.nif).includes(normalizedQuery))
   );
 
   const selectedOrder = useMemo(() => {
@@ -163,6 +165,10 @@ export default function ClientsScreen() {
 
                     {client.idnat ? (
                       <Text style={styles.legalText}>IDNAT : {client.idnat}</Text>
+                    ) : null}
+
+                    {client.nif ? (
+                      <Text style={styles.legalText}>NIF : {client.nif}</Text>
                     ) : null}
 
                     <View style={styles.contactInfo}>

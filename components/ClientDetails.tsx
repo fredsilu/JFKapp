@@ -1,3 +1,4 @@
+//components/ClientDetails.tsx
 import React, { useMemo, useState } from 'react';
 import {
   View,

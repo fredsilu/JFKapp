@@ -31,6 +31,7 @@ export interface Client {
   address?: string;
   rccm?: string;
   idnat?: string;
+  nif?: string;
   city?: string;
   notes?: string;
   totalOrders?: number;
