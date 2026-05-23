@@ -1,3 +1,4 @@
+//app/(traiteur)/config/index.tsx
 import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -22,6 +23,12 @@ export default function ConfigHome() {
       subtitle: "Gérer les ingrédients",
       icon: "🥦",
       route: "/ingredients",
+    },
+    {
+      title: "Aide & règles",
+      subtitle: "Comprendre les règles comptables et métier",
+      icon: "📘",
+      route: "/(traiteur)/config/help",
     },
   ];
 
