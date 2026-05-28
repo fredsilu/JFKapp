@@ -215,6 +215,11 @@ export async function createInvoiceFromOrder(
         order.idNat ??
         order.idnat ??
         "",
+      nif:
+        order.client?.nif ??
+        order.clientNif ??
+        order.nif ??
+        "",
     },
 
     designation: order.designation ?? order.name ?? "Prestation traiteur",
@@ -459,7 +464,7 @@ export async function replaceInvoice(
     issuedAt: serverTimestamp() as any,
 
     cancellation: null,
-  
+
     version:
       Number(oldInvoice.version ?? 1) + 1,
 
