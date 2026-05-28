@@ -584,6 +584,7 @@ ${headerHTML}
   <div class="client-name">${clientName}</div>
   <div>RCCM : ${clientRccm || '—'}</div>
   <div>IDNAT : ${clientIdnat || '—'}</div>
+  <div>NIF : ${clientNif || "—"}</div>
   <div>${clientAddress || '—'}</div>
   <div><u>${clientCity}</u></div>
 

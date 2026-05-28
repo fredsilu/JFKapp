@@ -183,6 +183,7 @@ export default function InvoiceDetailScreen() {
         clientName: invoice.client?.name ?? "",
         clientRccm: invoice.client?.rccm ?? "",
         clientIdnat: invoice.client?.idNat ?? "",
+        clientNif: invoice.client?.nif ?? "",
         clientAddress: invoice.client?.address ?? "",
         clientCity: invoice.client?.cityCountry ?? "Kinshasa / RDC",
 
@@ -370,6 +371,10 @@ export default function InvoiceDetailScreen() {
 
         <Text style={styles.line}>RCCM : {invoice.client?.rccm || "—"}</Text>
         <Text style={styles.line}>IDNAT : {invoice.client?.idNat || "—"}</Text>
+        <Text style={styles.line}>
+          NIF : {invoice.client?.nif || "—"}
+        </Text>
+
         <Text style={styles.line}>
           Adresse : {invoice.client?.address || "—"}
         </Text>

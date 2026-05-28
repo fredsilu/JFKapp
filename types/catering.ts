@@ -162,6 +162,7 @@ export interface CateringDocumentClient {
   notes?: string;
   rccm?: string;
   idNat?: string;
+  nif?: string;
 }
 
 /**
