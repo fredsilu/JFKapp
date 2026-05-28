@@ -93,8 +93,7 @@ export async function createProformaFromSimulation(simulationId: string) {
     client: {
       name: (simulation as any).client?.name ?? (simulation as any).clientName ?? '',
       address: (simulation as any).client?.address ?? (simulation as any).clientAddress ?? '',
-      cityCountry:
-        (simulation as any).client?.cityCountry ??
+      city:
         (simulation as any).client?.city ??
         (simulation as any).clientCity ??
         'Kinshasa / RDC',
@@ -106,8 +105,8 @@ export async function createProformaFromSimulation(simulationId: string) {
         '',
       idNat:
         (simulation as any).client?.idNat ??
-        (simulation as any).client?.idnat ??
-        (simulation as any).clientIdnat ??
+        (simulation as any).client?.idNat ??
+        (simulation as any).clientidNat ??
         '',
       nif:
         (simulation as any).client?.nif ??
@@ -379,8 +378,7 @@ export async function createOrderFromProforma(proforma: any) {
         proforma.clientAddress ??
         '',
 
-      cityCountry:
-        proforma.client?.cityCountry ??
+      city:
         proforma.client?.city ??
         proforma.clientCity ??
         'Kinshasa / RDC',
@@ -403,11 +401,11 @@ export async function createOrderFromProforma(proforma: any) {
 
       idNat:
         proforma.client?.idNat ??
-        proforma.client?.idnat ??
-        proforma.client?.IDNAT ??
-        proforma.clientIdnat ??
+        proforma.client?.idNat ??
+        proforma.client?.idNat ??
+        proforma.clientidNat ??
         proforma.idNat ??
-        proforma.idnat ??
+        proforma.idNat ??
         '',
 
       nif:

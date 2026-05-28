@@ -185,8 +185,7 @@ export async function createInvoiceFromOrder(
         order.clientAddress ??
         "",
 
-      cityCountry:
-        order.client?.cityCountry ??
+      city:
         order.client?.city ??
         order.clientCity ??
         "Kinshasa / RDC",
@@ -209,11 +208,11 @@ export async function createInvoiceFromOrder(
 
       idNat:
         order.client?.idNat ??
-        order.client?.idnat ??
-        order.client?.IDNAT ??
-        order.clientIdnat ??
+        order.client?.idNat ??
+        order.client?.idNat ??
+        order.clientidNat ??
         order.idNat ??
-        order.idnat ??
+        order.idNat ??
         "",
       nif:
         order.client?.nif ??

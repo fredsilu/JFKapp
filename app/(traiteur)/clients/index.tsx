@@ -53,7 +53,7 @@ export default function ClientsScreen() {
     (client.email && normalizeText(client.email).includes(normalizedQuery)) ||
     (client.phone && normalizeText(String(client.phone || '')).includes(normalizedQuery)) ||
     (client.rccm && normalizeText(client.rccm).includes(normalizedQuery)) ||
-    (client.idnat && normalizeText(client.idnat).includes(normalizedQuery)) ||
+    (client.idNat && normalizeText(client.idNat).includes(normalizedQuery)) ||
     (client.nif && normalizeText(client.nif).includes(normalizedQuery))
   );
 
@@ -163,8 +163,8 @@ export default function ClientsScreen() {
                       <Text style={styles.legalText}>RCCM : {client.rccm}</Text>
                     ) : null}
 
-                    {client.idnat ? (
-                      <Text style={styles.legalText}>IDNAT : {client.idnat}</Text>
+                    {client.idNat ? (
+                      <Text style={styles.legalText}>idNat : {client.idNat}</Text>
                     ) : null}
 
                     {client.nif ? (

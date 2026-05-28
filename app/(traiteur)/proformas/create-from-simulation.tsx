@@ -210,8 +210,8 @@ export default function CreateProformaFromSimulationScreen() {
     return client?.rccm || '';
   }
 
-  function getClientIdnat() {
-    return client?.idnat || '';
+  function getClientidNat() {
+    return client?.idNat || '';
   }
 
   function getClientAddress() {
@@ -271,7 +271,7 @@ export default function CreateProformaFromSimulationScreen() {
         clientId: simulation.clientId,
         clientName: getClientName(),
         clientRccm: getClientRccm(),
-        clientIdnat: getClientIdnat(),
+        clientidNat: getClientidNat(),
         clientNif: client?.nif || '',
         clientAddress: getClientAddress(),
         clientCity: getClientCity(),

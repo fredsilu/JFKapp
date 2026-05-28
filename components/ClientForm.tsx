@@ -33,7 +33,7 @@ export default function ClientForm({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [rccm, setRccm] = useState('');
-  const [idnat, setIdnat] = useState('');
+  const [idNat, setidNat] = useState('');
   const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
@@ -48,7 +48,7 @@ export default function ClientForm({
       setPhone(client.phone ? String(client.phone) : '');
       setAddress(client.address || '');
       setRccm(client.rccm || '');
-      setIdnat(client.idnat || '');
+      setidNat(client.idNat || '');
       setCity(client.city || '');
       setNotes((client as any).notes || '');
       setProfilePicture(client.profilePicture || '');
@@ -101,7 +101,7 @@ export default function ClientForm({
       phone: phone.trim(),
       address: address.trim(),
       rccm: rccm.trim(),
-      idnat: idnat.trim(),
+      idNat: idNat.trim(),
       city: city.trim(),
       notes: notes.trim(),
       nif: nif.trim(),
@@ -225,15 +225,15 @@ export default function ClientForm({
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>IDNAT</Text>
+            <Text style={styles.label}>idNat</Text>
             <Text style={styles.helperText}>
               Numéro d’identification nationale de l’entreprise.
               Exemple : 01-83-N12345P
             </Text>
             <TextInput
               style={styles.input}
-              value={idnat}
-              onChangeText={setIdnat}
+              value={idNat}
+              onChangeText={setidNat}
               placeholder="ID.NAT..."
               autoCapitalize="characters"
             />

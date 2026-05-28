@@ -174,7 +174,7 @@ export default function ClientDetails({
           <Text style={styles.sectionTitle}>Informations légales</Text>
 
           <InfoRow label="RCCM" value={client.rccm} icon="badge" />
-          <InfoRow label="IDNAT" value={client.idnat} icon="assignment-ind" />
+          <InfoRow label="idNat" value={client.idNat} icon="assignment-ind" />
           <InfoRow label="NIF" value={client.nif} icon="receipt-long" />
         </View>
 

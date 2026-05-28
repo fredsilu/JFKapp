@@ -171,6 +171,9 @@ export default function OrderDetails({
     order.address ||
     (order as any).eventLocation ||
     (order as any).proforma?.deliveryAddress ||
+    order.client?.address ||
+    (order as any).clientAddress ||
+    order.client?.city ||
     '-';
 
   /**

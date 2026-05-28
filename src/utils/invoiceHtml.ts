@@ -157,7 +157,7 @@ export function buildInvoiceHTML(
 
   const clientName = safeClientName(invoice);
   const clientRccm = safe(invoice.clientRccm);
-  const clientIdnat = safe(invoice.clientIdnat);
+  const clientidNat = safe(invoice.clientidNat);
   const clientAddress = safe(invoice.clientAddress);
   const clientCity = formatClientCity(invoice.clientCity);
   const clientNif = safe((invoice as any).clientNif);
@@ -583,7 +583,7 @@ ${headerHTML}
 <div class="client-block">
   <div class="client-name">${clientName}</div>
   <div>RCCM : ${clientRccm || '—'}</div>
-  <div>IDNAT : ${clientIdnat || '—'}</div>
+  <div>idNat : ${clientidNat || '—'}</div>
   <div>NIF : ${clientNif || "—"}</div>
   <div>${clientAddress || '—'}</div>
   <div><u>${clientCity}</u></div>

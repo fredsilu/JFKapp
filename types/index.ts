@@ -30,7 +30,7 @@ export interface Client {
   phone?: string;
   address?: string;
   rccm?: string;
-  idnat?: string;
+  idNat?: string;
   nif?: string;
   city?: string;
   notes?: string;

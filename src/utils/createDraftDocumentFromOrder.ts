@@ -11,10 +11,11 @@ type SourceOrder = {
   id: string;
   clientName?: string;
   clientRccm?: string;
-  clientIdnat?: string;
+  clientidNat?: string;
   clientAddressLine1?: string;
   clientAddressLine2?: string;
-  clientCityCountry?: string;
+  clientCity?: string;
+  clientNif?: string;
   eventName?: string;
   eventDate?: string;
   guestCount?: number;
@@ -55,16 +56,18 @@ export function createDraftDocumentFromOrder(
       name: "CREPOLIA",
       addressLine1: "54, Avenue de la Justice",
       addressLine2: "C/Gombe",
-      cityCountry: "Kinshasa / RDC",
+      city: "Kinshasa / RDC",
     },
 
     client: {
       name: order.clientName ?? "",
       rccm: order.clientRccm ?? "",
-      idnat: order.clientIdnat ?? "",
+
       addressLine1: order.clientAddressLine1 ?? "",
       addressLine2: order.clientAddressLine2 ?? "",
-      cityCountry: order.clientCityCountry ?? "Kinshasa / RDC",
+      idNat: order.clientidNat ?? "",
+      nif: order.clientNif ?? "",
+      city: order.clientCity ?? "Kinshasa / RDC",
     },
 
     eventName: order.eventName ?? "Evénement",

@@ -5,10 +5,12 @@ export type CateringDocumentType = "proforma" | "invoice";
 export interface CateringPartyInfo {
   name: string;
   rccm?: string;
-  idnat?: string;
+  idNat?: string;
+  idNat?: string;
+  nif?: string;
   addressLine1?: string;
   addressLine2?: string;
-  cityCountry?: string;
+  city?: string;
 }
 
 export interface CateringDocumentItem {

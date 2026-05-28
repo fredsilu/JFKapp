@@ -157,7 +157,7 @@ export type CateringSimulation = CateringSimulationDraft & {
 export interface CateringDocumentClient {
   name: string;
   address?: string;
-  cityCountry?: string;
+  city?: string;
   phone?: string;
   notes?: string;
   rccm?: string;

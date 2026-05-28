@@ -18,7 +18,7 @@ export async function fetchClients(): Promise<Client[]> {
 
       // ✅ champs manquants
       rccm: data.rccm || '',
-      idnat: data.idnat || '',
+      idNat: data.idNat || '',
       city: data.city || '',
 
       notes: data.notes || '',

@@ -93,7 +93,7 @@ export function buildProformaHTML(
 
   const clientName = safeClientName(proforma);
   const clientRccm = safe(proforma.clientRccm);
-  const clientIdnat = safe(proforma.clientIdnat);
+  const clientidNat = safe(proforma.clientidNat);
   const clientAddress = safe(proforma.clientAddress);
   const clientCity = safe(proforma.clientCity) || 'Kinshasa';
   const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
@@ -514,7 +514,7 @@ body {
     <div class="client-name">${clientName}</div>
 
     <div>RCCM : ${clientRccm || '—'}</div>
-    <div>IDNAT : ${clientIdnat || '—'}</div>
+    <div>IdNat : ${clientidNat || '—'}</div>
     <div>NIF : ${clientNif || '—'}</div>
     <div>${clientAddress || '—'}</div>
     <div><u>${clientCity} / RDC</u></div>

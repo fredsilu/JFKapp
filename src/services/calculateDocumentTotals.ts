@@ -1,4 +1,4 @@
-import { CateringDocumentItem } from "@/types/catering";
+import { CateringDocumentItem } from "@/types/documents";
 
 export function calculateDocumentTotals(
   items: CateringDocumentItem[],

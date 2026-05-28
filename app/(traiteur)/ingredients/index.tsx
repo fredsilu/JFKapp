@@ -1,3 +1,4 @@
+//app/(traiteur)/ingredients/index.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 //import Icon from 'react-native-vector-icons/MaterialIcons';

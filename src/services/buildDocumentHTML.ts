@@ -291,9 +291,10 @@ Numéro : ${document.meta.number ?? ""}
 <div class="client">
 <strong>${document.client.name ?? ""}</strong><br/>
 ${document.client.rccm ?? ""}<br/>
-${document.client.idNat ?? ""}<br/>
+${document.client.idNat ?? document.client.idNat ?? ""}<br/>
+${document.client.nif ? `NIF : ${document.client.nif}<br/>` : ""}
 ${document.client.addressLine1 ?? ""}<br/>
-${document.client.cityCountry ?? ""}<br/>
+${document.client.city ?? ""}<br/>
 ${document.meta.issueDate ?? ""}
 </div>
 
@@ -307,7 +308,7 @@ ${document.meta.issueDate ?? ""}
 
 <div class="comment">
 Commentaires ou indications particulières :
-${document.meta.comment ?? "Aucun"}
+${document.custom?.comments ?? "Aucun"}
 </div>
 
 <!-- TABLE -->
@@ -331,7 +332,7 @@ ${document.meta.comment ?? "Aucun"}
 <tr class="event-info">
 <td colspan="5">
 Evènement : ${document.eventName ?? ""}<br/>
-Date évènement : ${document.eventDate ?? ""}<br/>
+Date évènement : ${document.meta.eventDate ?? ""}<br/>
 Nbr de personnes : ${document.guestCount ?? ""}
 </td>
 </tr>

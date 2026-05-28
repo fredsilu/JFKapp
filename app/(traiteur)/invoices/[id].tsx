@@ -182,10 +182,12 @@ export default function InvoiceDetailScreen() {
 
         clientName: invoice.client?.name ?? "",
         clientRccm: invoice.client?.rccm ?? "",
-        clientIdnat: invoice.client?.idNat ?? "",
+        clientidNat: invoice.client?.idNat ?? "",
         clientNif: invoice.client?.nif ?? "",
         clientAddress: invoice.client?.address ?? "",
-        clientCity: invoice.client?.cityCountry ?? "Kinshasa / RDC",
+        clientCity:
+          (invoice.client as any)?.city ??
+          "Kinshasa / RDC",
 
         subtotal: Number(totals.subtotal ?? 0),
         total: Number(totals.total ?? 0),
@@ -370,7 +372,7 @@ export default function InvoiceDetailScreen() {
         <Text style={styles.sectionTitle}>Informations client</Text>
 
         <Text style={styles.line}>RCCM : {invoice.client?.rccm || "—"}</Text>
-        <Text style={styles.line}>IDNAT : {invoice.client?.idNat || "—"}</Text>
+        <Text style={styles.line}>idNat : {invoice.client?.idNat || "—"}</Text>
         <Text style={styles.line}>
           NIF : {invoice.client?.nif || "—"}
         </Text>
@@ -379,7 +381,7 @@ export default function InvoiceDetailScreen() {
           Adresse : {invoice.client?.address || "—"}
         </Text>
         <Text style={styles.line}>
-          Ville : {invoice.client?.cityCountry || "Kinshasa / RDC"}
+          Ville : {invoice.client?.city || "Kinshasa / RDC"}
         </Text>
         <Text style={styles.line}>
           Date facture : {formatDate(invoice.issuedAt)}
