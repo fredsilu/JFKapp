@@ -91,7 +91,29 @@ export async function createProformaFromSimulation(simulationId: string) {
     clientId: simulation.clientId,
 
     client: {
-      name: '',
+      name: (simulation as any).client?.name ?? (simulation as any).clientName ?? '',
+      address: (simulation as any).client?.address ?? (simulation as any).clientAddress ?? '',
+      cityCountry:
+        (simulation as any).client?.cityCountry ??
+        (simulation as any).client?.city ??
+        (simulation as any).clientCity ??
+        'Kinshasa / RDC',
+      phone: (simulation as any).client?.phone ?? (simulation as any).clientPhone ?? '',
+      notes: (simulation as any).client?.notes ?? '',
+      rccm:
+        (simulation as any).client?.rccm ??
+        (simulation as any).clientRccm ??
+        '',
+      idNat:
+        (simulation as any).client?.idNat ??
+        (simulation as any).client?.idnat ??
+        (simulation as any).clientIdnat ??
+        '',
+      nif:
+        (simulation as any).client?.nif ??
+        (simulation as any).clientNif ??
+        (simulation as any).nif ??
+        '',
     },
 
     designation: simulation.designation ?? '',
@@ -346,8 +368,53 @@ export async function createOrderFromProforma(proforma: any) {
 
     clientId: proforma.clientId ?? '',
 
-    client: proforma.client ?? {
-      name: proforma.clientName ?? '',
+    client: {
+      name:
+        proforma.client?.name ??
+        proforma.clientName ??
+        '',
+
+      address:
+        proforma.client?.address ??
+        proforma.clientAddress ??
+        '',
+
+      cityCountry:
+        proforma.client?.cityCountry ??
+        proforma.client?.city ??
+        proforma.clientCity ??
+        'Kinshasa / RDC',
+
+      phone:
+        proforma.client?.phone ??
+        proforma.clientPhone ??
+        '',
+
+      notes:
+        proforma.client?.notes ??
+        '',
+
+      rccm:
+        proforma.client?.rccm ??
+        proforma.client?.RCCM ??
+        proforma.clientRccm ??
+        proforma.rccm ??
+        '',
+
+      idNat:
+        proforma.client?.idNat ??
+        proforma.client?.idnat ??
+        proforma.client?.IDNAT ??
+        proforma.clientIdnat ??
+        proforma.idNat ??
+        proforma.idnat ??
+        '',
+
+      nif:
+        proforma.client?.nif ??
+        proforma.clientNif ??
+        proforma.nif ??
+        '',
     },
 
     designation: proforma.designation ?? '',
