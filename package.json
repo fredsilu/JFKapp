@@ -16,7 +16,15 @@
     "web:test": "dotenv -e .env.test -- expo start --web",
     "web:production": "dotenv -e .env.production -- expo start --web",
     "build:web:test": "dotenv -e .env.test -- expo export --platform web",
-    "build:web:production": "dotenv -e .env.production -- expo export --platform web"
+    "build:web:production": "dotenv -e .env.production -- expo export --platform web",
+    "import:ingredients:dry":
+      "tsx scripts/importIngredients.ts --dry",
+
+    "import:ingredients:test":
+      "tsx scripts/importIngredients.ts",
+
+    "import:ingredients:prod":
+      "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
   },
   "expo": {
     "doctor": {
@@ -25,6 +33,7 @@
       }
     }
   },
+  
   "dependencies": {
     "@expo-google-fonts/montserrat": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
@@ -33,6 +42,7 @@
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "dotenv": "^17.4.2",
     "expo": "~54.0.34",
     "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
@@ -48,6 +58,7 @@
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.11",
     "firebase": "^11.10.0",
+    "firebase-admin": "^13.10.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
@@ -62,6 +73,7 @@
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
     "svg.js": "^2.7.1",
+    "tsx": "^4.22.3",
     "uuid": "^13.0.0",
     "xlsx": "^0.18.5"
   },
