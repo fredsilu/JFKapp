@@ -9,7 +9,7 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Alert, Platform,
 } from 'react-native';
 
 import { router } from 'expo-router';
@@ -350,10 +350,23 @@ export default function OrderDetails({
       const invoice =
         await createInvoiceFromOrder(order as any);
 
+      if (Platform.OS === 'web') {
+        router.push({
+          pathname: '/(traiteur)/invoices/[id]',
+          params: { id: invoice.id },
+        } as any);
+
+        return;
+      }
+
       Alert.alert(
         'Succès',
         `Facture ${invoice.number} créée avec succès.`,
         [
+          {
+            text: 'Plus tard',
+            style: 'cancel',
+          },
           {
             text: 'Ouvrir',
             onPress: () => {
