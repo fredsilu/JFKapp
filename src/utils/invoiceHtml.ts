@@ -160,6 +160,7 @@ export function buildInvoiceHTML(
   const clientIdnat = safe(invoice.clientIdnat);
   const clientAddress = safe(invoice.clientAddress);
   const clientCity = formatClientCity(invoice.clientCity);
+  const clientNif = safe((invoice as any).clientNif);
 
   const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
 

@@ -7,7 +7,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,orderBy,
+  updateDoc, orderBy,
   where,
 } from "firebase/firestore";
 
@@ -74,19 +74,34 @@ async function addInvoiceHistory(
   );
 }
 
-async function getExistingCreditNotesTotal(invoiceId: string) {
+export async function getCreditNotesByInvoiceId(
+  invoiceId: string
+): Promise<CreditNote[]> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
   const q = query(
     collection(db, CREDIT_NOTES_COLLECTION),
-    where("invoiceId", "==", invoiceId),
-    where("status", "==", "issued")
+    where("invoiceId", "==", invoiceId)
   );
 
   const snap = await getDocs(q);
 
-  return snap.docs.reduce((sum, document) => {
-    const data = document.data() as CreditNote;
-    return sum + Number(data.amount ?? 0);
-  }, 0);
+  const notes = snap.docs.map((document) => ({
+    id: document.id,
+    ...(document.data() as Omit<CreditNote, "id">),
+  }));
+
+  return notes.sort((a, b) => {
+    const da =
+      a.createdAt?.toDate?.()?.getTime?.() ?? 0;
+
+    const db =
+      b.createdAt?.toDate?.()?.getTime?.() ?? 0;
+
+    return db - da;
+  });
 }
 
 /* =========================================
