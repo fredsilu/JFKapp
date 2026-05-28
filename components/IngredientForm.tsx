@@ -1,5 +1,6 @@
+//components/IngredientForm.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Ingredient } from '@/types';
@@ -12,7 +13,7 @@ const CATEGORIES = [
   'FRUIT',
   'LEGUME',
   'NON ALIMENTAIRE',
-  'POISSON', 
+  'POISSON',
   'PRODUIT LAITIER',
   'VIANDE',
 ] as const;
@@ -38,16 +39,21 @@ const initialFormData: IngredientFormData = {
 interface IngredientFormProps {
   ingredient?: Ingredient;
   onClose: () => void;
-  onSubmit: (values: Omit<Ingredient, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (
+    values: Omit<Ingredient, "id" | "createdAt" | "updatedAt">
+  ) => Promise<void> | void;
 }
 
 export default function IngredientForm({ ingredient, onClose, onSubmit }: IngredientFormProps) {
   const [formData, setFormData] = useState<IngredientFormData>({
     name: ingredient?.name || '',
-    price: ingredient?.price.toString() || '',
+    price: ingredient?.price != null ? String(ingredient.price) : "",
+    stock: ingredient?.stock != null ? String(ingredient.stock) : "",
     unit: ingredient?.unit || '',
-    stock: ingredient?.stock.toString() || '',
-    category: ingredient?.category as Category || '',
+
+    category: CATEGORIES.includes(ingredient?.category as Category)
+      ? (ingredient?.category as Category)
+      : "",
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [showCategories, setShowCategories] = useState(false);
@@ -55,7 +61,7 @@ export default function IngredientForm({ ingredient, onClose, onSubmit }: Ingred
   const handleSubmit = async () => {
     try {
       setFormError(null);
-      
+
       // Validate form data
       if (!formData.name || !formData.price || !formData.unit || !formData.stock || !formData.category) {
         setFormError('All fields are required');
@@ -75,23 +81,23 @@ export default function IngredientForm({ ingredient, onClose, onSubmit }: Ingred
         return;
       }
 
-      const ingredientData = {
-        name: formData.name,
+      const ingredientData: Omit<Ingredient, "id" | "createdAt" | "updatedAt"> = {
+        name: formData.name.trim(),
         price,
-        unit: formData.unit,
+        unit: formData.unit.trim(),
         stock,
         category: formData.category,
-        quantity: ingredient?.quantity || 0,
-        description: ingredient?.description || '',
+        quantity: ingredient?.quantity ?? 0,
+        description: ingredient?.description ?? "",
       };
 
       // Call the onSubmit callback that will either create or update
       await onSubmit(ingredientData);
-      
+
       // Show success message BEFORE closing so data has time to sync
       const message = ingredient ? 'Ingrédient modifié avec succès!' : 'Ingrédient ajouté avec succès!';
-      alert(message);
-      
+      Alert.alert("Succès", message);
+
       if (!ingredient) {
         // Only reset form if creating new ingredient
         setFormData(initialFormData);
@@ -103,14 +109,14 @@ export default function IngredientForm({ ingredient, onClose, onSubmit }: Ingred
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>
           {ingredient ? 'Modifier l\'ingrédient' : 'Nouvel ingrédient'}
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             setFormData(initialFormData);
             setFormError(null);
@@ -120,7 +126,7 @@ export default function IngredientForm({ ingredient, onClose, onSubmit }: Ingred
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
@@ -219,12 +225,12 @@ export default function IngredientForm({ ingredient, onClose, onSubmit }: Ingred
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.cancelButton}
           onPress={onClose}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.submitButton}
           onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>

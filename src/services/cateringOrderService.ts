@@ -77,6 +77,12 @@ export async function createProformaFromSimulation(simulationId: string) {
   const items = buildDocumentItemsFromSimulation(simulation);
   const totals = calculateDocumentTotals(items);
 
+  const eventName =
+    simulation.name ??
+    simulation.designation ??
+    (simulation as any).eventName ??
+    'Événement traiteur';
+
   const proforma: Omit<CateringOrder, 'id'> = {
     simulationId,
 
@@ -86,7 +92,7 @@ export async function createProformaFromSimulation(simulationId: string) {
     number: `PF-${Date.now()}`,
     version: 1,
 
-    name: simulation.name ?? 'Commande traiteur',
+    name: eventName,
 
     clientId: simulation.clientId,
 
@@ -115,7 +121,7 @@ export async function createProformaFromSimulation(simulationId: string) {
         '',
     },
 
-    designation: simulation.designation ?? '',
+    designation: eventName,
 
     dateLivraison: simulation.dateLivraison ?? '',
     deliveryDate: simulation.dateLivraison ?? '',

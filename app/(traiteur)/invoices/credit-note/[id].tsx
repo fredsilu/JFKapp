@@ -71,13 +71,20 @@ export default function CreateCreditNoteScreen() {
     Math.max(invoiceTotal - alreadyCredited, 0)
   );
 
+  const cleanReason = reason.trim();
+  const cleanAmount = Number(amount.replace(",", ".").trim());
+
+  const canSubmit =
+    !saving &&
+    Number.isFinite(cleanAmount) &&
+    cleanAmount > 0 &&
+    cleanAmount <= remainingCreditableAmount &&
+    cleanReason.length >= 3;
+
   async function handleCreateCreditNote() {
     if (!invoice?.id) return;
 
-    const cleanReason = reason.trim();
-    const cleanAmount = Number(amount.replace(",", "."));
-
-    if (!cleanAmount || cleanAmount <= 0) {
+    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
       Alert.alert("Erreur", "Montant invalide");
       return;
     }
@@ -149,7 +156,7 @@ export default function CreateCreditNoteScreen() {
   const isBlockedInvoice =
     invoice.status === "cancelled" ||
     invoice.status === "replaced" ||
-    invoice.documentType === "CREDIT_NOTE";
+    (invoice as any).documentType === "CREDIT_NOTE"
 
   return (
     <View style={styles.container}>
@@ -204,6 +211,7 @@ export default function CreateCreditNoteScreen() {
             value={amount}
             onChangeText={setAmount}
             placeholder="Ex : 150"
+            placeholderTextColor="#9CA3AF"
             keyboardType="numeric"
             style={styles.input}
           />
@@ -214,6 +222,7 @@ export default function CreateCreditNoteScreen() {
             value={reason}
             onChangeText={setReason}
             placeholder="Ex : correction montant, remise commerciale..."
+            placeholderTextColor="#9CA3AF"
             style={styles.textArea}
             multiline
             numberOfLines={5}
@@ -221,9 +230,10 @@ export default function CreateCreditNoteScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.createButton, saving && styles.disabledButton]}
+            style={[styles.createButton, !canSubmit && styles.disabledButton]}
+            disabled={!canSubmit}
             onPress={handleCreateCreditNote}
-            disabled={saving}
+            activeOpacity={0.85}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />

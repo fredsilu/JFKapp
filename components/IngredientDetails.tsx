@@ -1,3 +1,4 @@
+//components/IngredientDetails.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -14,11 +15,16 @@ interface IngredientDetailsProps {
 
 export default function IngredientDetails({ ingredient, onClose }: IngredientDetailsProps) {
   const [showEditForm, setShowEditForm] = useState(false);
+  const stock = ingredient.stock ?? 0;
+  const unit = ingredient.unit || "";
+  const price = ingredient.price ?? 0;
+  const category = ingredient.category || "Non catégorisé";
 
   const getStockStatus = () => {
-    if (ingredient.stock <= 10) return 'critical';
-    if (ingredient.stock <= 20) return 'low';
-    if (ingredient.stock >= 80) return 'good';
+
+    if (stock <= 10) return 'critical';
+    if (stock <= 20) return 'low';
+    if (stock >= 80) return 'good';
     return 'normal';
   };
 
@@ -48,12 +54,19 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
     }
   };
 
-  const handleUpdateIngredient = async (updatedIngredient: Omit<Ingredient, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateIngredient = async (
+    updatedIngredient: Omit<Ingredient, "id" | "createdAt" | "updatedAt">
+  ) => {
+    if (!ingredient.id) {
+      console.error("ID ingrédient manquant");
+      return;
+    }
+
     try {
       await updateIngredient(ingredient.id, updatedIngredient);
       setShowEditForm(false);
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'ingrédient:', error);
+      console.error("Erreur lors de la mise à jour de l'ingrédient:", error);
     }
   };
 
@@ -79,20 +92,20 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
             <View style={styles.nameSection}>
               <Text style={styles.name}>{ingredient.name}</Text>
               <View style={[styles.categoryBadge, { backgroundColor: '#007AFF15' }]}>
-                <Text style={styles.categoryText}>{ingredient.category}</Text>
+                <Text style={styles.categoryText}>{category || "Non catégorisé"}</Text>
               </View>
             </View>
 
             <View style={styles.priceCard}>
               <View style={styles.priceHeader}>
-                
+
                 <Text style={styles.priceLabel}>Coût unitaire</Text>
               </View>
-             <View style={styles.priceContent}>
-  <Text style={styles.priceValue}>
-    {formatCurrency(ingredient.price)} / {ingredient.unit}
-  </Text>
-</View>
+              <View style={styles.priceContent}>
+                <Text style={styles.priceValue}>
+                  {formatCurrency(price)} / {unit}
+                </Text>
+              </View>
 
             </View>
           </View>
@@ -105,8 +118,8 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
 
             <View style={styles.stockCard}>
               <View style={styles.stockInfo}>
-                <Text style={styles.stockValue}>{ingredient.stock}</Text>
-                <Text style={styles.stockUnit}>{ingredient.unit}</Text>
+                <Text style={styles.stockValue}>{stock}</Text>
+                <Text style={styles.stockUnit}>{unit}</Text>
               </View>
 
               <View style={styles.stockBarContainer}>
@@ -115,7 +128,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
                     style={[
                       styles.stockLevel,
                       {
-                        width: `${Math.min((ingredient.stock / 100) * 100, 100)}%`,
+                        width: `${Math.min((stock / 100) * 100, 100)}%`,
                         backgroundColor: getStockColor()
                       }
                     ]}
@@ -141,7 +154,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
                 </View>
                 <View style={styles.movementInfo}>
                   <Text style={styles.movementTitle}>Dernière entrée</Text>
-                  <Text style={styles.movementMeta}>20 {ingredient.unit} • 15/02/2024</Text>
+                  <Text style={styles.movementMeta}>20 {unit} • 15/02/2024</Text>
                 </View>
               </View>
 
@@ -151,7 +164,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
                 </View>
                 <View style={styles.movementInfo}>
                   <Text style={styles.movementTitle}>Dernière sortie</Text>
-                  <Text style={styles.movementMeta}>5 {ingredient.unit} • 14/02/2024</Text>
+                  <Text style={styles.movementMeta}>5 {unit} • 14/02/2024</Text>
                 </View>
               </View>
             </View>
@@ -170,7 +183,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>12.5</Text>
-                <Text style={styles.statLabel}>Moyenne mensuelle ({ingredient.unit})</Text>
+                <Text style={styles.statLabel}>Moyenne mensuelle ({unit})</Text>
               </View>
             </View>
           </View>
@@ -260,11 +273,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#007AFF',
   },
-  priceUnit: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    color: '#666',
-  },
+
   section: {
     padding: 20,
     borderTopWidth: 1,

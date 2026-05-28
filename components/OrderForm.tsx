@@ -1071,6 +1071,16 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       setFormError('Veuillez sélectionner un client');
       return false;
     }
+    if (
+      deliveryTime &&
+      !/^([01]\d|2[0-3]):([0-5]\d)$/.test(deliveryTime)
+    ) {
+      setFormError(
+        'L’heure doit être au format HH:mm'
+      );
+
+      return false;
+    }
     if (selectedDishes.length === 0 && editableItems.length === 0) {
       setFormError('Veuillez ajouter au moins un élément à la commande');
       return false;
@@ -1557,32 +1567,55 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           <Text style={styles.sectionTitle}>Détails de livraison</Text>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Date de livraison</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="event" size={20} color="#665" />
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowDeliveryDatePicker(true)}
-              >
-                <Text style={{ color: deliveryDate ? '#000' : '#9CA3AF' }}>
-                  {deliveryDate || 'Sélectionner une date'}
-                </Text>
-              </TouchableOpacity>
+            <Text style={styles.label}>Heure de livraison</Text>
 
-              {showDeliveryDatePicker && (
-                <DateTimePicker
-                  value={deliveryDateObj || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowDeliveryDatePicker(false);
-                    if (selectedDate) {
-                      setDeliveryDateObj(selectedDate);
-                      const iso = selectedDate.toISOString().split('T')[0];
-                      setDeliveryDate(iso);
-                    }
-                  }}
+            <View style={styles.inputContainer}>
+              <Icon name="access-time" size={20} color="#665" />
+
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={styles.input}
+                  value={deliveryTime}
+                  onChangeText={setDeliveryTime}
+                  placeholder="Ex : 14:30"
+                  keyboardType="default"
                 />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowDeliveryTimePicker(true)}
+                  >
+                    <Text
+                      style={{
+                        color: deliveryTime ? '#000' : '#9CA3AF',
+                      }}
+                    >
+                      {deliveryTime || 'Sélectionner une heure'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showDeliveryTimePicker && (
+                    <DateTimePicker
+                      value={deliveryTimeObj || new Date()}
+                      mode="time"
+                      display="default"
+                      onChange={(event, selectedTime) => {
+                        setShowDeliveryTimePicker(false);
+
+                        if (selectedTime) {
+                          setDeliveryTimeObj(selectedTime);
+
+                          const time = selectedTime
+                            .toTimeString()
+                            .slice(0, 5);
+
+                          setDeliveryTime(time);
+                        }
+                      }}
+                    />
+                  )}
+                </>
               )}
             </View>
           </View>

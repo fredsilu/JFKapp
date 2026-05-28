@@ -39,6 +39,28 @@ function formatDate(value?: any) {
   return date.toLocaleString("fr-FR");
 }
 
+function getHistoryColor(type?: string) {
+  switch (type) {
+    case "CREATED":
+      return "#2563EB";
+
+    case "ISSUED":
+      return "#059669";
+
+    case "CANCELLED":
+      return "#DC2626";
+
+    case "REPLACED":
+      return "#7C3AED";
+
+    case "CREDIT_NOTE_CREATED":
+      return "#EA580C";
+
+    default:
+      return "#6B7280";
+  }
+}
+
 function getHistoryLabel(type?: string) {
   switch (type) {
     case "CREATED":
@@ -62,6 +84,16 @@ function getHistoryLabel(type?: string) {
   }
 }
 
+function formatSnapshot(snapshot?: Record<string, unknown>) {
+  if (!snapshot) return "";
+
+  try {
+    return JSON.stringify(snapshot, null, 2);
+  } catch {
+    return "Impossible d'afficher les détails";
+  }
+}
+
 export default function InvoiceHistoryScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -73,7 +105,11 @@ export default function InvoiceHistoryScreen() {
   const loadData = useCallback(async () => {
     if (!id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(traiteur)/invoices");
+      }
       return;
     }
 
@@ -83,7 +119,11 @@ export default function InvoiceHistoryScreen() {
       const invoiceData = await getCateringInvoiceById(id);
       if (!invoiceData) {
         Alert.alert("Erreur", "Facture introuvable");
-        router.back();
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/(traiteur)/invoices");
+        }
         return;
       }
 
@@ -127,11 +167,19 @@ export default function InvoiceHistoryScreen() {
 
       {history.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>Aucun historique trouvé.</Text>
+          <Text style={styles.emptyText}>
+            Aucun événement enregistré pour cette facture.
+          </Text>
         </View>
       ) : (
         history.map((item) => (
-          <View key={item.id} style={styles.historyCard}>
+          <View
+            key={item.id}
+            style={[
+              styles.historyCard,
+              { borderLeftColor: getHistoryColor(item.type) },
+            ]}
+          >
             <Text style={styles.historyType}>
               {getHistoryLabel(item.type)}
             </Text>
@@ -143,12 +191,17 @@ export default function InvoiceHistoryScreen() {
             <Text style={styles.historyDate}>
               {formatDate(item.createdAt)}
             </Text>
+            {item.createdBy ? (
+              <Text style={styles.createdBy}>
+                Par : {item.createdBy}
+              </Text>
+            ) : null}
 
             {item.snapshot ? (
               <View style={styles.snapshotBox}>
                 <Text style={styles.snapshotTitle}>Détails</Text>
                 <Text style={styles.snapshotText}>
-                  {JSON.stringify(item.snapshot, null, 2)}
+                  {formatSnapshot(item.snapshot)}
                 </Text>
               </View>
             ) : null}
@@ -158,7 +211,13 @@ export default function InvoiceHistoryScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/(traiteur)/invoices");
+          }
+        }}
       >
         <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
@@ -223,7 +282,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: "#2563EB",
+
   },
   historyType: {
     fontSize: 14,
@@ -255,6 +314,11 @@ const styles = StyleSheet.create({
   snapshotText: {
     fontSize: 12,
     color: "#4B5563",
+  },
+  createdBy: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 4,
   },
   backButton: {
     backgroundColor: "#E5E7EB",

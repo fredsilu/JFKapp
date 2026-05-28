@@ -27,11 +27,13 @@ export default function ReplaceInvoiceScreen() {
   const [saving, setSaving] = useState(false);
 
   const [reason, setReason] = useState("");
+  const cleanReason = reason.trim();
+  const canSubmit = !!invoice?.id && cleanReason.length >= 3 && !saving;
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
-      router.back();
+      goBack();
       return;
     }
 
@@ -42,7 +44,7 @@ export default function ReplaceInvoiceScreen() {
 
       if (!data) {
         Alert.alert("Erreur", "Facture introuvable");
-        router.back();
+        goBack();
         return;
       }
 
@@ -61,10 +63,34 @@ export default function ReplaceInvoiceScreen() {
     }, [loadInvoice])
   );
 
-  async function handleReplaceInvoice() {
-    if (!invoice?.id) return;
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(traiteur)/invoices");
+    }
+  }
+  function confirmReplaceInvoice(confirmMessage: string) {
+    return new Promise<boolean>((resolve) => {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        resolve(window.confirm(confirmMessage));
+        return;
+      }
 
-    const cleanReason = reason.trim();
+      Alert.alert(
+        "Confirmer l’annule et remplace",
+        confirmMessage,
+        [
+          { text: "Annuler", style: "cancel", onPress: () => resolve(false) },
+          { text: "Confirmer", style: "destructive", onPress: () => resolve(true) },
+        ]
+      );
+    });
+  }
+
+  async function handleReplaceInvoice() {
+    if (saving) return;
+    if (!invoice?.id) return;
 
     if (cleanReason.length < 3) {
       Alert.alert(
@@ -73,15 +99,13 @@ export default function ReplaceInvoiceScreen() {
       );
       return;
     }
-
     const confirmMessage =
       `Cette action va remplacer la facture ${invoice.number} par une nouvelle facture avec un nouveau numéro. ` +
       "La facture initiale restera conservée dans l’historique.";
 
-    if (Platform.OS === "web" && typeof window !== "undefined") {
-      const confirmed = window.confirm(confirmMessage);
-      if (!confirmed) return;
-    }
+    const confirmed = await confirmReplaceInvoice(confirmMessage);
+    if (!confirmed) return;
+
 
     try {
       setSaving(true);
@@ -99,12 +123,15 @@ export default function ReplaceInvoiceScreen() {
         pathname: "/(traiteur)/invoices/[id]",
         params: { id: newInvoice.id ?? "" },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ replace invoice error:", error);
-      Alert.alert(
-        "Erreur",
-        error?.message || "Impossible de remplacer la facture"
-      );
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Impossible de remplacer la facture";
+
+      Alert.alert("Erreur", message);
     } finally {
       setSaving(false);
     }
@@ -129,7 +156,7 @@ export default function ReplaceInvoiceScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Annule et remplace</Text>
+      <Text style={styles.title}>Annulation et remplacement</Text>
 
       <View style={styles.notice}>
         <Text style={styles.noticeTitle}>Règle comptable</Text>
@@ -155,17 +182,19 @@ export default function ReplaceInvoiceScreen() {
       <TextInput
         value={reason}
         onChangeText={setReason}
+        editable={!saving}
         placeholder="Ex : erreur client, correction montant, correction libellé..."
         style={styles.textArea}
+        keyboardType="default"
         multiline
         numberOfLines={5}
         textAlignVertical="top"
       />
 
       <TouchableOpacity
-        style={[styles.replaceButton, saving && styles.disabledButton]}
+        style={[styles.replaceButton, !canSubmit && styles.disabledButton]}
         onPress={handleReplaceInvoice}
-        disabled={saving}
+        disabled={!canSubmit}
       >
         {saving ? (
           <ActivityIndicator color="#fff" />
@@ -178,7 +207,7 @@ export default function ReplaceInvoiceScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={goBack}
         disabled={saving}
       >
         <Text style={styles.backButtonText}>Retour</Text>

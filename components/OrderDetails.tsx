@@ -224,61 +224,60 @@ export default function OrderDetails({
     }
   };
 
+  const confirmAction = async (title: string, message: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return window.confirm(`${title}\n\n${message}`);
+    }
+
+    return new Promise<boolean>((resolve) => {
+      Alert.alert(title, message, [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+          onPress: () => resolve(false),
+        },
+        {
+          text: 'Confirmer',
+          style: 'default',
+          onPress: () => resolve(true),
+        },
+      ]);
+    });
+  };
+
   const handleUpdateStatus = async () => {
     try {
       const nextStatus = getNextStatus(order.status as any);
 
       if (!nextStatus) {
-        Alert.alert(
-          'Information',
-          'Cette commande est déjà livrée.'
-        );
+        Alert.alert('Information', 'Cette commande est déjà livrée.');
         return;
       }
 
-      Alert.alert(
+      const confirmed = await confirmAction(
         'Confirmation',
-        `Voulez-vous vraiment passer la commande au statut : "${nextStatus}" ?`,
-        [
-          {
-            text: 'Annuler',
-            style: 'cancel',
-          },
-          {
-            text: 'Confirmer',
-            style: 'default',
-            onPress: async () => {
-              try {
-                await updateOrderStatus(
-                  order.id,
-                  nextStatus as any
-                );
-
-                Alert.alert(
-                  'Succès',
-                  `Commande passée à : ${nextStatus}`
-                );
-
-                await onUpdated?.();
-              } catch (error) {
-                console.error(error);
-
-                Alert.alert(
-                  'Erreur',
-                  'Impossible de modifier le statut.'
-                );
-              }
-            },
-          },
-        ]
+        `Voulez-vous vraiment passer la commande au statut : "${nextStatus}" ?`
       );
+
+      if (!confirmed) return;
+
+      await updateOrderStatus(order.id, nextStatus as any);
+
+      if (Platform.OS === 'web') {
+        window.alert(`Commande passée à : ${nextStatus}`);
+      } else {
+        Alert.alert('Succès', `Commande passée à : ${nextStatus}`);
+      }
+
+      await onUpdated?.();
     } catch (error) {
       console.error(error);
 
-      Alert.alert(
-        'Erreur',
-        'Impossible de modifier le statut.'
-      );
+      if (Platform.OS === 'web') {
+        window.alert('Impossible de modifier le statut.');
+      } else {
+        Alert.alert('Erreur', 'Impossible de modifier le statut.');
+      }
     }
   };
 
@@ -289,29 +288,24 @@ export default function OrderDetails({
    */
 
   const handleUpdateOrder = async (
-    updatedOrder: Omit<
-      Order,
-      'id' | 'createdAt' | 'updatedAt'
-    >
+    updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
   ) => {
     try {
-      await updateOrder(order.id, updatedOrder as any);
+      await updateOrder(order.id, {
+        ...updatedOrder,
+        deliveryTime: (updatedOrder as any).deliveryTime ?? order.deliveryTime ?? '',
+        deliveryDate: (updatedOrder as any).deliveryDate ?? order.deliveryDate ?? '',
+        deliveryAddress: (updatedOrder as any).deliveryAddress ?? order.deliveryAddress ?? '',
+      } as any);
 
       setShowEditForm(false);
 
-      Alert.alert(
-        'Succès',
-        'Commande modifiée avec succès.'
-      );
+      Alert.alert('Succès', 'Commande modifiée avec succès.');
 
       await onUpdated?.();
     } catch (error) {
       console.error(error);
-
-      Alert.alert(
-        'Erreur',
-        'Impossible de modifier la commande.'
-      );
+      Alert.alert('Erreur', 'Impossible de modifier la commande.');
     }
   };
 

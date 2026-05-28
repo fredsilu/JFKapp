@@ -1,8 +1,9 @@
+//app/(traiteur)/_layout.tsx
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-import ModuleButton from '@/components/ModuleButton';
+
 
 import {
   useFonts,
@@ -48,7 +49,7 @@ export default function TraiteurLayout() {
           fontSize: 16,
           color: '#0F172A',
         },
-        headerRight: () => <ModuleButton />,
+       
 
         tabBarActiveTintColor: '#0F4C81',
         tabBarInactiveTintColor: '#94A3B8',
