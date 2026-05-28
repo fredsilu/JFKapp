@@ -4,7 +4,7 @@ export type InvoicePdfData = {
 
   clientName?: string;
   clientRccm?: string;
-  clientidNat?: string;
+  clientIdNat?: string;
   clientAddress?: string;
   clientCity?: string;
 

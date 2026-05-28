@@ -45,7 +45,7 @@ export type CateringProforma = {
   clientId?: string;
   clientName?: string;
   clientRccm?: string;
-  clientidNat?: string;
+  clientIdNat?: string;
   clientNif?: string;
   clientAddress?: string;
   clientCity?: string;
@@ -169,7 +169,7 @@ function normalizeProformaData(
     clientName,
     clientId: cleanText(data.clientId),
     clientRccm: cleanText(data.clientRccm),
-    clientidNat: cleanText(data.clientidNat),
+    clientIdNat: cleanText(data.clientIdNat),
     clientAddress: cleanText(data.clientAddress),
     clientNif: cleanText(data.clientNif),
     clientCity: cleanText(data.clientCity),
@@ -293,8 +293,8 @@ export async function updateCateringProforma(
     payload.clientRccm = cleanText(data.clientRccm);
   }
 
-  if (typeof data.clientidNat !== 'undefined') {
-    payload.clientidNat = cleanText(data.clientidNat);
+  if (typeof data.clientIdNat !== 'undefined') {
+    payload.clientIdNat = cleanText(data.clientIdNat);
   }
   if (typeof data.clientNif !== 'undefined') {
     payload.clientNif = cleanText(data.clientNif);

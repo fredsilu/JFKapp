@@ -1,5 +1,4 @@
-// app/(traiteur)/DocumentEditorScreen.tsx
-
+//app/(traiteur)/documents/editor.tsx
 import React, { useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -10,7 +9,7 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  ScrollView,
+  ScrollView, Platform,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
@@ -167,6 +166,11 @@ export default function DocumentEditorScreen() {
   }
 
   function removeLine(index: number) {
+    if (document.items.length <= 1) {
+      Alert.alert("Action impossible", "Le document doit contenir au moins une ligne.");
+      return;
+    }
+
     const newItems = document.items.filter((_, i) => i !== index);
     const { items, totals } = calculateDocumentTotals(newItems);
 
@@ -181,8 +185,13 @@ export default function DocumentEditorScreen() {
     try {
       const html = buildDocumentHTML(document);
       const uri = await generateDocumentPDF(html);
-      await Sharing.shareAsync(uri);
-      Alert.alert("PDF généré", uri);
+
+      if (Platform.OS !== "web" && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert("PDF généré", "Le PDF a été généré avec succès.");
+        console.log("PDF URI:", uri);
+      }
     } catch (error) {
       console.error(error);
       Alert.alert("Erreur", "Impossible de générer le PDF.");
@@ -226,7 +235,7 @@ export default function DocumentEditorScreen() {
           onChangeText={(text) => updateItem(index, "unitPrice", text)}
         />
 
-        <Text style={styles.total}>{item.totalPrice.toFixed(2)}</Text>
+        <Text style={styles.total}>{(item.totalPrice ?? 0).toFixed(2)}</Text>
 
         <TouchableOpacity onPress={() => removeLine(index)}>
           <Text style={styles.delete}>✕</Text>
@@ -260,7 +269,7 @@ export default function DocumentEditorScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Evénement</Text>
+          <Text style={styles.label}>Événement</Text>
           <TextInput
             style={styles.input}
             value={document.eventName ?? ""}
@@ -322,14 +331,14 @@ export default function DocumentEditorScreen() {
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>Sous-total :</Text>
             <Text style={styles.totalValue}>
-              {document.totals.subtotal.toFixed(2)} $
+              {(document.totals.subtotal ?? 0).toFixed(2)} $
             </Text>
           </View>
 
           <View style={styles.totalBox}>
             <Text style={styles.totalLabel}>Total :</Text>
             <Text style={styles.totalValue}>
-              {document.totals.total.toFixed(2)} $
+              {(document.totals.total ?? 0).toFixed(2)} $
             </Text>
           </View>
         </View>

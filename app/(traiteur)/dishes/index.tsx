@@ -1,6 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+// app/(traiteur)/dishes/index.tsx
+import React, { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from 'react-native';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
 import { useDishes, useIngredients } from '@/src/hooks/useFirestore';
 import { addDish } from '@/src/services/firestore';
 import Modal from '@/components/Modal';
@@ -9,55 +21,72 @@ import DishDetails from '@/components/DishDetails';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Dish } from '@/types';
-import { useRouter } from 'expo-router';
-import { MaterialIcons as Icon } from '@expo/vector-icons';
 
-const DEFAULT_DISH_IMAGE = 'https://images.unsplash.com/photo-1546241072-48010ad2862c?w=400&h=300&q=80&fit=crop';
+const DEFAULT_DISH_IMAGE =
+  'https://images.unsplash.com/photo-1546241072-48010ad2862c?w=400&h=300&q=80&fit=crop';
 
 export default function DishesScreen() {
+  const router = useRouter();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
 
-  const router = useRouter();
-
-  const { data: dishes = [], loading: dishesLoading, error: dishesError } = useDishes({
-    orderBy: ['name', 'asc']
+  const {
+    data: dishes = [],
+    loading: dishesLoading,
+    error: dishesError,
+  } = useDishes({
+    orderBy: ['name', 'asc'],
   });
-  const { data: ingredients = [], loading: ingredientsLoading, error: ingredientsError } = useIngredients({
-    orderBy: ['name', 'asc']
+
+  const {
+    data: ingredients = [],
+    loading: ingredientsLoading,
+    error: ingredientsError,
+  } = useIngredients({
+    orderBy: ['name', 'asc'],
   });
 
-  const filteredDishes = dishes.filter(dish =>
-    (dish.name && dish.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (dish.description && dish.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Get the current dish object from the updated list
+  const filteredDishes = useMemo(() => {
+    if (!normalizedQuery) return dishes;
+
+    return dishes.filter((dish) => {
+      const name = dish.name ?? '';
+      const description = dish.description ?? '';
+
+      return (
+        name.toLowerCase().includes(normalizedQuery) ||
+        description.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [dishes, normalizedQuery]);
+
   const selectedDish = selectedDishId
-    ? dishes.find(d => d.id === selectedDishId) || null
+    ? dishes.find((dish) => dish.id === selectedDishId) ?? null
     : null;
 
-  const calculateDishPrice = (dish: Dish) => {
-    if (!dish?.ingredients || dish.ingredients.length === 0) {
-      return 0;
-    }
-    return dish.ingredients.reduce((total, { ingredient, quantity }) => {
-      if (!ingredient || !ingredient.price) {
-        return total;
-      }
-      return total + (ingredient.price * quantity);
+  const calculateDishPrice = (dish: Dish): number => {
+    return (dish.ingredients ?? []).reduce((total, item) => {
+      const price = item.ingredient?.price ?? 0;
+      const quantity = item.quantity ?? 0;
+
+      return total + price * quantity;
     }, 0);
   };
 
-  const handleCreateDish = async (values: Omit<Dish, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateDish = async (
+    values: Omit<Dish, 'id' | 'createdAt' | 'updatedAt'>
+  ) => {
     try {
-      console.log('Creating dishe', values);
       await addDish(values);
-      alert('Dishe added successfully');
+      Alert.alert('Succès', 'Plat ajouté avec succès');
       setIsFormModalVisible(false);
     } catch (err) {
       console.error('Error creating dish:', err);
+      Alert.alert('Erreur', 'Impossible de créer le plat.');
     }
   };
 
@@ -66,7 +95,7 @@ export default function DishesScreen() {
   }
 
   if (dishesError || ingredientsError) {
-    return <ErrorMessage message="Error loading data" />;
+    return <ErrorMessage message="Erreur lors du chargement des plats" />;
   }
 
   return (
@@ -80,10 +109,10 @@ export default function DishesScreen() {
         <Text style={styles.backPillText}>Configuration</Text>
       </TouchableOpacity>
 
-
       <View style={styles.header}>
         <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
+
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher un plat..."
@@ -92,46 +121,58 @@ export default function DishesScreen() {
             onChangeText={setSearchQuery}
           />
         </View>
+
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setIsFormModalVisible(true)}>
-          <MaterialIcons name="add" size={24} color="#fff" />
+          onPress={() => setIsFormModalVisible(true)}
+          activeOpacity={0.85}
+        >
+          <Icon name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.contentContainer}>
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {filteredDishes.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="error-outline" size={48} color="#666" />
+            <Icon name="restaurant-menu" size={48} color="#666" />
             <Text style={styles.emptyStateText}>Aucun plat trouvé</Text>
           </View>
         ) : (
           <View style={styles.grid}>
-            {filteredDishes.map((dish) => (
-              <TouchableOpacity
-                key={dish.id}
-                style={styles.dishCard}
-                onPress={() => setSelectedDishId(dish.id)}>
-                <Image
-                  source={{ uri: dish.image || DEFAULT_DISH_IMAGE }}
-                  style={styles.dishImage}
-                  defaultSource={{ uri: DEFAULT_DISH_IMAGE }}
-                />
-                <View style={styles.dishInfo}>
-                  <Text style={styles.dishName} numberOfLines={1}>
-                    {dish.name}
-                  </Text>
-                  <View style={styles.priceContainer}>
-                    <MaterialIcons name="attach-money" size={16} color="#007AFF" />
-                    <Text style={styles.dishPrice}>
-                      {calculateDishPrice(dish).toFixed(2)}
+            {filteredDishes.map((dish) => {
+              const dishPrice = calculateDishPrice(dish);
+
+              return (
+                <TouchableOpacity
+                  key={dish.id}
+                  style={styles.dishCard}
+                  onPress={() => setSelectedDishId(dish.id)}
+                  activeOpacity={0.85}
+                >
+                  <Image
+                    source={{ uri: dish.image || DEFAULT_DISH_IMAGE }}
+                    style={styles.dishImage}
+                  />
+
+                  <View style={styles.dishInfo}>
+                    <Text style={styles.dishName} numberOfLines={1}>
+                      {dish.name || 'Plat sans nom'}
                     </Text>
+
+                    <View style={styles.priceContainer}>
+                      <Icon name="attach-money" size={16} color="#007AFF" />
+                      <Text style={styles.dishPrice}>
+                        {dishPrice.toFixed(2)}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -145,12 +186,12 @@ export default function DishesScreen() {
       </Modal>
 
       <Modal visible={!!selectedDish}>
-        {selectedDish && (
+        {selectedDish ? (
           <DishDetails
             dish={selectedDish}
             onClose={() => setSelectedDishId(null)}
           />
-        )}
+        ) : null}
       </Modal>
     </View>
   );
@@ -161,6 +202,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     marginTop: 40,
+  },
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 12,
+    marginLeft: 20,
+  },
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
   },
   header: {
     padding: 20,
@@ -203,7 +263,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyState: {
-    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
@@ -234,6 +295,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 160,
     resizeMode: 'cover',
+    backgroundColor: '#E5E7EB',
   },
   dishInfo: {
     padding: 12,
@@ -253,41 +315,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
     color: '#007AFF',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  backIcon: {
-    fontSize: 24,
-    marginRight: 10,
-    color: '#111827',
-  },
-
-  backText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  backPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#EEF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginBottom: 12,
-  },
-
-  backPillText: {
-    color: '#0F4C81',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

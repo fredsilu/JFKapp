@@ -210,7 +210,7 @@ export async function createInvoiceFromOrder(
         order.client?.idNat ??
         order.client?.idNat ??
         order.client?.idNat ??
-        order.clientidNat ??
+        order.clientIdNat ??
         order.idNat ??
         order.idNat ??
         "",

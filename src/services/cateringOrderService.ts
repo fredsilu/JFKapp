@@ -106,7 +106,7 @@ export async function createProformaFromSimulation(simulationId: string) {
       idNat:
         (simulation as any).client?.idNat ??
         (simulation as any).client?.idNat ??
-        (simulation as any).clientidNat ??
+        (simulation as any).clientIdNat ??
         '',
       nif:
         (simulation as any).client?.nif ??
@@ -403,7 +403,7 @@ export async function createOrderFromProforma(proforma: any) {
         proforma.client?.idNat ??
         proforma.client?.idNat ??
         proforma.client?.idNat ??
-        proforma.clientidNat ??
+        proforma.clientIdNat ??
         proforma.idNat ??
         proforma.idNat ??
         '',

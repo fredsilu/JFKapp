@@ -65,7 +65,7 @@ function getStatusLabel(status?: string) {
     case "paid":
       return "Payée";
     case "replaced":
-      return "Annule et remplacée";
+      return "Annulée et remplacée";
     case "cancelled":
       return "Annulée";
     default:
@@ -74,11 +74,13 @@ function getStatusLabel(status?: string) {
 }
 
 function getItemDays(item: InvoiceItem): number {
-  return Number((item as any).numberOfDays ?? (item as any).days ?? 1);
+  const days = Number((item as any).numberOfDays ?? (item as any).days ?? 1);
+  return Number.isFinite(days) && days > 0 ? days : 1;
 }
 
 function getItemTotal(item: InvoiceItem): number {
-  return Number((item as any).total ?? (item as any).totalPrice ?? 0);
+  const total = Number((item as any).total ?? (item as any).totalPrice ?? 0);
+  return Number.isFinite(total) ? total : 0;
 }
 
 export default function InvoiceDetailScreen() {
@@ -182,7 +184,7 @@ export default function InvoiceDetailScreen() {
 
         clientName: invoice.client?.name ?? "",
         clientRccm: invoice.client?.rccm ?? "",
-        clientidNat: invoice.client?.idNat ?? "",
+        clientIdNat: invoice.client?.idNat ?? "",
         clientNif: invoice.client?.nif ?? "",
         clientAddress: invoice.client?.address ?? "",
         clientCity:
@@ -218,7 +220,7 @@ export default function InvoiceDetailScreen() {
 
       if (Platform.OS === "web") {
         const html = buildInvoiceHTML(invoicePdfData);
-        downloadHtmlAsPdfWeb(html, filename, printWindow);
+        downloadHtmlAsPdfWeb(html, filename, printWindow ?? undefined);
         return;
       }
 
@@ -490,7 +492,7 @@ export default function InvoiceDetailScreen() {
               </View>
 
               <Text style={styles.creditNoteAmount}>
-                - {formatCurrency(note.amount)}
+                - {formatCurrency(Number(note.amount ?? 0))}
               </Text>
             </View>
           ))}

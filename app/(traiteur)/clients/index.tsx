@@ -1,4 +1,4 @@
-//app/(trauteur)/clients/index.tsx
+//app/(traiteur)/clients/index.tsx
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -48,14 +48,18 @@ export default function ClientsScreen() {
 
   const normalizedQuery = normalizeText(searchQuery);
 
-  const filteredClients = clients.filter(client =>
-    (client.name && normalizeText(client.name).includes(normalizedQuery)) ||
-    (client.email && normalizeText(client.email).includes(normalizedQuery)) ||
-    (client.phone && normalizeText(String(client.phone || '')).includes(normalizedQuery)) ||
-    (client.rccm && normalizeText(client.rccm).includes(normalizedQuery)) ||
-    (client.idNat && normalizeText(client.idNat).includes(normalizedQuery)) ||
-    (client.nif && normalizeText(client.nif).includes(normalizedQuery))
-  );
+  const filteredClients = useMemo(() => {
+    if (!normalizedQuery) return clients;
+
+    return clients.filter(client =>
+      normalizeText(client.name ?? '').includes(normalizedQuery) ||
+      normalizeText(client.email ?? '').includes(normalizedQuery) ||
+      normalizeText(String(client.phone ?? '')).includes(normalizedQuery) ||
+      normalizeText(client.rccm ?? '').includes(normalizedQuery) ||
+      normalizeText(client.idNat ?? '').includes(normalizedQuery) ||
+      normalizeText(client.nif ?? '').includes(normalizedQuery)
+    );
+  }, [clients, normalizedQuery]);
 
   const selectedOrder = useMemo(() => {
     if (!selectedOrderId) return null;
@@ -76,11 +80,17 @@ export default function ClientsScreen() {
     }
   };
 
-  const getClientOrdersCount = (clientId: string) => {
-    return orders.filter(order => {
-      return order.clientId === clientId || order.client?.id === clientId;
-    }).length;
-  };
+  const ordersCountByClientId = useMemo(() => {
+    return orders.reduce<Record<string, number>>((acc, order) => {
+      const clientId = order.clientId ?? order.client?.id;
+
+      if (clientId) {
+        acc[clientId] = (acc[clientId] ?? 0) + 1;
+      }
+
+      return acc;
+    }, {});
+  }, [orders]);
 
   if (loadingClients || loadingOrders) {
     return <LoadingSpinner />;
@@ -136,7 +146,7 @@ export default function ClientsScreen() {
             </View>
           ) : (
             filteredClients.map(client => {
-              const clientOrdersCount = getClientOrdersCount(client.id);
+              const clientOrdersCount = ordersCountByClientId[client.id] ?? 0;
 
               return (
                 <TouchableOpacity
@@ -223,7 +233,10 @@ export default function ClientsScreen() {
             clientId={selectedClientId}
             clients={clients}
             onClose={() => setSelectedClientId(null)}
-            onOpenOrder={(orderId: string) => setSelectedOrderId(orderId)}
+            onOpenOrder={(orderId: string) => {
+              setSelectedClientId(null);
+              setSelectedOrderId(orderId);
+            }}
           />
         ) : null}
       </Modal>

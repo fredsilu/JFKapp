@@ -11,7 +11,7 @@ type SourceOrder = {
   id: string;
   clientName?: string;
   clientRccm?: string;
-  clientidNat?: string;
+  clientIdNat?: string;
   clientAddressLine1?: string;
   clientAddressLine2?: string;
   clientCity?: string;
@@ -65,7 +65,7 @@ export function createDraftDocumentFromOrder(
 
       addressLine1: order.clientAddressLine1 ?? "",
       addressLine2: order.clientAddressLine2 ?? "",
-      idNat: order.clientidNat ?? "",
+      idNat: order.clientIdNat ?? "",
       nif: order.clientNif ?? "",
       city: order.clientCity ?? "Kinshasa / RDC",
     },

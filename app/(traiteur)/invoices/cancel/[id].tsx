@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// app/(traiteur)/invoices/cancel/[id].tsx
+import React, { useMemo, useState } from 'react';
 
 import {
   View,
@@ -10,115 +11,127 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import {
-  router,
-  useLocalSearchParams,
-} from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
-import {
-  cancelCateringInvoice,
-} from '@/src/services/cateringInvoice.service';
+import { cancelCateringInvoice } from '@/src/services/cateringInvoice.service';
 
 export default function CancelInvoiceScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
 
-  const id = Array.isArray(params.id)
-    ? params.id[0]
-    : params.id;
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleCancelInvoice() {
+  const cleanReason = useMemo(() => reason.trim(), [reason]);
+  const canSubmit = !!id && cleanReason.length >= 3 && !loading;
+
+  async function cancelInvoiceConfirmed() {
     if (!id) {
       Alert.alert('Erreur', 'Facture invalide');
-      return;
-    }
-
-    if (reason.trim().length < 3) {
-      Alert.alert(
-        'Erreur',
-        "Veuillez saisir un motif d'annulation"
-      );
       return;
     }
 
     try {
       setLoading(true);
 
-      await cancelCateringInvoice(
-        id,
-        reason.trim()
-      );
+      await cancelCateringInvoice(id, cleanReason);
+
+      Alert.alert('Succès', 'Facture annulée avec succès.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            router.replace({
+              pathname: '/(traiteur)/invoices/[id]',
+              params: { id },
+            });
+          },
+        },
+      ]);
+    } catch (e: any) {
+      console.error('❌ cancel invoice error:', e);
 
       Alert.alert(
-        'Succès',
-        'Facture annulée',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.replace(
-                '/(traiteur)/invoices'
-              );
-            },
-          },
-        ]
-      );
-    } catch (e: any) {
-      Alert.alert(
         'Erreur',
-        e?.message ||
-          "Impossible d'annuler la facture"
+        e?.message || "Impossible d'annuler la facture."
       );
     } finally {
       setLoading(false);
     }
   }
 
+  function handleCancelInvoice() {
+    if (!id) {
+      Alert.alert('Erreur', 'Facture invalide');
+      return;
+    }
+
+    if (cleanReason.length < 3) {
+      Alert.alert('Erreur', "Veuillez saisir un motif d'annulation.");
+      return;
+    }
+
+    Alert.alert(
+      'Confirmation',
+      'Voulez-vous vraiment annuler cette facture ? Cette action ne doit être faite que pour une raison valable.',
+      [
+        {
+          text: 'Non',
+          style: 'cancel',
+        },
+        {
+          text: 'Oui, annuler',
+          style: 'destructive',
+          onPress: cancelInvoiceConfirmed,
+        },
+      ]
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Annuler la facture
+      <Text style={styles.title}>Annuler la facture</Text>
+
+      <Text style={styles.warningText}>
+        Cette action va marquer la facture comme annulée. Le motif sera conservé dans l’historique.
       </Text>
 
-      <Text style={styles.label}>
-        Motif d'annulation
-      </Text>
+      <Text style={styles.label}>Motif d'annulation</Text>
 
       <TextInput
         style={styles.input}
         multiline
         numberOfLines={5}
         placeholder="Exemple : erreur client, doublon, annulation commande..."
+        placeholderTextColor="#9CA3AF"
         value={reason}
         onChangeText={setReason}
+        maxLength={250}
+        editable={!loading}
       />
 
+      <Text style={styles.counter}>{cleanReason.length}/250 caractères</Text>
+
       <TouchableOpacity
-        style={[
-          styles.button,
-          loading && styles.disabledButton,
-        ]}
-        disabled={loading}
+        style={[styles.button, !canSubmit && styles.disabledButton]}
+        disabled={!canSubmit}
         onPress={handleCancelInvoice}
+        activeOpacity={0.85}
       >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>
-            Confirmer annulation
-          </Text>
+          <Text style={styles.buttonText}>Confirmer annulation</Text>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.back()}
+        disabled={loading}
+        activeOpacity={0.85}
       >
-        <Text style={styles.backButtonText}>
-          Retour
-        </Text>
+        <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
     </View>
   );
@@ -135,6 +148,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     color: '#111827',
+    marginBottom: 12,
+  },
+
+  warningText: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    color: '#991B1B',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
     marginBottom: 20,
   },
 
@@ -151,9 +177,17 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 120,
     textAlignVertical: 'top',
-    marginBottom: 20,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#D1D5DB',
+    color: '#111827',
+  },
+
+  counter: {
+    textAlign: 'right',
+    color: '#6B7280',
+    fontSize: 12,
+    marginBottom: 20,
   },
 
   button: {
@@ -170,7 +204,7 @@ const styles = StyleSheet.create({
   },
 
   disabledButton: {
-    opacity: 0.7,
+    opacity: 0.5,
   },
 
   backButton: {
