@@ -53,7 +53,7 @@ export interface Ingredient {
   quantity?: number;
   description?: string;
   stock?: number;
-  category?: string;
+  category: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

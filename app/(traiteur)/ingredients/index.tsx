@@ -1,8 +1,15 @@
-//app/(traiteur)/ingredients/index.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-//import Icon from 'react-native-vector-icons/MaterialIcons';
+// app/(traiteur)/ingredients/index.tsx
+import React, { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import { useIngredients } from '@/src/hooks/useFirestore';
 import { addIngredient } from '@/src/services/firestore';
@@ -11,28 +18,40 @@ import Modal from '@/components/Modal';
 import IngredientForm from '@/components/IngredientForm';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
-import { Ingredient } from '@/types';
-import { useRouter } from 'expo-router';
-
 
 export default function Ingredients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
+
   const router = useRouter();
 
-  const { data: ingredients, loading, error } = useIngredients({
-    orderBy: ['category', 'asc']
+  const {
+    data: ingredients = [],
+    loading,
+    error,
+  } = useIngredients({
+    orderBy: ['category', 'asc'],
   });
 
-  const filteredIngredients = ingredients.filter(ingredient =>
-    ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ingredient.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
 
-  // Get the current ingredient object from the updated list
+  const filteredIngredients = useMemo(() => {
+    if (!normalizedSearch) return ingredients;
+
+    return ingredients.filter((ingredient) => {
+      const name = ingredient.name ?? '';
+      const category = ingredient.category ?? '';
+
+      return (
+        name.toLowerCase().includes(normalizedSearch) ||
+        category.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [ingredients, normalizedSearch]);
+
   const selectedIngredient = selectedIngredientId
-    ? ingredients.find(i => i.id === selectedIngredientId) || null
+    ? ingredients.find((ingredient) => ingredient.id === selectedIngredientId) ?? null
     : null;
 
   if (loading) {
@@ -40,7 +59,7 @@ export default function Ingredients() {
   }
 
   if (error) {
-    return <ErrorMessage message="Error loading ingredients" />;
+    return <ErrorMessage message="Erreur lors du chargement des ingrédients" />;
   }
 
   return (
@@ -54,22 +73,23 @@ export default function Ingredients() {
         <Text style={styles.backPillText}>Configuration</Text>
       </TouchableOpacity>
 
-
-
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for an ingredient..."
+            placeholder="Rechercher un ingrédient..."
             placeholderTextColor="#666"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
+
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => setIsModalVisible(true)}>
+          onPress={() => setIsModalVisible(true)}
+          activeOpacity={0.8}
+        >
           <Icon name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -77,48 +97,62 @@ export default function Ingredients() {
       <ScrollView style={styles.content}>
         {filteredIngredients.length === 0 ? (
           <View style={styles.emptyState}>
-            <Icon name="error-outline" size={48} color="#665" />
-            <Text style={styles.emptyStateText}>No ingredients found</Text>
+            <Icon name="error-outline" size={48} color="#666" />
+            <Text style={styles.emptyStateText}>Aucun ingrédient trouvé</Text>
           </View>
         ) : (
-          filteredIngredients.map((ingredient) => (
-            <TouchableOpacity
-              key={ingredient.id}
-              style={styles.ingredientCard}
-              onPress={() => setSelectedIngredientId(ingredient.id)}>
-              <View style={styles.ingredientHeader}>
-                <View>
-                  <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                  <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
+          filteredIngredients.map((ingredient) => {
+            const stock = ingredient.stock ?? 0;
+            const price = ingredient.price ?? 0;
+            const unit = ingredient.unit ?? '';
+            const stockPercentage = Math.min(Math.max(stock, 0), 100);
+            const isLowStock = stock < 20;
+
+            return (
+              <TouchableOpacity
+                key={ingredient.id}
+                style={styles.ingredientCard}
+                onPress={() => setSelectedIngredientId(ingredient.id)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.ingredientHeader}>
+                  <View style={styles.ingredientInfo}>
+                    <Text style={styles.ingredientName}>
+                      {ingredient.name ?? 'Ingrédient sans nom'}
+                    </Text>
+                    <Text style={styles.ingredientCategory}>
+                      {ingredient.category ?? 'Non catégorisé'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.priceContainer}>
+                    <Icon name="attach-money" size={16} color="#007AFF" />
+                    <Text style={styles.price}>{price.toFixed(2)}</Text>
+                    {!!unit && <Text style={styles.unit}>/ {unit}</Text>}
+                  </View>
                 </View>
-                <View style={styles.priceContainer}>
-                  <Icon name="attach-money" size={16} color="#007AFF" />
-                  <Text style={styles.price}>{ingredient.price.toFixed(2)}</Text>
-                  <Text style={styles.unit}>/ {ingredient.unit}</Text>
+
+                <View style={styles.stockContainer}>
+                  <View style={styles.stockBar}>
+                    <View
+                      style={[
+                        styles.stockLevel,
+                        {
+                          width: `${stockPercentage}%`,
+                          backgroundColor: stock < 1 ? '#FF3B30' : '#4CAF50',
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={[styles.stockText, isLowStock && styles.stockWarning]}>
+                    Stock : {stock} {unit}
+                    {isLowStock && ' (Faible)'}
+                  </Text>
                 </View>
-              </View>
-              <View style={styles.stockContainer}>
-                <View style={styles.stockBar}>
-                  <View
-                    style={[
-                      styles.stockLevel,
-                      {
-                        width: `${Math.min((ingredient.stock / 100) * 100, 100)}%`,
-                        backgroundColor: ingredient.stock < 1 ? '#FF3B30' : '#4CAF50'
-                      }
-                    ]}
-                  />
-                </View>
-                <Text style={[
-                  styles.stockText,
-                  ingredient.stock < 20 && styles.stockWarning
-                ]}>
-                  Stock: {ingredient.stock} {ingredient.unit}
-                  {ingredient.stock < 20 && ' (Low)'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
 
@@ -135,6 +169,7 @@ export default function Ingredients() {
           }}
         />
       </Modal>
+
       <Modal visible={!!selectedIngredient}>
         {selectedIngredient && (
           <IngredientDetails
@@ -145,13 +180,32 @@ export default function Ingredients() {
       </Modal>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
     marginTop: 40,
+  },
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 12,
+    marginLeft: 20,
+  },
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
   },
   header: {
     padding: 20,
@@ -192,7 +246,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
@@ -219,6 +272,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
+    gap: 12,
+  },
+  ingredientInfo: {
+    flex: 1,
   },
   ingredientName: {
     fontFamily: 'Inter_600SemiBold',
@@ -271,40 +328,5 @@ const styles = StyleSheet.create({
   },
   stockWarning: {
     color: '#FF3B30',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  backIcon: {
-    fontSize: 24,
-    marginRight: 10,
-    color: '#111827',
-  },
-
-  backText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  backPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#EEF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginBottom: 12,
-  },
-
-  backPillText: {
-    color: '#0F4C81',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });
