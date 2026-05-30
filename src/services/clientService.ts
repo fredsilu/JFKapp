@@ -1,3 +1,4 @@
+//src/services/clientService.ts
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Client } from '@/types';
@@ -16,9 +17,10 @@ export async function fetchClients(): Promise<Client[]> {
       phone: data.phone || '',
       address: data.address || '',
 
-      // ✅ champs manquants
-      rccm: data.rccm || '',
-      idNat: data.idNat || '',
+      rccm: data.rccm || data.RCCM || '',
+      idNat: data.idNat || data.idnat || data.idNAT || '',
+      nif: data.nif || data.NIF || '',
+
       city: data.city || '',
 
       notes: data.notes || '',

@@ -1,3 +1,4 @@
+//src/services/buildDocumentHTML.ts
 import { CateringDocument } from "@/types/documents";
 
 export function buildDocumentHTML(document: CateringDocument): string {
@@ -290,8 +291,8 @@ Numéro : ${document.meta.number ?? ""}
 
 <div class="client">
 <strong>${document.client.name ?? ""}</strong><br/>
-${document.client.rccm ?? ""}<br/>
-${document.client.idNat ?? document.client.idNat ?? ""}<br/>
+${document.client.rccm ? `RCCM : ${document.client.rccm}<br/>` : ""}
+${document.client.idNat ? `ID Nat : ${document.client.idNat}<br/>` : ""}
 ${document.client.nif ? `NIF : ${document.client.nif}<br/>` : ""}
 ${document.client.addressLine1 ?? ""}<br/>
 ${document.client.city ?? ""}<br/>

@@ -95,7 +95,11 @@ export function buildProformaHTML(
   const clientRccm = safe(proforma.clientRccm);
   const clientIdNat = safe(proforma.clientIdNat);
   const clientAddress = safe(proforma.clientAddress);
-  const clientCity = safe(proforma.clientCity) || 'Kinshasa';
+  const clientCity =
+    safe(proforma.clientCity)
+      .replace('/ RDC', '')
+      .replace('/RDC', '')
+      .trim() || 'Kinshasa';
   const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
   const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
   const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');

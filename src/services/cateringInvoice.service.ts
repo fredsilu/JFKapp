@@ -208,16 +208,19 @@ export async function createInvoiceFromOrder(
 
       idNat:
         order.client?.idNat ??
-        order.client?.idNat ??
-        order.client?.idNat ??
+        order.client?.idnat ??
+        order.client?.idNAT ??
         order.clientIdNat ??
         order.idNat ??
-        order.idNat ??
+        order.idnat ??
+        order.idNAT ??
         "",
       nif:
         order.client?.nif ??
+        order.client?.NIF ??
         order.clientNif ??
         order.nif ??
+        order.NIF ??
         "",
     },
 

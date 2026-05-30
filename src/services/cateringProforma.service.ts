@@ -172,7 +172,7 @@ function normalizeProformaData(
     clientIdNat: cleanText(data.clientIdNat),
     clientAddress: cleanText(data.clientAddress),
     clientNif: cleanText(data.clientNif),
-    clientCity: cleanText(data.clientCity),
+    clientCity: cleanText(data.clientCity) || 'Kinshasa / RDC',
 
     service: cleanText(data.service),
     serviceType: cleanText(data.serviceType),

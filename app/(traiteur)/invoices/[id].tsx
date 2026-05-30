@@ -175,45 +175,52 @@ export default function InvoiceDetailScreen() {
       setPdfLoading(true);
 
       const totals: any = invoice.totals ?? {};
+      const client: any = invoice.client ?? {};
 
       const invoicePdfData: any = {
         ...invoice,
 
         invoiceNumber: invoice.number ?? "",
-        date: toIsoDate(invoice.issuedAt),
+        date:
+          toIsoDate(invoice.issuedAt) ||
+          toIsoDate(invoice.createdAt) ||
+          new Date().toISOString(),
 
-        clientName: invoice.client?.name ?? "",
-        clientRccm: invoice.client?.rccm ?? "",
-        clientIdNat: invoice.client?.idNat ?? "",
-        clientNif: invoice.client?.nif ?? "",
-        clientAddress: invoice.client?.address ?? "",
-        clientCity:
-          (invoice.client as any)?.city ??
-          "Kinshasa / RDC",
-
-        subtotal: Number(totals.subtotal ?? 0),
-        total: Number(totals.total ?? 0),
-
-        discount: Number(totals.discount ?? 0),
-        discountAmount: Number(
-          totals.discountAmount ?? totals.discount ?? 0
-        ),
-        totalAfterDiscount: Number(
-          totals.totalAfterDiscount ?? totals.total ?? 0
-        ),
-
+        documentType: invoice.documentType,
         status: invoice.status ?? "issued",
 
+        clientName: client.name ?? "",
+        clientRccm: client.rccm ?? client.RCCM ?? "",
+        clientIdNat: client.idNat ?? client.idnat ?? client.idNAT ?? "",
+        clientNif: client.nif ?? client.NIF ?? "",
+        clientAddress: client.address ?? "",
+        clientCity: client.city ?? "Kinshasa / RDC",
+
+        subtotal: Number(totals.subtotal ?? totals.totalHT ?? 0),
+        discount: Number(totals.discount ?? 0),
+        discountAmount: Number(totals.discountAmount ?? totals.discount ?? 0),
+        totalAfterDiscount: Number(
+          totals.totalAfterDiscount ?? totals.total ?? totals.subtotal ?? 0
+        ),
+        total: Number(totals.total ?? totals.totalAfterDiscount ?? 0),
+
         items:
-          invoice.items?.map((item: InvoiceItem) => ({
-            label: item.label ?? "",
-            quantity: Number(item.quantity ?? 0),
-            unitPrice: Number((item as any).unitPrice ?? 0),
-            days: getItemDays(item),
-            numberOfDays: getItemDays(item),
-            totalPrice: getItemTotal(item),
-            total: getItemTotal(item),
-          })) ?? [],
+          invoice.items?.map((item: InvoiceItem) => {
+            const days = getItemDays(item);
+            const quantity = Number(item.quantity ?? 0);
+            const unitPrice = Number((item as any).unitPrice ?? 0);
+            const total = getItemTotal(item);
+
+            return {
+              label: item.label ?? (item as any).name ?? "",
+              quantity,
+              unitPrice,
+              days,
+              numberOfDays: days,
+              totalPrice: total,
+              total,
+            };
+          }) ?? [],
       };
 
       const filename = getInvoicePdfFileName(invoice);

@@ -207,11 +207,31 @@ export default function CreateProformaFromSimulationScreen() {
   }
 
   function getClientRccm() {
-    return client?.rccm || '';
+    return (
+      client?.rccm ??
+      client?.RCCM ??
+      simulation?.clientRccm ??
+      ''
+    );
   }
 
-  function getclientIdNat() {
-    return client?.idNat || '';
+  function getClientIdNat() {
+    return (
+      client?.idNat ??
+      client?.idnat ??
+      client?.idNAT ??
+      simulation?.clientIdNat ??
+      ''
+    );
+  }
+
+  function getClientNif() {
+    return (
+      client?.nif ??
+      client?.NIF ??
+      simulation?.clientNif ??
+      ''
+    );
   }
 
   function getClientAddress() {
@@ -219,7 +239,11 @@ export default function CreateProformaFromSimulationScreen() {
   }
 
   function getClientCity() {
-    return client?.city || simulation?.clientCity || '';
+    return (
+      client?.city ??
+      simulation?.clientCity ??
+      'Kinshasa'
+    );
   }
 
   function getEventDate() {
@@ -271,8 +295,8 @@ export default function CreateProformaFromSimulationScreen() {
         clientId: simulation.clientId,
         clientName: getClientName(),
         clientRccm: getClientRccm(),
-        clientIdNat: getclientIdNat(),
-        clientNif: client?.nif || '',
+        clientIdNat: getClientIdNat(),
+        clientNif: getClientNif(),
         clientAddress: getClientAddress(),
         clientCity: getClientCity(),
 

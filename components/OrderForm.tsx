@@ -1621,39 +1621,6 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
           </View>
 
           <View style={styles.formField}>
-            <Text style={styles.label}>Heure de livraison</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="access-time" size={20} color="#665" />
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowDeliveryTimePicker(true)}
-              >
-                <Text style={{ color: deliveryTime ? '#000' : '#9CA3AF' }}>
-                  {deliveryTime || 'Sélectionner une heure'}
-                </Text>
-              </TouchableOpacity>
-
-              {showDeliveryTimePicker && (
-                <DateTimePicker
-                  value={deliveryTimeObj || new Date()}
-                  mode="time"
-                  display="default"
-                  onChange={(event, selectedTime) => {
-                    setShowDeliveryTimePicker(false);
-                    if (selectedTime) {
-                      setDeliveryTimeObj(selectedTime);
-                      const time = selectedTime
-                        .toTimeString()
-                        .slice(0, 5); // HH:mm
-                      setDeliveryTime(time);
-                    }
-                  }}
-                />
-              )}
-            </View>
-          </View>
-
-          <View style={styles.formField}>
             <Text style={styles.label}>Adresse de livraison</Text>
             <View style={styles.inputContainer}>
               <Icon name="location-on" size={20} color="#665" />
