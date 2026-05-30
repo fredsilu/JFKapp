@@ -1,3 +1,4 @@
+//app/(traiteur)/analytics/index.tsx
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -64,7 +65,7 @@ export default function AnalyticsScreen() {
         <Text style={styles.emptyText}>Aucune commande pour afficher les analytics</Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}>
+          onPress={() => router.replace('/(traiteur)/sales')}>
           <Text style={styles.backButtonText}>Retour</Text>
         </TouchableOpacity>
       </View>
@@ -80,7 +81,7 @@ export default function AnalyticsScreen() {
             <Text style={styles.title}>Analytics</Text>
             <Text style={styles.subtitle}>Tableau de bord des performances</Text>
           </View>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.replace('/(traiteur)/sales')}>
             <MaterialIcons name="close" size={24} color="#666" />
           </TouchableOpacity>
         </View>

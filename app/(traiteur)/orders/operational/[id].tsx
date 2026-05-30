@@ -28,7 +28,7 @@ export default function OperationalOrderSheetScreen() {
     try {
       if (!id) {
         Alert.alert('Erreur', 'Identifiant de commande manquant');
-        router.back();
+        router.replace('/(traiteur)/orders');
         return;
       }
 
@@ -38,7 +38,7 @@ export default function OperationalOrderSheetScreen() {
 
       if (!data) {
         Alert.alert('Erreur', 'Commande introuvable');
-        router.back();
+        router.replace('/(traiteur)/orders');
         return;
       }
 
@@ -269,7 +269,17 @@ export default function OperationalOrderSheetScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (!id) {
+              router.replace('/(traiteur)/orders');
+              return;
+            }
+
+            router.replace({
+              pathname: '/(traiteur)/orders/[id]',
+              params: { id },
+            });
+          }}
         >
           <MaterialIcons name="arrow-back" size={22} color="#111827" />
         </TouchableOpacity>

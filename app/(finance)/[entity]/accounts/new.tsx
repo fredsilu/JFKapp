@@ -1,3 +1,4 @@
+//app/(finance)/[entity]/accounts/new.tsx
 import {
   View,
   Text,
@@ -42,7 +43,7 @@ export default function NewAccount() {
         isActive: true,
       });
 
-      router.back();
+      router.replace(`/(finance)/${entity}/accounts`);
     } catch (error) {
       console.error(error);
       Alert.alert("Erreur", "Impossible de créer le compte.");

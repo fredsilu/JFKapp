@@ -105,11 +105,9 @@ export default function InvoiceHistoryScreen() {
   const loadData = useCallback(async () => {
     if (!id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace("/(traiteur)/invoices");
-      }
+
+      router.replace("/(traiteur)/invoices");
+
       return;
     }
 
@@ -119,11 +117,9 @@ export default function InvoiceHistoryScreen() {
       const invoiceData = await getCateringInvoiceById(id);
       if (!invoiceData) {
         Alert.alert("Erreur", "Facture introuvable");
-        if (router.canGoBack()) {
-          router.back();
-        } else {
-          router.replace("/(traiteur)/invoices");
-        }
+
+        router.replace("/(traiteur)/invoices");
+
         return;
       }
 
@@ -212,11 +208,15 @@ export default function InvoiceHistoryScreen() {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace("/(traiteur)/invoices");
+          if (!id) {
+            router.replace('/(traiteur)/invoices');
+            return;
           }
+
+          router.replace({
+            pathname: '/(traiteur)/invoices/[id]',
+            params: { id },
+          });
         }}
       >
         <Text style={styles.backButtonText}>Retour</Text>

@@ -95,7 +95,7 @@ export default function InvoiceDetailScreen() {
   const loadInvoice = useCallback(async () => {
     if (!id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
-      router.back();
+      router.replace("/(traiteur)/invoices");
       return;
     }
 
@@ -106,7 +106,7 @@ export default function InvoiceDetailScreen() {
 
       if (!data) {
         Alert.alert("Erreur", "Facture introuvable");
-        router.back();
+        router.replace("/(traiteur)/invoices");
         return;
       }
 
@@ -151,18 +151,18 @@ export default function InvoiceDetailScreen() {
       'Evenement';
 
     if (documentType === 'CREDIT_NOTE') {
-      return `AVOIR_${number}_${eventName}.pdf`;
+      return `AVOIR_${number}.pdf`;
     }
 
     if (status === 'cancelled') {
-      return `FACTURE_ANNULEE_${number}_${eventName}.pdf`;
+      return `FACTURE_ANNULEE_${number}.pdf`;
     }
 
     if (status === 'replaced') {
-      return `FACTURE_REMPLACEE_${number}_${eventName}.pdf`;
+      return `FACTURE_REMPLACEE_${number}.pdf`;
     }
 
-    return `FACTURE_${number}_${eventName}.pdf`;
+    return `FACTURE_${number}.pdf`;
   }
 
   async function handleGeneratePDF() {

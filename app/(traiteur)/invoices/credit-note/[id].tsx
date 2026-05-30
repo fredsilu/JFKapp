@@ -29,11 +29,9 @@ export default function CreateCreditNoteScreen() {
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
-      Alert.alert("Erreur", "Identifiant facture introuvable");
-      router.back();
+      Alert.alert('Erreur', 'Identifiant introuvable');
       return;
     }
-
     try {
       setLoading(true);
 
@@ -41,7 +39,9 @@ export default function CreateCreditNoteScreen() {
 
       if (!data) {
         Alert.alert("Erreur", "Facture introuvable");
-        router.back();
+
+        router.replace('/(traiteur)/invoices');
+
         return;
       }
 
@@ -246,7 +246,17 @@ export default function CreateCreditNoteScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => {
+          if (!invoice?.id) {
+            router.replace('/(traiteur)/invoices');
+            return;
+          }
+
+          router.replace({
+            pathname: '/(traiteur)/invoices/[id]',
+            params: { id: invoice.id },
+          });
+        }}
         disabled={saving}
       >
         <Text style={styles.backButtonText}>Retour</Text>

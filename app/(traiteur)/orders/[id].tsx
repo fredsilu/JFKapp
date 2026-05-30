@@ -24,7 +24,7 @@ export default function OrderDetailScreen() {
     try {
       if (!id) {
         Alert.alert('Erreur', 'Identifiant de commande manquant');
-        router.back();
+        router.replace('/(traiteur)/orders');
         return;
       }
 
@@ -34,7 +34,7 @@ export default function OrderDetailScreen() {
 
       if (!data) {
         Alert.alert('Erreur', 'Commande introuvable');
-        router.back();
+        router.replace('/(traiteur)/orders');
         return;
       }
 
@@ -73,7 +73,7 @@ export default function OrderDetailScreen() {
   return (
     <OrderDetails
       order={order}
-      onClose={() => router.back()}
+      onClose={() => router.replace('/(traiteur)/orders')}
       onUpdated={load}
     />
   );

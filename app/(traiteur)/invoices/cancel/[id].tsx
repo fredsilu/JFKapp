@@ -127,7 +127,7 @@ export default function CancelInvoiceScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={() => router.replace('/(traiteur)/invoices')}
         disabled={loading}
         activeOpacity={0.85}
       >

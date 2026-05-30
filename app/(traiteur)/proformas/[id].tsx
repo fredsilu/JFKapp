@@ -51,7 +51,7 @@ export default function ProformaDetailScreen() {
 
       if (!data) {
         Alert.alert('Erreur', 'Proforma introuvable');
-        router.replace('/(traiteur)/proformas'); s
+        router.replace('/(traiteur)/proformas'); 
         return;
       }
 

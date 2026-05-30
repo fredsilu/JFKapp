@@ -64,11 +64,15 @@ export default function ReplaceInvoiceScreen() {
   );
 
   function goBack() {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/(traiteur)/invoices");
+    if (!id) {
+      router.replace('/(traiteur)/invoices');
+      return;
     }
+
+    router.replace({
+      pathname: '/(traiteur)/invoices/[id]',
+      params: { id },
+    });
   }
   function confirmReplaceInvoice(confirmMessage: string) {
     return new Promise<boolean>((resolve) => {
