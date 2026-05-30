@@ -1,5 +1,6 @@
 // app/(traiteur)/orders/[id].tsx
 import React, { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -7,7 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+
 
 import OrderDetails from '@/components/OrderDetails';
 import { getOrderById } from '@/src/services/cateringOrderService';
@@ -46,9 +47,11 @@ export default function OrderDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   if (loading) {
     return (

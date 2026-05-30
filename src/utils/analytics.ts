@@ -1,3 +1,4 @@
+//src/utils/analytics.ts
 import { Order, Dish, Client } from '@/types';
 
 export interface KPI {
@@ -105,7 +106,10 @@ export function calculateKPIs(orders: Order[]): KPI[] {
   const weekTrend = weekBeforeRevenue ? ((weekRevenue - weekBeforeRevenue) / weekBeforeRevenue) * 100 : 0;
 
   const averageOrderValue = monthOrders.length > 0 ? monthRevenue / monthOrders.length : 0;
-  const deliveredOrders = monthOrders.filter(o => o.status === 'Livré').length;
+  const deliveredOrders =
+    monthOrders.filter(
+      o => normalizeOrderStatus(o.status) === 'delivered'
+    ).length;
   const completionRate = monthOrders.length > 0 ? (deliveredOrders / monthOrders.length) * 100 : 0;
 
   return [
@@ -248,24 +252,84 @@ export function getDailyRevenueData(orders: Order[], days: number = 7): DailyRev
     }));
 }
 
-export function getStatusDistribution(orders: Order[]): { status: string; count: number; percentage: number }[] {
-  const statusMap = {
-    'En cours': 0,
-    'En préparation': 0,
-    'Livré': 0,
+function normalizeOrderStatus(status?: string) {
+  switch (status) {
+    case 'En cours':
+      return 'confirmed';
+
+    case 'En préparation':
+      return 'in-production';
+
+    case 'Livré':
+      return 'delivered';
+
+    case 'Annulé':
+      return 'cancelled';
+
+    case 'draft':
+    case 'sent':
+    case 'confirmed':
+    case 'in-production':
+    case 'delivered':
+    case 'cancelled':
+      return status;
+
+    default:
+      return 'confirmed';
+  }
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'draft':
+      return 'Brouillon';
+
+    case 'sent':
+      return 'Envoyée';
+
+    case 'confirmed':
+      return 'Confirmée';
+
+    case 'in-production':
+      return 'En préparation';
+
+    case 'delivered':
+      return 'Livrée';
+
+    case 'cancelled':
+      return 'Annulée';
+
+    default:
+      return 'Confirmée';
+  }
+}
+
+export function getStatusDistribution(
+  orders: Order[]
+): { status: string; count: number; percentage: number }[] {
+  const statusMap: Record<string, number> = {
+    draft: 0,
+    sent: 0,
+    confirmed: 0,
+    'in-production': 0,
+    delivered: 0,
+    cancelled: 0,
   };
 
-  orders.forEach(order => {
-    statusMap[order.status]++;
+  orders.forEach((order) => {
+    const status = normalizeOrderStatus(order.status);
+    statusMap[status] = (statusMap[status] || 0) + 1;
   });
 
   const total = orders.length || 1;
 
-  return [
-    { status: 'En cours', count: statusMap['En cours'], percentage: (statusMap['En cours'] / total) * 100 },
-    { status: 'En préparation', count: statusMap['En préparation'], percentage: (statusMap['En préparation'] / total) * 100 },
-    { status: 'Livré', count: statusMap['Livré'], percentage: (statusMap['Livré'] / total) * 100 },
-  ].filter(s => s.count > 0);
+  return Object.entries(statusMap)
+    .map(([status, count]) => ({
+      status: getStatusLabel(status),
+      count,
+      percentage: (count / total) * 100,
+    }))
+    .filter((item) => item.count > 0);
 }
 
 export function getIngredientUsageData(orders: Order[]): IngredientUsage[] {

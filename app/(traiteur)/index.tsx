@@ -1,6 +1,8 @@
 // app/(traiteur)/index.tsx
 
 import React from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import {
   View,
   Text,
@@ -8,7 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
+  Image, Alert,
 } from 'react-native';
 import { useOrders, useClients, useDishes } from '@/src/hooks/useFirestore';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
@@ -34,6 +36,16 @@ export default function DashboardScreen() {
 
   if (ordersError || clientsError || dishesError) {
     return <ErrorMessage message="Erreur lors du chargement du dashboard" />;
+  }
+
+  async function handleLogout() {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Erreur déconnexion:', error);
+      Alert.alert('Erreur', 'Impossible de se déconnecter.');
+    }
   }
 
   function toDate(value: any): Date | null {
@@ -73,32 +85,113 @@ export default function DashboardScreen() {
   }
 
   function normalizeStatus(status?: string) {
-    return status || 'En cours';
+    switch (status) {
+      case 'En cours':
+        return 'confirmed';
+
+      case 'En préparation':
+        return 'in-production';
+
+      case 'Livré':
+        return 'delivered';
+
+      case 'Facturé':
+        return 'invoiced';
+
+      case 'Annulé':
+        return 'cancelled';
+
+      case 'draft':
+      case 'sent':
+      case 'confirmed':
+      case 'in-production':
+      case 'delivered':
+      case 'cancelled':
+      case 'invoiced':
+        return status;
+
+      default:
+        return 'confirmed';
+    }
   }
 
   function isDeliveredOrder(order: any) {
     const status = normalizeStatus(order.status);
 
-    return (
-      status === 'Livré' ||
-      status === 'delivered' ||
-      status === 'Facturé' ||
-      status === 'invoiced'
-    );
+    return status === 'delivered' || status === 'invoiced';
   }
 
   function isClosedOrder(order: any) {
     const status = normalizeStatus(order.status);
 
     return (
-      status === 'Livré' ||
       status === 'delivered' ||
-      status === 'Facturé' ||
       status === 'invoiced' ||
-      status === 'Annulé' ||
       status === 'cancelled'
     );
   }
+
+  function getStatusLabel(status?: string) {
+    const normalizedStatus = normalizeStatus(status);
+
+    switch (normalizedStatus) {
+      case 'draft':
+        return 'Brouillon';
+
+      case 'sent':
+        return 'Envoyée';
+
+      case 'confirmed':
+        return 'Confirmée';
+
+      case 'in-production':
+        return 'En préparation';
+
+      case 'delivered':
+        return 'Livrée';
+
+      case 'invoiced':
+        return 'Facturée';
+
+      case 'cancelled':
+        return 'Annulée';
+
+      default:
+        return 'Confirmée';
+    }
+  }
+
+  function getStatusColor(status?: string) {
+    const normalizedStatus = normalizeStatus(status);
+
+    switch (normalizedStatus) {
+      case 'draft':
+        return '#6B7280';
+
+      case 'sent':
+        return '#007AFF';
+
+      case 'confirmed':
+        return '#5856D6';
+
+      case 'in-production':
+        return '#FF9500';
+
+      case 'delivered':
+        return '#34C759';
+
+      case 'invoiced':
+        return '#1E40AF';
+
+      case 'cancelled':
+        return '#EF4444';
+
+      default:
+        return '#6B7280';
+    }
+  }
+
+
 
   function getOrderAmount(order: any) {
     return Number(
@@ -191,6 +284,13 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Icon name="logout" size={22} color="#fff" />
+        </TouchableOpacity>
+        
         <View>
           <Text style={styles.title}>Dashboard</Text>
           <Text style={styles.subtitle}>Vue d’ensemble Traiteur</Text>
@@ -377,67 +477,7 @@ export default function DashboardScreen() {
   );
 }
 
-function getStatusLabel(status: string) {
-  switch (status) {
-    case 'En cours':
-    case 'draft':
-      return 'En cours';
 
-    case 'En préparation':
-    case 'in-production':
-      return 'En préparation';
-
-    case 'confirmed':
-    case 'confirmed-order':
-      return 'Confirmée';
-
-    case 'Livré':
-    case 'delivered':
-      return 'Livrée';
-
-    case 'Facturé':
-    case 'invoiced':
-      return 'Facturée';
-
-    case 'Annulé':
-    case 'cancelled':
-      return 'Annulée';
-
-    default:
-      return status || 'En cours';
-  }
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'En cours':
-    case 'draft':
-      return '#007AFF';
-
-    case 'confirmed':
-    case 'confirmed-order':
-      return '#5856D6';
-
-    case 'En préparation':
-    case 'in-production':
-      return '#FF9500';
-
-    case 'Livré':
-    case 'delivered':
-      return '#34C759';
-
-    case 'Facturé':
-    case 'invoiced':
-      return '#1E40AF';
-
-    case 'Annulé':
-    case 'cancelled':
-      return '#EF4444';
-
-    default:
-      return '#666';
-  }
-}
 
 const styles = StyleSheet.create({
   container: {
@@ -637,5 +677,10 @@ const styles = StyleSheet.create({
   dishMeta: {
     fontSize: 14,
     color: '#666',
+  },
+  logoutButton: {
+    backgroundColor: '#DC2626',
+    borderRadius: 8,
+    padding: 10,
   },
 });

@@ -349,13 +349,13 @@ function formatAmount(value: any): string {
 
 function getStatusColor(status?: string) {
   switch (status) {
-    case 'En cours':
+    case 'confirmed':
       return '#007AFF';
-    case 'En préparation':
+    case 'in-production':
       return '#FF9500';
-    case 'Livré':
+    case 'delivered':
       return '#34C759';
-    case 'Annulé':
+    case 'cancelled':
       return '#FF3B30';
     default:
       return '#6B7280';

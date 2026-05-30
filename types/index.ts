@@ -171,11 +171,7 @@ export interface Order {
     | 'in-production'
     | 'delivered'
     | 'cancelled'
-    | 'En cours'
-    | 'En préparation'
-    | 'Livré'
-    | 'Facturé'
-    | 'Annulé';
+   
 
   // Liens documents
   proformaId?: string;

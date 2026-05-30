@@ -1,3 +1,4 @@
+//app/preparation-ingredients.tsx
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -17,10 +18,10 @@ interface AggregatedIngredient {
 
 export default function PreparationIngredientsScreen() {
   const { data: orders = [], loading, error } = useOrders({
-    where: ['status', '==', 'En préparation'],
+    where: ['status', '==', 'in-production'],
   });
 
-  // Aggregate ingredients from all "En préparation" orders
+  // Aggregate ingredients from all "in-production" orders
   const aggregatedIngredients = useMemo(() => {
     const ingredientMap: { [key: string]: AggregatedIngredient } = {};
 

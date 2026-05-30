@@ -65,7 +65,7 @@ export default function OrdersScreen() {
   const totalOrders = orders.length;
 
   const completedOrders = useMemo(() => {
-    return orders.filter((o: any) => o.status === 'Livré').length;
+    return orders.filter((o: any) => o.status === 'delivered').length;
   }, [orders]);
 
   function getOrderAmount(order: any) {
@@ -95,49 +95,57 @@ export default function OrdersScreen() {
   }
 
   function getStatusLabel(status?: string) {
-    switch (status) {
-      case 'En cours':
-        return 'En cours';
-      case 'En préparation':
-        return 'En préparation';
-      case 'Livré':
-        return 'Livré';
-      case 'Annulé':
-        return 'Annulé';
-      default:
-        return status || 'En cours';
-    }
+  switch (status) {
+    case 'draft':
+      return 'Brouillon';
+    case 'sent':
+      return 'Envoyée';
+    case 'confirmed':
+      return 'Confirmée';
+    case 'in-production':
+      return 'En préparation';
+    case 'delivered':
+      return 'Livrée';
+    case 'cancelled':
+      return 'Annulée';
+    default:
+      return 'Confirmée';
   }
+}
 
   function getStatusStyle(status?: string) {
-    switch (status) {
-      case 'En cours':
-        return {
-          backgroundColor: '#DBEAFE',
-          color: '#1D4ED8',
-        };
-      case 'En préparation':
-        return {
-          backgroundColor: '#FEF3C7',
-          color: '#92400E',
-        };
-      case 'Livré':
-        return {
-          backgroundColor: '#DCFCE7',
-          color: '#166534',
-        };
-      case 'Annulé':
-        return {
-          backgroundColor: '#FEE2E2',
-          color: '#991B1B',
-        };
-      default:
-        return {
-          backgroundColor: '#E5E7EB',
-          color: '#374151',
-        };
-    }
+  switch (status) {
+    case 'confirmed':
+      return {
+        backgroundColor: '#DBEAFE',
+        color: '#1D4ED8',
+      };
+
+    case 'in-production':
+      return {
+        backgroundColor: '#FEF3C7',
+        color: '#92400E',
+      };
+
+    case 'delivered':
+      return {
+        backgroundColor: '#DCFCE7',
+        color: '#166534',
+      };
+
+    case 'cancelled':
+      return {
+        backgroundColor: '#FEE2E2',
+        color: '#991B1B',
+      };
+
+    default:
+      return {
+        backgroundColor: '#E5E7EB',
+        color: '#374151',
+      };
   }
+}
   function getInvoiceBadge(order: CateringOrder) {
     if (order.invoiceId) {
       return {
@@ -346,13 +354,13 @@ export default function OrdersScreen() {
                   <Text style={styles.primaryActionText}>Voir</Text>
                 </TouchableOpacity>
 
-                {order.status === 'En cours' && (
+                {order.status === 'confirmed' && (
                   <TouchableOpacity
                     style={styles.secondaryAction}
                     onPress={() =>
                       confirmStatusChange(
                         order.id,
-                        'En préparation' as CateringOrder['status']
+                        'in-production'
                       )
                     }
                   >
@@ -360,13 +368,13 @@ export default function OrdersScreen() {
                   </TouchableOpacity>
                 )}
 
-                {order.status === 'En préparation' && (
+                {order.status === 'in-production' && (
                   <TouchableOpacity
                     style={styles.successAction}
                     onPress={() =>
                       confirmStatusChange(
                         order.id,
-                        'Livré' as CateringOrder['status']
+                        'delivered'
                       )
                     }
                   >
@@ -374,13 +382,13 @@ export default function OrdersScreen() {
                   </TouchableOpacity>
                 )}
 
-                {order.status !== 'Livré' && order.status !== 'Annulé' && (
+                {order.status !== 'delivered' && order.status !== 'cancelled' && (
                   <TouchableOpacity
                     style={styles.deleteAction}
                     onPress={() =>
                       confirmStatusChange(
                         order.id,
-                        'Annulé' as CateringOrder['status']
+                        'cancelled'
                       )
                     }
                   >

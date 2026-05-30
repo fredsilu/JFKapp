@@ -182,21 +182,39 @@ export default function OrderDetails({
    * =========================
    */
 
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'En cours':
-        return '#2563EB';
+  const getStatusColor = (status?: string) => {
+  switch (status) {
+    case 'confirmed':
+      return '#2563EB';
+    case 'in-production':
+      return '#D97706';
+    case 'delivered':
+      return '#059669';
+    case 'cancelled':
+      return '#DC2626';
+    default:
+      return '#6B7280';
+  }
+};
 
-      case 'En préparation':
-        return '#D97706';
-
-      case 'Livré':
-        return '#059669';
-
-      default:
-        return '#6B7280';
-    }
-  };
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'draft':
+      return 'Brouillon';
+    case 'sent':
+      return 'Envoyée';
+    case 'confirmed':
+      return 'Confirmée';
+    case 'in-production':
+      return 'En préparation';
+    case 'delivered':
+      return 'Livrée';
+    case 'cancelled':
+      return 'Annulée';
+    default:
+      return 'Confirmée';
+  }
+};
 
   const statusColor = getStatusColor(order.status);
 
@@ -206,23 +224,24 @@ export default function OrderDetails({
    * =========================
    */
 
-  const getNextStatus = (status?: string) => {
-    switch (status) {
-      case 'draft':
-      case 'confirmed':
-      case 'En cours':
-        return 'En préparation';
+ const getNextStatus = (status?: string) => {
+  switch (status) {
+    case 'draft':
+    case 'sent':
+    case 'confirmed':
+      return 'in-production';
 
-      case 'En préparation':
-        return 'Livré';
+    case 'in-production':
+      return 'delivered';
 
-      case 'Livré':
-        return null;
+    case 'delivered':
+    case 'cancelled':
+      return null;
 
-      default:
-        return 'En préparation';
-    }
-  };
+    default:
+      return 'in-production';
+  }
+};
 
   const confirmAction = async (title: string, message: string) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -508,7 +527,7 @@ export default function OrderDetails({
                     },
                   ]}
                 >
-                  {order.status}
+                  {getStatusLabel(order.status)}
                 </Text>
               </View>
             </View>
@@ -623,7 +642,7 @@ export default function OrderDetails({
 
           {/* STATUS BUTTON */}
 
-          {order.status !== 'Livré' && (
+          {order.status !== 'delivered' && order.status !== 'cancelled' && (
             <TouchableOpacity
               style={[
                 styles.nextStatusButton,
@@ -643,11 +662,7 @@ export default function OrderDetails({
                   styles.nextStatusText
                 }
               >
-                Passer au statut :
-                {' '}
-                {
-                  getNextStatus(order.status as any) as any
-                }
+                Passer au statut : {getStatusLabel(getNextStatus(order.status as any) as any)}
               </Text>
 
               <MaterialIcons
