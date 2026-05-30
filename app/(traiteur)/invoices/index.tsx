@@ -45,6 +45,9 @@ export default function InvoicesScreen() {
 
   const [cancelReason, setCancelReason] = useState('');
   const [creditAmount, setCreditAmount] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] =
+    useState<'all' | InvoiceStatus>('all');
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -94,6 +97,32 @@ export default function InvoicesScreen() {
       return sum + (invoice.totals?.total ?? 0);
     }, 0);
   }, [activeInvoices]);
+
+  const displayedInvoices = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return invoices.filter((invoice) => {
+      const matchesStatus =
+        statusFilter === 'all' ||
+        invoice.status === statusFilter;
+
+      const searchable = [
+        invoice.number,
+        invoice.client?.name,
+        invoice.orderNumber,
+        invoice.proformaNumber,
+        invoice.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      const matchesSearch =
+        !q || searchable.includes(q);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [invoices, search, statusFilter]);
 
   function formatDateFromTimestamp(dateValue?: any) {
     const date = dateValue?.toDate?.();
@@ -272,6 +301,47 @@ export default function InvoicesScreen() {
 
         <Text style={styles.title}>Factures</Text>
 
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher par client, numéro, statut..."
+          placeholderTextColor="#9CA3AF"
+          value={search}
+          onChangeText={setSearch}
+        />
+
+        <View style={styles.filterRow}>
+          {[
+            { label: 'Toutes', value: 'all' },
+            { label: 'Émises', value: 'issued' },
+            { label: 'Payées', value: 'paid' },
+            { label: 'Partielles', value: 'partial' },
+            { label: 'Annulées', value: 'cancelled' },
+            { label: 'Remplacées', value: 'replaced' },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.value}
+              style={[
+                styles.filterChip,
+                statusFilter === item.value &&
+                styles.activeFilterChip,
+              ]}
+              onPress={() =>
+                setStatusFilter(item.value as any)
+              }
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  statusFilter === item.value &&
+                  styles.activeFilterChipText,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Nombre total de factures</Text>
           <Text style={styles.summaryValue}>{invoices.length}</Text>
@@ -291,10 +361,10 @@ export default function InvoicesScreen() {
           </Text>
         </View>
 
-        {invoices.length === 0 ? (
+        {displayedInvoices.length === 0 ? (
           <Text style={styles.empty}>Aucune facture créée</Text>
         ) : (
-          invoices.map((invoice) => {
+          displayedInvoices.map((invoice) => {
             const statusColors = getStatusColors(invoice.status);
 
             return (
@@ -749,5 +819,45 @@ const styles = StyleSheet.create({
   primaryModalButtonText: {
     color: '#fff',
     fontWeight: '800',
+  },
+
+  searchInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    marginBottom: 10,
+  },
+
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+
+  filterChip: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+
+  activeFilterChip: {
+    backgroundColor: '#111827',
+  },
+
+  filterChipText: {
+    color: '#374151',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  activeFilterChipText: {
+    color: '#fff',
   },
 });

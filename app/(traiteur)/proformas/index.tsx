@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
+  ActivityIndicator, TextInput,
   Alert,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -37,6 +37,7 @@ export default function ProformasScreen() {
   const [proformas, setProformas] = useState<CateringProforma[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ProformaView>('active');
+  const [search, setSearch] = useState('');
 
   const loadProformas = useCallback(async () => {
     try {
@@ -45,6 +46,7 @@ export default function ProformasScreen() {
       const data = await getCateringProformas();
 
       const visibleData = data.filter((p) => p.isDeleted !== true);
+  
 
       const sortedData = [...visibleData].sort((a, b) => {
         const dateA = a.createdAt?.toMillis?.() || new Date(a.issueDate || '').getTime() || 0;
@@ -125,11 +127,33 @@ export default function ProformasScreen() {
   }, [proformas]);
 
   const displayedProformas = useMemo(() => {
-    if (view === 'active') return activeProformas;
-    if (view === 'converted') return convertedProformas;
+    const base =
+      view === 'active'
+        ? activeProformas
+        : view === 'converted'
+          ? convertedProformas
+          : proformas;
 
-    return proformas;
-  }, [view, activeProformas, convertedProformas, proformas]);
+    const q = search.trim().toLowerCase();
+
+    if (!q) return base;
+
+    return base.filter((p) => {
+      return [
+        p.number,
+        p.clientName,
+        p.clientId,
+        p.eventName,
+        p.orderNumber,
+        p.invoiceNumber,
+        p.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [view, activeProformas, convertedProformas, proformas, search]);
 
   const activeTotal = useMemo(() => {
     return activeProformas.reduce(
@@ -267,6 +291,13 @@ export default function ProformasScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Proformas</Text>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Rechercher par client, numéro, statut..."
+        placeholderTextColor="#9CA3AF"
+        value={search}
+        onChangeText={setSearch}
+      />
 
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Proformas en cours</Text>
@@ -580,6 +611,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     marginBottom: 4,
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    marginBottom: 14,
   },
 
   amount: {

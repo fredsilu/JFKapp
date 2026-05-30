@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Alert, TextInput,
   Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
@@ -23,6 +23,9 @@ import { MaterialIcons as Icon } from '@expo/vector-icons';
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<CateringOrder[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | CateringOrder['status']>('all');
 
   const loadOrders = useCallback(async () => {
     try {
@@ -95,57 +98,57 @@ export default function OrdersScreen() {
   }
 
   function getStatusLabel(status?: string) {
-  switch (status) {
-    case 'draft':
-      return 'Brouillon';
-    case 'sent':
-      return 'Envoyée';
-    case 'confirmed':
-      return 'Confirmée';
-    case 'in-production':
-      return 'En préparation';
-    case 'delivered':
-      return 'Livrée';
-    case 'cancelled':
-      return 'Annulée';
-    default:
-      return 'Confirmée';
+    switch (status) {
+      case 'draft':
+        return 'Brouillon';
+      case 'sent':
+        return 'Envoyée';
+      case 'confirmed':
+        return 'Confirmée';
+      case 'in-production':
+        return 'En préparation';
+      case 'delivered':
+        return 'Livrée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return 'Confirmée';
+    }
   }
-}
 
   function getStatusStyle(status?: string) {
-  switch (status) {
-    case 'confirmed':
-      return {
-        backgroundColor: '#DBEAFE',
-        color: '#1D4ED8',
-      };
+    switch (status) {
+      case 'confirmed':
+        return {
+          backgroundColor: '#DBEAFE',
+          color: '#1D4ED8',
+        };
 
-    case 'in-production':
-      return {
-        backgroundColor: '#FEF3C7',
-        color: '#92400E',
-      };
+      case 'in-production':
+        return {
+          backgroundColor: '#FEF3C7',
+          color: '#92400E',
+        };
 
-    case 'delivered':
-      return {
-        backgroundColor: '#DCFCE7',
-        color: '#166534',
-      };
+      case 'delivered':
+        return {
+          backgroundColor: '#DCFCE7',
+          color: '#166534',
+        };
 
-    case 'cancelled':
-      return {
-        backgroundColor: '#FEE2E2',
-        color: '#991B1B',
-      };
+      case 'cancelled':
+        return {
+          backgroundColor: '#FEE2E2',
+          color: '#991B1B',
+        };
 
-    default:
-      return {
-        backgroundColor: '#E5E7EB',
-        color: '#374151',
-      };
+      default:
+        return {
+          backgroundColor: '#E5E7EB',
+          color: '#374151',
+        };
+    }
   }
-}
   function getInvoiceBadge(order: CateringOrder) {
     if (order.invoiceId) {
       return {
@@ -219,6 +222,32 @@ export default function OrdersScreen() {
       ]
     );
   }
+  const displayedOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return orders.filter((order: any) => {
+      const matchesStatus =
+        statusFilter === 'all' || order.status === statusFilter;
+
+      const searchable = [
+        order.number,
+        order.client?.name,
+        order.clientName,
+        order.clientId,
+        order.proformaNumber,
+        order.dateLivraison,
+        order.deliveryAddress,
+        order.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      const matchesSearch = !q || searchable.includes(q);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [orders, search, statusFilter]);
 
   if (loading) {
     return (
@@ -228,6 +257,8 @@ export default function OrdersScreen() {
       </View>
     );
   }
+
+
 
   return (
     <ScrollView style={styles.container}>
@@ -243,6 +274,47 @@ export default function OrdersScreen() {
 
       <Text style={styles.title}>Commandes</Text>
 
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Rechercher par client, numéro, statut..."
+        placeholderTextColor="#9CA3AF"
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      <View style={styles.filterRow}>
+        {[
+          { label: 'Toutes', value: 'all' },
+          { label: 'Confirmées', value: 'confirmed' },
+          { label: 'Préparation', value: 'in-production' },
+          { label: 'Livrées', value: 'delivered' },
+          { label: 'Annulées', value: 'cancelled' },
+        ].map((item) => (
+          <TouchableOpacity
+            key={item.value}
+            style={[
+              styles.filterChip,
+              statusFilter === item.value &&
+              styles.activeFilterChip,
+            ]}
+            onPress={() => setStatusFilter(item.value as any)}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                statusFilter === item.value &&
+                styles.activeFilterChipText,
+              ]}
+            >
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+
+
+
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Commandes créées</Text>
         <Text style={styles.summaryValue}>{totalOrders}</Text>
@@ -256,10 +328,10 @@ export default function OrdersScreen() {
         <Text style={styles.summaryAmount}>{completedOrders}</Text>
       </View>
 
-      {orders.length === 0 ? (
+      {displayedOrders.length === 0 ? (
         <Text style={styles.empty}>Aucune commande créée</Text>
       ) : (
-        orders.map((order: any) => {
+        displayedOrders.map((order: any) => {
           const statusStyle = getStatusStyle(order.status);
           const invoiceBadge = getInvoiceBadge(order);
 
@@ -532,6 +604,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
   },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    marginBottom: 14,
+  },
   successAction: {
     flex: 1,
     minWidth: 90,
@@ -618,4 +701,34 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     textAlignVertical: 'center',
   },
+
+
+
+filterRow: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginBottom: 14,
+},
+
+filterChip: {
+  backgroundColor: '#E5E7EB',
+  paddingHorizontal: 10,
+  paddingVertical: 7,
+  borderRadius: 999,
+},
+
+activeFilterChip: {
+  backgroundColor: '#111827',
+},
+
+filterChipText: {
+  color: '#374151',
+  fontSize: 12,
+  fontWeight: '800',
+},
+
+activeFilterChipText: {
+  color: '#fff',
+},
 });
