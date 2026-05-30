@@ -126,7 +126,14 @@ export default function CateringSimulationsScreen() {
 
         <TouchableOpacity
           style={styles.newButton}
-          onPress={() => router.push('/(traiteur)/simulations/new')}
+          onPress={() =>
+            router.push({
+              pathname: '/(traiteur)/simulations/new',
+              params: {
+                backTo: '/(traiteur)/simulations',
+              },
+            })
+          }
         >
           <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
         </TouchableOpacity>
@@ -162,9 +169,11 @@ export default function CateringSimulationsScreen() {
                   style={styles.createProformaBtn}
                   onPress={() =>
                     router.push({
-                      pathname:
-                        '/(traiteur)/proformas/create-from-simulation',
-                      params: { simulationId: sim.id },
+                      pathname: '/(traiteur)/proformas/create-from-simulation',
+                      params: {
+                        simulationId: sim.id,
+                        backTo: '/(traiteur)/simulations',
+                      },
                     })
                   }
                 >
@@ -178,7 +187,10 @@ export default function CateringSimulationsScreen() {
                     onPress={() =>
                       router.push({
                         pathname: '/(traiteur)/simulations/[id]',
-                        params: { id: sim.id },
+                        params: {
+                          id: sim.id,
+                          backTo: '/(traiteur)/simulations',
+                        },
                       })
                     }
                   >
@@ -333,22 +345,22 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   backPill: {
-  alignSelf: 'flex-start',
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 6,
-  backgroundColor: '#EEF6FF',
-  borderColor: '#BFDBFE',
-  borderWidth: 1,
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 999,
-  marginBottom: 12,
-},
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 12,
+  },
 
-backPillText: {
-  color: '#0F4C81',
-  fontSize: 14,
-  fontWeight: '700',
-},
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

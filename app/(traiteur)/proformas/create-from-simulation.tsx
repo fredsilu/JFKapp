@@ -501,7 +501,7 @@ export default function CreateProformaFromSimulationScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/(traiteur)/simulations')}
+        onPress={() => router.replace('/(traiteur)/simulations')}
       >
         <Text style={styles.backButtonText}>Retour aux simulations</Text>
       </TouchableOpacity>

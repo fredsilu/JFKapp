@@ -41,7 +41,7 @@ export default function ProformaDetailScreen() {
   const loadProforma = useCallback(async () => {
     if (!id) {
       Alert.alert('Erreur', 'Identifiant proforma introuvable');
-      router.back();
+      router.replace('/(traiteur)/proformas');
       return;
     }
 
@@ -51,7 +51,7 @@ export default function ProformaDetailScreen() {
 
       if (!data) {
         Alert.alert('Erreur', 'Proforma introuvable');
-        router.back();
+        router.replace('/(traiteur)/proformas'); s
         return;
       }
 
@@ -496,7 +496,7 @@ export default function ProformaDetailScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/(traiteur)/proformas')}
+        onPress={() => router.replace('/(traiteur)/proformas')}
       >
         <Text style={styles.backButtonText}>Retour à la liste</Text>
       </TouchableOpacity>

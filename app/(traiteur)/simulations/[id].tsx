@@ -13,7 +13,9 @@ import { getCateringSimulations } from '@/src/services/cateringSimulation.servic
 import { fetchClients } from '@/src/services/clientService';
 
 export default function CateringSimulationDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{
+    id: string;
+  }>();
   const [clientName, setClientName] = useState<string>('—');
   const [sim, setSim] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,8 @@ export default function CateringSimulationDetailsScreen() {
       </View>
     );
   }
+
+
 
   const prestations = [
     {
@@ -233,8 +237,11 @@ export default function CateringSimulationDetailsScreen() {
             style={styles.secondaryButton}
             onPress={() =>
               router.push({
-                pathname: '/proformas/create-from-simulation',
-                params: { simulationId: sim.id },
+                pathname: '/(traiteur)/proformas/create-from-simulation',
+                params: {
+                  simulationId: sim.id,
+                  backTo: '/(traiteur)/simulations',
+                },
               })
             }
           >
@@ -249,9 +256,10 @@ export default function CateringSimulationDetailsScreen() {
           style={styles.secondaryButton}
           onPress={() =>
             router.push({
-              pathname: '/tools/calculator',
+              pathname: '/(traiteur)/tools/calculator',
               params: {
                 reuseSimulationId: sim.id,
+                backTo: '/(traiteur)/simulations',
               },
             })
           }
@@ -263,9 +271,11 @@ export default function CateringSimulationDetailsScreen() {
 
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push('/simulations')}
+          onPress={() => router.replace('/(traiteur)/simulations')}
         >
-          <Text style={styles.backButtonText}>Retour aux simulations</Text>
+          <Text style={styles.backButtonText}>
+            Retour aux simulations
+          </Text>
         </TouchableOpacity>
       </View>
 

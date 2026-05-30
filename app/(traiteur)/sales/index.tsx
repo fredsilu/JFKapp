@@ -1,3 +1,4 @@
+//app/(traiteur)/sales/index.tsx
 import { useRouter } from 'expo-router';
 import {
   ScrollView,
@@ -64,7 +65,14 @@ export default function SalesHome() {
             key={item.title}
             style={styles.card}
             activeOpacity={0.75}
-            onPress={() => router.push(item.route as any)}
+            onPress={() =>
+              router.push({
+                pathname: item.route as any,
+                params: {
+                  backTo: '/(traiteur)/sales',
+                },
+              })
+            }
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <View style={styles.cardText}>
@@ -140,6 +148,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   content: {
-  paddingBottom: 40, // 🔥 espace pour le tab bar
-},
+    paddingBottom: 40, // 🔥 espace pour le tab bar
+  },
 });

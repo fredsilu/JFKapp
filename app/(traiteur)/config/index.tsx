@@ -10,19 +10,19 @@ export default function ConfigHome() {
       title: "Clients",
       subtitle: "Créer et gérer les clients",
       icon: "👥",
-      route: "/clients",
+      route: "/(traiteur)/clients",
     },
     {
       title: "Plats",
       subtitle: "Gérer les plats, menus et références",
       icon: "🍽️",
-      route: "/dishes",
+      route: "/(traiteur)/dishes",
     },
     {
       title: "Ingrédients",
       subtitle: "Gérer les ingrédients",
       icon: "🥦",
-      route: "/ingredients",
+      route: "/(traiteur)/ingredients",
     },
     {
       title: "Aide & règles",
@@ -42,7 +42,14 @@ export default function ConfigHome() {
           <TouchableOpacity
             key={item.title}
             style={styles.card}
-            onPress={() => router.push(item.route as any)}
+            onPress={() =>
+              router.push({
+                pathname: item.route as any,
+                params: {
+                  backTo: "/(traiteur)/config",
+                },
+              })
+            }
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.cardTitle}>{item.title}</Text>
