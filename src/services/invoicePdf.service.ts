@@ -1,9 +1,44 @@
 // src/services/invoicePdf.service.ts
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system/legacy";
 
 import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
 import { InvoicePdfData } from "@/types/invoicePdf.types";
+
+function sanitizeFileName(value?: string | null): string {
+  return String(value || "document")
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "_")
+    .slice(0, 100);
+}
+
+function getInvoicePdfFileName(invoice: InvoicePdfData): string {
+  const documentType = invoice.documentType;
+  const status = invoice.status;
+  const number = invoice.invoiceNumber || "document";
+
+  const eventName =
+    (invoice as any).eventName ||
+    (invoice as any).eventTitle ||
+    invoice.clientName ||
+    "Evenement";
+
+  if (documentType === "CREDIT_NOTE") {
+    return `AVOIR_${number}.pdf`;
+  }
+
+  if (status === "cancelled") {
+    return `FACTURE_ANNULEE_${number}.pdf`;
+  }
+
+  if (status === "replaced") {
+    return `FACTURE_REMPLACEE_${number}.pdf`;
+  }
+
+  return `FACTURE_${number}.pdf`;
+}
 
 function getPdfDialogTitle(invoice: InvoicePdfData) {
   const documentType = invoice.documentType;
@@ -26,7 +61,8 @@ function getPdfDialogTitle(invoice: InvoicePdfData) {
 }
 
 export async function generateInvoicePDF(
-  invoice: InvoicePdfData
+  invoice: InvoicePdfData,
+  filename?: string
 ): Promise<string> {
   try {
     if (!invoice?.invoiceNumber) {
@@ -40,17 +76,29 @@ export async function generateInvoicePDF(
       base64: false,
     });
 
+    const finalFilename =
+      sanitizeFileName(
+        (filename || getInvoicePdfFileName(invoice)).replace(/\.pdf$/i, "")
+      ) + ".pdf";
+
+    const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
+
+    await FileSystem.copyAsync({
+      from: uri,
+      to: finalUri,
+    });
+
     const canShare = await Sharing.isAvailableAsync();
 
     if (canShare) {
-      await Sharing.shareAsync(uri, {
+      await Sharing.shareAsync(finalUri, {
         mimeType: "application/pdf",
         dialogTitle: getPdfDialogTitle(invoice),
         UTI: "com.adobe.pdf",
       });
     }
 
-    return uri;
+    return finalUri;
   } catch (error) {
     console.error("❌ Erreur génération PDF facture:", error);
     throw error;

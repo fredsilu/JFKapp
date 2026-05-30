@@ -162,7 +162,7 @@ export default function ProformaDetailScreen() {
         signatureBase64,
       });
 
-      const filename = `Proforma-${proforma.number || proforma.id || 'client'}.pdf`;
+      const filename = `PROFORMA_${proforma.number}.pdf`;
 
       if (Platform.OS === 'web') {
         downloadHtmlAsPdfWeb(
@@ -173,8 +173,8 @@ export default function ProformaDetailScreen() {
         return;
       }
 
-      const uri = await generateDocumentPDF(html);
-      await shareDocumentPDF(uri);
+      const uri = await generateDocumentPDF(html, filename);
+      await shareDocumentPDF(uri, 'Partager la proforma');
     } catch (e: any) {
       console.error('❌ generate proforma pdf error:', e);
       Alert.alert(
@@ -463,7 +463,7 @@ export default function ProformaDetailScreen() {
           ))}
         </View>
       ) : null}
-      
+
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -734,5 +734,5 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     fontWeight: '700',
   },
-  
+
 });

@@ -143,24 +143,26 @@ export default function InvoiceDetailScreen() {
     const documentType = (invoice as any)?.documentType;
     const status = invoice?.status;
 
-    const number =
-      invoice?.number ||
-      invoice?.id ||
-      "document";
+    const number = invoice?.number || invoice?.id || 'document';
+    const eventName =
+      (invoice as any).eventName ||
+      invoice.designation ||
+      invoice.client?.name ||
+      'Evenement';
 
-    if (documentType === "CREDIT_NOTE") {
-      return `Avoir-${number}.pdf`;
+    if (documentType === 'CREDIT_NOTE') {
+      return `AVOIR_${number}_${eventName}.pdf`;
     }
 
-    if (status === "cancelled") {
-      return `Facture-ANNULEE-${number}.pdf`;
+    if (status === 'cancelled') {
+      return `FACTURE_ANNULEE_${number}_${eventName}.pdf`;
     }
 
-    if (status === "replaced") {
-      return `Facture-REMPLACEE-${number}.pdf`;
+    if (status === 'replaced') {
+      return `FACTURE_REMPLACEE_${number}_${eventName}.pdf`;
     }
 
-    return `Facture-${number}.pdf`;
+    return `FACTURE_${number}_${eventName}.pdf`;
   }
 
   async function handleGeneratePDF() {
@@ -231,7 +233,7 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
-      await generateInvoicePDF(invoicePdfData);
+      await generateInvoicePDF(invoicePdfData, filename);
     } catch (error) {
       console.error("❌ PDF error:", error);
       Alert.alert("Erreur", "Impossible de générer le PDF");
