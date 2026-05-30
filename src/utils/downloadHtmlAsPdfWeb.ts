@@ -1,3 +1,4 @@
+//src/utils/downloadHtmlAsPdfWeb.ts
 export function downloadHtmlAsPdfWeb(
   html: string,
   filename: string,
@@ -5,7 +6,8 @@ export function downloadHtmlAsPdfWeb(
 ) {
   if (typeof window === 'undefined') return;
 
-  const targetWindow = printWindow || window.open('', '_blank');
+  const targetWindow =
+    printWindow || window.open('', '_blank');
 
   if (!targetWindow) {
     alert('Veuillez autoriser les popups pour générer le PDF.');
@@ -14,6 +16,11 @@ export function downloadHtmlAsPdfWeb(
 
   targetWindow.document.open();
   targetWindow.document.write(html);
+
+  // ✅ AJOUT
+  targetWindow.document.title =
+    filename.replace('.pdf', '');
+
   targetWindow.document.close();
 
   const triggerPrint = () => {
