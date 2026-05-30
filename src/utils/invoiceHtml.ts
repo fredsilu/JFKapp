@@ -168,6 +168,10 @@ export function buildInvoiceHTML(
     (invoice as any).eventDate || (invoice as any).dateLivraison,
     'fr'
   );
+  const eventName =
+    safe((invoice as any).eventName) ||
+    safe((invoice as any).eventTitle) ||
+    'Évènement sans nom';
 
   const headerHTML = `
 <div class="header">
@@ -655,9 +659,9 @@ ${(invoice as any).creditNoteForInvoiceNumber
   <tbody>
     <tr class="event">
       <td>
-        Evénement :<br/>
-        Date événement : ${eventDateFormatted}<br/>
-        Nbr de personnes : ${items?.[0]?.quantity || ''}
+        <strong>Evénement :</strong> ${eventName}<br/>
+        <strong>Date événement :</strong> ${eventDateFormatted}<br/>
+        <strong>Nbr de personnes :</strong> ${items?.[0]?.quantity || ''}
       </td>
       <td></td>
       <td></td>

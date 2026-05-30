@@ -229,6 +229,12 @@ export async function createInvoiceFromOrder(
     dateLivraison: order.dateLivraison ?? "",
     deliveryTime: order.deliveryTime ?? order.heureLivraison ?? "",
     deliveryAddress: order.deliveryAddress ?? order.lieu ?? "",
+    eventName:
+      order.eventName ??
+      order.proformaEventName ??
+      order.simulationName ??
+      order.designation ??
+      "",
 
     guestCount: order.guestCount ?? 0,
 

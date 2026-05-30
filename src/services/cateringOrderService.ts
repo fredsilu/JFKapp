@@ -371,6 +371,12 @@ export async function createOrderFromProforma(proforma: any) {
 
     name: proforma.name ?? proforma.eventName ?? 'Commande traiteur',
 
+    eventName:
+      proforma.eventName ??
+      proforma.name ??
+      proforma.designation ??
+      '',
+
     clientId: proforma.clientId ?? '',
 
     client: {

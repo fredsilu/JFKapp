@@ -1,3 +1,4 @@
+//src/services/cateringSimulation.service.ts
 import {
   collection,
   getDocs,
@@ -123,4 +124,23 @@ export async function markSimulationAsConverted(
     convertedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+}
+
+
+/* ================================
+   GET SIMULATION EVENT NAME
+================================ */
+export function getSimulationEventName(
+  simulation: CateringSimulation | null | undefined
+): string {
+  if (!simulation) return '';
+
+  const data = simulation as any;
+
+  return (
+    data.eventName ||
+    data.name ||
+    data.title ||
+    ''
+  );
 }

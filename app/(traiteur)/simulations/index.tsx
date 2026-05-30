@@ -1,3 +1,4 @@
+//app/(traiteur)/simulations/index.tsx
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,

@@ -102,6 +102,9 @@ export function buildProformaHTML(
       .trim() || 'Kinshasa';
   const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
   const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
+  const eventName =
+    safe((proforma as any).eventName) ||
+    'Évènement sans nom';
   const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');
   const clientNif = safe(proforma.clientNif);
 
@@ -554,9 +557,9 @@ body {
     <tbody>
       <tr class="event">
         <td>
-          Evénement :<br/>
-          Date événement : ${eventDateFormatted}<br/>
-          Nbr de personnes : ${proforma.items?.[0]?.quantity || ''}
+          <strong>Evénement :</strong> ${eventName}<br/>
+          <strong>Date événement :</strong> ${eventDateFormatted}<br/>
+          <strong>Nbr de personnes :</strong> ${proforma.items?.[0]?.quantity || ''}
         </td>
         <td></td>
         <td></td>

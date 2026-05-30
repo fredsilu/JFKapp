@@ -54,6 +54,7 @@ export type CateringProforma = {
   issueDate: string;
   validityDate?: string;
   eventDate?: string;
+  eventName?: string;
 
   status: ProformaStatus;
 
@@ -181,6 +182,7 @@ function normalizeProformaData(
     issueDate: cleanText(data.issueDate),
     validityDate: cleanText(data.validityDate),
     eventDate: cleanText(data.eventDate),
+    eventName: cleanText(data.eventName),
 
     status: data.status || 'draft',
     isInvoiced: Boolean(data.isInvoiced),
@@ -331,6 +333,10 @@ export async function updateCateringProforma(
 
   if (typeof data.eventDate !== 'undefined') {
     payload.eventDate = cleanText(data.eventDate);
+  }
+
+  if (typeof data.eventName !== 'undefined') {
+    payload.eventName = cleanText(data.eventName);
   }
 
   if (typeof data.orderId !== 'undefined') {

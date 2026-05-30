@@ -1,3 +1,4 @@
+//app/(traiteur)/simulations/[id].tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,

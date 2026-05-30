@@ -302,7 +302,12 @@ export default function CreateProformaFromSimulationScreen() {
 
         issueDate: new Date().toISOString().slice(0, 10),
         validityDate: getValidityDate(),
+
         eventDate: getEventDate(),
+        eventName:
+          simulation.name ||
+          simulation.eventName ||
+          'Évènement sans nom',
 
         status: 'draft',
 

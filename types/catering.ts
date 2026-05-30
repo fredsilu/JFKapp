@@ -200,6 +200,7 @@ export type CateringOrder = {
   client: CateringDocumentClient;
 
   designation: string;
+  eventName?: string;
 
   dateLivraison: string;
   deliveryTime?: string;
@@ -334,7 +335,7 @@ export type CateringInvoice = {
   sourceProformaId?: string | null;
   sourceProformaNumber?: string;
 
-  
+
 
   /**
    * Numéro officiel de la facture.
@@ -356,6 +357,7 @@ export type CateringInvoice = {
   dateLivraison: string;
   deliveryTime?: string;
   deliveryAddress?: string;
+  eventName?: string;
 
   guestCount?: number;
 
