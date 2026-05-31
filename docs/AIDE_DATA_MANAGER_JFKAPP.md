@@ -81,7 +81,6 @@ catering_simulations
 catering_proformas
 orders
 catering_invoices
-catering_documents
 ```
 
 ### financial
@@ -91,7 +90,6 @@ Données financières :
 ```txt
 orders
 catering_invoices
-catering_documents
 ```
 
 ### all
@@ -106,7 +104,6 @@ catering_simulations
 catering_proformas
 orders
 catering_invoices
-catering_documents
 ```
 
 ### Collections individuelles
@@ -467,8 +464,7 @@ Chaque fichier contient :
     "catering_simulations": [],
     "catering_proformas": [],
     "orders": [],
-    "catering_invoices": [],
-    "catering_documents": []
+    "catering_invoices": []
   }
 }
 ```

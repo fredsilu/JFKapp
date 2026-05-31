@@ -9,8 +9,7 @@ export type DataGroupName =
     | "simulations"
     | "proformas"
     | "orders"
-    | "invoices"
-    | "documents";
+    | "invoices";
 
 export const APP_NAME = "JFKApp";
 
