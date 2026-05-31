@@ -22,13 +22,11 @@ export const DATA_GROUPS: Record<DataGroupName, string[]> = {
         "catering_proformas",
         "orders",
         "catering_invoices",
-        "catering_documents",
     ],
 
     financial: [
         "orders",
         "catering_invoices",
-        "catering_documents",
     ],
 
     all: [
@@ -39,7 +37,6 @@ export const DATA_GROUPS: Record<DataGroupName, string[]> = {
         "catering_proformas",
         "orders",
         "catering_invoices",
-        "catering_documents",
     ],
 
     clients: ["clients"],
@@ -50,7 +47,6 @@ export const DATA_GROUPS: Record<DataGroupName, string[]> = {
     proformas: ["catering_proformas"],
     orders: ["orders"],
     invoices: ["catering_invoices"],
-    documents: ["catering_documents"],
 };
 
 export function getCollectionsFromGroup(groupName: string): string[] {
