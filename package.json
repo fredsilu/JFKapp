@@ -23,6 +23,8 @@
     "data:backup:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/backup.ts",
     "data:list:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/listBackups.ts",
     "data:list:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/listBackups.ts",
+    "data:verify:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/verifyBackup.ts",
+    "data:verify:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/verifyBackup.ts",
     "import:ingredients:dry": "tsx scripts/importIngredients.ts --dry",
     "import:ingredients:test": "tsx scripts/importIngredients.ts",
     "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts"

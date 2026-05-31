@@ -1,6 +1,7 @@
 export type DataGroupName =
     | "master"
     | "operations"
+    | "financial"
     | "all"
     | "clients"
     | "ingredients"
@@ -19,6 +20,12 @@ export const DATA_GROUPS: Record<DataGroupName, string[]> = {
     operations: [
         "catering_simulations",
         "catering_proformas",
+        "orders",
+        "catering_invoices",
+        "catering_documents",
+    ],
+
+    financial: [
         "orders",
         "catering_invoices",
         "catering_documents",

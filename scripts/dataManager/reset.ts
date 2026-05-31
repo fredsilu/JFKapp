@@ -30,8 +30,7 @@ async function createBackup(env: string, group: string) {
     const backup: Record<string, any[]> = {};
 
     for (const collectionName of collections) {
-        backup[collectionName] =
-            await exportCollection(collectionName);
+        backup[collectionName] = await exportCollection(collectionName);
     }
 
     const payload = {
@@ -46,16 +45,10 @@ async function createBackup(env: string, group: string) {
 
     ensureDir(dir);
 
-    const filename =
-        `${group}-before-reset-${getTimestamp()}.json`;
-
+    const filename = `${group}-before-reset-${getTimestamp()}.json`;
     const fullPath = path.join(dir, filename);
 
-    fs.writeFileSync(
-        fullPath,
-        JSON.stringify(payload, null, 2),
-        "utf8"
-    );
+    fs.writeFileSync(fullPath, JSON.stringify(payload, null, 2), "utf8");
 
     console.log("");
     console.log("🛟 Backup automatique créé");
@@ -66,15 +59,7 @@ async function createBackup(env: string, group: string) {
 }
 
 async function deleteCollection(collectionName: string) {
-    const snapshot =
-        await db.collection(collectionName).get();
-
-    if (snapshot.empty) {
-        console.log(
-            `ℹ️ ${collectionName} : déjà vide`
-        );
-        return;
-    }
+    const snapshot = await db.collection(collectionName).get();
 
     let batch = db.batch();
     let count = 0;
@@ -98,30 +83,24 @@ async function deleteCollection(collectionName: string) {
         await batch.commit();
     }
 
-    console.log(
-        `🗑️ ${collectionName} : ${total} supprimés`
-    );
+    console.log(`🗑️ ${collectionName} : ${total} supprimés`);
 }
 
 async function main() {
     const env = getEnv();
+    const isDryRun = process.argv.includes("--dry-run");
 
     if (env !== "test") {
-        throw new Error(
-            "RESET INTERDIT EN PRODUCTION"
-        );
+        throw new Error("RESET INTERDIT EN PRODUCTION");
     }
 
     const groupName = process.argv[2];
 
     if (!groupName) {
-        throw new Error(
-            "Usage : npm run data:reset:test -- operations"
-        );
+        throw new Error("Usage : npm run data:reset:test -- operations");
     }
 
-    const collections =
-        getCollectionsFromGroup(groupName);
+    const collections = getCollectionsFromGroup(groupName);
 
     console.log("");
     console.log("================================");
@@ -129,42 +108,46 @@ async function main() {
     console.log("================================");
     console.log("Environment :", env);
     console.log("Group       :", groupName);
+    console.log("Dry Run     :", isDryRun ? "YES" : "NO");
     console.log("");
 
-    for (const collectionName of collections) {
-        const snapshot =
-            await db.collection(collectionName).get();
+    let total = 0;
 
-        console.log(
-            `${collectionName}: ${snapshot.size} documents`
-        );
+    for (const collectionName of collections) {
+        const snapshot = await db.collection(collectionName).get();
+
+        total += snapshot.size;
+
+        console.log(`${collectionName}: ${snapshot.size} documents`);
+    }
+
+    console.log("");
+    console.log(`TOTAL : ${total} documents`);
+    console.log("");
+
+    if (isDryRun) {
+        console.log("🧪 DRY RUN : aucune donnée n'a été supprimée.");
+        console.log("");
+        return;
     }
 
     await createBackup(env, groupName);
 
     console.log("");
     console.log("⚠️ ATTENTION");
-    console.log(
-        "Toutes les données du groupe vont être supprimées."
-    );
+    console.log("Toutes les données du groupe vont être supprimées.");
     console.log("");
 
-    await requireConfirmation(
-        "RESET_TEST_JFKAPP"
-    );
+    await requireConfirmation("RESET_TEST_JFKAPP");
 
     for (const collectionName of collections) {
         await deleteCollection(collectionName);
     }
 
-    writeAuditLog(
-        `[RESET] env=${env} group=${groupName}`
-    );
+    writeAuditLog(`[RESET] env=${env} group=${groupName}`);
 
     console.log("");
-    console.log(
-        "✅ Reset terminé avec succès"
-    );
+    console.log("✅ Reset terminé avec succès");
     console.log("");
 }
 

@@ -66,11 +66,6 @@ function resolveBackupFile(env: string, group: string, backupArg: string) {
 async function deleteCollection(collectionName: string) {
     const snapshot = await db.collection(collectionName).get();
 
-    if (snapshot.empty) {
-        console.log(`ℹ️ ${collectionName} : déjà vide`);
-        return;
-    }
-
     let batch = db.batch();
     let count = 0;
     let total = 0;
@@ -91,18 +86,13 @@ async function deleteCollection(collectionName: string) {
         await batch.commit();
     }
 
-    console.log(`🗑️ ${collectionName} : ${total} documents supprimés`);
+    console.log(`🗑️ ${collectionName} : ${total} supprimés`);
 }
 
 async function restoreCollection(
     collectionName: string,
     docs: Array<{ id: string; data: any }>
 ) {
-    if (!docs || docs.length === 0) {
-        console.log(`ℹ️ ${collectionName} : aucun document à restaurer`);
-        return;
-    }
-
     let batch = db.batch();
     let count = 0;
     let total = 0;
@@ -126,7 +116,7 @@ async function restoreCollection(
         await batch.commit();
     }
 
-    console.log(`✅ ${collectionName} : ${total} documents restaurés`);
+    console.log(`✅ ${collectionName} : ${total} restaurés`);
 }
 
 async function createSafetyBackup(env: string, group: string) {
@@ -142,7 +132,7 @@ async function createSafetyBackup(env: string, group: string) {
         }));
     }
 
-    const backupPayload = {
+    const payload = {
         app: APP_NAME,
         env,
         group: `${group}-before-restore`,
@@ -159,7 +149,7 @@ async function createSafetyBackup(env: string, group: string) {
 
     const fullPath = path.join(dir, filename);
 
-    fs.writeFileSync(fullPath, JSON.stringify(backupPayload, null, 2), "utf8");
+    fs.writeFileSync(fullPath, JSON.stringify(payload, null, 2), "utf8");
 
     writeAuditLog(`[SAFETY_BACKUP] env=${env} group=${group} file=${filename}`);
 
@@ -195,11 +185,10 @@ async function main() {
 
     const groupName = process.argv[2];
     const backupArg = process.argv[3];
+    const isDryRun = process.argv.includes("--dry-run");
 
     if (!groupName || !backupArg) {
-        throw new Error(
-            "Usage : npm run data:restore:test -- operations latest"
-        );
+        throw new Error("Usage : npm run data:restore:test -- operations latest");
     }
 
     const expectedCollections = getCollectionsFromGroup(groupName);
@@ -233,14 +222,26 @@ async function main() {
     console.log("Group       :", groupName);
     console.log("Backup      :", backupFile);
     console.log("Mode        :", env === "test" ? "REPLACE" : "MERGE");
+    console.log("Dry Run     :", isDryRun ? "YES" : "NO");
     console.log("");
+
+    let total = 0;
 
     for (const collectionName of expectedCollections) {
         const count = backup.collections[collectionName]?.length ?? 0;
+        total += count;
         console.log(`- ${collectionName}: ${count} documents`);
     }
 
     console.log("");
+    console.log(`TOTAL : ${total} documents`);
+    console.log("");
+
+    if (isDryRun) {
+        console.log("🧪 DRY RUN : aucune donnée n'a été modifiée.");
+        console.log("");
+        return;
+    }
 
     if (env === "production") {
         await requireProductionSecurity(groupName, backupFile);
