@@ -2,3 +2,4 @@
 [2026-05-31T06:41:03.758Z] [BACKUP] env=test group=operations file=operations-2026-05-31T06-41-03-752Z.json
 [2026-05-31T06:41:49.227Z] [BACKUP] env=test group=clients file=clients-2026-05-31T06-41-49-192Z.json
 [2026-05-31T06:42:29.659Z] [BACKUP] env=test group=operations file=operations-2026-05-31T06-42-29-641Z.json
+[2026-05-31T06:46:25.277Z] [RESTORE] env=test group=operations file=operations-2026-05-31T06-42-29-641Z.json mode=REPLACE
