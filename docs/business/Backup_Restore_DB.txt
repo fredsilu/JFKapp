@@ -1,0 +1,59 @@
+#### Sauvegarder l'environnement test avant une grosse modification
+npm run backup:test
+    Résultat : backups/jfkapp-test-backup-2026-05-31-....
+
+#### Vider complètement les données de test
+npm run reset:test:catering
+
+#### Restaurer les données
+npm run import:test:catering
+
+
+
+
+### Ce que je te recommande de faire maintenant
+
+Comme tu es en phase de stabilisation de JFKApp, je mettrais en place les scripts suivants :
+
+| Script              | Description                                 |
+| ------------------- | ------------------------------------------- |
+| backup:test         | Sauvegarde complète                         |
+| restore:test        | Restauration complète                       |
+| reset:test:catering | Simulations, Proformas, Commandes, Factures |
+| export:ingredients  | Export ingrédients                          |
+| import:ingredients  | Import ingrédients                          |
+| export:clients      | Export clients                              |
+| import:clients      | Import clients                              |
+| export:dishes       | Export plats                                |
+| import:dishes       | Import plats                                |
+
+Ainsi tu pourras :
+
+* tester librement
+* supprimer des données
+* revenir en arrière en 30 secondes
+* partager une base de démonstration à un autre développeur
+* migrer facilement vers la production le jour du go-live
+
+---
+
+### Pour la suite de JFKApp
+
+Je pense que nous avons maintenant suffisamment de sécurité pour commencer la phase de **tests fonctionnels complets** :
+
+1. Ingrédients
+2. Plats
+3. Clients
+4. Simulations
+5. Proformas
+6. Commandes
+7. Factures
+8. Avoirs
+9. PDF
+10. Statistiques
+
+Pendant quelques jours, note chaque bug rencontré.
+
+Ensuite nous ferons une **release candidate (RC)** avant la version production, ce qui évitera d'ajouter encore des fonctionnalités alors qu'il reste peut-être quelques anomalies à corriger.
+
+D'après tout ce que nous avons corrigé ces dernières semaines, JFKApp commence à être suffisamment mature pour entrer dans cette phase de validation métier.

@@ -17,14 +17,13 @@
     "web:production": "dotenv -e .env.production -- expo start --web",
     "build:web:test": "dotenv -e .env.test -- expo export --platform web",
     "build:web:production": "dotenv -e .env.production -- expo export --platform web",
-    "import:ingredients:dry":
-      "tsx scripts/importIngredients.ts --dry",
-
-    "import:ingredients:test":
-      "tsx scripts/importIngredients.ts",
-
-    "import:ingredients:prod":
-      "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
+    "data:backup:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/backup.ts",
+    "data:restore:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/restore.ts",
+    "data:reset:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/reset.ts",
+    "data:backup:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/backup.ts",
+    "import:ingredients:dry": "tsx scripts/importIngredients.ts --dry",
+    "import:ingredients:test": "tsx scripts/importIngredients.ts",
+    "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
   },
   "expo": {
     "doctor": {
@@ -33,7 +32,6 @@
       }
     }
   },
-  
   "dependencies": {
     "@expo-google-fonts/montserrat": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
@@ -82,9 +80,11 @@
     "@types/firebase": "^2.4.32",
     "@types/react": "~19.1.10",
     "@types/react-test-renderer": "^18.3.0",
+    "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   },
   "private": true
