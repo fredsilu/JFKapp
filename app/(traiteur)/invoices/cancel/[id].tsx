@@ -8,7 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
+  ActivityIndicator, Platform,
 } from 'react-native';
 
 import { router, useLocalSearchParams } from 'expo-router';
@@ -68,6 +68,20 @@ export default function CancelInvoiceScreen() {
 
     if (cleanReason.length < 3) {
       Alert.alert('Erreur', "Veuillez saisir un motif d'annulation.");
+      return;
+    }
+
+    if (loading) return;
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Voulez-vous vraiment annuler cette facture ? Cette action ne doit être faite que pour une raison valable.'
+      );
+
+      if (confirmed) {
+        cancelInvoiceConfirmed();
+      }
+
       return;
     }
 
