@@ -462,45 +462,7 @@ body {
   background: white;
 }
 
-.status-banner {
-  margin-top: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  text-align: center;
-  letter-spacing: 1px;
-}
 
-.status-issued {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.status-cancelled {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.status-replaced {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-
-.status-partial {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-paid {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.status-draft {
-  background: #e5e7eb;
-  color: #374151;
-}
   .relation-box {
   margin-top: 14px;
   padding: 10px 12px;
@@ -566,12 +528,7 @@ ${headerHTML}
 </div>
 <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
 
-<div class="status-banner status-${status}">
-  ${getStatusLabel(
-      status,
-      (invoice as any).documentType
-    )}
-</div>
+
 
 <div class="client-block">
   <div class="client-name">${clientName}</div>
