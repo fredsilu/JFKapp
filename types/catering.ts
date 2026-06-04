@@ -274,6 +274,7 @@ export type CateringInvoiceCorrectionType =
 
 export type CateringInvoiceHistoryType =
   | "CREATED"
+  | "UPDATED"
   | "ISSUED"
   | "CANCELLED"
   | "REPLACED"
@@ -299,6 +300,8 @@ export interface CateringInvoiceCorrection {
 
   relatedInvoiceId?: string | null;
   relatedInvoiceNumber?: string | null;
+
+  reason?: string | null;
 }
 
 export interface CateringInvoiceHistory {

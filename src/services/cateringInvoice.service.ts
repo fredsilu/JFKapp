@@ -558,6 +558,260 @@ export async function replaceInvoice(
 /* =========================================
    GET INVOICE HISTORY
 ========================================= */
+/* =========================================
+   CREATE REPLACEMENT DRAFT INVOICE
+========================================= */
+export async function createReplacementDraftInvoice(
+  invoiceId: string,
+  reason: string
+): Promise<CateringInvoice> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
+  const cleanReason = reason.trim();
+
+  if (!cleanReason || cleanReason.length < 3) {
+    throw new Error("La raison de l'annule et remplace est obligatoire");
+  }
+
+  const ref = doc(db, COLLECTION, invoiceId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error("Facture introuvable");
+  }
+
+  const oldInvoice = {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (oldInvoice.status === "paid" || oldInvoice.status === "partial") {
+    throw new Error(
+      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir"
+    );
+  }
+
+  if (oldInvoice.status === "cancelled") {
+    throw new Error("Impossible de remplacer une facture annulée");
+  }
+
+  if (oldInvoice.status === "replaced") {
+    throw new Error("Cette facture a déjà été remplacée");
+  }
+
+  if (oldInvoice.status !== "issued") {
+    throw new Error(
+      "Seule une facture émise peut faire l'objet d'un annule et remplace"
+    );
+  }
+
+  const newInvoiceNumber = await getNextInvoiceNumber();
+
+  const draftInvoice: Omit<CateringInvoice, "id"> = {
+    ...oldInvoice,
+
+    number: newInvoiceNumber,
+
+    status: "draft",
+    isLocked: false,
+
+    correction: {
+      correctionType: "ANNULLE_ET_REMPLACE",
+      replacesInvoiceId: oldInvoice.id,
+      replacesInvoiceNumber: oldInvoice.number,
+      reason: cleanReason,
+    } as any,
+
+    cancellation: null,
+
+    createdAt: serverTimestamp() as any,
+    updatedAt: serverTimestamp() as any,
+    issuedAt: null as any,
+
+    createdBy: null,
+    issuedBy: null,
+
+    version: Number(oldInvoice.version ?? 1) + 1,
+  };
+
+  const newRef = await addDoc(collection(db, COLLECTION), draftInvoice);
+
+  await addInvoiceHistory(newRef.id, {
+    type: "CREATED",
+    message: "Brouillon de facture créé par annule et remplace",
+    snapshot: {
+      number: newInvoiceNumber,
+      status: "draft",
+      replacesInvoiceNumber: oldInvoice.number,
+      reason: cleanReason,
+    },
+  });
+
+  await addInvoiceHistory(invoiceId, {
+    type: "CREATED",
+    message: "Préparation d'un annule et remplace",
+    snapshot: {
+      originalInvoiceNumber: oldInvoice.number,
+      draftReplacementInvoiceNumber: newInvoiceNumber,
+      reason: cleanReason,
+    },
+  });
+
+  return {
+    id: newRef.id,
+    ...draftInvoice,
+  };
+}
+
+/* =========================================
+   ISSUE REPLACEMENT DRAFT INVOICE
+========================================= */
+export async function issueReplacementDraftInvoice(
+  draftInvoiceId: string
+): Promise<CateringInvoice> {
+  if (!draftInvoiceId) {
+    throw new Error("Facture brouillon invalide");
+  }
+
+  const draftRef = doc(db, COLLECTION, draftInvoiceId);
+  const draftSnap = await getDoc(draftRef);
+
+  if (!draftSnap.exists()) {
+    throw new Error("Facture brouillon introuvable");
+  }
+
+  const draftInvoice = {
+    id: draftSnap.id,
+    ...(draftSnap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (draftInvoice.status !== "draft") {
+    throw new Error("Seule une facture brouillon peut être émise");
+  }
+
+  if (draftInvoice.correction?.correctionType !== "ANNULLE_ET_REMPLACE") {
+    throw new Error("Cette facture n'est pas une facture de remplacement");
+  }
+
+  const originalInvoiceId = draftInvoice.correction?.replacesInvoiceId;
+
+  if (!originalInvoiceId) {
+    throw new Error("Facture originale introuvable dans la correction");
+  }
+
+  const originalRef = doc(db, COLLECTION, originalInvoiceId);
+  const originalSnap = await getDoc(originalRef);
+
+  if (!originalSnap.exists()) {
+    throw new Error("Facture originale introuvable");
+  }
+
+  const originalInvoice = {
+    id: originalSnap.id,
+    ...(originalSnap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (originalInvoice.status !== "issued") {
+    throw new Error(
+      "La facture originale ne peut plus être remplacée"
+    );
+  }
+
+  await updateDoc(draftRef, {
+    status: "issued",
+    isLocked: true,
+    issuedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  await updateDoc(originalRef, {
+    status: "replaced",
+    isLocked: true,
+    correction: {
+      ...(originalInvoice.correction ?? {}),
+      correctionType: "ANNULLE_ET_REMPLACE",
+      replacedByInvoiceId: draftInvoice.id,
+      replacedByInvoiceNumber: draftInvoice.number,
+    },
+    updatedAt: serverTimestamp(),
+  });
+
+  await addInvoiceHistory(draftInvoiceId, {
+    type: "ISSUED",
+    message: "Facture de remplacement émise",
+    snapshot: {
+      number: draftInvoice.number,
+      status: "issued",
+      replacesInvoiceNumber: originalInvoice.number,
+    },
+  });
+
+  await addInvoiceHistory(originalInvoiceId, {
+    type: "REPLACED",
+    message: "Facture remplacée après émission du brouillon de remplacement",
+    snapshot: {
+      oldInvoiceNumber: originalInvoice.number,
+      replacedBy: draftInvoice.number,
+    },
+  });
+
+  return {
+    ...draftInvoice,
+    status: "issued",
+    isLocked: true,
+  };
+}
+
+export async function updateDraftInvoice(
+  invoiceId: string,
+  data: Partial<Pick<
+    CateringInvoice,
+    | "designation"
+    | "eventName"
+    | "dateLivraison"
+    | "deliveryTime"
+    | "deliveryAddress"
+    | "guestCount"
+    | "comment"
+    | "items"
+    | "totals"
+  >>
+): Promise<boolean> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
+
+  const ref = doc(db, COLLECTION, invoiceId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error("Facture introuvable");
+  }
+
+  const invoice = {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (invoice.status !== "draft") {
+    throw new Error("Seule une facture brouillon peut être modifiée");
+  }
+
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+
+  await addInvoiceHistory(invoiceId, {
+    type: "UPDATED",
+    message: "Brouillon de facture modifié",
+    snapshot: data,
+  });
+
+  return true;
+}
 export async function getInvoiceHistory(
   invoiceId: string
 ): Promise<any[]> {

@@ -18,7 +18,7 @@ import { CateringInvoice } from "@/types/catering";
 
 import {
   getCateringInvoiceById,
-  replaceInvoice,
+  createReplacementDraftInvoice,
 } from "@/src/services/cateringInvoice.service";
 
 export default function ReplaceInvoiceScreen() {
@@ -81,14 +81,14 @@ export default function ReplaceInvoiceScreen() {
     }, [loadInvoice])
   );
 
-  function confirmReplaceInvoice(confirmMessage: string) {
+  function confirmCreateDraft(confirmMessage: string) {
     return new Promise<boolean>((resolve) => {
       if (Platform.OS === "web" && typeof window !== "undefined") {
         resolve(window.confirm(confirmMessage));
         return;
       }
 
-      Alert.alert("Confirmer l’annule et remplace", confirmMessage, [
+      Alert.alert("Créer un brouillon de remplacement", confirmMessage, [
         {
           text: "Annuler",
           style: "cancel",
@@ -103,7 +103,7 @@ export default function ReplaceInvoiceScreen() {
     });
   }
 
-  async function handleReplaceInvoice() {
+  async function handleCreateReplacementDraft() {
     if (saving) return;
 
     if (!id) {
@@ -127,64 +127,65 @@ export default function ReplaceInvoiceScreen() {
     const originalInvoiceNumber = invoice.number || "—";
 
     const confirmMessage =
-      `Cette action va remplacer la facture ${originalInvoiceNumber} par une nouvelle facture avec un nouveau numéro. ` +
-      "La facture initiale restera conservée dans l’historique.";
+      `Cette action va créer un brouillon de remplacement pour la facture ${originalInvoiceNumber}. ` +
+      "La facture initiale ne sera pas encore remplacée. Elle le sera seulement quand le nouveau brouillon sera émis.";
 
-    const confirmed = await confirmReplaceInvoice(confirmMessage);
+    const confirmed = await confirmCreateDraft(confirmMessage);
 
     if (!confirmed) return;
 
     try {
       setSaving(true);
 
-      const newInvoice = await replaceInvoice(id, {
-        comment: `Annule et remplace la facture ${originalInvoiceNumber}. Motif : ${cleanReason}`,
-      });
+      const draftInvoice = await createReplacementDraftInvoice(
+        id,
+        cleanReason
+      );
 
-      if (!newInvoice?.id) {
+      if (!draftInvoice?.id) {
         throw new Error(
-          "La facture de remplacement a été créée mais son identifiant est introuvable."
+          "Le brouillon de remplacement a été créé mais son identifiant est introuvable."
         );
       }
 
-      const newInvoiceId = String(newInvoice.id);
-      const newInvoiceNumber = newInvoice.number || "—";
+      const draftInvoiceId = String(draftInvoice.id);
+      const draftInvoiceNumber = draftInvoice.number || "—";
 
       if (Platform.OS === "web" && typeof window !== "undefined") {
         window.alert(
-          `Facture remplacée. Nouvelle facture créée : ${newInvoiceNumber}`
+          `Brouillon créé : ${draftInvoiceNumber}. Vous pouvez maintenant le modifier.`
         );
 
         router.replace({
-          pathname: "/(traiteur)/invoices/[id]",
-          params: { id: newInvoiceId },
+          pathname: "/(traiteur)/invoices/edit/[id]",
+          params: { id: draftInvoiceId },
         });
 
         return;
       }
 
       Alert.alert(
-        "Facture remplacée",
-        `Nouvelle facture créée : ${newInvoiceNumber}`,
+        "Brouillon créé",
+        `Brouillon créé : ${draftInvoiceNumber}. Vous pouvez maintenant le modifier.`,
         [
           {
             text: "OK",
             onPress: () => {
               router.replace({
-                pathname: "/(traiteur)/invoices/[id]",
-                params: { id: newInvoiceId },
+                pathname: "/(traiteur)/invoices/edit/[id]",
+                params: { id: draftInvoiceId },
               });
             },
           },
         ]
       );
     } catch (error: unknown) {
-      console.error("❌ replace invoice error:", error);
+      console.error("❌ create replacement draft error:", error);
 
       const message =
         error instanceof Error
           ? error.message
-          : "Impossible de remplacer la facture";
+          : "Impossible de créer le brouillon de remplacement";
 
       Alert.alert("Erreur", message);
     } finally {
@@ -214,12 +215,11 @@ export default function ReplaceInvoiceScreen() {
       <Text style={styles.title}>Annulation et remplacement</Text>
 
       <View style={styles.notice}>
-        <Text style={styles.noticeTitle}>Règle comptable</Text>
+        <Text style={styles.noticeTitle}>Nouvelle règle</Text>
 
         <Text style={styles.noticeText}>
-          Cette action ne modifie pas la facture initiale. Elle la marque comme
-          remplacée et crée une nouvelle facture avec un nouveau numéro
-          chronologique.
+          Cette action crée un brouillon de remplacement. La facture initiale
+          restera émise tant que le nouveau brouillon n’est pas validé et émis.
         </Text>
       </View>
 
@@ -250,7 +250,7 @@ export default function ReplaceInvoiceScreen() {
 
       <TouchableOpacity
         style={[styles.replaceButton, !canSubmit && styles.disabledButton]}
-        onPress={handleReplaceInvoice}
+        onPress={handleCreateReplacementDraft}
         disabled={!canSubmit}
         activeOpacity={0.85}
       >
@@ -258,7 +258,7 @@ export default function ReplaceInvoiceScreen() {
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.replaceButtonText}>
-            Créer la facture annule et remplace
+            Préparer la facture de remplacement
           </Text>
         )}
       </TouchableOpacity>
@@ -303,9 +303,9 @@ const styles = StyleSheet.create({
   },
 
   notice: {
-    backgroundColor: "#FFF7E6",
+    backgroundColor: "#EEF2FF",
     borderWidth: 1,
-    borderColor: "#F0C36A",
+    borderColor: "#C7D2FE",
     borderRadius: 12,
     padding: 14,
     marginBottom: 14,
@@ -314,14 +314,14 @@ const styles = StyleSheet.create({
   noticeTitle: {
     fontSize: 15,
     fontWeight: "900",
-    color: "#7A4E00",
+    color: "#3730A3",
     marginBottom: 6,
   },
 
   noticeText: {
     fontSize: 13,
     lineHeight: 19,
-    color: "#5C4300",
+    color: "#312E81",
   },
 
   card: {
