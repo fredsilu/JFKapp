@@ -1,5 +1,7 @@
 // app/(traiteur)/invoices/[id].tsx
 import React, { useCallback, useState } from "react";
+import { Asset } from "expo-asset";
+import * as FileSystem from "expo-file-system/legacy";
 import {
   View,
   Text,
@@ -164,6 +166,23 @@ export default function InvoiceDetailScreen() {
 
     return `FACTURE_${number}.pdf`;
   }
+  async function getImageSource(moduleId: number): Promise<string> {
+    const asset = Asset.fromModule(moduleId);
+
+    await asset.downloadAsync();
+
+    const uri = asset.localUri || asset.uri;
+
+    if (Platform.OS === "web") {
+      return uri;
+    }
+
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: "base64",
+    });
+
+    return `data:image/png;base64,${base64}`;
+  }
 
   async function handleGeneratePDF() {
     if (!invoice) return;
@@ -175,6 +194,25 @@ export default function InvoiceDetailScreen() {
 
     try {
       setPdfLoading(true);
+
+      const logoBase64 = await getImageSource(
+        require("@/assets/images/crepolia-logo.png")
+      );
+
+      let stampBase64 = "";
+      let signatureBase64 = "";
+
+      try {
+        stampBase64 = await getImageSource(
+          require("@/assets/images/crepolia-stamp.png")
+        );
+      } catch { }
+
+      try {
+        signatureBase64 = await getImageSource(
+          require("@/assets/images/crepolia-signature.png")
+        );
+      } catch { }
 
       const totals: any = invoice.totals ?? {};
       const client: any = invoice.client ?? {};
@@ -225,10 +263,18 @@ export default function InvoiceDetailScreen() {
           }) ?? [],
       };
 
+      invoicePdfData.logoBase64 = logoBase64;
+      invoicePdfData.stampBase64 = stampBase64;
+      invoicePdfData.signatureBase64 = signatureBase64;
+
       const filename = getInvoicePdfFileName(invoice);
 
       if (Platform.OS === "web") {
-        const html = buildInvoiceHTML(invoicePdfData);
+        const html = buildInvoiceHTML(invoicePdfData, {
+          logoBase64,
+          stampBase64,
+          signatureBase64,
+        });
         downloadHtmlAsPdfWeb(html, filename, printWindow ?? undefined);
         return;
       }

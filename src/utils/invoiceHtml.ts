@@ -176,10 +176,7 @@ export function buildInvoiceHTML(
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${assets?.logoBase64
-      ? `<img src="${assets.logoBase64}" />`
-      : `<div class="logo-text">CREPOLIA</div>`
-    }
+    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ''}
   </div>
 
   <div class="address">
@@ -248,14 +245,6 @@ body {
   max-height: 90px;
   object-fit: contain;
   margin-left: -20px;
-}
-
-.logo-text {
-  font-size: 24px;
-  font-weight: 900;
-  color: #2f3b4f;
-  letter-spacing: 1px;
-  margin-top: 18px;
 }
 
 .address {
@@ -715,19 +704,14 @@ ${(invoice as any).cancellation?.reason
 </div>
 
 <div class="signature-area">
-  <div class="stamp">
-    ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
-  </div>
+    <div class="stamp">
+      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
+    </div>
 
-  <div class="signature">
-    ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+    <div class="signature">
+      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+    </div>
   </div>
-
-  ${!assets?.stampBase64 && !assets?.signatureBase64
-      ? `<div class="stamp-text">Pour CREPOLIA<br/><br/><br/>Signature & cachet</div>`
-      : ''
-    }
-</div>
 
 ${footerHTML}
 

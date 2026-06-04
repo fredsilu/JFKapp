@@ -69,7 +69,22 @@ export async function generateInvoicePDF(
       throw new Error("Données facture invalides : numéro manquant");
     }
 
-    const html = buildInvoiceHTML(invoice);
+    const html = buildInvoiceHTML(invoice, {
+      logoBase64:
+        (invoice as any).logoBase64 ||
+        (invoice as any).assets?.logoBase64 ||
+        (invoice as any).assets?.logoUri,
+
+      stampBase64:
+        (invoice as any).stampBase64 ||
+        (invoice as any).assets?.stampBase64 ||
+        (invoice as any).assets?.stampUri,
+
+      signatureBase64:
+        (invoice as any).signatureBase64 ||
+        (invoice as any).assets?.signatureBase64 ||
+        (invoice as any).assets?.signatureUri,
+    });
 
     const { uri } = await Print.printToFileAsync({
       html,
