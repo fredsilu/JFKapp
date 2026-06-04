@@ -1,5 +1,6 @@
 // app/(traiteur)/invoices/replace/[id].tsx
 import React, { useCallback, useState } from "react";
+
 import {
   View,
   Text,
@@ -10,9 +11,11 @@ import {
   Alert,
   Platform,
 } from "react-native";
+
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { CateringInvoice } from "@/types/catering";
+
 import {
   getCateringInvoiceById,
   replaceInvoice,
@@ -25,10 +28,22 @@ export default function ReplaceInvoiceScreen() {
   const [invoice, setInvoice] = useState<CateringInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [reason, setReason] = useState("");
+
   const cleanReason = reason.trim();
-  const canSubmit = !!invoice?.id && cleanReason.length >= 3 && !saving;
+  const canSubmit = !!id && !!invoice && cleanReason.length >= 3 && !saving;
+
+  function goBack() {
+    if (!id) {
+      router.replace("/(traiteur)/invoices");
+      return;
+    }
+
+    router.replace({
+      pathname: "/(traiteur)/invoices/[id]",
+      params: { id },
+    });
+  }
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
@@ -48,7 +63,10 @@ export default function ReplaceInvoiceScreen() {
         return;
       }
 
-      setInvoice(data);
+      setInvoice({
+        ...data,
+        id: data.id ?? id,
+      });
     } catch (error) {
       console.error("❌ load invoice replace error:", error);
       Alert.alert("Erreur", "Impossible de charger la facture");
@@ -63,17 +81,6 @@ export default function ReplaceInvoiceScreen() {
     }, [loadInvoice])
   );
 
-  function goBack() {
-    if (!id) {
-      router.replace('/(traiteur)/invoices');
-      return;
-    }
-
-    router.replace({
-      pathname: '/(traiteur)/invoices/[id]',
-      params: { id },
-    });
-  }
   function confirmReplaceInvoice(confirmMessage: string) {
     return new Promise<boolean>((resolve) => {
       if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -81,20 +88,33 @@ export default function ReplaceInvoiceScreen() {
         return;
       }
 
-      Alert.alert(
-        "Confirmer l’annule et remplace",
-        confirmMessage,
-        [
-          { text: "Annuler", style: "cancel", onPress: () => resolve(false) },
-          { text: "Confirmer", style: "destructive", onPress: () => resolve(true) },
-        ]
-      );
+      Alert.alert("Confirmer l’annule et remplace", confirmMessage, [
+        {
+          text: "Annuler",
+          style: "cancel",
+          onPress: () => resolve(false),
+        },
+        {
+          text: "Confirmer",
+          style: "destructive",
+          onPress: () => resolve(true),
+        },
+      ]);
     });
   }
 
   async function handleReplaceInvoice() {
     if (saving) return;
-    if (!invoice?.id) return;
+
+    if (!id) {
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      return;
+    }
+
+    if (!invoice) {
+      Alert.alert("Erreur", "Facture introuvable");
+      return;
+    }
 
     if (cleanReason.length < 3) {
       Alert.alert(
@@ -103,30 +123,61 @@ export default function ReplaceInvoiceScreen() {
       );
       return;
     }
+
+    const originalInvoiceNumber = invoice.number || "—";
+
     const confirmMessage =
-      `Cette action va remplacer la facture ${invoice.number} par une nouvelle facture avec un nouveau numéro. ` +
+      `Cette action va remplacer la facture ${originalInvoiceNumber} par une nouvelle facture avec un nouveau numéro. ` +
       "La facture initiale restera conservée dans l’historique.";
 
     const confirmed = await confirmReplaceInvoice(confirmMessage);
-    if (!confirmed) return;
 
+    if (!confirmed) return;
 
     try {
       setSaving(true);
 
-      const newInvoice = await replaceInvoice(invoice.id, {
-        comment: `Annule et remplace la facture ${invoice.number}. Motif : ${cleanReason}`,
+      const newInvoice = await replaceInvoice(id, {
+        comment: `Annule et remplace la facture ${originalInvoiceNumber}. Motif : ${cleanReason}`,
       });
+
+      if (!newInvoice?.id) {
+        throw new Error(
+          "La facture de remplacement a été créée mais son identifiant est introuvable."
+        );
+      }
+
+      const newInvoiceId = String(newInvoice.id);
+      const newInvoiceNumber = newInvoice.number || "—";
+
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.alert(
+          `Facture remplacée. Nouvelle facture créée : ${newInvoiceNumber}`
+        );
+
+        router.replace({
+          pathname: "/(traiteur)/invoices/[id]",
+          params: { id: newInvoiceId },
+        });
+
+        return;
+      }
 
       Alert.alert(
         "Facture remplacée",
-        `Nouvelle facture créée : ${newInvoice.number}`
+        `Nouvelle facture créée : ${newInvoiceNumber}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              router.replace({
+                pathname: "/(traiteur)/invoices/[id]",
+                params: { id: newInvoiceId },
+              });
+            },
+          },
+        ]
       );
-
-      router.replace({
-        pathname: "/(traiteur)/invoices/[id]",
-        params: { id: newInvoice.id ?? "" },
-      });
     } catch (error: unknown) {
       console.error("❌ replace invoice error:", error);
 
@@ -164,6 +215,7 @@ export default function ReplaceInvoiceScreen() {
 
       <View style={styles.notice}>
         <Text style={styles.noticeTitle}>Règle comptable</Text>
+
         <Text style={styles.noticeText}>
           Cette action ne modifie pas la facture initiale. Elle la marque comme
           remplacée et crée une nouvelle facture avec un nouveau numéro
@@ -173,7 +225,7 @@ export default function ReplaceInvoiceScreen() {
 
       <View style={styles.card}>
         <Text style={styles.label}>Facture initiale</Text>
-        <Text style={styles.value}>{invoice.number}</Text>
+        <Text style={styles.value}>{invoice.number || "—"}</Text>
 
         <Text style={styles.label}>Client</Text>
         <Text style={styles.value}>
@@ -188,6 +240,7 @@ export default function ReplaceInvoiceScreen() {
         onChangeText={setReason}
         editable={!saving}
         placeholder="Ex : erreur client, correction montant, correction libellé..."
+        placeholderTextColor="#9CA3AF"
         style={styles.textArea}
         keyboardType="default"
         multiline
@@ -199,6 +252,7 @@ export default function ReplaceInvoiceScreen() {
         style={[styles.replaceButton, !canSubmit && styles.disabledButton]}
         onPress={handleReplaceInvoice}
         disabled={!canSubmit}
+        activeOpacity={0.85}
       >
         {saving ? (
           <ActivityIndicator color="#fff" />
@@ -213,6 +267,7 @@ export default function ReplaceInvoiceScreen() {
         style={styles.backButton}
         onPress={goBack}
         disabled={saving}
+        activeOpacity={0.85}
       >
         <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
@@ -226,6 +281,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F6F8",
     padding: 16,
   },
+
   center: {
     flex: 1,
     backgroundColor: "#fff",
@@ -233,16 +289,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
+
   loadingText: {
     marginTop: 10,
     color: "#4B5563",
   },
+
   title: {
     fontSize: 24,
     fontWeight: "900",
     color: "#111827",
     marginBottom: 16,
   },
+
   notice: {
     backgroundColor: "#FFF7E6",
     borderWidth: 1,
@@ -251,41 +310,48 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 14,
   },
+
   noticeTitle: {
     fontSize: 15,
     fontWeight: "900",
     color: "#7A4E00",
     marginBottom: 6,
   },
+
   noticeText: {
     fontSize: 13,
     lineHeight: 19,
     color: "#5C4300",
   },
+
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
     marginBottom: 14,
   },
+
   label: {
     fontSize: 12,
     fontWeight: "800",
     color: "#6B7280",
     marginTop: 6,
   },
+
   value: {
     fontSize: 15,
     fontWeight: "800",
     color: "#111827",
     marginTop: 2,
   },
+
   inputLabel: {
     fontSize: 14,
     fontWeight: "800",
     color: "#111827",
     marginBottom: 8,
   },
+
   textArea: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -298,20 +364,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  disabledButton: {
-    opacity: 0.7,
-  },
-  backButton: {
-    backgroundColor: "#E5E7EB",
-    paddingVertical: 13,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  backButtonText: {
-    color: "#111827",
-    fontWeight: "800",
-    fontSize: 14,
-  },
   replaceButton: {
     backgroundColor: "#7C3AED",
     paddingVertical: 14,
@@ -326,5 +378,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
+  disabledButton: {
+    opacity: 0.7,
+  },
 
+  backButton: {
+    backgroundColor: "#E5E7EB",
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
+  backButtonText: {
+    color: "#111827",
+    fontWeight: "800",
+    fontSize: 14,
+  },
 });
