@@ -565,9 +565,7 @@ export async function createReplacementDraftInvoice(
   invoiceId: string,
   reason: string
 ): Promise<CateringInvoice> {
-  if (!invoiceId) {
-    throw new Error("Facture invalide");
-  }
+  if (!invoiceId) throw new Error("Facture invalide");
 
   const cleanReason = reason.trim();
 
@@ -582,7 +580,7 @@ export async function createReplacementDraftInvoice(
     throw new Error("Facture introuvable");
   }
 
-  const oldInvoice = {
+  const oldInvoice: CateringInvoice = {
     id: snap.id,
     ...(snap.data() as Omit<CateringInvoice, "id">),
   };
@@ -609,11 +607,25 @@ export async function createReplacementDraftInvoice(
 
   const newInvoiceNumber = await getNextInvoiceNumber();
 
+  const {
+    id: _oldId,
+    number: _oldNumber,
+    status: _oldStatus,
+    isLocked: _oldIsLocked,
+    correction: _oldCorrection,
+    cancellation: _oldCancellation,
+    createdAt: _oldCreatedAt,
+    updatedAt: _oldUpdatedAt,
+    issuedAt: _oldIssuedAt,
+    createdBy: _oldCreatedBy,
+    issuedBy: _oldIssuedBy,
+    ...oldInvoiceData
+  } = oldInvoice;
+
   const draftInvoice: Omit<CateringInvoice, "id"> = {
-    ...oldInvoice,
+    ...oldInvoiceData,
 
     number: newInvoiceNumber,
-
     status: "draft",
     isLocked: false,
 
@@ -644,6 +656,7 @@ export async function createReplacementDraftInvoice(
     snapshot: {
       number: newInvoiceNumber,
       status: "draft",
+      replacesInvoiceId: oldInvoice.id,
       replacesInvoiceNumber: oldInvoice.number,
       reason: cleanReason,
     },
@@ -654,14 +667,15 @@ export async function createReplacementDraftInvoice(
     message: "Préparation d'un annule et remplace",
     snapshot: {
       originalInvoiceNumber: oldInvoice.number,
+      draftReplacementInvoiceId: newRef.id,
       draftReplacementInvoiceNumber: newInvoiceNumber,
       reason: cleanReason,
     },
   });
 
   return {
-    id: newRef.id,
     ...draftInvoice,
+    id: newRef.id,
   };
 }
 

@@ -1,4 +1,4 @@
-//app/(traiteur)/invoices/credit-note/[id].tsx
+// app/(traiteur)/invoices/credit-note/[id].tsx
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -13,7 +13,7 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { CateringInvoice } from "@/types/catering";
 import { getCateringInvoiceById } from "@/src/services/cateringInvoice.service";
-import { createCreditNote } from "@/src/services/creditNote.service";
+import { createDraftCreditNote } from "@/src/services/creditNote.service";
 import { formatCurrency } from "@/src/utils/costs";
 
 export default function CreateCreditNoteScreen() {
@@ -29,9 +29,11 @@ export default function CreateCreditNoteScreen() {
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
-      Alert.alert('Erreur', 'Identifiant introuvable');
+      Alert.alert("Erreur", "Identifiant introuvable");
+      router.replace("/(traiteur)/invoices");
       return;
     }
+
     try {
       setLoading(true);
 
@@ -39,9 +41,7 @@ export default function CreateCreditNoteScreen() {
 
       if (!data) {
         Alert.alert("Erreur", "Facture introuvable");
-
-        router.replace('/(traiteur)/invoices');
-
+        router.replace("/(traiteur)/invoices");
         return;
       }
 
@@ -107,7 +107,7 @@ export default function CreateCreditNoteScreen() {
     try {
       setSaving(true);
 
-      const creditNote = await createCreditNote(
+      const creditNote = await createDraftCreditNote(
         invoice.id,
         cleanAmount,
         cleanReason
@@ -119,8 +119,8 @@ export default function CreateCreditNoteScreen() {
       );
 
       router.replace({
-        pathname: "/(traiteur)/invoices/[id]",
-        params: { id: invoice.id },
+        pathname: "/(traiteur)/invoices/credit-note/edit/[id]",
+        params: { id: String(creditNote.id) },
       });
     } catch (error: any) {
       console.error("❌ create credit note error:", error);
@@ -153,10 +153,11 @@ export default function CreateCreditNoteScreen() {
   const isFullyCredited =
     invoice.creditNoteSummary?.isFullyCredited ||
     remainingCreditableAmount <= 0;
+
   const isBlockedInvoice =
     invoice.status === "cancelled" ||
     invoice.status === "replaced" ||
-    (invoice as any).documentType === "CREDIT_NOTE"
+    (invoice as any).documentType === "CREDIT_NOTE";
 
   return (
     <View style={styles.container}>
@@ -238,7 +239,7 @@ export default function CreateCreditNoteScreen() {
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.createButtonText}>Créer l’avoir</Text>
+              <Text style={styles.createButtonText}>Créer le brouillon d’avoir</Text>
             )}
           </TouchableOpacity>
         </>
@@ -248,13 +249,13 @@ export default function CreateCreditNoteScreen() {
         style={styles.backButton}
         onPress={() => {
           if (!invoice?.id) {
-            router.replace('/(traiteur)/invoices');
+            router.replace("/(traiteur)/invoices");
             return;
           }
 
           router.replace({
-            pathname: '/(traiteur)/invoices/[id]',
-            params: { id: invoice.id },
+            pathname: "/(traiteur)/invoices/[id]",
+            params: { id: String(invoice.id) },
           });
         }}
         disabled={saving}

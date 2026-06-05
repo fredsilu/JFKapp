@@ -538,12 +538,30 @@ export default function InvoiceDetailScreen() {
             <View key={note.id} style={styles.creditNoteRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.creditNoteNumber}>{note.number}</Text>
+
                 <Text style={styles.creditNoteReason}>
                   {note.reason || "Avoir"}
                 </Text>
+
                 <Text style={styles.creditNoteType}>
                   {note.type === "full" ? "Avoir total" : "Avoir partiel"}
                 </Text>
+
+                {note.status === "draft" && note.id ? (
+                  <TouchableOpacity
+                    style={styles.editCreditNoteButton}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(traiteur)/invoices/credit-note/edit/[id]",
+                        params: { id: String(note.id) },
+                      })
+                    }
+                  >
+                    <Text style={styles.editCreditNoteButtonText}>
+                      Modifier
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               <Text style={styles.creditNoteAmount}>
@@ -870,6 +888,20 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#991B1B",
     marginBottom: 8,
+  },
+  editCreditNoteButton: {
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+
+  editCreditNoteButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
   },
 
 });

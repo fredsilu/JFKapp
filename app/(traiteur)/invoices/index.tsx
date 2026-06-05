@@ -14,8 +14,6 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 
-import { createCreditNote } from '@/src/services/creditNote.service';
-
 import { CateringInvoice } from '@/types/catering';
 
 import {
@@ -38,13 +36,12 @@ export default function InvoicesScreen() {
   const [loading, setLoading] = useState(true);
 
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [creditModalVisible, setCreditModalVisible] = useState(false);
+
 
   const [selectedInvoice, setSelectedInvoice] =
     useState<CateringInvoice | null>(null);
 
   const [cancelReason, setCancelReason] = useState('');
-  const [creditAmount, setCreditAmount] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] =
     useState<'all' | InvoiceStatus>('all');
@@ -211,11 +208,7 @@ export default function InvoicesScreen() {
     setCancelModalVisible(true);
   }
 
-  function openCreditModal(invoice: CateringInvoice) {
-    setSelectedInvoice(invoice);
-    setCreditAmount('');
-    setCreditModalVisible(true);
-  }
+
 
   async function handleCancelInvoice() {
     try {
@@ -246,38 +239,7 @@ export default function InvoicesScreen() {
     }
   }
 
-  async function handleCreateCreditNote() {
-    try {
-      if (!selectedInvoice?.id) return;
 
-      const normalizedValue = creditAmount.replace(',', '.');
-      const amount = Number(normalizedValue);
-
-      if (!amount || amount <= 0) {
-        Alert.alert('Erreur', 'Montant invalide');
-        return;
-      }
-
-      await createCreditNote(
-        selectedInvoice.id,
-        amount,
-        'Avoir manuel'
-      );
-
-      setCreditModalVisible(false);
-      setSelectedInvoice(null);
-      setCreditAmount('');
-
-      Alert.alert('Succès', 'Avoir créé');
-
-      loadInvoices();
-    } catch (e: any) {
-      Alert.alert(
-        'Erreur',
-        e?.message || 'Erreur lors de la création de l’avoir'
-      );
-    }
-  }
 
   if (loading) {
     return (
@@ -435,13 +397,31 @@ export default function InvoicesScreen() {
                     onPress={() => {
                       if (!invoice.id) return;
 
+                      if (invoice.status === "draft") {
+                        if ((invoice as any).documentType === "CREDIT_NOTE") {
+                          router.push({
+                            pathname: "/(traiteur)/invoices/credit-note/edit/[id]",
+                            params: { id: String(invoice.id) },
+                          });
+                          return;
+                        }
+
+                        router.push({
+                          pathname: "/(traiteur)/invoices/edit/[id]",
+                          params: { id: String(invoice.id) },
+                        });
+                        return;
+                      }
+
                       router.push({
-                        pathname: '/(traiteur)/invoices/[id]',
-                        params: { id: invoice.id },
+                        pathname: "/(traiteur)/invoices/[id]",
+                        params: { id: String(invoice.id) },
                       });
                     }}
                   >
-                    <Text style={styles.primaryActionText}>Voir</Text>
+                    <Text style={styles.primaryActionText}>
+                      {invoice.status === "draft" ? "Modifier" : "Voir"}
+                    </Text>
                   </TouchableOpacity>
 
                   {canCancel(invoice) ? (
@@ -458,7 +438,14 @@ export default function InvoicesScreen() {
                   {canCredit(invoice) ? (
                     <TouchableOpacity
                       style={styles.creditAction}
-                      onPress={() => openCreditModal(invoice)}
+                      onPress={() => {
+                        if (!invoice.id) return;
+
+                        router.push({
+                          pathname: "/(traiteur)/invoices/credit-note/[id]",
+                          params: { id: String(invoice.id) },
+                        });
+                      }}
                     >
                       <Text style={styles.creditActionText}>
                         Avoir
@@ -526,48 +513,7 @@ export default function InvoicesScreen() {
         </View>
       </Modal>
 
-      <Modal
-        visible={creditModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCreditModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Créer un avoir</Text>
 
-            <Text style={styles.modalText}>Montant de l’avoir</Text>
-
-            <TextInput
-              style={styles.input}
-              value={creditAmount}
-              onChangeText={setCreditAmount}
-              placeholder="Ex : 150"
-              keyboardType="numeric"
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.secondaryModalButton}
-                onPress={() => setCreditModalVisible(false)}
-              >
-                <Text style={styles.secondaryModalButtonText}>
-                  Fermer
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.warningModalButton}
-                onPress={handleCreateCreditNote}
-              >
-                <Text style={styles.primaryModalButtonText}>
-                  Créer
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }

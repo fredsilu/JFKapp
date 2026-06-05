@@ -104,10 +104,14 @@ export default function EditInvoiceScreen() {
                     "Facture verrouillée",
                     "Seule une facture brouillon peut être modifiée."
                 );
-
+                if (!data.id) {
+                    Alert.alert("Erreur", "Identifiant facture manquant");
+                    router.replace("/(traiteur)/invoices");
+                    return;
+                }
                 router.replace({
                     pathname: "/(traiteur)/invoices/[id]",
-                    params: { id },
+                    params: { id: String(id) },
                 });
 
                 return;
@@ -298,7 +302,13 @@ export default function EditInvoiceScreen() {
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+        >
             <Text style={styles.title}>Modifier facture brouillon</Text>
 
             <View style={styles.notice}>
@@ -690,5 +700,9 @@ const styles = StyleSheet.create({
         color: "#111827",
         fontWeight: "800",
         fontSize: 14,
+    },
+    contentContainer: {
+        paddingBottom: 120,
+        flexGrow: 1,
     },
 });
