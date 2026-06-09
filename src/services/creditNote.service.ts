@@ -211,7 +211,17 @@ export async function createDraftCreditNote(
       `Le montant de l'avoir dépasse le solde disponible (${remainingCreditableAmount})`
     );
   }
+  const existingDrafts = await getCreditNotesByInvoiceId(invoiceId);
 
+  const existingDraft = existingDrafts.find(
+    (n) => n.status === "draft"
+  );
+
+  if (existingDraft) {
+    throw new Error(
+      `Un brouillon d'avoir existe déjà (${existingDraft.number})`
+    );
+  }
   const number = await getNextCreditNoteNumber();
 
   const creditNote: Omit<CreditNote, "id"> = {

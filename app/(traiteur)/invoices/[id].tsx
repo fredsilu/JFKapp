@@ -136,8 +136,13 @@ export default function InvoiceDetailScreen() {
   const canCancel =
     invoice?.status === "issued" && !isFullyCredited;
 
+  const hasDraftCreditNote =
+    creditNotes.some((n) => n.status === "draft");
+
   const canCreateCreditNote =
-    invoice?.status === "issued" && !isFullyCredited;
+    invoice?.status === "issued" &&
+    !isFullyCredited &&
+    !hasDraftCreditNote;
 
   const canReplace =
     invoice?.status === "issued" && !isFullyCredited;

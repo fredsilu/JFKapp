@@ -140,7 +140,18 @@ export default function EditCreditNoteScreen() {
         try {
             setSaving(true);
 
-            await handleSaveDraft();
+            if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+                throw new Error("Montant invalide");
+            }
+
+            if (cleanReason.length < 3) {
+                throw new Error("Motif obligatoire");
+            }
+
+            await updateDraftCreditNote(id, {
+                amount: cleanAmount,
+                reason: cleanReason,
+            });
 
             const issuedCreditNote = await issueCreditNote(id);
 
