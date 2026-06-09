@@ -794,6 +794,7 @@ export async function updateDraftInvoice(
     | "deliveryAddress"
     | "guestCount"
     | "comment"
+    | "sections"
     | "items"
     | "totals"
   >>

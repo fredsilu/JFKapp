@@ -407,7 +407,7 @@ export default function InvoicesScreen() {
                         }
 
                         router.push({
-                          pathname: "/(traiteur)/invoices/edit/[id]",
+                          pathname: "/(traiteur)/invoices/edit-v2/[id]",
                           params: { id: String(invoice.id) },
                         });
                         return;

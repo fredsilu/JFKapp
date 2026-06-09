@@ -157,7 +157,7 @@ export default function ReplaceInvoiceScreen() {
         );
 
         router.replace({
-          pathname: "/(traiteur)/invoices/edit/[id]",
+          pathname: "/(traiteur)/invoices/edit-v2/[id]",
           params: { id: draftInvoiceId },
         });
 
@@ -172,7 +172,7 @@ export default function ReplaceInvoiceScreen() {
             text: "OK",
             onPress: () => {
               router.replace({
-                pathname: "/(traiteur)/invoices/edit/[id]",
+                pathname: "/(traiteur)/invoices/edit-v2/[id]",
                 params: { id: draftInvoiceId },
               });
             },
