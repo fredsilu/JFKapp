@@ -1,0 +1,10 @@
+{
+  "app": "JFKApp",
+  "env": "test",
+  "group": "financial",
+  "createdAt": "2026-06-09T22:14:17.059Z",
+  "collections": {
+    "orders": [],
+    "catering_invoices": []
+  }
+}

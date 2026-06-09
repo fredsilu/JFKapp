@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  ScrollView,
+  KeyboardAvoidingView,
 } from "react-native";
 
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -211,75 +213,94 @@ export default function ReplaceInvoiceScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Annulation et remplacement</Text>
-
-      <View style={styles.notice}>
-        <Text style={styles.noticeTitle}>Nouvelle règle</Text>
-
-        <Text style={styles.noticeText}>
-          Cette action crée un brouillon de remplacement. La facture initiale
-          restera émise tant que le nouveau brouillon n’est pas validé et émis.
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Facture initiale</Text>
-        <Text style={styles.value}>{invoice.number || "—"}</Text>
-
-        <Text style={styles.label}>Client</Text>
-        <Text style={styles.value}>
-          {invoice.client?.name || "Client non défini"}
-        </Text>
-      </View>
-
-      <Text style={styles.inputLabel}>Motif du remplacement</Text>
-
-      <TextInput
-        value={reason}
-        onChangeText={setReason}
-        editable={!saving}
-        placeholder="Ex : erreur client, correction montant, correction libellé..."
-        placeholderTextColor="#9CA3AF"
-        style={styles.textArea}
-        keyboardType="default"
-        multiline
-        numberOfLines={5}
-        textAlignVertical="top"
-      />
-
-      <TouchableOpacity
-        style={[styles.replaceButton, !canSubmit && styles.disabledButton]}
-        onPress={handleCreateReplacementDraft}
-        disabled={!canSubmit}
-        activeOpacity={0.85}
+    <KeyboardAvoidingView
+      style={styles.keyboardRoot}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
       >
-        {saving ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.replaceButtonText}>
-            Préparer la facture de remplacement
+        <Text style={styles.title}>Annulation et remplacement</Text>
+
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Nouvelle règle</Text>
+
+          <Text style={styles.noticeText}>
+            Cette action crée un brouillon de remplacement. La facture initiale
+            restera émise tant que le nouveau brouillon n’est pas validé et émis.
           </Text>
-        )}
-      </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={goBack}
-        disabled={saving}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.backButtonText}>Retour</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.card}>
+          <Text style={styles.label}>Facture initiale</Text>
+          <Text style={styles.value}>{invoice.number || "—"}</Text>
+
+          <Text style={styles.label}>Client</Text>
+          <Text style={styles.value}>
+            {invoice.client?.name || "Client non défini"}
+          </Text>
+        </View>
+
+        <Text style={styles.inputLabel}>Motif du remplacement</Text>
+
+        <TextInput
+          value={reason}
+          onChangeText={setReason}
+          editable={!saving}
+          placeholder="Ex : erreur client, correction montant, correction libellé..."
+          placeholderTextColor="#9CA3AF"
+          style={styles.textArea}
+          keyboardType="default"
+          multiline
+          numberOfLines={5}
+          textAlignVertical="top"
+        />
+
+        <TouchableOpacity
+          style={[styles.replaceButton, !canSubmit && styles.disabledButton]}
+          onPress={handleCreateReplacementDraft}
+          disabled={!canSubmit}
+          activeOpacity={0.85}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.replaceButtonText}>
+              Préparer la facture de remplacement
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={goBack}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.backButtonText}>Retour</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardRoot: {
+    flex: 1,
+    backgroundColor: "#F4F6F8",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#F4F6F8",
+  },
+
+  scrollContent: {
     padding: 16,
+    paddingBottom: 80,
   },
 
   center: {

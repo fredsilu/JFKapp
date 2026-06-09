@@ -4,3 +4,6 @@
 [2026-05-31T06:42:29.659Z] [BACKUP] env=test group=operations file=operations-2026-05-31T06-42-29-641Z.json
 [2026-05-31T06:46:25.277Z] [RESTORE] env=test group=operations file=operations-2026-05-31T06-42-29-641Z.json mode=REPLACE
 [2026-06-04T23:54:30.876Z] [RESET] env=test group=operations
+[2026-06-09T21:40:01.465Z] [RESET] env=test group=operations
+[2026-06-09T22:05:32.866Z] [RESET] env=test group=operations
+[2026-06-09T22:14:36.426Z] [RESET] env=test group=financial

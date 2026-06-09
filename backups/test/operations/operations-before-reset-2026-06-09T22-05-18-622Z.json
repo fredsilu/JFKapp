@@ -1,0 +1,484 @@
+{
+  "app": "JFKApp",
+  "env": "test",
+  "group": "operations",
+  "createdAt": "2026-06-09T22:05:18.622Z",
+  "collections": {
+    "catering_simulations": [
+      {
+        "id": "T7WZ3g1YCUQFOifsgtlW",
+        "data": {
+          "name": "QQQQQQQQQQ",
+          "eventName": "QQQQQQQQQQ",
+          "clientId": "NNwrKMqppKYeXlsWMJEU",
+          "clientName": "Afi Bongong",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "25/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 30,
+              "numberOfDays": 1,
+              "total": 1500,
+              "costRate": 30,
+              "costAmount": 450,
+              "margin": 1050,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": true,
+              "quantity": 1,
+              "unitPrice": 150,
+              "numberOfDays": 1,
+              "total": 150,
+              "costRate": 0,
+              "costAmount": 110,
+              "margin": 40,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781039920289_sg13wx",
+                  "dayNumber": 1,
+                  "numberOfPeople": 50,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 2,
+                  "numberOfCooks": 1,
+                  "serverDailyCost": 20,
+                  "cookDailyCost": 40,
+                  "electricityDailyCost": 10,
+                  "gasDailyCost": 10,
+                  "fuelDailyCost": 10,
+                  "extraDailyCost": 30,
+                  "totalCost": 110,
+                  "billedAmount": 150
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "globalTurnover": 1650,
+          "globalCost": 560,
+          "globalMargin": 840,
+          "discount": 0,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      },
+      {
+        "id": "jPokbyzlF6Jbe10pJGfY",
+        "data": {
+          "name": "Buffet",
+          "eventName": "Buffet",
+          "clientId": "uoDtSBVUSkcVopgX8oWI",
+          "clientName": "Alexandra x",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "27/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 35,
+              "numberOfDays": 1,
+              "total": 1750,
+              "costRate": 30,
+              "costAmount": 525,
+              "margin": 1225,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": false,
+              "quantity": 0,
+              "unitPrice": 0,
+              "numberOfDays": 1,
+              "total": 0,
+              "costRate": 0,
+              "costAmount": 0,
+              "margin": 0,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781042200229_7rrz5r",
+                  "dayNumber": 1,
+                  "numberOfPeople": 0,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 0,
+                  "numberOfCooks": 0,
+                  "serverDailyCost": 0,
+                  "cookDailyCost": 0,
+                  "electricityDailyCost": 0,
+                  "gasDailyCost": 0,
+                  "fuelDailyCost": 0,
+                  "extraDailyCost": 0,
+                  "totalCost": 0,
+                  "billedAmount": 0
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "totals": {
+            "subtotal": 1750,
+            "discountAmount": 100,
+            "grandTotal": 1650,
+            "totalCost": 525,
+            "margin": 1125
+          },
+          "globalTurnover": 1650,
+          "globalCost": 525,
+          "globalMargin": 1125,
+          "discount": 100,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      }
+    ],
+    "catering_proformas": [
+      {
+        "id": "3WfJESTqscWqlDL4b5pk",
+        "data": {
+          "simulationId": "T7WZ3g1YCUQFOifsgtlW",
+          "clientId": "NNwrKMqppKYeXlsWMJEU",
+          "clientName": "Alain Kapita",
+          "clientRccm": "",
+          "clientIdNat": "",
+          "clientNif": "",
+          "clientAddress": "x",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-09",
+          "validityDate": "2026-06-16",
+          "eventDate": "25/06/2026",
+          "eventName": "QQQQQQQQQQ",
+          "status": "draft",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "sections": [
+            {
+              "id": "main_article",
+              "enabled": true,
+              "costRate": 30,
+              "kind": "article",
+              "notes": "",
+              "total": 1500,
+              "key": "main_article",
+              "unitPrice": 30,
+              "margin": 1050,
+              "type": "food",
+              "quantity": 50,
+              "position": 1,
+              "costAmount": 450,
+              "numberOfDays": 1,
+              "name": "Déjeuner"
+            },
+            {
+              "quantity": 1,
+              "position": 2,
+              "margin": 40,
+              "type": "service",
+              "key": "catering_service",
+              "total": 150,
+              "unitPrice": 150,
+              "id": "catering_service",
+              "enabled": true,
+              "costRate": 0,
+              "kind": "service",
+              "notes": "",
+              "serviceMode": "identical_days",
+              "numberOfDays": 1,
+              "name": "Service traiteur",
+              "serviceDays": [
+                {
+                  "dayNumber": 1,
+                  "numberOfCooks": 1,
+                  "numberOfPeople": 50,
+                  "billedAmount": 150,
+                  "cookDailyCost": 40,
+                  "serverDailyCost": 20,
+                  "fuelDailyCost": 10,
+                  "id": "service_day_1_1781039920289_sg13wx",
+                  "extraDailyCost": 30,
+                  "electricityDailyCost": 10,
+                  "gasDailyCost": 10,
+                  "serverRate": 25,
+                  "totalCost": 110,
+                  "numberOfServers": 2,
+                  "cookRate": 50
+                }
+              ],
+              "costAmount": 110
+            }
+          ],
+          "items": [
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 1650,
+            "discount": 0,
+            "tax": 0,
+            "total": 1650,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "orderId": "",
+          "orderNumber": "",
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-045",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1781041407,
+            "_nanoseconds": 904000000
+          },
+          "updatedAt": {
+            "_seconds": 1781041407,
+            "_nanoseconds": 904000000
+          }
+        }
+      },
+      {
+        "id": "fE9B72uiW9fLQIJZHGrA",
+        "data": {
+          "simulationId": "jPokbyzlF6Jbe10pJGfY",
+          "clientId": "uoDtSBVUSkcVopgX8oWI",
+          "clientName": "Alexandra x",
+          "clientRccm": "",
+          "clientIdNat": "",
+          "clientNif": "",
+          "clientAddress": "x",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-09",
+          "validityDate": "2026-06-16",
+          "eventDate": "27/06/2026",
+          "eventName": "Buffet",
+          "status": "draft",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "sections": [
+            {
+              "notes": "",
+              "quantity": 50,
+              "margin": 1225,
+              "id": "main_article",
+              "unitPrice": 35,
+              "costAmount": 525,
+              "type": "food",
+              "key": "main_article",
+              "kind": "article",
+              "position": 1,
+              "name": "Déjeuner",
+              "costRate": 30,
+              "total": 1750,
+              "numberOfDays": 1,
+              "enabled": true
+            },
+            {
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781042200229_7rrz5r",
+                  "billedAmount": 0,
+                  "serverRate": 25,
+                  "fuelDailyCost": 0,
+                  "dayNumber": 1,
+                  "numberOfServers": 0,
+                  "cookDailyCost": 0,
+                  "gasDailyCost": 0,
+                  "numberOfPeople": 0,
+                  "extraDailyCost": 0,
+                  "numberOfCooks": 0,
+                  "electricityDailyCost": 0,
+                  "serverDailyCost": 0,
+                  "cookRate": 50,
+                  "totalCost": 0
+                }
+              ],
+              "type": "service",
+              "key": "catering_service",
+              "unitPrice": 0,
+              "costAmount": 0,
+              "kind": "service",
+              "quantity": 0,
+              "notes": "",
+              "margin": 0,
+              "id": "catering_service",
+              "name": "Service traiteur",
+              "total": 0,
+              "costRate": 0,
+              "serviceMode": "identical_days",
+              "enabled": false,
+              "numberOfDays": 1,
+              "position": 2
+            }
+          ],
+          "items": [
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 1750,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 1750,
+            "discount": 100,
+            "tax": 0,
+            "total": 1650,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "orderId": "",
+          "orderNumber": "",
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-046",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1781042299,
+            "_nanoseconds": 825000000
+          },
+          "updatedAt": {
+            "_seconds": 1781042299,
+            "_nanoseconds": 825000000
+          }
+        }
+      }
+    ],
+    "orders": [],
+    "catering_invoices": []
+  }
+}

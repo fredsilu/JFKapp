@@ -22,6 +22,31 @@ function mapSimulationDoc(docSnap: any): CateringSimulation {
   };
 }
 
+/**
+ * Firestore refuse les valeurs undefined.
+ * Cette fonction supprime les undefined dans les objets simples,
+ * sans transformer les objets spéciaux Firestore comme serverTimestamp().
+ */
+function removeUndefinedDeep(value: any): any {
+  if (Array.isArray(value)) {
+    return value.map(removeUndefinedDeep);
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    value.constructor === Object
+  ) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, removeUndefinedDeep(item)])
+    );
+  }
+
+  return value;
+}
+
 /* ================================
    GET ALL SIMULATIONS
 ================================ */
@@ -57,10 +82,9 @@ export async function getSimulationById(
 export async function createCateringSimulation(
   simulation: Omit<CateringSimulation, "id" | "createdAt" | "updatedAt">
 ): Promise<string> {
-  const ref = await addDoc(collection(db, COLLECTION), {
+  const payload = removeUndefinedDeep({
     ...simulation,
 
-    // Compatible V2 sections[]
     sections: (simulation as any).sections ?? [],
 
     isDeleted: false,
@@ -70,6 +94,8 @@ export async function createCateringSimulation(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+
+  const ref = await addDoc(collection(db, COLLECTION), payload);
 
   return ref.id;
 }
@@ -85,14 +111,15 @@ export async function updateCateringSimulation(
 
   const { id: _id, createdAt, updatedAt, ...safeData } = simulation as any;
 
-  await updateDoc(ref, {
+  const payload = removeUndefinedDeep({
     ...safeData,
 
-    // Compatible V2 sections[]
     sections: safeData.sections ?? [],
 
     updatedAt: serverTimestamp(),
   });
+
+  await updateDoc(ref, payload);
 }
 
 /* ================================

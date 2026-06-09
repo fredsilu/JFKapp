@@ -1,138 +1,165 @@
 // app/tools/calculator-v2.tsx
 import React, { useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import {
-    router,
-    Stack,
-    useLocalSearchParams,
+  router,
+  Stack,
+  useLocalSearchParams,
 } from "expo-router";
 
 import SimulationEditor from "@/components/simulation/SimulationEditor";
 import { createCateringSimulation } from "@/src/services/cateringSimulation.service";
 
 function paramToString(value?: string | string[]) {
-    if (!value) return "";
-    return Array.isArray(value) ? value[0] : value;
+  if (!value) return "";
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function showAlert(title: string, message: string) {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n${message}`);
+    return;
+  }
+
+  Alert.alert(title, message);
 }
 
 export default function CalculatorV2Screen() {
-    const params = useLocalSearchParams<{
-        clientId?: string | string[];
-        clientName?: string | string[];
-    }>();
+  const params = useLocalSearchParams<{
+    clientId?: string | string[];
+    clientName?: string | string[];
+  }>();
 
-    const clientId = paramToString(params.clientId);
-    const clientName = decodeURIComponent(
-        paramToString(params.clientName)
-    );
+  const clientId = paramToString(params.clientId);
+  const clientName = decodeURIComponent(paramToString(params.clientName));
 
-    const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-    async function handleSubmit(payload: any) {
-        if (saving) return;
+  async function handleSubmit(payload: any) {
+    if (saving) return;
 
-        try {
-            setSaving(true);
+    try {
+      setSaving(true);
 
-            const simulationId = await createCateringSimulation({
-                name: payload.eventName || "Simulation traiteur",
-                eventName: payload.eventName || "Simulation traiteur",
+      const subtotal = Number(payload.totals?.subtotal ?? 0);
+      const discount = Number(payload.discount ?? payload.totals?.discountAmount ?? 0);
+      const grandTotal = Number(
+        payload.totals?.grandTotal ?? Math.max(subtotal - discount, 0)
+      );
+      const totalCost = Number(payload.totals?.totalCost ?? 0);
+      const margin = Number(payload.totals?.margin ?? grandTotal - totalCost);
 
-                clientId,
-                clientName: payload.clientName || clientName,
+      console.log("🔥 PAYLOAD REÇU EDITEUR:", payload);
+console.log("🔥 DISCOUNT:", payload.discount);
+console.log("🔥 TOTALS:", payload.totals);
 
-                numberOfPeople: payload.numberOfPeople,
-                guestCount: payload.numberOfPeople,
+      const simulationId = await createCateringSimulation({
+        name: payload.eventName || "Simulation traiteur",
+        eventName: payload.eventName || "Simulation traiteur",
 
-                dateLivraison: payload.dateLivraison || "",
-                deliveryTime: payload.deliveryTime || "",
-                deliveryAddress: payload.deliveryAddress || "",
-                comment: payload.comment || "",
+        clientId,
+        clientName: payload.clientName || clientName,
 
-                sections: payload.sections ?? [],
+        numberOfPeople: payload.numberOfPeople,
+        guestCount: payload.numberOfPeople,
 
-                globalTurnover: payload.totals?.subtotal ?? 0,
-                globalCost: payload.totals?.totalCost ?? 0,
-                globalMargin: payload.totals?.margin ?? 0,
+        dateLivraison: payload.dateLivraison || "",
+        deliveryTime: payload.deliveryTime || "",
+        deliveryAddress: payload.deliveryAddress || "",
+        comment: payload.comment || "",
 
-                discount: 0,
+        sections: payload.sections ?? [],
 
-                breakfast: {
-                    enabled: false,
-                    numberOfPeople: 0,
-                    unitPrice: 0,
-                    numberOfDays: 1,
-                    foodCostRate: 0,
-                },
+        totals: {
+          subtotal,
+          discountAmount: discount,
+          grandTotal,
+          totalCost,
+          margin,
+        },
 
-                lunch: {
-                    enabled: false,
-                    numberOfPeople: 0,
-                    unitPrice: 0,
-                    numberOfDays: 1,
-                    foodCostRate: 0,
-                },
+        globalTurnover: grandTotal,
+        globalCost: totalCost,
+        globalMargin: margin,
 
-                drinks: {
-                    enabled: false,
-                    numberOfPeople: 0,
-                    unitPrice: 0,
-                    numberOfDays: 1,
-                    foodCostRate: 0,
-                },
+        discount,
 
-                service: {
-                    enabled: false,
-                    numberOfPeople: 0,
-                    numberOfDays: 1,
-                    serverRate: 0,
-                    cookRate: 0,
-                },
+        breakfast: {
+          enabled: false,
+          numberOfPeople: 0,
+          unitPrice: 0,
+          numberOfDays: 1,
+          foodCostRate: 0,
+        },
 
-                serviceCosts: {
-                    serverDailyCost: 0,
-                    cookDailyCost: 0,
-                    electricityDailyCost: 0,
-                    gasDailyCost: 0,
-                    fuelDailyCost: 0,
-                },
+        lunch: {
+          enabled: false,
+          numberOfPeople: 0,
+          unitPrice: 0,
+          numberOfDays: 1,
+          foodCostRate: 0,
+        },
 
-                status: "draft",
-                isDeleted: false,
-                convertedToOrder: false,
-            } as any);
+        drinks: {
+          enabled: false,
+          numberOfPeople: 0,
+          unitPrice: 0,
+          numberOfDays: 1,
+          foodCostRate: 0,
+        },
 
-            Alert.alert("Succès", "Simulation enregistrée.");
+        service: {
+          enabled: false,
+          numberOfPeople: 0,
+          numberOfDays: 1,
+          serverRate: 0,
+          cookRate: 0,
+        },
 
-            router.replace({
-                pathname: "/(traiteur)/simulations/[id]",
-                params: {
-                    id: simulationId,
-                },
-            });
-        } catch (error) {
-            console.error("❌ create simulation v2 error:", error);
-            Alert.alert("Erreur", "Impossible d'enregistrer.");
-        } finally {
-            setSaving(false);
-        }
+        serviceCosts: {
+          serverDailyCost: 0,
+          cookDailyCost: 0,
+          electricityDailyCost: 0,
+          gasDailyCost: 0,
+          fuelDailyCost: 0,
+        },
+
+        status: "draft",
+        isDeleted: false,
+        convertedToOrder: false,
+      } as any);
+
+      showAlert("Succès", "Simulation enregistrée.");
+
+      router.replace({
+        pathname: "/(traiteur)/simulations/[id]",
+        params: {
+          id: simulationId,
+        },
+      });
+    } catch (error) {
+      console.error("❌ create simulation v2 error:", error);
+      showAlert("Erreur", "Impossible d'enregistrer.");
+    } finally {
+      setSaving(false);
     }
+  }
 
-    return (
-        <>
-            <Stack.Screen
-                options={{
-                    title: "Nouvelle simulation",
-                }}
-            />
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "Nouvelle simulation",
+        }}
+      />
 
-            <SimulationEditor
-                title="Création de simulation"
-                initialClientName={clientName}
-                submitLabel="Enregistrer"
-                saving={saving}
-                onSubmit={handleSubmit}
-            />
-        </>
-    );
+      <SimulationEditor
+        title="Création de simulation"
+        initialClientName={clientName}
+        submitLabel="Enregistrer"
+        saving={saving}
+        onSubmit={handleSubmit}
+      />
+    </>
+  );
 }

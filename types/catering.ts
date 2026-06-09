@@ -188,6 +188,13 @@ export interface CateringSimulationDraft {
   deliveryAddress?: string;
   deliveryTime?: string;
   comment?: string;
+  totals?: {
+    subtotal: number;
+    discountAmount?: number;
+    grandTotal?: number;
+    totalCost: number;
+    margin: number;
+  };
 }
 
 /**
@@ -512,6 +519,8 @@ export function isCateringInvoiceLocked(
 
 export type MoneyTotals = {
   totalHT: number;
+  discountAmount?: number;
+  grandTotal?: number;
   totalCost: number;
   margin: number;
 };

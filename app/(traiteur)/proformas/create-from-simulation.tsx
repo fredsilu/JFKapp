@@ -179,8 +179,10 @@ export default function CreateProformaFromSimulationScreen() {
   }, [items]);
 
   const generalDiscount = Number(
-    simulation?.discount ?? 0
-  );
+  simulation?.totals?.discountAmount ??
+  simulation?.discount ??
+  0
+);
 
   const totalAfterDiscount = Math.max(
     subtotal - generalDiscount,

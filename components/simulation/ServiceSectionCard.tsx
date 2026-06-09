@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Switch,
 } from "react-native";
 
 import {
@@ -41,33 +42,20 @@ export default function ServiceSectionCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Service traiteur</Text>
-          <Text style={styles.subtitle}>
-            Personnel, charges et forfait automatique
-          </Text>
-        </View>
+        <Text style={styles.title}>
+          Service traiteur
+        </Text>
 
-        <TouchableOpacity
-          onPress={() =>
-            onUpdateSection(section.id, "enabled", !section.enabled)
+        <Switch
+          value={section.enabled}
+          onValueChange={(value) =>
+            onUpdateSection(
+              section.id,
+              "enabled",
+              value
+            )
           }
-          style={[
-            styles.statusButton,
-            section.enabled ? styles.statusButtonActive : styles.statusButtonInactive,
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusButtonText,
-              section.enabled
-                ? styles.statusButtonTextActive
-                : styles.statusButtonTextInactive,
-            ]}
-          >
-            {section.enabled ? "Activé" : "Désactivé"}
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       {!section.enabled ? (
@@ -291,19 +279,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
 
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-
-  title: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#0F172A",
-  },
 
   subtitle: {
     marginTop: 3,
@@ -491,5 +466,22 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#064E3B",
     marginBottom: 10,
+  },
+
+ 
+
+  header: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  gap: 12,
+  marginBottom: 12,
+  flexWrap: "wrap",
+},
+
+  title: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#111827",
   },
 });

@@ -1,22 +1,45 @@
-//app/(traiteur)/simulations/[id].tsx
-import React, { useEffect, useState } from 'react';
+// app/(traiteur)/simulations/[id].tsx
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { formatCurrency } from '@/src/utils/costs';
-import { getCateringSimulations } from '@/src/services/cateringSimulation.service';
-import { fetchClients } from '@/src/services/clientService';
+} from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+
+import { formatCurrency } from "@/src/utils/costs";
+import { getCateringSimulations } from "@/src/services/cateringSimulation.service";
+import { fetchClients } from "@/src/services/clientService";
+
+function toNumber(value: any, fallback = 0): number {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function formatFirestoreDate(value: any): string {
+  if (!value) return "Non définie";
+
+  if (typeof value?.toDate === "function") {
+    return value.toDate().toLocaleDateString("fr-FR");
+  }
+
+  if (value instanceof Date) {
+    return value.toLocaleDateString("fr-FR");
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return "Non définie";
+}
 
 export default function CateringSimulationDetailsScreen() {
-  const { id } = useLocalSearchParams<{
-    id: string;
-  }>();
-  const [clientName, setClientName] = useState<string>('—');
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const [clientName, setClientName] = useState<string>("—");
   const [sim, setSim] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,6 +49,7 @@ export default function CateringSimulationDetailsScreen() {
 
       try {
         setLoading(true);
+
         const [sims, clients] = await Promise.all([
           getCateringSimulations(),
           fetchClients(),
@@ -37,10 +61,12 @@ export default function CateringSimulationDetailsScreen() {
 
         if (found?.clientId) {
           const client = clients.find((c) => c.id === found.clientId);
-          setClientName(client?.name || 'Client inconnu');
+          setClientName(client?.name || "Client inconnu");
+        } else if ((found as any)?.clientName) {
+          setClientName((found as any).clientName);
         }
       } catch (e) {
-        console.error('❌ load simulation error:', e);
+        console.error("❌ load simulation error:", e);
         setSim(null);
       } finally {
         setLoading(false);
@@ -49,6 +75,47 @@ export default function CateringSimulationDetailsScreen() {
 
     loadSimulation();
   }, [id]);
+
+  const financials = useMemo(() => {
+    if (!sim) {
+      return {
+        subtotal: 0,
+        discount: 0,
+        grandTotal: 0,
+        totalCost: 0,
+        margin: 0,
+      };
+    }
+
+    const subtotal =
+      toNumber(sim.totals?.subtotal) ||
+      toNumber(sim.globalTurnover) + toNumber(sim.discount);
+
+    const discount =
+      toNumber(sim.totals?.discountAmount) ||
+      toNumber(sim.discount);
+
+    const grandTotal =
+      toNumber(sim.totals?.grandTotal) ||
+      Math.max(subtotal - discount, 0);
+
+    const totalCost =
+      toNumber(sim.totals?.totalCost) ||
+      toNumber(sim.globalCost);
+
+    const margin =
+      toNumber(sim.totals?.margin) ||
+      grandTotal - totalCost ||
+      toNumber(sim.globalMargin);
+
+    return {
+      subtotal,
+      discount,
+      grandTotal,
+      totalCost,
+      margin,
+    };
+  }, [sim]);
 
   if (loading) {
     return (
@@ -66,138 +133,125 @@ export default function CateringSimulationDetailsScreen() {
     );
   }
 
-
-
-
-
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{sim.name || 'Simulation sans nom'}</Text>
+      <Text style={styles.title}>
+        {sim.eventName || sim.name || "Simulation sans nom"}
+      </Text>
+
+      <Text style={styles.subtitle}>Client : {clientName}</Text>
 
       <Text style={styles.subtitle}>
-        Client : {clientName}
+        Date livraison : {sim.dateLivraison || "Non définie"}
       </Text>
 
       <Text style={styles.subtitle}>
-        Date livraison : {sim.dateLivraison || 'Non définie'}
+        Date création : {formatFirestoreDate(sim.createdAt)}
       </Text>
 
-      <Text style={styles.status}>Statut : {sim.status || '—'}</Text>
+      <Text style={styles.status}>Statut : {sim.status || "draft"}</Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Rubriques</Text>
+
+        {(sim.sections ?? [])
+          .filter((section: any) => section.enabled)
+          .map((section: any) => (
+            <View key={section.id} style={styles.cardLine}>
+              <Text style={styles.lineTitle}>{section.name}</Text>
+
+              <Text style={styles.lineText}>
+                Quantité : {section.quantity}
+              </Text>
+
+              <Text style={styles.lineText}>
+                Prix unitaire : {formatCurrency(section.unitPrice)}
+              </Text>
+
+              <Text style={styles.lineText}>
+                Nombre de jours : {section.numberOfDays}
+              </Text>
+
+              <Text style={styles.lineText}>
+                Chiffre d'affaires : {formatCurrency(section.total)}
+              </Text>
+
+              <Text style={styles.lineText}>
+                Coût : {formatCurrency(section.costAmount ?? 0)}
+              </Text>
+
+              <Text style={styles.lineText}>
+                Marge : {formatCurrency(section.margin ?? 0)}
+              </Text>
+            </View>
+          ))}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Résultats financiers</Text>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Rubriques
-          </Text>
-
-          {(sim.sections ?? [])
-            .filter((section: any) => section.enabled)
-            .map((section: any) => (
-              <View
-                key={section.id}
-                style={styles.cardLine}
-              >
-                <Text style={styles.lineTitle}>
-                  {section.name}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Quantité : {section.quantity}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Prix unitaire : {formatCurrency(section.unitPrice)}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Nombre de jours : {section.numberOfDays}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Chiffre d'affaires :{" "}
-                  {formatCurrency(section.total)}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Coût :{" "}
-                  {formatCurrency(section.costAmount ?? 0)}
-                </Text>
-
-                <Text style={styles.lineText}>
-                  Marge :{" "}
-                  {formatCurrency(section.margin ?? 0)}
-                </Text>
-              </View>
-            ))}
-        </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>CA avant remise</Text>
           <Text style={styles.resultValue}>
-            {formatCurrency((sim.globalTurnover ?? 0) + (sim.discount ?? 0))}
+            {formatCurrency(financials.subtotal)}
           </Text>
         </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>Remise globale</Text>
           <Text style={styles.resultValue}>
-            -{formatCurrency(sim.discount ?? 0)}
+            -{formatCurrency(financials.discount)}
           </Text>
         </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>CA après remise</Text>
           <Text style={styles.resultValue}>
-            {formatCurrency(sim.globalTurnover ?? 0)}
+            {formatCurrency(financials.grandTotal)}
           </Text>
         </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>Coût total</Text>
           <Text style={styles.resultValue}>
-            {formatCurrency(sim.globalCost ?? 0)}
+            {formatCurrency(financials.totalCost)}
           </Text>
         </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>Marge globale</Text>
           <Text style={styles.resultValue}>
-            {formatCurrency(sim.globalMargin ?? 0)}
+            {formatCurrency(financials.margin)}
           </Text>
         </View>
       </View>
 
       <View style={styles.actions}>
-        {/* 🔵 Créer proforma */}
         {sim?.id && (
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() =>
               router.push({
-                pathname: '/(traiteur)/proformas/create-from-simulation',
+                pathname: "/(traiteur)/proformas/create-from-simulation",
                 params: {
                   simulationId: sim.id,
-                  backTo: '/(traiteur)/simulations',
+                  backTo: "/(traiteur)/simulations",
                 },
               })
             }
           >
-            <Text style={styles.secondaryButtonText}>
-              Créer proforma
-            </Text>
+            <Text style={styles.secondaryButtonText}>Créer proforma</Text>
           </TouchableOpacity>
         )}
-
 
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={() =>
             router.push({
-              pathname: '/(traiteur)/tools/calculator-v2',
+              pathname: "/(traiteur)/tools/calculator-v2",
               params: {
                 reuseSimulationId: sim.id,
-                backTo: '/(traiteur)/simulations',
+                backTo: "/(traiteur)/simulations",
               },
             })
           }
@@ -209,11 +263,9 @@ export default function CateringSimulationDetailsScreen() {
 
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.replace('/(traiteur)/simulations')}
+          onPress={() => router.replace("/(traiteur)/simulations")}
         >
-          <Text style={styles.backButtonText}>
-            Retour aux simulations
-          </Text>
+          <Text style={styles.backButtonText}>Retour aux simulations</Text>
         </TouchableOpacity>
       </View>
 
@@ -225,35 +277,35 @@ export default function CateringSimulationDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F8',
+    backgroundColor: "#F4F6F8",
     padding: 16,
   },
 
   center: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 16,
   },
 
   title: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 6,
-    color: '#111827',
+    color: "#111827",
   },
 
   subtitle: {
     fontSize: 14,
-    color: '#4B5563',
+    color: "#4B5563",
     marginBottom: 4,
   },
 
   status: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#007AFF',
+    fontWeight: "700",
+    color: "#007AFF",
     marginBottom: 16,
   },
 
@@ -263,13 +315,13 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 10,
-    color: '#111827',
+    color: "#111827",
   },
 
   resultCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -278,18 +330,18 @@ const styles = StyleSheet.create({
 
   resultLabel: {
     fontSize: 13,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 4,
   },
 
   resultValue: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
   },
 
   cardLine: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 12,
     marginBottom: 10,
@@ -298,14 +350,14 @@ const styles = StyleSheet.create({
 
   lineTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 8,
-    color: '#111827',
+    color: "#111827",
   },
 
   lineText: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
     marginBottom: 4,
   },
 
@@ -313,44 +365,30 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  createOrderBtn: {
-    backgroundColor: '#28a745',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-
-  createOrderText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 15,
-  },
-
   secondaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 14,
     borderRadius: 12,
     marginBottom: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   secondaryButtonText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 15,
   },
 
   backButton: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     padding: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   backButtonText: {
-    color: '#374151',
-    fontWeight: '700',
+    color: "#374151",
+    fontWeight: "700",
     fontSize: 15,
   },
 });

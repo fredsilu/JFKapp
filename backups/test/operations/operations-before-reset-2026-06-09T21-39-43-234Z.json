@@ -1,0 +1,2563 @@
+{
+  "app": "JFKApp",
+  "env": "test",
+  "group": "operations",
+  "createdAt": "2026-06-09T21:39:43.234Z",
+  "collections": {
+    "catering_simulations": [
+      {
+        "id": "3ryNca0oCWgesGZlX28E",
+        "data": {
+          "name": "QQQQQQQQQQ",
+          "eventName": "QQQQQQQQQQ",
+          "clientId": "9yGHP1ezcEIkwUYxHkrQ",
+          "clientName": "Afi Bongong",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "25/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 30,
+              "numberOfDays": 1,
+              "total": 1500,
+              "costRate": 30,
+              "costAmount": 450,
+              "margin": 1050,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": true,
+              "quantity": 1,
+              "unitPrice": 150,
+              "numberOfDays": 1,
+              "total": 150,
+              "costRate": 0,
+              "costAmount": 110,
+              "margin": 40,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781039920289_sg13wx",
+                  "dayNumber": 1,
+                  "numberOfPeople": 50,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 2,
+                  "numberOfCooks": 1,
+                  "serverDailyCost": 20,
+                  "cookDailyCost": 40,
+                  "electricityDailyCost": 10,
+                  "gasDailyCost": 10,
+                  "fuelDailyCost": 10,
+                  "extraDailyCost": 30,
+                  "totalCost": 110,
+                  "billedAmount": 150
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "globalTurnover": 1650,
+          "globalCost": 560,
+          "globalMargin": 840,
+          "discount": 0,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      },
+      {
+        "id": "9KluxYkyH33w14lKUAR3",
+        "data": {
+          "name": "BUFFET -100 pers (copie)",
+          "lunch": {
+            "foodCostRate": 0,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "enabled": false,
+            "numberOfDays": 1
+          },
+          "service": {
+            "serverRate": 25,
+            "numberOfPeople": 100,
+            "enabled": true,
+            "numberOfDays": 1,
+            "cookRate": 50
+          },
+          "discount": 0,
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "dateLivraison": "2026-06-10",
+          "convertedToOrder": false,
+          "serviceCosts": {
+            "electricityDailyCost": 10,
+            "fuelDailyCost": 12,
+            "gasDailyCost": 8,
+            "serverDailyCost": 15,
+            "cookDailyCost": 20
+          },
+          "globalTurnover": 850,
+          "globalMargin": 510,
+          "drinks": {
+            "foodCostRate": 0,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "unitPrice": 0,
+            "enabled": false
+          },
+          "breakfast": {
+            "foodCostRate": 30,
+            "numberOfPeople": 10,
+            "enabled": true,
+            "unitPrice": 70,
+            "numberOfDays": 1
+          },
+          "globalCost": 340,
+          "status": "validated",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780933947,
+            "_nanoseconds": 443000000
+          },
+          "updatedAt": {
+            "_seconds": 1780933947,
+            "_nanoseconds": 443000000
+          }
+        }
+      },
+      {
+        "id": "9P5unxnpxJJV1NbbMfym",
+        "data": {
+          "name": "Test",
+          "eventName": "Test",
+          "clientId": "5ZnjXkqGmUrf4maTbt4E",
+          "clientName": "Alain Kapita",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "25/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 30,
+              "numberOfDays": 1,
+              "total": 1500,
+              "costRate": 30,
+              "costAmount": 450,
+              "margin": 1050,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": false,
+              "quantity": 0,
+              "unitPrice": 0,
+              "numberOfDays": 1,
+              "total": 0,
+              "costRate": 0,
+              "costAmount": 0,
+              "margin": 0,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781039002056_vrfp8s",
+                  "dayNumber": 1,
+                  "numberOfPeople": 0,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 0,
+                  "numberOfCooks": 0,
+                  "serverDailyCost": 0,
+                  "cookDailyCost": 0,
+                  "electricityDailyCost": 0,
+                  "gasDailyCost": 0,
+                  "fuelDailyCost": 0,
+                  "extraDailyCost": 0,
+                  "totalCost": 0,
+                  "billedAmount": 0
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "globalTurnover": 1500,
+          "globalCost": 450,
+          "globalMargin": 1050,
+          "discount": 0,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      },
+      {
+        "id": "AQiblSAhtGTR7I5OaSN3",
+        "data": {
+          "serviceCosts": {
+            "cookDailyCost": 20,
+            "gasDailyCost": 8,
+            "serverDailyCost": 15,
+            "electricityDailyCost": 10,
+            "fuelDailyCost": 12
+          },
+          "breakfast": {
+            "numberOfPeople": 50,
+            "enabled": true,
+            "foodCostRate": 30,
+            "unitPrice": 35,
+            "numberOfDays": 3
+          },
+          "globalMargin": 4785,
+          "name": "Brunch & Cocktail (copie)",
+          "convertedToOrder": false,
+          "globalCost": 2565,
+          "service": {
+            "numberOfDays": 3,
+            "cookRate": 50,
+            "enabled": true,
+            "numberOfPeople": 150,
+            "serverRate": 25
+          },
+          "discount": 0,
+          "lunch": {
+            "numberOfDays": 1,
+            "unitPrice": 30,
+            "foodCostRate": 30,
+            "enabled": true,
+            "numberOfPeople": 50
+          },
+          "globalTurnover": 7350,
+          "drinks": {
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0,
+            "enabled": false,
+            "numberOfPeople": 0
+          },
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "dateLivraison": "2026-06-22",
+          "status": "validated",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780930635,
+            "_nanoseconds": 51000000
+          },
+          "updatedAt": {
+            "_seconds": 1780930635,
+            "_nanoseconds": 51000000
+          }
+        }
+      },
+      {
+        "id": "aCLvYFq0Sls1GZmKgSGe",
+        "data": {
+          "name": "Buffet séminaire",
+          "clientId": "yyDBcq4yEezjX1AHfyc9",
+          "dateLivraison": "2026-06-30",
+          "discount": 0,
+          "breakfast": {
+            "enabled": true,
+            "numberOfPeople": 50,
+            "unitPrice": 35,
+            "numberOfDays": 1,
+            "foodCostRate": 30
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": true,
+            "numberOfPeople": 30,
+            "numberOfDays": 1,
+            "serverRate": 25,
+            "cookRate": 50
+          },
+          "serviceCosts": {
+            "serverDailyCost": 15,
+            "cookDailyCost": 20,
+            "electricityDailyCost": 10,
+            "gasDailyCost": 8,
+            "fuelDailyCost": 12
+          },
+          "globalTurnover": 1850,
+          "globalCost": 605,
+          "globalMargin": 1245,
+          "status": "validated",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "createdAt": {
+            "_seconds": 1780999851,
+            "_nanoseconds": 765000000
+          },
+          "updatedAt": {
+            "_seconds": 1780999851,
+            "_nanoseconds": 765000000
+          }
+        }
+      },
+      {
+        "id": "eehRIWbjAma5q8V9vb0o",
+        "data": {
+          "globalMargin": 2470,
+          "convertedToOrder": false,
+          "globalCost": 1130,
+          "discount": 0,
+          "drinks": {
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "foodCostRate": 0,
+            "numberOfDays": 1,
+            "enabled": false
+          },
+          "breakfast": {
+            "enabled": true,
+            "numberOfDays": 1,
+            "foodCostRate": 30,
+            "unitPrice": 70,
+            "numberOfPeople": 50
+          },
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "name": "BUFFET -100 pers (copie)",
+          "lunch": {
+            "enabled": false,
+            "numberOfDays": 1,
+            "foodCostRate": 0,
+            "numberOfPeople": 0,
+            "unitPrice": 0
+          },
+          "service": {
+            "enabled": true,
+            "numberOfDays": 1,
+            "cookRate": 50,
+            "serverRate": 25,
+            "numberOfPeople": 50
+          },
+          "globalTurnover": 3600,
+          "dateLivraison": "2026-06-10",
+          "serviceCosts": {
+            "serverDailyCost": 15,
+            "fuelDailyCost": 12,
+            "cookDailyCost": 20,
+            "electricityDailyCost": 10,
+            "gasDailyCost": 8
+          },
+          "status": "validated",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780998450,
+            "_nanoseconds": 968000000
+          },
+          "updatedAt": {
+            "_seconds": 1780998450,
+            "_nanoseconds": 968000000
+          }
+        }
+      },
+      {
+        "id": "hhmVm7IAkPx9xiHBDdhw",
+        "data": {
+          "name": "Tetssss",
+          "eventName": "Tetssss",
+          "clientId": "zPXJMgvGWPlSXUlUrDWl",
+          "clientName": "Afi Bongong",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "25/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 30,
+              "numberOfDays": 1,
+              "total": 1500,
+              "costRate": 30,
+              "costAmount": 450,
+              "margin": 1050,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": false,
+              "quantity": 0,
+              "unitPrice": 0,
+              "numberOfDays": 1,
+              "total": 0,
+              "costRate": 0,
+              "costAmount": 0,
+              "margin": 0,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781039920289_sg13wx",
+                  "dayNumber": 1,
+                  "numberOfPeople": 0,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 0,
+                  "numberOfCooks": 0,
+                  "serverDailyCost": 0,
+                  "cookDailyCost": 0,
+                  "electricityDailyCost": 0,
+                  "gasDailyCost": 0,
+                  "fuelDailyCost": 0,
+                  "extraDailyCost": 0,
+                  "totalCost": 0,
+                  "billedAmount": 0
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "globalTurnover": 1500,
+          "globalCost": 450,
+          "globalMargin": 800,
+          "discount": 0,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      },
+      {
+        "id": "mA1r5Phu2M2N1UrdIyco",
+        "data": {
+          "name": "Brunch & Cocktail",
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "dateLivraison": "2026-06-12",
+          "discount": 0,
+          "breakfast": {
+            "enabled": true,
+            "numberOfPeople": 50,
+            "unitPrice": 35,
+            "numberOfDays": 3,
+            "foodCostRate": 30
+          },
+          "lunch": {
+            "enabled": true,
+            "numberOfPeople": 300,
+            "unitPrice": 35,
+            "numberOfDays": 1,
+            "foodCostRate": 30
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": true,
+            "numberOfPeople": 150,
+            "numberOfDays": 3,
+            "serverRate": 25,
+            "cookRate": 50
+          },
+          "serviceCosts": {
+            "serverDailyCost": 15,
+            "cookDailyCost": 20,
+            "electricityDailyCost": 10,
+            "gasDailyCost": 8,
+            "fuelDailyCost": 12
+          },
+          "globalTurnover": 16350,
+          "globalCost": 5265,
+          "globalMargin": 11085,
+          "status": "validated",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "createdAt": {
+            "_seconds": 1780911301,
+            "_nanoseconds": 705000000
+          },
+          "updatedAt": {
+            "_seconds": 1780911301,
+            "_nanoseconds": 705000000
+          }
+        }
+      },
+      {
+        "id": "vMe16CbHaUfSfkEm4AVF",
+        "data": {
+          "name": "BUFFET -100 pers",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "dateLivraison": "2026-06-10",
+          "discount": 0,
+          "breakfast": {
+            "enabled": true,
+            "numberOfPeople": 100,
+            "unitPrice": 70,
+            "numberOfDays": 1,
+            "foodCostRate": 30
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": true,
+            "numberOfPeople": 100,
+            "numberOfDays": 1,
+            "serverRate": 25,
+            "cookRate": 50
+          },
+          "serviceCosts": {
+            "serverDailyCost": 15,
+            "cookDailyCost": 20,
+            "electricityDailyCost": 10,
+            "gasDailyCost": 8,
+            "fuelDailyCost": 12
+          },
+          "globalTurnover": 7150,
+          "globalCost": 2230,
+          "globalMargin": 4920,
+          "status": "validated",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "createdAt": {
+            "_seconds": 1780617424,
+            "_nanoseconds": 953000000
+          },
+          "updatedAt": {
+            "_seconds": 1780617424,
+            "_nanoseconds": 953000000
+          }
+        }
+      },
+      {
+        "id": "yMXmQhZLC8YZr2QdtvLC",
+        "data": {
+          "name": "fesfsefse",
+          "eventName": "fesfsefse",
+          "clientId": "P1Z59UadhmVmBFWZeiTW",
+          "clientName": "Alex x",
+          "numberOfPeople": 0,
+          "guestCount": 0,
+          "dateLivraison": "20/06/2026",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "comment": "",
+          "sections": [
+            {
+              "id": "main_article",
+              "key": "main_article",
+              "kind": "article",
+              "name": "Déjeuner",
+              "type": "food",
+              "position": 1,
+              "enabled": true,
+              "quantity": 50,
+              "unitPrice": 30,
+              "numberOfDays": 1,
+              "total": 1500,
+              "costRate": 30,
+              "costAmount": 450,
+              "margin": 1050,
+              "notes": ""
+            },
+            {
+              "id": "catering_service",
+              "key": "catering_service",
+              "kind": "service",
+              "name": "Service traiteur",
+              "type": "service",
+              "position": 2,
+              "enabled": false,
+              "quantity": 0,
+              "unitPrice": 0,
+              "numberOfDays": 1,
+              "total": 0,
+              "costRate": 0,
+              "costAmount": 0,
+              "margin": 0,
+              "serviceMode": "identical_days",
+              "serviceDays": [
+                {
+                  "id": "service_day_1_1781038917797_b9bawj",
+                  "dayNumber": 1,
+                  "numberOfPeople": 0,
+                  "serverRate": 25,
+                  "cookRate": 50,
+                  "numberOfServers": 0,
+                  "numberOfCooks": 0,
+                  "serverDailyCost": 0,
+                  "cookDailyCost": 0,
+                  "electricityDailyCost": 0,
+                  "gasDailyCost": 0,
+                  "fuelDailyCost": 0,
+                  "extraDailyCost": 0,
+                  "totalCost": 0,
+                  "billedAmount": 0
+                }
+              ],
+              "notes": ""
+            }
+          ],
+          "globalTurnover": 1500,
+          "globalCost": 450,
+          "globalMargin": 1050,
+          "discount": 0,
+          "breakfast": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "lunch": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "drinks": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "unitPrice": 0,
+            "numberOfDays": 1,
+            "foodCostRate": 0
+          },
+          "service": {
+            "enabled": false,
+            "numberOfPeople": 0,
+            "numberOfDays": 1,
+            "serverRate": 0,
+            "cookRate": 0
+          },
+          "serviceCosts": {
+            "serverDailyCost": 0,
+            "cookDailyCost": 0,
+            "electricityDailyCost": 0,
+            "gasDailyCost": 0,
+            "fuelDailyCost": 0
+          },
+          "status": "draft",
+          "isDeleted": false,
+          "convertedToOrder": false,
+          "orderId": null,
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "updatedAt": {
+            "_methodName": "serverTimestamp"
+          }
+        }
+      }
+    ],
+    "catering_proformas": [
+      {
+        "id": "1fiK2oFvqVJwnoybP19C",
+        "data": {
+          "simulationId": "3ryNca0oCWgesGZlX28E",
+          "clientId": "9yGHP1ezcEIkwUYxHkrQ",
+          "clientName": "Afi Bongong",
+          "clientRccm": "",
+          "clientIdNat": "",
+          "clientNif": "",
+          "clientAddress": "Rawbank 5è niveau  à  droite",
+          "clientCity": "RDC Kinshasa",
+          "issueDate": "2026-06-09",
+          "validityDate": "2026-06-16",
+          "eventDate": "25/06/2026",
+          "eventName": "QQQQQQQQQQ",
+          "status": "draft",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "sections": [
+            {
+              "name": "Déjeuner",
+              "numberOfDays": 1,
+              "costAmount": 450,
+              "margin": 1050,
+              "type": "food",
+              "position": 1,
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "key": "main_article",
+              "costRate": 30,
+              "kind": "article",
+              "notes": "",
+              "id": "main_article",
+              "enabled": true
+            },
+            {
+              "margin": 40,
+              "type": "service",
+              "position": 2,
+              "quantity": 1,
+              "total": 150,
+              "key": "catering_service",
+              "unitPrice": 150,
+              "id": "catering_service",
+              "enabled": true,
+              "serviceMode": "identical_days",
+              "kind": "service",
+              "costRate": 0,
+              "notes": "",
+              "numberOfDays": 1,
+              "name": "Service traiteur",
+              "serviceDays": [
+                {
+                  "extraDailyCost": 30,
+                  "fuelDailyCost": 10,
+                  "id": "service_day_1_1781039920289_sg13wx",
+                  "electricityDailyCost": 10,
+                  "numberOfCooks": 1,
+                  "dayNumber": 1,
+                  "numberOfPeople": 50,
+                  "serverDailyCost": 20,
+                  "billedAmount": 150,
+                  "cookDailyCost": 40,
+                  "cookRate": 50,
+                  "serverRate": 25,
+                  "numberOfServers": 2,
+                  "totalCost": 110,
+                  "gasDailyCost": 10
+                }
+              ],
+              "costAmount": 110
+            }
+          ],
+          "items": [
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 1650,
+            "discount": 0,
+            "tax": 0,
+            "total": 1650,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "orderId": "",
+          "orderNumber": "",
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-044",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1781040962,
+            "_nanoseconds": 856000000
+          },
+          "updatedAt": {
+            "_seconds": 1781040962,
+            "_nanoseconds": 856000000
+          }
+        }
+      },
+      {
+        "id": "3ZvEliLSAqRgC0Niw6Y5",
+        "data": {
+          "simulationId": "vMe16CbHaUfSfkEm4AVF",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "clientName": "EQUITYBCDC",
+          "clientRccm": "CD/KIN/RCCM/14-B-3364",
+          "clientIdNat": "01-K6500-N44216E",
+          "clientNif": "A0703770G",
+          "clientAddress": "Boulevard du 30 juin / Gombe",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-04",
+          "validityDate": "2026-06-11",
+          "eventDate": "2026-06-10",
+          "eventName": "BUFFET -100 pers",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 100,
+              "unitPrice": 70,
+              "total": 7000,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 7150,
+            "discount": 0,
+            "tax": 0,
+            "total": 7150,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-038",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780617435,
+            "_nanoseconds": 634000000
+          },
+          "orderNumber": "CMD-1780617475061",
+          "orderId": "PsE3nLBNGVMmKnhyZFHN",
+          "convertedAt": {
+            "_seconds": 1780617475,
+            "_nanoseconds": 763000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780617475,
+            "_nanoseconds": 763000000
+          }
+        }
+      },
+      {
+        "id": "O21jnVLpyoCaPg9l5S5c",
+        "data": {
+          "simulationId": "vMe16CbHaUfSfkEm4AVF",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "clientName": "EQUITYBCDC",
+          "clientRccm": "CD/KIN/RCCM/14-B-3364",
+          "clientIdNat": "01-K6500-N44216E",
+          "clientNif": "A0703770G",
+          "clientAddress": "Boulevard du 30 juin / Gombe",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-05",
+          "validityDate": "2026-06-12",
+          "eventDate": "2026-06-10",
+          "eventName": "BUFFET -100 pers",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 100,
+              "unitPrice": 70,
+              "total": 7000,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 7150,
+            "discount": 0,
+            "tax": 0,
+            "total": 7150,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-039",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780618132,
+            "_nanoseconds": 643000000
+          },
+          "orderNumber": "CMD-1780618157008",
+          "orderId": "543my3RYFGnbu8gxRQs3",
+          "convertedAt": {
+            "_seconds": 1780618158,
+            "_nanoseconds": 67000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780618158,
+            "_nanoseconds": 67000000
+          }
+        }
+      },
+      {
+        "id": "a8Fu7lVq7z2XvPQo7S0V",
+        "data": {
+          "simulationId": "eehRIWbjAma5q8V9vb0o",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "clientName": "EQUITYBCDC",
+          "clientRccm": "CD/KIN/RCCM/14-B-3364",
+          "clientIdNat": "01-K6500-N44216E",
+          "clientNif": "A0703770G",
+          "clientAddress": "Boulevard du 30 juin / Gombe",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-09",
+          "validityDate": "2026-06-16",
+          "eventDate": "2026-06-10",
+          "eventName": "BUFFET -100 pers (copie)",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 70,
+              "total": 3500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 100,
+              "total": 100,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 3600,
+            "discount": 0,
+            "tax": 0,
+            "total": 3600,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-042",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780998468,
+            "_nanoseconds": 433000000
+          },
+          "orderNumber": "CMD-1780998578825",
+          "orderId": "EWBrvzlHuHWeENnasP2A",
+          "convertedAt": {
+            "_seconds": 1780998579,
+            "_nanoseconds": 376000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780998579,
+            "_nanoseconds": 376000000
+          }
+        }
+      },
+      {
+        "id": "dG9uv3kl5zlve4A9WbkX",
+        "data": {
+          "simulationId": "9KluxYkyH33w14lKUAR3",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "clientName": "EQUITYBCDC",
+          "clientRccm": "CD/KIN/RCCM/14-B-3364",
+          "clientIdNat": "01-K6500-N44216E",
+          "clientNif": "A0703770G",
+          "clientAddress": "Boulevard du 30 juin / Gombe",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-08",
+          "validityDate": "2026-06-15",
+          "eventDate": "2026-06-10",
+          "eventName": "BUFFET -100 pers (copie)",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 10,
+              "unitPrice": 70,
+              "total": 700,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 850,
+            "discount": 0,
+            "tax": 0,
+            "total": 850,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-041",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780933967,
+            "_nanoseconds": 134000000
+          },
+          "orderNumber": "CMD-1780933978226",
+          "orderId": "5M6Tt373oGN9H8SgcOYu",
+          "convertedAt": {
+            "_seconds": 1780933979,
+            "_nanoseconds": 256000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780933979,
+            "_nanoseconds": 256000000
+          }
+        }
+      },
+      {
+        "id": "fh5wXLaaikkXa7ubxyM8",
+        "data": {
+          "simulationId": "AQiblSAhtGTR7I5OaSN3",
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "clientName": "D-Way",
+          "clientRccm": "",
+          "clientIdNat": "",
+          "clientNif": "",
+          "clientAddress": "Gombe",
+          "clientCity": "Kinshasa",
+          "issueDate": "2026-06-08",
+          "validityDate": "2026-06-15",
+          "eventDate": "2026-06-22",
+          "eventName": "Brunch & Cocktail (copie)",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 5250,
+              "numberOfDays": 3
+            },
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 200,
+              "total": 600,
+              "numberOfDays": 3
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 7350,
+            "discount": 0,
+            "tax": 0,
+            "total": 7350,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-040",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780930650,
+            "_nanoseconds": 14000000
+          },
+          "orderNumber": "CMD-1780930667670",
+          "orderId": "6B6JP9s2QvBjjsRzPzpb",
+          "convertedAt": {
+            "_seconds": 1780930672,
+            "_nanoseconds": 834000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780930672,
+            "_nanoseconds": 834000000
+          }
+        }
+      },
+      {
+        "id": "y5n3ecKAj1gyM1FsmoE7",
+        "data": {
+          "simulationId": "aCLvYFq0Sls1GZmKgSGe",
+          "clientId": "yyDBcq4yEezjX1AHfyc9",
+          "clientName": "UN GLOBAL",
+          "clientRccm": "",
+          "clientIdNat": "",
+          "clientNif": "",
+          "clientAddress": "42 avenue des cliniques C Gombe",
+          "clientCity": "Kinshasa / RDC",
+          "issueDate": "2026-06-09",
+          "validityDate": "2026-06-16",
+          "eventDate": "2026-06-30",
+          "eventName": "Buffet séminaire",
+          "service": "Service traiteur",
+          "serviceType": "Service traiteur",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 1750,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 100,
+              "total": 100,
+              "numberOfDays": 1
+            }
+          ],
+          "menu": [],
+          "totals": {
+            "subtotal": 1850,
+            "discount": 0,
+            "tax": 0,
+            "total": 1850,
+            "currency": "USD"
+          },
+          "isInvoiced": false,
+          "invoiceId": "",
+          "invoiceNumber": "",
+          "number": "CR2026-PR-043",
+          "isDeleted": false,
+          "createdAt": {
+            "_seconds": 1780999863,
+            "_nanoseconds": 162000000
+          },
+          "orderNumber": "CMD-1780999874258",
+          "orderId": "d8Js4wfrJWrXsMLRE62k",
+          "convertedAt": {
+            "_seconds": 1780999874,
+            "_nanoseconds": 764000000
+          },
+          "status": "converted",
+          "updatedAt": {
+            "_seconds": 1780999874,
+            "_nanoseconds": 764000000
+          }
+        }
+      }
+    ],
+    "orders": [
+      {
+        "id": "543my3RYFGnbu8gxRQs3",
+        "data": {
+          "simulationId": "vMe16CbHaUfSfkEm4AVF",
+          "documentType": "order",
+          "number": "CMD-1780618157008",
+          "version": 1,
+          "name": "BUFFET -100 pers",
+          "eventName": "BUFFET -100 pers",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryDate": "2026-06-10",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 100,
+              "unitPrice": 70,
+              "total": 7000,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 7150,
+            "discount": 0,
+            "tax": 0,
+            "total": 7150,
+            "currency": "USD"
+          },
+          "billedAmount": 7150,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 7150,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "O21jnVLpyoCaPg9l5S5c",
+          "proformaNumber": "CR2026-PR-039",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "LkcmrrvcAHZAwfba0Ru6",
+          "status": "in-production",
+          "updatedAt": {
+            "_seconds": 1780644723,
+            "_nanoseconds": 259000000
+          }
+        }
+      },
+      {
+        "id": "5M6Tt373oGN9H8SgcOYu",
+        "data": {
+          "simulationId": "9KluxYkyH33w14lKUAR3",
+          "documentType": "order",
+          "number": "CMD-1780933978226",
+          "version": 1,
+          "name": "BUFFET -100 pers (copie)",
+          "eventName": "BUFFET -100 pers (copie)",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryDate": "2026-06-10",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 10,
+              "unitPrice": 70,
+              "total": 700,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 850,
+            "discount": 0,
+            "tax": 0,
+            "total": 850,
+            "currency": "USD"
+          },
+          "billedAmount": 850,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 850,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "dG9uv3kl5zlve4A9WbkX",
+          "proformaNumber": "CR2026-PR-041",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "kD60x2tM7iWF1AYqqOmd",
+          "status": "delivered",
+          "updatedAt": {
+            "_seconds": 1780934066,
+            "_nanoseconds": 496000000
+          }
+        }
+      },
+      {
+        "id": "6B6JP9s2QvBjjsRzPzpb",
+        "data": {
+          "simulationId": "AQiblSAhtGTR7I5OaSN3",
+          "documentType": "order",
+          "status": "confirmed",
+          "number": "CMD-1780930667670",
+          "version": 1,
+          "name": "Brunch & Cocktail (copie)",
+          "eventName": "Brunch & Cocktail (copie)",
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "client": {
+            "name": "D-Way",
+            "address": "Gombe",
+            "city": "Kinshasa",
+            "phone": "",
+            "notes": "",
+            "rccm": "",
+            "idNat": "",
+            "nif": ""
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-22",
+          "deliveryDate": "2026-06-22",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 5250,
+              "numberOfDays": 3
+            },
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 200,
+              "total": 600,
+              "numberOfDays": 3
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 7350,
+            "discount": 0,
+            "tax": 0,
+            "total": 7350,
+            "currency": "USD"
+          },
+          "billedAmount": 7350,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 7350,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "fh5wXLaaikkXa7ubxyM8",
+          "proformaNumber": "CR2026-PR-040",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "KgFVJNCWxW7q0yFKObTX",
+          "updatedAt": {
+            "_seconds": 1780930684,
+            "_nanoseconds": 563000000
+          }
+        }
+      },
+      {
+        "id": "EWBrvzlHuHWeENnasP2A",
+        "data": {
+          "simulationId": "eehRIWbjAma5q8V9vb0o",
+          "documentType": "order",
+          "status": "confirmed",
+          "number": "CMD-1780998578825",
+          "version": 1,
+          "name": "BUFFET -100 pers (copie)",
+          "eventName": "BUFFET -100 pers (copie)",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryDate": "2026-06-10",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 70,
+              "total": 3500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 100,
+              "total": 100,
+              "numberOfDays": 1
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 3600,
+            "discount": 0,
+            "tax": 0,
+            "total": 3600,
+            "currency": "USD"
+          },
+          "billedAmount": 3600,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 3600,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "a8Fu7lVq7z2XvPQo7S0V",
+          "proformaNumber": "CR2026-PR-042",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "xMX1kWUvAi5ySouIbizT",
+          "updatedAt": {
+            "_seconds": 1780998582,
+            "_nanoseconds": 929000000
+          }
+        }
+      },
+      {
+        "id": "PsE3nLBNGVMmKnhyZFHN",
+        "data": {
+          "simulationId": "vMe16CbHaUfSfkEm4AVF",
+          "documentType": "order",
+          "status": "confirmed",
+          "number": "CMD-1780617475061",
+          "version": 1,
+          "name": "BUFFET -100 pers",
+          "eventName": "BUFFET -100 pers",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryDate": "2026-06-10",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 100,
+              "unitPrice": 70,
+              "total": 7000,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 150,
+              "total": 150,
+              "numberOfDays": 1
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 7150,
+            "discount": 0,
+            "tax": 0,
+            "total": 7150,
+            "currency": "USD"
+          },
+          "billedAmount": 7150,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 7150,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "3ZvEliLSAqRgC0Niw6Y5",
+          "proformaNumber": "CR2026-PR-038",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "4umLIkTrFg46sQdC0b2i",
+          "updatedAt": {
+            "_seconds": 1780617499,
+            "_nanoseconds": 602000000
+          }
+        }
+      },
+      {
+        "id": "d8Js4wfrJWrXsMLRE62k",
+        "data": {
+          "simulationId": "aCLvYFq0Sls1GZmKgSGe",
+          "documentType": "order",
+          "status": "confirmed",
+          "number": "CMD-1780999874258",
+          "version": 1,
+          "name": "Buffet séminaire",
+          "eventName": "Buffet séminaire",
+          "clientId": "yyDBcq4yEezjX1AHfyc9",
+          "client": {
+            "name": "UN GLOBAL",
+            "address": "42 avenue des cliniques C Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "",
+            "idNat": "",
+            "nif": ""
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-30",
+          "deliveryDate": "2026-06-30",
+          "deliveryAddress": "",
+          "address": "",
+          "deliveryTime": "",
+          "guestCount": 0,
+          "numberOfGuests": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 1750,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 100,
+              "total": 100,
+              "numberOfDays": 1
+            }
+          ],
+          "dishes": [],
+          "additionalIngredients": [],
+          "operationalDishes": [],
+          "operationalAdditionalIngredients": [],
+          "operationalCosts": {
+            "dishesCost": 0,
+            "additionalIngredientsCost": 0,
+            "totalProductionCost": 0
+          },
+          "totals": {
+            "subtotal": 1850,
+            "discount": 0,
+            "tax": 0,
+            "total": 1850,
+            "currency": "USD"
+          },
+          "billedAmount": 1850,
+          "breakfast": null,
+          "lunch": null,
+          "drinks": null,
+          "service": "Service traiteur",
+          "pricingReference": {
+            "totalHT": 1850,
+            "totalCost": 0,
+            "margin": 0
+          },
+          "proformaId": "y5n3ecKAj1gyM1FsmoE7",
+          "proformaNumber": "CR2026-PR-043",
+          "confirmedAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "createdAt": {
+            "_methodName": "serverTimestamp"
+          },
+          "invoiceId": "XkVXgqQecc8zjUCUVcBE",
+          "updatedAt": {
+            "_seconds": 1780999879,
+            "_nanoseconds": 143000000
+          }
+        }
+      }
+    ],
+    "catering_invoices": [
+      {
+        "id": "4umLIkTrFg46sQdC0b2i",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "PsE3nLBNGVMmKnhyZFHN",
+          "orderNumber": "CMD-1780617475061",
+          "proformaId": "3ZvEliLSAqRgC0Niw6Y5",
+          "proformaNumber": "CR2026-PR-038",
+          "sourceProformaId": "3ZvEliLSAqRgC0Niw6Y5",
+          "number": "CR2026-FC-030",
+          "status": "issued",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "BUFFET -100 pers",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "total": 7000,
+              "numberOfDays": 1,
+              "unitPrice": 70,
+              "label": "Petit-déjeuner",
+              "quantity": 100
+            },
+            {
+              "total": 150,
+              "quantity": 1,
+              "numberOfDays": 1,
+              "label": "Service traiteur",
+              "unitPrice": 150
+            }
+          ],
+          "totals": {
+            "currency": "USD",
+            "tax": 0,
+            "total": 7150,
+            "subtotal": 7150,
+            "discount": 0,
+            "discountAmount": 0,
+            "totalAfterDiscount": 7150
+          },
+          "correction": {
+            "correctionType": null
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780617499,
+            "_nanoseconds": 192000000
+          },
+          "issuedAt": {
+            "_seconds": 1780617499,
+            "_nanoseconds": 192000000
+          },
+          "updatedAt": {
+            "_seconds": 1780617499,
+            "_nanoseconds": 192000000
+          }
+        }
+      },
+      {
+        "id": "KgFVJNCWxW7q0yFKObTX",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "6B6JP9s2QvBjjsRzPzpb",
+          "orderNumber": "CMD-1780930667670",
+          "proformaId": "fh5wXLaaikkXa7ubxyM8",
+          "proformaNumber": "CR2026-PR-040",
+          "sourceProformaId": "fh5wXLaaikkXa7ubxyM8",
+          "number": "CR2026-FC-033",
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "client": {
+            "name": "D-Way",
+            "address": "Gombe",
+            "city": "Kinshasa",
+            "phone": "",
+            "notes": "",
+            "rccm": "",
+            "idNat": "",
+            "nif": ""
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-22",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "Brunch & Cocktail (copie)",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 5250,
+              "numberOfDays": 3
+            },
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "unitPrice": 30,
+              "total": 1500,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 200,
+              "total": 600,
+              "numberOfDays": 3
+            }
+          ],
+          "totals": {
+            "subtotal": 7350,
+            "discount": 0,
+            "tax": 0,
+            "total": 7350,
+            "currency": "USD",
+            "discountAmount": 0,
+            "totalAfterDiscount": 7350
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780930684,
+            "_nanoseconds": 76000000
+          },
+          "issuedAt": {
+            "_seconds": 1780930684,
+            "_nanoseconds": 76000000
+          },
+          "correction": {
+            "correctionType": "ANNULLE_ET_REMPLACE",
+            "replacedByInvoiceId": "RDZZ7VranSXOTz5YG2AX",
+            "replacedByInvoiceNumber": "CR2026-FC-034"
+          },
+          "status": "replaced",
+          "updatedAt": {
+            "_seconds": 1780930960,
+            "_nanoseconds": 206000000
+          }
+        }
+      },
+      {
+        "id": "LkcmrrvcAHZAwfba0Ru6",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "543my3RYFGnbu8gxRQs3",
+          "orderNumber": "CMD-1780618157008",
+          "proformaId": "O21jnVLpyoCaPg9l5S5c",
+          "proformaNumber": "CR2026-PR-039",
+          "sourceProformaId": "O21jnVLpyoCaPg9l5S5c",
+          "number": "CR2026-FC-031",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "BUFFET -100 pers",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "total": 7000,
+              "unitPrice": 70,
+              "quantity": 100,
+              "label": "Petit-déjeuner",
+              "numberOfDays": 1
+            },
+            {
+              "total": 150,
+              "unitPrice": 150,
+              "label": "Service traiteur",
+              "quantity": 1,
+              "numberOfDays": 1
+            }
+          ],
+          "totals": {
+            "subtotal": 7150,
+            "currency": "USD",
+            "discount": 0,
+            "tax": 0,
+            "total": 7150,
+            "discountAmount": 0,
+            "totalAfterDiscount": 7150
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780618162,
+            "_nanoseconds": 837000000
+          },
+          "issuedAt": {
+            "_seconds": 1780618162,
+            "_nanoseconds": 837000000
+          },
+          "correction": {
+            "correctionType": "ANNULLE_ET_REMPLACE",
+            "replacedByInvoiceId": "t58A26k2wDj2hIVip5vi",
+            "replacedByInvoiceNumber": "CR2026-FC-032"
+          },
+          "status": "replaced",
+          "updatedAt": {
+            "_seconds": 1780644860,
+            "_nanoseconds": 562000000
+          }
+        }
+      },
+      {
+        "id": "RDZZ7VranSXOTz5YG2AX",
+        "data": {
+          "eventName": "Brunch & Cocktail (copie)",
+          "proformaNumber": "CR2026-PR-040",
+          "comment": "",
+          "version": 2,
+          "orderId": "6B6JP9s2QvBjjsRzPzpb",
+          "dateLivraison": "2026-06-22",
+          "client": {
+            "phone": "",
+            "notes": "",
+            "nif": "",
+            "name": "D-Way",
+            "idNat": "",
+            "city": "Kinshasa",
+            "address": "Gombe",
+            "rccm": ""
+          },
+          "sourceProformaId": "fh5wXLaaikkXa7ubxyM8",
+          "proformaId": "fh5wXLaaikkXa7ubxyM8",
+          "orderNumber": "CMD-1780930667670",
+          "clientId": "CJyt8qS4HKF9b27REZyj",
+          "documentType": "INVOICE",
+          "totals": {
+            "discountAmount": 0,
+            "total": 7350,
+            "currency": "USD",
+            "totalAfterDiscount": 7350,
+            "discount": 0,
+            "tax": 0,
+            "subtotal": 7350
+          },
+          "number": "CR2026-FC-034",
+          "correction": {
+            "correctionType": "ANNULLE_ET_REMPLACE",
+            "replacesInvoiceId": "KgFVJNCWxW7q0yFKObTX",
+            "replacesInvoiceNumber": "CR2026-FC-033",
+            "reason": "Erreur client"
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "createdAt": {
+            "_seconds": 1780930795,
+            "_nanoseconds": 399000000
+          },
+          "deliveryTime": "15:00",
+          "deliveryAddress": "Gombe",
+          "guestCount": 30,
+          "designation": "Test",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "numberOfDays": 3,
+              "unitPrice": 35,
+              "total": 5250,
+              "days": 3,
+              "totalPrice": 5250
+            },
+            {
+              "label": "Déjeuner",
+              "quantity": 50,
+              "numberOfDays": 1,
+              "unitPrice": 30,
+              "total": 1500,
+              "days": 1,
+              "totalPrice": 1500
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "numberOfDays": 3,
+              "unitPrice": 200,
+              "total": 600,
+              "days": 3,
+              "totalPrice": 600
+            }
+          ],
+          "isLocked": true,
+          "issuedAt": {
+            "_seconds": 1780930959,
+            "_nanoseconds": 737000000
+          },
+          "status": "issued",
+          "creditNoteSummary": {
+            "totalCredited": 7350,
+            "remainingCreditableAmount": 0,
+            "lastCreditNoteId": "G7utYwtnWAPSX9uXng1i",
+            "lastCreditNoteNumber": "AV2026-1781000345521",
+            "lastCreditNoteAmount": 7350,
+            "isFullyCredited": true,
+            "lastCreditNoteAt": {
+              "_seconds": 1781000361,
+              "_nanoseconds": 546000000
+            }
+          },
+          "updatedAt": {
+            "_seconds": 1781000361,
+            "_nanoseconds": 546000000
+          }
+        }
+      },
+      {
+        "id": "XkVXgqQecc8zjUCUVcBE",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "d8Js4wfrJWrXsMLRE62k",
+          "orderNumber": "CMD-1780999874258",
+          "proformaId": "y5n3ecKAj1gyM1FsmoE7",
+          "proformaNumber": "CR2026-PR-043",
+          "sourceProformaId": "y5n3ecKAj1gyM1FsmoE7",
+          "number": "CR2026-FC-037",
+          "status": "issued",
+          "clientId": "yyDBcq4yEezjX1AHfyc9",
+          "client": {
+            "name": "UN GLOBAL",
+            "address": "42 avenue des cliniques C Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "",
+            "idNat": "",
+            "nif": ""
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-30",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "Buffet séminaire",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 50,
+              "unitPrice": 35,
+              "total": 1750,
+              "numberOfDays": 1
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "unitPrice": 100,
+              "total": 100,
+              "numberOfDays": 1
+            }
+          ],
+          "totals": {
+            "subtotal": 1850,
+            "discount": 0,
+            "tax": 0,
+            "total": 1850,
+            "currency": "USD",
+            "discountAmount": 0,
+            "totalAfterDiscount": 1850
+          },
+          "correction": {
+            "correctionType": null
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780999878,
+            "_nanoseconds": 602000000
+          },
+          "issuedAt": {
+            "_seconds": 1780999878,
+            "_nanoseconds": 602000000
+          },
+          "creditNoteSummary": {
+            "totalCredited": 850,
+            "remainingCreditableAmount": 1000,
+            "lastCreditNoteId": "gqFBIOnt1AfPelOOmHxx",
+            "lastCreditNoteNumber": "AV2026-1780999907346",
+            "lastCreditNoteAmount": 850,
+            "isFullyCredited": false,
+            "lastCreditNoteAt": {
+              "_seconds": 1780999939,
+              "_nanoseconds": 921000000
+            }
+          },
+          "updatedAt": {
+            "_seconds": 1780999939,
+            "_nanoseconds": 921000000
+          }
+        }
+      },
+      {
+        "id": "kD60x2tM7iWF1AYqqOmd",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "5M6Tt373oGN9H8SgcOYu",
+          "orderNumber": "CMD-1780933978226",
+          "proformaId": "dG9uv3kl5zlve4A9WbkX",
+          "proformaNumber": "CR2026-PR-041",
+          "sourceProformaId": "dG9uv3kl5zlve4A9WbkX",
+          "number": "CR2026-FC-035",
+          "status": "issued",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "BUFFET -100 pers (copie)",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "unitPrice": 70,
+              "numberOfDays": 1,
+              "total": 700,
+              "quantity": 10,
+              "label": "Petit-déjeuner"
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 1,
+              "total": 150,
+              "numberOfDays": 1,
+              "unitPrice": 150
+            }
+          ],
+          "totals": {
+            "subtotal": 850,
+            "discount": 0,
+            "tax": 0,
+            "currency": "USD",
+            "total": 850,
+            "discountAmount": 0,
+            "totalAfterDiscount": 850
+          },
+          "correction": {
+            "correctionType": null
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780933983,
+            "_nanoseconds": 815000000
+          },
+          "issuedAt": {
+            "_seconds": 1780933983,
+            "_nanoseconds": 815000000
+          },
+          "creditNoteSummary": {
+            "totalCredited": 850,
+            "remainingCreditableAmount": 0,
+            "lastCreditNoteId": "o881ZX9Hs2maq68KK6Le",
+            "lastCreditNoteNumber": "AV2026-1780934280564",
+            "lastCreditNoteAmount": 850,
+            "isFullyCredited": true,
+            "lastCreditNoteAt": {
+              "_seconds": 1780934387,
+              "_nanoseconds": 753000000
+            }
+          },
+          "updatedAt": {
+            "_seconds": 1780934387,
+            "_nanoseconds": 753000000
+          }
+        }
+      },
+      {
+        "id": "t58A26k2wDj2hIVip5vi",
+        "data": {
+          "proformaId": "O21jnVLpyoCaPg9l5S5c",
+          "dateLivraison": "2026-06-10",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "orderId": "543my3RYFGnbu8gxRQs3",
+          "proformaNumber": "CR2026-PR-039",
+          "sourceProformaId": "O21jnVLpyoCaPg9l5S5c",
+          "client": {
+            "notes": "",
+            "phone": "",
+            "address": "Boulevard du 30 juin / Gombe",
+            "nif": "A0703770G",
+            "name": "EQUITYBCDC",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "city": "Kinshasa / RDC"
+          },
+          "orderNumber": "CMD-1780618157008",
+          "version": 2,
+          "documentType": "INVOICE",
+          "comment": "",
+          "eventName": "BUFFET -100 pers",
+          "deliveryTime": "",
+          "number": "CR2026-FC-032",
+          "correction": {
+            "correctionType": "ANNULLE_ET_REMPLACE",
+            "replacesInvoiceId": "LkcmrrvcAHZAwfba0Ru6",
+            "replacesInvoiceNumber": "CR2026-FC-031",
+            "reason": "test annulation"
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "createdAt": {
+            "_seconds": 1780644764,
+            "_nanoseconds": 551000000
+          },
+          "deliveryAddress": "Kinshasa",
+          "guestCount": 100,
+          "designation": "Buffet - 100pers",
+          "totals": {
+            "subtotal": 7100,
+            "discount": 0,
+            "discountAmount": 0,
+            "tax": 0,
+            "totalAfterDiscount": 7100,
+            "total": 7100,
+            "currency": "USD"
+          },
+          "items": [
+            {
+              "label": "Petit-déjeuner",
+              "quantity": 100,
+              "numberOfDays": 1,
+              "unitPrice": 70,
+              "total": 7000,
+              "days": 1,
+              "totalPrice": 7000
+            },
+            {
+              "label": "Service traiteur",
+              "quantity": 100,
+              "numberOfDays": 1,
+              "unitPrice": 1,
+              "total": 100,
+              "totalPrice": 100,
+              "days": 1
+            }
+          ],
+          "isLocked": true,
+          "issuedAt": {
+            "_seconds": 1780644860,
+            "_nanoseconds": 117000000
+          },
+          "status": "issued",
+          "updatedAt": {
+            "_seconds": 1780644860,
+            "_nanoseconds": 117000000
+          }
+        }
+      },
+      {
+        "id": "xMX1kWUvAi5ySouIbizT",
+        "data": {
+          "documentType": "INVOICE",
+          "orderId": "EWBrvzlHuHWeENnasP2A",
+          "orderNumber": "CMD-1780998578825",
+          "proformaId": "a8Fu7lVq7z2XvPQo7S0V",
+          "proformaNumber": "CR2026-PR-042",
+          "sourceProformaId": "a8Fu7lVq7z2XvPQo7S0V",
+          "number": "CR2026-FC-036",
+          "status": "issued",
+          "clientId": "AwL8g5Vi8rqSURl0EMzT",
+          "client": {
+            "name": "EQUITYBCDC",
+            "address": "Boulevard du 30 juin / Gombe",
+            "city": "Kinshasa / RDC",
+            "phone": "",
+            "notes": "",
+            "rccm": "CD/KIN/RCCM/14-B-3364",
+            "idNat": "01-K6500-N44216E",
+            "nif": "A0703770G"
+          },
+          "designation": "",
+          "dateLivraison": "2026-06-10",
+          "deliveryTime": "",
+          "deliveryAddress": "",
+          "eventName": "BUFFET -100 pers (copie)",
+          "guestCount": 0,
+          "comment": "",
+          "items": [
+            {
+              "total": 3500,
+              "quantity": 50,
+              "unitPrice": 70,
+              "label": "Petit-déjeuner",
+              "numberOfDays": 1
+            },
+            {
+              "numberOfDays": 1,
+              "quantity": 1,
+              "total": 100,
+              "unitPrice": 100,
+              "label": "Service traiteur"
+            }
+          ],
+          "totals": {
+            "currency": "USD",
+            "total": 3600,
+            "tax": 0,
+            "subtotal": 3600,
+            "discount": 0,
+            "discountAmount": 0,
+            "totalAfterDiscount": 3600
+          },
+          "correction": {
+            "correctionType": null
+          },
+          "cancellation": null,
+          "createdBy": null,
+          "issuedBy": null,
+          "version": 1,
+          "isLocked": true,
+          "createdAt": {
+            "_seconds": 1780998582,
+            "_nanoseconds": 625000000
+          },
+          "issuedAt": {
+            "_seconds": 1780998582,
+            "_nanoseconds": 625000000
+          },
+          "creditNoteSummary": {
+            "totalCredited": 2600,
+            "remainingCreditableAmount": 1000,
+            "lastCreditNoteId": "0t0g6o4k9JFnSrKEDQyw",
+            "lastCreditNoteNumber": "AV2026-1780998651625",
+            "lastCreditNoteAmount": 2600,
+            "isFullyCredited": false,
+            "lastCreditNoteAt": {
+              "_seconds": 1780998761,
+              "_nanoseconds": 861000000
+            }
+          },
+          "updatedAt": {
+            "_seconds": 1780998761,
+            "_nanoseconds": 861000000
+          }
+        }
+      }
+    ]
+  }
+}

@@ -48,12 +48,15 @@ type SimulationEditorSubmitPayload = {
   clientName: string;
   numberOfPeople: number;
   dateLivraison: string;
+  discount: number;
   deliveryTime: string;
   deliveryAddress: string;
   comment: string;
   sections: CateringSection[];
   totals: {
     subtotal: number;
+    discountAmount: number;
+    grandTotal: number;
     totalCost: number;
     margin: number;
   };
@@ -105,9 +108,11 @@ export default function SimulationEditor({
   const [serviceSettings, setServiceSettings] =
     useState<CateringServiceSettings | null>(null);
 
+  const [discountAmount, setDiscountAmount] = useState("0");
+
   const [loading, setLoading] = useState(true);
 
-
+  const [formError, setFormError] = useState("");
 
 
   useEffect(() => {
@@ -383,27 +388,43 @@ export default function SimulationEditor({
     return getSectionsTotals(sections);
   }, [sections]);
 
-  async function handleSubmit() {
-    if (!eventName.trim()) {
-      Alert.alert("Champ requis", "Veuillez saisir le nom de l’événement.");
-      return;
-    }
+  const discount = Number(discountAmount) || 0;
+  const grandTotal = Math.max(totals.subtotal - discount, 0);
+  const finalMargin = grandTotal - totals.totalCost;
 
-    await onSubmit({
-      eventName: eventName.trim(),
-      dateLivraison,
-      deliveryTime,
-      deliveryAddress,
-      comment,
-      clientName: clientName.trim(),
-      numberOfPeople: Number(numberOfPeople) || 0,
-      sections: totals.sections,
-      totals: {
-        subtotal: totals.subtotal,
-        totalCost: totals.totalCost,
-        margin: totals.margin,
-      },
-    });
+  async function handleSubmit() {
+    console.log("🔥 handleSubmit lancé");
+
+    try {
+      setFormError("");
+
+      if (!eventName.trim()) {
+        setFormError("Veuillez saisir le nom de l’événement.");
+        return;
+      }
+
+      await onSubmit({
+        eventName: eventName.trim(),
+        dateLivraison,
+        deliveryTime,
+        deliveryAddress,
+        comment,
+        clientName: clientName.trim(),
+        numberOfPeople: Number(numberOfPeople) || 0,
+        discount,
+        sections: totals.sections,
+        totals: {
+          subtotal: totals.subtotal,
+          discountAmount: discount,
+          grandTotal,
+          totalCost: totals.totalCost,
+          margin: finalMargin,
+        },
+      });
+    } catch (error) {
+      console.error("Erreur enregistrement simulation:", error);
+      setFormError("Impossible d’enregistrer la simulation. Vérifie la console.");
+    }
   }
 
   if (loading) {
@@ -580,7 +601,14 @@ export default function SimulationEditor({
             </View>
           </View>
         </Modal>
-
+        <Text style={styles.label}>Remise</Text>
+        <TextInput
+          value={discountAmount}
+          onChangeText={setDiscountAmount}
+          keyboardType="numeric"
+          placeholder="0"
+          style={styles.input}
+        />
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>📊 Récapitulatif global</Text>
 
@@ -589,17 +617,35 @@ export default function SimulationEditor({
           </Text>
 
           <Text style={styles.globalText}>
+            Remise : {discount.toFixed(2)} $
+          </Text>
+
+          <Text style={styles.globalText}>
+            Total net : {grandTotal.toFixed(2)} $
+          </Text>
+
+          <Text style={styles.globalText}>
             Coût total : {totals.totalCost.toFixed(2)} $
           </Text>
 
           <Text style={styles.globalText}>
-            Marge : {totals.margin.toFixed(2)} $
+            Marge : {finalMargin.toFixed(2)} $
           </Text>
         </View>
+        {formError ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{formError}</Text>
+          </View>
+        ) : null}
+
+
 
         <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={saving}
+          onPress={() => {
+            console.log("🔥 BOUTON ENREGISTRER CLIQUÉ");
+            handleSubmit();
+          }}
+          activeOpacity={0.8}
           style={[styles.saveButton, saving && styles.disabledButton]}
         >
           <Text style={styles.saveButtonText}>
@@ -825,6 +871,19 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
+  errorBox: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
 
+  errorText: {
+    color: "#B91C1C",
+    fontWeight: "700",
+    fontSize: 13,
+  },
 
 });
