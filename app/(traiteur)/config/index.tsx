@@ -25,6 +25,12 @@ export default function ConfigHome() {
       route: "/(traiteur)/ingredients",
     },
     {
+      title: "Service traiteur",
+      subtitle: "Configurer les coûts et ratios du service",
+      icon: "🧑‍🍳",
+      route: "/(traiteur)/config/service-settings",
+    },
+    {
       title: "Aide & règles",
       subtitle: "Comprendre les règles comptables et métier",
       icon: "📘",

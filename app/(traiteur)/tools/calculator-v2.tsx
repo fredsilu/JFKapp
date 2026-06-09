@@ -8,14 +8,21 @@ import {
     TouchableOpacity,
     Alert,
 } from "react-native";
+import {
+    getCateringServiceSettings,
+    CateringServiceSettings,
+} from "@/src/services/cateringServiceSettings.service";
 import { router } from "expo-router";
-
+import ArticleSectionCard from "@/components/simulation/ArticleSectionCard";
+import ServiceSectionCard from "@/components/simulation/ServiceSectionCard";
+import { CateringServiceDay } from "@/types/catering";
 import { CateringSection } from "@/types/catering";
 import { createCateringSimulation } from "@/src/services/cateringSimulation.service";
 import { getCateringSectionTemplates } from "@/src/services/cateringSectionTemplate.service";
 import {
     createEmptySectionsFromTemplates,
     getSectionsTotals,
+    calculateSection,
 } from "@/src/utils/cateringSections";
 
 export default function CalculatorV2Screen() {
@@ -25,6 +32,8 @@ export default function CalculatorV2Screen() {
     const [sections, setSections] = useState<CateringSection[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [serviceSettings, setServiceSettings] =
+        useState<CateringServiceSettings | null>(null);
 
     useEffect(() => {
         loadTemplates();
@@ -33,11 +42,43 @@ export default function CalculatorV2Screen() {
     async function loadTemplates() {
         try {
             setLoading(true);
+            const settings =
+                await getCateringServiceSettings();
 
+            setServiceSettings(settings);
             const templates = await getCateringSectionTemplates();
             const emptySections = createEmptySectionsFromTemplates(templates);
+            const hydratedSections = emptySections.map((section) => {
+                if (section.kind !== "service") return section;
 
-            setSections(emptySections);
+                return {
+                    ...section,
+                    serviceDays: [
+                        {
+                            ...(section.serviceDays?.[0] ?? createServiceDay(1)),
+
+                            serverRate:
+                                settings.defaultServerRate ?? 25,
+
+                            cookRate:
+                                settings.defaultCookRate ?? 50,
+
+                            serverDailyCost:
+                                settings.serverDailyCost ?? 0,
+
+                            cookDailyCost:
+                                settings.cookDailyCost ?? 0,
+
+                            extraDailyCost:
+                                (settings.electricityDailyCost ?? 0) +
+                                (settings.gasDailyCost ?? 0) +
+                                (settings.fuelDailyCost ?? 0),
+                        },
+                    ],
+                };
+            });
+
+            setSections(hydratedSections);
         } catch (error) {
             console.error("Erreur chargement rubriques:", error);
             Alert.alert("Erreur", "Impossible de charger les rubriques.");
@@ -50,20 +91,111 @@ export default function CalculatorV2Screen() {
         return getSectionsTotals(sections);
     }, [sections]);
 
+    function updateServiceDay(
+        sectionId: string,
+        dayId: string,
+        field: keyof CateringServiceDay,
+        value: any
+    ) {
+        setSections((prev) =>
+            prev.map((section) => {
+                if (section.id !== sectionId) return section;
+
+                const updatedSection: CateringSection = {
+                    ...section,
+                    serviceDays: (section.serviceDays ?? []).map((day) =>
+                        day.id === dayId
+                            ? {
+                                ...day,
+                                [field]: value,
+                            }
+                            : day
+                    ),
+                };
+
+                return calculateSection(updatedSection);
+            })
+        );
+    }
+
+    function createServiceDay(dayNumber: number): CateringServiceDay {
+        return {
+            id: `service_day_${dayNumber}_${Date.now()}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`,
+            dayNumber,
+
+            numberOfPeople: Number(numberOfPeople) || 0,
+
+            serverRate:
+                serviceSettings?.defaultServerRate ?? 25,
+
+            cookRate:
+                serviceSettings?.defaultCookRate ?? 50,
+
+            numberOfServers: 0,
+            numberOfCooks: 0,
+
+            serverDailyCost:
+                serviceSettings?.serverDailyCost ?? 0,
+
+            cookDailyCost:
+                serviceSettings?.cookDailyCost ?? 0,
+
+            extraDailyCost:
+                (serviceSettings?.electricityDailyCost ?? 0) +
+                (serviceSettings?.gasDailyCost ?? 0) +
+                (serviceSettings?.fuelDailyCost ?? 0),
+
+            totalCost: 0,
+            billedAmount: 0,
+        };
+    }
+
+    function normalizeServiceDays(
+        section: CateringSection,
+        nextNumberOfDays: number
+    ): CateringServiceDay[] {
+        const count = Math.max(Number(nextNumberOfDays || 1), 1);
+        const existingDays = section.serviceDays ?? [];
+
+        if (section.serviceMode !== "different_days") {
+            return existingDays.length > 0 ? [existingDays[0]] : [createServiceDay(1)];
+        }
+
+        return Array.from({ length: count }).map((_, index) => {
+            return (
+                existingDays[index] ?? createServiceDay(index + 1)
+            );
+        });
+    }
+
     function updateSectionField(
         sectionId: string,
         field: keyof CateringSection,
         value: any
     ) {
         setSections((prev) =>
-            prev.map((section) =>
-                section.id === sectionId
-                    ? {
-                        ...section,
-                        [field]: value,
-                    }
-                    : section
-            )
+            prev.map((section) => {
+                if (section.id !== sectionId) return section;
+
+                const nextSection: CateringSection = {
+                    ...section,
+                    [field]: value,
+                };
+
+                if (
+                    nextSection.kind === "service" &&
+                    (field === "numberOfDays" || field === "serviceMode")
+                ) {
+                    nextSection.serviceDays = normalizeServiceDays(
+                        nextSection,
+                        Number(nextSection.numberOfDays ?? 1)
+                    );
+                }
+
+                return calculateSection(nextSection);
+            })
         );
     }
 
@@ -207,109 +339,22 @@ export default function CalculatorV2Screen() {
                 }}
             />
 
-            {sections.map((section) => (
-                <View
-                    key={section.id}
-                    style={{
-                        padding: 14,
-                        borderWidth: 1,
-                        borderColor: "#ddd",
-                        borderRadius: 10,
-                        marginBottom: 12,
-                        backgroundColor: "#fff",
-                    }}
-                >
-                    <Text style={{ fontSize: 18, fontWeight: "700" }}>
-                        {section.name}
-                    </Text>
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            updateSectionField(section.id, "enabled", !section.enabled)
-                        }
-                        style={{
-                            marginTop: 10,
-                            marginBottom: 10,
-                            padding: 10,
-                            borderRadius: 8,
-                            backgroundColor: section.enabled ? "#111" : "#ddd",
-                            alignItems: "center",
-                        }}
-                    >
-                        <Text style={{ color: section.enabled ? "#fff" : "#111" }}>
-                            {section.enabled ? "Rubrique activée" : "Activer cette rubrique"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <Text>Quantité</Text>
-                    <TextInput
-                        value={String(section.quantity ?? 0)}
-                        onChangeText={(value) =>
-                            updateSectionField(section.id, "quantity", Number(value) || 0)
-                        }
-                        keyboardType="numeric"
-                        style={{
-                            borderWidth: 1,
-                            borderColor: "#ccc",
-                            padding: 10,
-                            marginTop: 4,
-                            marginBottom: 8,
-                            borderRadius: 8,
-                        }}
+            {sections.map((section) =>
+                section.kind === "service" ? (
+                    <ServiceSectionCard
+                        key={section.id}
+                        section={section}
+                        onUpdateSection={updateSectionField}
+                        onUpdateServiceDay={updateServiceDay}
                     />
-
-                    <Text>Prix unitaire</Text>
-                    <TextInput
-                        value={String(section.unitPrice ?? 0)}
-                        onChangeText={(value) =>
-                            updateSectionField(section.id, "unitPrice", Number(value) || 0)
-                        }
-                        keyboardType="numeric"
-                        style={{
-                            borderWidth: 1,
-                            borderColor: "#ccc",
-                            padding: 10,
-                            marginTop: 4,
-                            marginBottom: 8,
-                            borderRadius: 8,
-                        }}
+                ) : (
+                    <ArticleSectionCard
+                        key={section.id}
+                        section={section}
+                        onUpdate={updateSectionField}
                     />
-
-                    <Text>Nombre de jours</Text>
-                    <TextInput
-                        value={String(section.numberOfDays ?? 1)}
-                        onChangeText={(value) =>
-                            updateSectionField(section.id, "numberOfDays", Number(value) || 1)
-                        }
-                        keyboardType="numeric"
-                        style={{
-                            borderWidth: 1,
-                            borderColor: "#ccc",
-                            padding: 10,
-                            marginTop: 4,
-                            marginBottom: 8,
-                            borderRadius: 8,
-                        }}
-                    />
-
-                    <Text>Taux de coût matière / coût interne (%)</Text>
-                    <TextInput
-                        value={String(section.costRate ?? 0)}
-                        onChangeText={(value) =>
-                            updateSectionField(section.id, "costRate", Number(value) || 0)
-                        }
-                        keyboardType="numeric"
-                        style={{
-                            borderWidth: 1,
-                            borderColor: "#ccc",
-                            padding: 10,
-                            marginTop: 4,
-                            marginBottom: 8,
-                            borderRadius: 8,
-                        }}
-                    />
-                </View>
-            ))}
+                )
+            )}
 
             <View
                 style={{

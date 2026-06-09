@@ -123,13 +123,50 @@ export default function CreateProformaFromSimulationScreen() {
 
     return (simulation.sections ?? [])
       .filter((section: any) => section.enabled)
-      .map((section: any) => ({
-        label: section.name,
-        quantity: Number(section.quantity ?? 0),
-        numberOfDays: Number(section.numberOfDays ?? 1),
-        unitPrice: Number(section.unitPrice ?? 0),
-        total: Number(section.total ?? 0),
-      }));
+      .map((section: any) => {
+        const isService =
+          section.kind === "service" || section.type === "service";
+
+        if (isService && section.serviceMode === "different_days") {
+          const total = Number(section.total ?? 0);
+
+          return {
+            label: "Forfait Service traiteur",
+            quantity: 1,
+            numberOfDays: 1,
+            unitPrice: total,
+            total,
+          };
+        }
+
+        if (isService) {
+          const numberOfDays = Number(section.numberOfDays ?? 1);
+          const unitPrice = Number(section.unitPrice ?? 0);
+          const total = Number(section.total ?? numberOfDays * unitPrice);
+
+          return {
+            label: "Service traiteur",
+            quantity: 1,
+            numberOfDays,
+            unitPrice,
+            total,
+          };
+        }
+
+        const quantity = Number(section.quantity ?? 0);
+        const numberOfDays = Number(section.numberOfDays ?? 1);
+        const unitPrice = Number(section.unitPrice ?? 0);
+        const total = Number(section.total ?? quantity * numberOfDays * unitPrice);
+
+        return {
+          label: section.name,
+          quantity,
+          numberOfDays,
+          unitPrice,
+          total,
+        };
+      })
+      .filter((item: any) => item.quantity > 0 && item.unitPrice > 0);
   }, [simulation]);
 
   const subtotal = useMemo((): number => {

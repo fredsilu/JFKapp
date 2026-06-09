@@ -95,10 +95,37 @@ export interface CateringSectionTemplate {
   updatedAt?: Timestamp;
 }
 
+export type CateringSectionKind = "article" | "service";
 
+export type CateringServiceMode =
+  | "identical_days"
+  | "different_days";
+
+export interface CateringServiceDay {
+  id: string;
+  dayNumber: number;
+
+  numberOfPeople: number;
+
+  serverRate: number;
+  cookRate: number;
+
+  numberOfServers: number;
+  numberOfCooks: number;
+
+  serverDailyCost: number;
+  cookDailyCost: number;
+
+  extraDailyCost?: number;
+
+  totalCost: number;
+  billedAmount: number;
+}
 export interface CateringSection {
   id: string;
   key?: string;
+
+  kind: CateringSectionKind;
 
   name: string;
   type: CateringSectionType;
@@ -106,6 +133,9 @@ export interface CateringSection {
 
   enabled: boolean;
 
+  /**
+   * Ligne commerciale simple
+   */
   quantity: number;
   unitPrice: number;
   numberOfDays: number;
@@ -115,6 +145,12 @@ export interface CateringSection {
   costRate?: number;
   costAmount?: number;
   margin?: number;
+
+  /**
+   * Service traiteur avancé
+   */
+  serviceMode?: CateringServiceMode;
+  serviceDays?: CateringServiceDay[];
 
   notes?: string;
 }
