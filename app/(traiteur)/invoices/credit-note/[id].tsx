@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
@@ -160,7 +161,12 @@ export default function CreateCreditNoteScreen() {
     (invoice as any).documentType === "CREDIT_NOTE";
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator
+    >
       <Text style={styles.title}>Créer un avoir</Text>
 
       <View style={styles.notice}>
@@ -262,7 +268,7 @@ export default function CreateCreditNoteScreen() {
       >
         <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -271,6 +277,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F6F8",
     padding: 16,
+  },
+  contentContainer: {
+    paddingBottom: 140,
   },
   center: {
     flex: 1,

@@ -131,6 +131,7 @@ export function buildInvoiceHTML(
   assets?: InvoicePdfAssets
 ): string {
   const items = invoice.items || [];
+  const isCreditNote = (invoice as any).documentType === 'CREDIT_NOTE';
 
   const rows = items
     .map(
@@ -582,7 +583,9 @@ ${(invoice as any).creditNoteForInvoiceNumber
       : ''
     }
 <div class="intro">
-  Vous trouverez ci-dessous la facture relative aux prestations convenues :
+  ${isCreditNote
+      ? "Vous trouverez ci-dessous l’avoir relatif à la facture concernée :"
+      : "Vous trouverez ci-dessous la facture relative aux prestations convenues :"}
 </div>
 
 <table class="main-table">
@@ -642,7 +645,7 @@ ${(invoice as any).creditNoteForInvoiceNumber
     }
 
   <div class="grand-total">
-    <div>Total à payer :</div>
+    <div>${isCreditNote ? "Montant de l’avoir :" : "Total à payer :"}</div>
     <div>$</div>
     <div style="text-align:right;">${money(totalAfterDiscount)}</div>
   </div>
@@ -661,7 +664,9 @@ ${(invoice as any).cancellation?.reason
     }
 
 <div class="payment">
-  La totalité de la facture est payable conformément aux conditions convenues.
+  ${isCreditNote
+      ? "Cet avoir vient en déduction de la facture concernée."
+      : "La totalité de la facture est payable conformément aux conditions convenues."}
 </div>
 
 <div class="signature-area">

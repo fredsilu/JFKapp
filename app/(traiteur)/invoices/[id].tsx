@@ -552,18 +552,21 @@ export default function InvoiceDetailScreen() {
                   {note.type === "full" ? "Avoir total" : "Avoir partiel"}
                 </Text>
 
-                {note.status === "draft" && note.id ? (
+                {note.id ? (
                   <TouchableOpacity
                     style={styles.editCreditNoteButton}
                     onPress={() =>
                       router.push({
-                        pathname: "/(traiteur)/invoices/credit-note/edit/[id]",
+                        pathname:
+                          note.status === "draft"
+                            ? "/(traiteur)/invoices/credit-note/edit/[id]"
+                            : "/(traiteur)/invoices/credit-note/view/[id]",
                         params: { id: String(note.id) },
                       })
                     }
                   >
                     <Text style={styles.editCreditNoteButtonText}>
-                      Modifier
+                      {note.status === "draft" ? "Modifier" : "Voir"}
                     </Text>
                   </TouchableOpacity>
                 ) : null}
