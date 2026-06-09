@@ -68,23 +68,7 @@ export default function CateringSimulationDetailsScreen() {
 
 
 
-  const prestations = [
-    {
-      key: 'breakfast',
-      label: 'Petit-déjeuner',
-      data: sim.breakfast,
-    },
-    {
-      key: 'lunch',
-      label: 'Déjeuner',
-      data: sim.lunch,
-    },
-    {
-      key: 'drinks',
-      label: 'Boissons',
-      data: sim.drinks,
-    },
-  ];
+
 
   return (
     <ScrollView style={styles.container}>
@@ -102,6 +86,51 @@ export default function CateringSimulationDetailsScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Résultats financiers</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Rubriques
+          </Text>
+
+          {(sim.sections ?? [])
+            .filter((section: any) => section.enabled)
+            .map((section: any) => (
+              <View
+                key={section.id}
+                style={styles.cardLine}
+              >
+                <Text style={styles.lineTitle}>
+                  {section.name}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Quantité : {section.quantity}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Prix unitaire : {formatCurrency(section.unitPrice)}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Nombre de jours : {section.numberOfDays}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Chiffre d'affaires :{" "}
+                  {formatCurrency(section.total)}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Coût :{" "}
+                  {formatCurrency(section.costAmount ?? 0)}
+                </Text>
+
+                <Text style={styles.lineText}>
+                  Marge :{" "}
+                  {formatCurrency(section.margin ?? 0)}
+                </Text>
+              </View>
+            ))}
+        </View>
 
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>CA avant remise</Text>
@@ -139,97 +168,6 @@ export default function CateringSimulationDetailsScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Prestations</Text>
-
-        {prestations.map((item) => {
-          if (!item.data?.enabled) return null;
-
-          return (
-            <View key={item.key} style={styles.cardLine}>
-              <Text style={styles.lineTitle}>{item.label}</Text>
-
-              <Text style={styles.lineText}>
-                Personnes : {item.data.numberOfPeople ?? 0}
-              </Text>
-
-              <Text style={styles.lineText}>
-                Jours : {item.data.numberOfDays ?? 0}
-              </Text>
-
-              <Text style={styles.lineText}>
-                Prix unitaire : {formatCurrency(item.data.unitPrice ?? 0)}
-              </Text>
-
-              <Text style={styles.lineText}>
-                Food cost : {item.data.foodCostRate ?? 0}%
-              </Text>
-
-              <Text style={styles.lineText}>
-                Remise : {item.data.discount ?? 0}%
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      {sim.service?.enabled && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Service</Text>
-
-          <View style={styles.cardLine}>
-            <Text style={styles.lineText}>
-              Personnes : {sim.service.numberOfPeople ?? 0}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Jours : {sim.service.numberOfDays ?? 0}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Taux serveur : {formatCurrency(sim.service.serverRate ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Taux cuisinier : {formatCurrency(sim.service.cookRate ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Remise : {sim.service.discount ?? 0}%
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {sim.serviceCosts && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Coûts de service journaliers</Text>
-
-          <View style={styles.cardLine}>
-            <Text style={styles.lineText}>
-              Serveur : {formatCurrency(sim.serviceCosts.serverDailyCost ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Cuisinier : {formatCurrency(sim.serviceCosts.cookDailyCost ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Gaz : {formatCurrency(sim.serviceCosts.gasDailyCost ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Carburant : {formatCurrency(sim.serviceCosts.fuelDailyCost ?? 0)}
-            </Text>
-
-            <Text style={styles.lineText}>
-              Électricité :{' '}
-              {formatCurrency(sim.serviceCosts.electricityDailyCost ?? 0)}
-            </Text>
-          </View>
-        </View>
-      )}
-
       <View style={styles.actions}>
         {/* 🔵 Créer proforma */}
         {sim?.id && (
@@ -256,7 +194,7 @@ export default function CateringSimulationDetailsScreen() {
           style={styles.secondaryButton}
           onPress={() =>
             router.push({
-              pathname: '/(traiteur)/tools/calculator',
+              pathname: '/(traiteur)/tools/calculator-v2',
               params: {
                 reuseSimulationId: sim.id,
                 backTo: '/(traiteur)/simulations',

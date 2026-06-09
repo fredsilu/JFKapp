@@ -1,4 +1,4 @@
-//src/services/cateringSimulation.service.ts
+// src/services/cateringSimulation.service.ts
 import {
   collection,
   getDocs,
@@ -8,30 +8,29 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  query,
-  where,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-import { db } from '@/lib/firebase';
-import { CateringSimulation } from '@/types/catering';
+import { db } from "@/lib/firebase";
+import { CateringSimulation } from "@/types/catering";
 
-const COLLECTION = 'catering_simulations';
+const COLLECTION = "catering_simulations";
+
+function mapSimulationDoc(docSnap: any): CateringSimulation {
+  return {
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<CateringSimulation, "id">),
+  };
+}
 
 /* ================================
-   GET ALL SIMULATIONS (non supprimées)
+   GET ALL SIMULATIONS
 ================================ */
 export async function getCateringSimulations(): Promise<CateringSimulation[]> {
-  const q = query(
-    collection(db, COLLECTION),
-    where('isDeleted', '==', false)
-  );
+  const snapshot = await getDocs(collection(db, COLLECTION));
 
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...(docSnap.data() as Omit<CateringSimulation, 'id'>),
-  }));
+  return snapshot.docs
+    .map(mapSimulationDoc)
+    .filter((simulation: any) => simulation.isDeleted !== true);
 }
 
 /* ================================
@@ -45,27 +44,28 @@ export async function getSimulationById(
 
   if (!snap.exists()) return null;
 
-  return {
-    id: snap.id,
-    ...(snap.data() as Omit<CateringSimulation, 'id'>),
-  };
+  const simulation = mapSimulationDoc(snap);
+
+  if ((simulation as any).isDeleted === true) return null;
+
+  return simulation;
 }
 
 /* ================================
    CREATE SIMULATION
 ================================ */
 export async function createCateringSimulation(
-  simulation: Omit<
-    CateringSimulation,
-    'id' | 'createdAt' | 'updatedAt'
-  >
-) {
+  simulation: Omit<CateringSimulation, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
   const ref = await addDoc(collection(db, COLLECTION), {
     ...simulation,
 
-    // 🔥 Sécurisation champs système
+    // Compatible V2 sections[]
+    sections: (simulation as any).sections ?? [],
+
     isDeleted: false,
     convertedToOrder: false,
+    orderId: null,
 
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -80,11 +80,17 @@ export async function createCateringSimulation(
 export async function updateCateringSimulation(
   id: string,
   simulation: Partial<CateringSimulation>
-) {
+): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
+  const { id: _id, createdAt, updatedAt, ...safeData } = simulation as any;
+
   await updateDoc(ref, {
-    ...simulation,
+    ...safeData,
+
+    // Compatible V2 sections[]
+    sections: safeData.sections ?? [],
+
     updatedAt: serverTimestamp(),
   });
 }
@@ -92,19 +98,20 @@ export async function updateCateringSimulation(
 /* ================================
    SOFT DELETE SIMULATION
 ================================ */
-export async function softDeleteCateringSimulation(id: string) {
+export async function softDeleteCateringSimulation(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   await updateDoc(ref, {
     isDeleted: true,
+    deletedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }
 
 /* ================================
-   HARD DELETE (optionnel)
+   HARD DELETE
 ================================ */
-export async function deleteCateringSimulation(id: string) {
+export async function deleteCateringSimulation(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
   await deleteDoc(ref);
 }
@@ -115,7 +122,7 @@ export async function deleteCateringSimulation(id: string) {
 export async function markSimulationAsConverted(
   id: string,
   orderId?: string
-) {
+): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   await updateDoc(ref, {
@@ -126,21 +133,15 @@ export async function markSimulationAsConverted(
   });
 }
 
-
 /* ================================
    GET SIMULATION EVENT NAME
 ================================ */
 export function getSimulationEventName(
   simulation: CateringSimulation | null | undefined
 ): string {
-  if (!simulation) return '';
+  if (!simulation) return "";
 
   const data = simulation as any;
 
-  return (
-    data.eventName ||
-    data.name ||
-    data.title ||
-    ''
-  );
+  return data.eventName || data.name || data.title || "";
 }

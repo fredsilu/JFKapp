@@ -13,6 +13,7 @@ import {
 
 import { db } from '@/lib/firebase';
 import { getNextProformaNumber } from '@/src/services/proformaNumber.service';
+import { CateringSection } from "@/types/catering";
 
 export type ProformaStatus =
   | 'draft'
@@ -64,6 +65,8 @@ export type CateringProforma = {
 
   service?: string;
   serviceType?: string;
+
+  sections?: CateringSection[];
 
   isInvoiced?: boolean;
   invoiceId?: string;
@@ -175,6 +178,8 @@ function normalizeProformaData(
     clientNif: cleanText(data.clientNif),
     clientCity: cleanText(data.clientCity) || 'Kinshasa / RDC',
 
+
+
     service: cleanText(data.service),
     serviceType: cleanText(data.serviceType),
 
@@ -192,10 +197,11 @@ function normalizeProformaData(
 
     invoiceId: cleanText(data.invoiceId),
     invoiceNumber: cleanText(data.invoiceNumber),
-
+    sections: Array.isArray(data.sections) ? data.sections : [],
     items,
     menu,
     totals: normalizeTotals(data.totals),
+
   };
 }
 

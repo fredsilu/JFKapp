@@ -121,91 +121,34 @@ export default function CreateProformaFromSimulationScreen() {
   const items = useMemo(() => {
     if (!simulation) return [];
 
-    const result: any[] = [];
-
-    const mealMap = [
-      { key: 'breakfast', label: 'Petit-déjeuner' },
-      { key: 'lunch', label: 'Déjeuner' },
-      { key: 'dinner', label: 'Dîner' },
-      { key: 'drinks', label: 'Boissons' },
-    ];
-
-    mealMap.forEach(({ key, label }) => {
-      const item = simulation[key];
-
-      if (item?.enabled) {
-        const numberOfPeople = Number(item.numberOfPeople || 0);
-        const numberOfDays = Number(item.numberOfDays || 1);
-        const unitPrice = Number(item.unitPrice || 0);
-        const quantity = numberOfPeople;
-        const total = numberOfDays * quantity * unitPrice;
-
-        if (quantity > 0 && unitPrice > 0) {
-          result.push({
-            label,
-            numberOfDays,
-            quantity,
-            unitPrice,
-            total,
-          });
-        }
-      }
-    });
-
-    const service = simulation.service;
-
-    if (service?.enabled) {
-      const numberOfPeople = Number(service.numberOfPeople || 0);
-      const numberOfDays = Number(service.numberOfDays || 1);
-
-      const serverRate = Number(service.serverRate || 1);
-      const cookRate = Number(service.cookRate || 1);
-
-      const serviceCosts = simulation.serviceCosts || {};
-
-      const serverDailyCost = Number(serviceCosts.serverDailyCost || 0);
-      const cookDailyCost = Number(serviceCosts.cookDailyCost || 0);
-      const electricityDailyCost = Number(serviceCosts.electricityDailyCost || 0);
-      const gasDailyCost = Number(serviceCosts.gasDailyCost || 0);
-      const fuelDailyCost = Number(serviceCosts.fuelDailyCost || 0);
-
-      const numberOfServers = Math.ceil(numberOfPeople / serverRate);
-      const numberOfCooks = Math.ceil(numberOfPeople / cookRate);
-
-      const realDailyServiceCost =
-        numberOfServers * serverDailyCost +
-        numberOfCooks * cookDailyCost +
-        electricityDailyCost +
-        gasDailyCost +
-        fuelDailyCost;
-
-      const unitPrice =
-        calculateServiceUnitPriceFromCost(realDailyServiceCost);
-
-      const quantity = 1;
-      const total = numberOfDays * quantity * unitPrice;
-
-      if (numberOfDays > 0 && unitPrice > 0) {
-        result.push({
-          label: 'Service traiteur',
-          numberOfDays,
-          quantity,
-          unitPrice,
-          total,
-        });
-      }
-    }
-
-    return result;
+    return (simulation.sections ?? [])
+      .filter((section: any) => section.enabled)
+      .map((section: any) => ({
+        label: section.name,
+        quantity: Number(section.quantity ?? 0),
+        numberOfDays: Number(section.numberOfDays ?? 1),
+        unitPrice: Number(section.unitPrice ?? 0),
+        total: Number(section.total ?? 0),
+      }));
   }, [simulation]);
 
-  const subtotal = useMemo(() => {
-    return items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const subtotal = useMemo((): number => {
+    return items.reduce(
+      (sum: number, item: {
+        total: number;
+      }) => sum + Number(item.total || 0),
+      0
+    );
   }, [items]);
 
-  const generalDiscount = Number(simulation?.discount || 0);
+  const generalDiscount = Number(
+    simulation?.discount ?? 0
+  );
 
-  const totalAfterDiscount = Math.max(subtotal - generalDiscount, 0);
+  const totalAfterDiscount = Math.max(
+    subtotal - generalDiscount,
+    0
+  );
 
   function getClientName() {
     return client?.name || client?.clientName || simulation?.clientName || 'Client';
@@ -316,18 +259,9 @@ export default function CreateProformaFromSimulationScreen() {
 
         status: 'draft',
 
-        service:
-          simulation.serviceType ||
-          simulation.typeService ||
-          simulation.serviceName ||
-          (simulation.service?.enabled ? 'Service traiteur' : ''),
-
-        serviceType:
-          simulation.serviceType ||
-          simulation.typeService ||
-          simulation.serviceName ||
-          (simulation.service?.enabled ? 'Service traiteur' : ''),
-
+        service: 'Service traiteur',
+        serviceType: 'Service traiteur',
+        sections: simulation.sections ?? [],
         items,
         menu: selectedMenu,
 
@@ -387,7 +321,7 @@ export default function CreateProformaFromSimulationScreen() {
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Lignes proforma</Text>
 
-        {items.map((item, index) => (
+        {items.map((item: any, index: number) => (
           <View key={`${item.label}-${index}`} style={styles.itemRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.itemLabel}>{item.label}</Text>

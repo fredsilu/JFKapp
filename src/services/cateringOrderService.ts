@@ -139,10 +139,7 @@ export async function createProformaFromSimulation(simulationId: string) {
     items,
     totals,
 
-    breakfast: simulation.breakfast ?? null,
-    lunch: simulation.lunch ?? null,
-    drinks: simulation.drinks ?? null,
-    service: simulation.service ?? null,
+    sections: simulation.sections ?? [],
 
     dishes: [],
     additionalIngredients: [],
@@ -465,10 +462,7 @@ export async function createOrderFromProforma(proforma: any) {
 
     billedAmount: billedAmountValue,
 
-    breakfast: proforma.breakfast ?? null,
-    lunch: proforma.lunch ?? null,
-    drinks: proforma.drinks ?? null,
-    service: proforma.service ?? null,
+    sections: proforma.sections ?? [],
 
     pricingReference: proforma.pricingReference ?? {
       totalHT: proforma.totals?.subtotal ?? 0,

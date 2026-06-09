@@ -6,7 +6,6 @@ export interface CateringPartyInfo {
   name: string;
   rccm?: string;
   idNat?: string;
-  idNat?: string;
   nif?: string;
   addressLine1?: string;
   addressLine2?: string;

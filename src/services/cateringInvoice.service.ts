@@ -134,6 +134,8 @@ export async function createInvoiceFromOrder(
     throw new Error("Cette commande possède déjà une facture");
   }
 
+
+
   const freshOrderRef = doc(db, "orders", order.id);
 
   const freshOrderSnap = await getDoc(freshOrderRef);
@@ -241,6 +243,9 @@ export async function createInvoiceFromOrder(
     comment: order.comment ?? "",
 
     items: order.items ?? [],
+
+    sections: order.sections ?? [],
+
     totals,
 
     correction: {

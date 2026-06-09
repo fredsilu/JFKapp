@@ -73,6 +73,54 @@ export type EditableOrderItem = {
 
 /**
  * =========================
+ * RUBRIQUES DYNAMIQUES
+ * =========================
+ */
+
+export type CateringSectionType =
+  | "food"
+  | "drink"
+  | "service"
+  | "logistics"
+  | "custom";
+
+export interface CateringSectionTemplate {
+  id?: string;
+  key: string;
+  name: string;
+  type: CateringSectionType;
+  position: number;
+  isActive: boolean;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+
+export interface CateringSection {
+  id: string;
+  key?: string;
+
+  name: string;
+  type: CateringSectionType;
+  position: number;
+
+  enabled: boolean;
+
+  quantity: number;
+  unitPrice: number;
+  numberOfDays: number;
+
+  total: number;
+
+  costRate?: number;
+  costAmount?: number;
+  margin?: number;
+
+  notes?: string;
+}
+
+/**
+ * =========================
  * SIMULATION – DRAFT (UI / CALCUL)
  * =========================
  */
@@ -82,6 +130,7 @@ export interface CateringSimulationDraft {
   lunch: CateringMealInput;
   drinks: CateringMealInput;
   service: CateringServiceInput;
+  sections?: CateringSection[];
 
   serviceCosts: CateringServiceCosts;
 
@@ -215,6 +264,8 @@ export type CateringOrder = {
    */
   items: CateringDocumentItem[];
   totals: CateringDocumentTotals;
+
+  sections?: CateringSection[];
 
   /**
    * Snapshot technique (facultatif)
@@ -371,6 +422,8 @@ export type CateringInvoice = {
    */
   items: CateringDocumentItem[];
   totals: CateringDocumentTotals;
+
+  sections?: CateringSection[];
 
   /**
    * Correction comptable :

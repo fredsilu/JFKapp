@@ -280,7 +280,7 @@ export default function CateringSimulationsScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: '/(traiteur)/tools/calculator',
+                        pathname: '/(traiteur)/tools/calculator-v2',
                         params: {
                           reuseSimulationId: sim.id,
                           backTo: '/(traiteur)/simulations',
