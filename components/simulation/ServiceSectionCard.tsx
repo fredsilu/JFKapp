@@ -1,378 +1,495 @@
 import React from "react";
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 
 import {
-    CateringSection,
-    CateringServiceDay,
+  CateringSection,
+  CateringServiceDay,
 } from "@/types/catering";
 
 import { formatCurrency } from "@/src/utils/costs";
 
 type Props = {
-    section: CateringSection;
+  section: CateringSection;
 
-    onUpdateSection: (
-        sectionId: string,
-        field: keyof CateringSection,
-        value: any
-    ) => void;
+  onUpdateSection: (
+    sectionId: string,
+    field: keyof CateringSection,
+    value: any
+  ) => void;
 
-    onUpdateServiceDay: (
-        sectionId: string,
-        dayId: string,
-        field: keyof CateringServiceDay,
-        value: any
-    ) => void;
+  onUpdateServiceDay: (
+    sectionId: string,
+    dayId: string,
+    field: keyof CateringServiceDay,
+    value: any
+  ) => void;
 };
 
 export default function ServiceSectionCard({
-    section,
-    onUpdateSection,
-    onUpdateServiceDay,
+  section,
+  onUpdateSection,
+  onUpdateServiceDay,
 }: Props) {
-    const serviceDays = section.serviceDays ?? [];
+  const serviceDays = section.serviceDays ?? [];
 
-    return (
-        <View
-            style={{
-                padding: 14,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                borderRadius: 10,
-                marginBottom: 12,
-                backgroundColor: "#fff",
-            }}
+  return (
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Service traiteur</Text>
+          <Text style={styles.subtitle}>
+            Personnel, charges et forfait automatique
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() =>
+            onUpdateSection(section.id, "enabled", !section.enabled)
+          }
+          style={[
+            styles.statusButton,
+            section.enabled ? styles.statusButtonActive : styles.statusButtonInactive,
+          ]}
         >
-            <Text
-                style={{
-                    fontSize: 18,
-                    fontWeight: "700",
-                }}
-            >
-                Service traiteur
+          <Text
+            style={[
+              styles.statusButtonText,
+              section.enabled
+                ? styles.statusButtonTextActive
+                : styles.statusButtonTextInactive,
+            ]}
+          >
+            {section.enabled ? "Activé" : "Désactivé"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {!section.enabled ? (
+        <Text style={styles.inactiveText}>
+          Active le service traiteur si Crepolia doit facturer le personnel et les charges.
+        </Text>
+      ) : (
+        <>
+          <Text style={styles.label}>Nombre de jours</Text>
+          <TextInput
+            value={String(section.numberOfDays ?? 1)}
+            onChangeText={(value) =>
+              onUpdateSection(
+                section.id,
+                "numberOfDays",
+                Number(value) || 1
+              )
+            }
+            keyboardType="numeric"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Mode de service</Text>
+
+          <TouchableOpacity
+            style={styles.toggleModeButton}
+            onPress={() =>
+              onUpdateSection(
+                section.id,
+                "serviceMode",
+                section.serviceMode === "identical_days"
+                  ? "different_days"
+                  : "identical_days"
+              )
+            }
+          >
+            <Text style={styles.toggleModeText}>
+              {section.serviceMode === "identical_days"
+                ? "Même service tous les jours"
+                : "Service différent selon les jours"}
             </Text>
 
-            <TouchableOpacity
-                onPress={() =>
-                    onUpdateSection(
-                        section.id,
-                        "enabled",
-                        !section.enabled
+            <Text style={styles.toggleModeHint}>Appuyer pour changer</Text>
+          </TouchableOpacity>
+
+          {serviceDays.map((day) => {
+            const serversCost =
+              Number(day.numberOfServers ?? 0) *
+              Number(day.serverDailyCost ?? 0);
+
+            const cooksCost =
+              Number(day.numberOfCooks ?? 0) *
+              Number(day.cookDailyCost ?? 0);
+
+            return (
+              <View key={day.id} style={styles.dayCard}>
+                <Text style={styles.dayTitle}>Jour {day.dayNumber}</Text>
+
+                <Text style={styles.label}>Nombre de personnes</Text>
+                <TextInput
+                  value={String(day.numberOfPeople ?? 0)}
+                  onChangeText={(value) =>
+                    onUpdateServiceDay(
+                      section.id,
+                      day.id,
+                      "numberOfPeople",
+                      Number(value) || 0
                     )
-                }
-                style={{
-                    marginTop: 10,
-                    marginBottom: 10,
-                    padding: 10,
-                    borderRadius: 8,
-                    backgroundColor: section.enabled
-                        ? "#111"
-                        : "#ddd",
-                    alignItems: "center",
-                }}
-            >
-                <Text
-                    style={{
-                        color: section.enabled
-                            ? "#fff"
-                            : "#111",
-                    }}
-                >
-                    {section.enabled
-                        ? "Service activé"
-                        : "Activer service"}
-                </Text>
-            </TouchableOpacity>
+                  }
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
 
-            {!section.enabled && null}
-
-            {section.enabled && (
-                <>
-                    <Text>Nombre de jours</Text>
-
+                <View style={styles.row}>
+                  <View style={styles.half}>
+                    <Text style={styles.label}>Ratio serveur</Text>
                     <TextInput
-                        value={String(section.numberOfDays ?? 1)}
-                        onChangeText={(value) =>
-                            onUpdateSection(
-                                section.id,
-                                "numberOfDays",
-                                Number(value) || 1
-                            )
-                        }
-                        keyboardType="numeric"
-                        style={inputStyle}
+                      value={String(day.serverRate ?? 25)}
+                      onChangeText={(value) =>
+                        onUpdateServiceDay(
+                          section.id,
+                          day.id,
+                          "serverRate",
+                          Number(value) || 0
+                        )
+                      }
+                      keyboardType="numeric"
+                      style={styles.input}
                     />
+                  </View>
 
-                    <Text
-                        style={{
-                            marginTop: 10,
-                            marginBottom: 10,
-                            fontWeight: "700",
-                        }}
-                    >
-                        Mode de service
+                  <View style={styles.half}>
+                    <Text style={styles.label}>Ratio cuisinier</Text>
+                    <TextInput
+                      value={String(day.cookRate ?? 50)}
+                      onChangeText={(value) =>
+                        onUpdateServiceDay(
+                          section.id,
+                          day.id,
+                          "cookRate",
+                          Number(value) || 0
+                        )
+                      }
+                      keyboardType="numeric"
+                      style={styles.input}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.resultBox}>
+                  <Text style={styles.resultTitle}>Calcul du service</Text>
+
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Serveurs calculés</Text>
+                    <Text style={styles.resultValue}>
+                      {day.numberOfServers ?? 0}
                     </Text>
+                  </View>
 
-                    <TouchableOpacity
-                        style={modeButton(
-                            section.serviceMode ===
-                            "identical_days"
-                        )}
-                        onPress={() =>
-                            onUpdateSection(
-                                section.id,
-                                "serviceMode",
-                                "identical_days"
-                            )
-                        }
-                    >
-                        <Text>
-                            Services identiques
-                        </Text>
-                    </TouchableOpacity>
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Cuisiniers calculés</Text>
+                    <Text style={styles.resultValue}>
+                      {day.numberOfCooks ?? 0}
+                    </Text>
+                  </View>
 
-                    <TouchableOpacity
-                        style={modeButton(
-                            section.serviceMode ===
-                            "different_days"
-                        )}
-                        onPress={() =>
-                            onUpdateSection(
-                                section.id,
-                                "serviceMode",
-                                "different_days"
-                            )
-                        }
-                    >
-                        <Text>
-                            Services différents
-                        </Text>
-                    </TouchableOpacity>
+                  <View style={styles.separator} />
 
-                    {serviceDays.map((day) => (
-                        <View
-                            key={day.id}
-                            style={{
-                                marginTop: 12,
-                                padding: 12,
-                                borderWidth: 1,
-                                borderColor: "#E5E7EB",
-                                borderRadius: 8,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    fontWeight: "700",
-                                    marginBottom: 10,
-                                }}
-                            >
-                                Jour {day.dayNumber}
-                            </Text>
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Coût serveurs</Text>
+                    <Text style={styles.resultValue}>
+                      {formatCurrency(serversCost)}
+                    </Text>
+                  </View>
 
-                            <Text>
-                                Nombre de personnes
-                            </Text>
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Coût cuisiniers</Text>
+                    <Text style={styles.resultValue}>
+                      {formatCurrency(cooksCost)}
+                    </Text>
+                  </View>
 
-                            <TextInput
-                                value={String(
-                                    day.numberOfPeople ?? 0
-                                )}
-                                onChangeText={(value) =>
-                                    onUpdateServiceDay(
-                                        section.id,
-                                        day.id,
-                                        "numberOfPeople",
-                                        Number(value) || 0
-                                    )
-                                }
-                                keyboardType="numeric"
-                                style={inputStyle}
-                            />
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Courant</Text>
+                    <Text style={styles.resultValue}>
+                      {formatCurrency(day.electricityDailyCost ?? 0)}
+                    </Text>
+                  </View>
 
-                            <Text>
-                                Ratio serveur
-                            </Text>
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Gaz</Text>
+                    <Text style={styles.resultValue}>
+                      {formatCurrency(day.gasDailyCost ?? 0)}
+                    </Text>
+                  </View>
 
-                            <TextInput
-                                value={String(
-                                    day.serverRate ?? 25
-                                )}
-                                onChangeText={(value) =>
-                                    onUpdateServiceDay(
-                                        section.id,
-                                        day.id,
-                                        "serverRate",
-                                        Number(value) || 0
-                                    )
-                                }
-                                keyboardType="numeric"
-                                style={inputStyle}
-                            />
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultLabel}>Carburant</Text>
+                    <Text style={styles.resultValue}>
+                      {formatCurrency(day.fuelDailyCost ?? 0)}
+                    </Text>
+                  </View>
 
-                            <Text>
-                                Ratio cuisinier
-                            </Text>
+                  <View style={styles.separator} />
 
-                            <TextInput
-                                value={String(
-                                    day.cookRate ?? 50
-                                )}
-                                onChangeText={(value) =>
-                                    onUpdateServiceDay(
-                                        section.id,
-                                        day.id,
-                                        "cookRate",
-                                        Number(value) || 0
-                                    )
-                                }
-                                keyboardType="numeric"
-                                style={inputStyle}
-                            />
+                  <View style={styles.resultRow}>
+                    <Text style={styles.totalCostLabel}>Coût réel/jour</Text>
+                    <Text style={styles.totalCostValue}>
+                      {formatCurrency(day.totalCost ?? 0)}
+                    </Text>
+                  </View>
 
+                  <View style={styles.resultRow}>
+                    <Text style={styles.billedLabel}>Montant facturé/jour</Text>
+                    <Text style={styles.billedValue}>
+                      {formatCurrency(day.billedAmount ?? 0)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
 
-                            <Text>
-                                Montant facturé
-                            </Text>
+          <View style={styles.summaryBox}>
+            <Text style={styles.summaryTitle}>Résumé service traiteur</Text>
 
-                            <TextInput
-                                value={String(
-                                    day.billedAmount ?? 0
-                                )}
-                                onChangeText={(value) =>
-                                    onUpdateServiceDay(
-                                        section.id,
-                                        day.id,
-                                        "billedAmount",
-                                        Number(value) || 0
-                                    )
-                                }
-                                keyboardType="numeric"
-                                style={inputStyle}
-                            />
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Total facturé</Text>
+              <Text style={styles.resultValue}>
+                {formatCurrency(section.total ?? 0)}
+              </Text>
+            </View>
 
-                            <View
-                                style={{
-                                    marginTop: 8,
-                                    padding: 10,
-                                    backgroundColor: "#F3F4F6",
-                                    borderRadius: 8,
-                                }}
-                            >
-                                <Text>
-                                    Serveurs calculés :
-                                    {" "}
-                                    {day.numberOfServers}
-                                </Text>
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Coût total</Text>
+              <Text style={styles.resultValue}>
+                {formatCurrency(section.costAmount ?? 0)}
+              </Text>
+            </View>
 
-                                <Text>
-                                    Cuisiniers calculés :
-                                    {" "}
-                                    {day.numberOfCooks}
-                                </Text>
-
-                                <Text>
-                                    Coût serveur :
-                                    {" "}
-                                    {formatCurrency(
-                                        day.numberOfServers *
-                                        (day.serverDailyCost ?? 0)
-                                    )}
-                                </Text>
-
-                                <Text>
-                                    Coût cuisinier :
-                                    {" "}
-                                    {formatCurrency(
-                                        day.numberOfCooks *
-                                        (day.cookDailyCost ?? 0)
-                                    )}
-                                </Text>
-
-                                <Text>
-                                    Charges diverses :
-                                    {" "}
-                                    {formatCurrency(
-                                        day.extraDailyCost ?? 0
-                                    )}
-                                </Text>
-
-                                <Text
-                                    style={{
-                                        marginTop: 6,
-                                        fontWeight: "700",
-                                    }}
-                                >
-                                    Coût total :
-                                    {" "}
-                                    {formatCurrency(
-                                        day.totalCost ?? 0
-                                    )}
-                                </Text>
-                            </View>
-                        </View>
-                    ))}
-
-                    <View
-                        style={{
-                            marginTop: 12,
-                            padding: 10,
-                            backgroundColor: "#F3F4F6",
-                            borderRadius: 8,
-                        }}
-                    >
-                        <Text>
-                            Total service :
-                            {" "}
-                            {formatCurrency(
-                                section.total ?? 0
-                            )}
-                        </Text>
-
-                        <Text>
-                            Coût :
-                            {" "}
-                            {formatCurrency(
-                                section.costAmount ?? 0
-                            )}
-                        </Text>
-
-                        <Text>
-                            Marge :
-                            {" "}
-                            {formatCurrency(
-                                section.margin ?? 0
-                            )}
-                        </Text>
-                    </View>
-                </>
-            )}
-        </View>
-    );
+            <View style={styles.resultRow}>
+              <Text style={styles.billedLabel}>Marge</Text>
+              <Text style={styles.billedValue}>
+                {formatCurrency(section.margin ?? 0)}
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
+    </View>
+  );
 }
 
-function modeButton(
-    active: boolean
-) {
-    return {
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 8,
-        backgroundColor: active
-            ? "#111"
-            : "#E5E7EB",
-    };
-}
-
-const inputStyle = {
+const styles = StyleSheet.create({
+  card: {
+    padding: 16,
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
+    borderColor: "#CCFBF1",
+    borderRadius: 16,
+    marginBottom: 14,
+    backgroundColor: "#FFFFFF",
+  },
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+
+  title: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+
+  subtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  statusButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  statusButtonActive: {
+    backgroundColor: "#ECFDF5",
+    borderColor: "#5EEAD4",
+  },
+
+  statusButtonInactive: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#CBD5E1",
+  },
+
+  statusButtonText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  statusButtonTextActive: {
+    color: "#0F766E",
+  },
+
+  statusButtonTextInactive: {
+    color: "#64748B",
+  },
+
+  inactiveText: {
+    color: "#64748B",
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
+  label: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#475569",
+    marginBottom: 5,
+  },
+
+  input: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    padding: 11,
+    marginBottom: 12,
+    color: "#0F172A",
+  },
+
+  toggleModeButton: {
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#99F6E4",
+  },
+
+  toggleModeText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F766E",
+  },
+
+  toggleModeHint: {
     marginTop: 4,
-    marginBottom: 8,
-    borderRadius: 8,
-};
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  dayCard: {
+    marginTop: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    backgroundColor: "#F8FAFC",
+  },
+
+  dayTitle: {
+    fontWeight: "800",
+    fontSize: 15,
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  half: {
+    flex: 1,
+  },
+
+  resultBox: {
+    marginTop: 4,
+    padding: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  resultTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 10,
+  },
+
+  resultRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 7,
+  },
+
+  resultLabel: {
+    color: "#475569",
+    fontSize: 13,
+    flex: 1,
+  },
+
+  resultValue: {
+    color: "#0F172A",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  separator: {
+    height: 1,
+    backgroundColor: "#E2E8F0",
+    marginVertical: 7,
+  },
+
+  totalCostLabel: {
+    color: "#92400E",
+    fontSize: 13,
+    fontWeight: "800",
+    flex: 1,
+  },
+
+  totalCostValue: {
+    color: "#92400E",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  billedLabel: {
+    color: "#0F766E",
+    fontSize: 14,
+    fontWeight: "800",
+    flex: 1,
+  },
+
+  billedValue: {
+    color: "#0F766E",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+
+  summaryBox: {
+    marginTop: 12,
+    padding: 14,
+    backgroundColor: "#ECFDF5",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+
+  summaryTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#064E3B",
+    marginBottom: 10,
+  },
+});

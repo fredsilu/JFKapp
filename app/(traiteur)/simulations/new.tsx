@@ -59,12 +59,12 @@ export default function CateringNewSimulation() {
     }
 
     router.push({
-      pathname: '/tools/calculator',
+      pathname: '/tools/calculator-v2',
       params: {
         clientId: selectedClient.id,
         clientName: selectedClient.name,
       },
-    });
+    } as any);
   }
 
   return (

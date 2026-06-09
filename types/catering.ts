@@ -116,6 +116,10 @@ export interface CateringServiceDay {
   serverDailyCost: number;
   cookDailyCost: number;
 
+  electricityDailyCost?: number;
+  gasDailyCost?: number;
+  fuelDailyCost?: number;
+
   extraDailyCost?: number;
 
   totalCost: number;

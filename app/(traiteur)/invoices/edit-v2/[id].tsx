@@ -9,8 +9,9 @@ import {
 import {
   useLocalSearchParams,
   router,
-  useFocusEffect,
 } from "expo-router";
+
+import { useFocusEffect } from "@react-navigation/native";
 
 import SimulationEditor from "@/components/simulation/SimulationEditor";
 
