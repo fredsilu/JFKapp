@@ -1,5 +1,6 @@
 // app/(traiteur)/dishes/index.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   View,
   Text,
@@ -9,10 +10,10 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
+import { useWebModalBack } from '@/src/hooks/useWebModalBack';
 import { useDishes, useIngredients } from '@/src/hooks/useFirestore';
 import { addDish } from '@/src/services/firestore';
 import Modal from '@/components/Modal';
@@ -49,6 +50,31 @@ export default function DishesScreen() {
   });
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (selectedDishId) {
+          setSelectedDishId(null);
+          return true;
+        }
+
+        if (isFormModalVisible) {
+          setIsFormModalVisible(false);
+          return true;
+        }
+
+        router.replace('/(traiteur)/config');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [selectedDishId, isFormModalVisible, router])
+  );
 
   const filteredDishes = useMemo(() => {
     if (!normalizedQuery) return dishes;
@@ -89,6 +115,23 @@ export default function DishesScreen() {
       Alert.alert('Erreur', 'Impossible de créer le plat.');
     }
   };
+  const closeDishModal = useCallback(() => {
+    setSelectedDishId(null);
+  }, []);
+
+  const closeFormModal = useCallback(() => {
+    setIsFormModalVisible(false);
+  }, []);
+
+  useWebModalBack({
+    visible: !!selectedDishId,
+    onClose: closeDishModal,
+  });
+
+  useWebModalBack({
+    visible: isFormModalVisible,
+    onClose: closeFormModal,
+  });
 
   if (dishesLoading || ingredientsLoading) {
     return <LoadingSpinner />;

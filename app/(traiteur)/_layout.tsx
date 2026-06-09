@@ -1,9 +1,8 @@
-//app/(traiteur)/_layout.tsx
+// app/(traiteur)/_layout.tsx
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-
 
 import {
   useFonts,
@@ -11,6 +10,11 @@ import {
   Montserrat_600SemiBold,
   Montserrat_700Bold,
 } from '@expo-google-fonts/montserrat';
+
+const hiddenScreenOptions = {
+  href: null,
+  headerShown: false,
+};
 
 export default function TraiteurLayout() {
   const [fontsLoaded] = useFonts({
@@ -35,8 +39,8 @@ export default function TraiteurLayout() {
   }
 
   return (
-
     <Tabs
+      backBehavior="history"
       screenOptions={{
         headerShown: true,
         headerTitle: () => null,
@@ -49,7 +53,6 @@ export default function TraiteurLayout() {
           fontSize: 16,
           color: '#0F172A',
         },
-       
 
         tabBarActiveTintColor: '#0F4C81',
         tabBarInactiveTintColor: '#94A3B8',
@@ -66,7 +69,6 @@ export default function TraiteurLayout() {
         },
       }}
     >
-      {/* Onglets visibles */}
       <Tabs.Screen
         name="index"
         options={{
@@ -107,102 +109,70 @@ export default function TraiteurLayout() {
         }}
       />
 
-      {/* Routes cachées */}
-      <Tabs.Screen name="tools" options={{ href: null }} />
-
-      <Tabs.Screen name="simulations" options={{ href: null }} />
+      <Tabs.Screen name="tools" options={hiddenScreenOptions} />
       <Tabs.Screen
-        name="simulations/index"
+        name="tools/calculator"
         options={{
           href: null,
-          headerLeft: () => null,
+          headerShown: false,
         }}
       />
-      <Tabs.Screen name="simulations/new" options={{ href: null }} />
-      <Tabs.Screen name="simulations/[id]" options={{ href: null }} />
 
-      <Tabs.Screen name="proformas" options={{ href: null }} />
-      <Tabs.Screen
-        name="proformas/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-         
-        }}
-      />
-      <Tabs.Screen name="proformas/[id]" options={{ href: null }} />
+      <Tabs.Screen name="simulations" options={hiddenScreenOptions} />
+      <Tabs.Screen name="simulations/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="simulations/new" options={hiddenScreenOptions} />
+      <Tabs.Screen name="simulations/[id]" options={hiddenScreenOptions} />
+
+      <Tabs.Screen name="proformas" options={hiddenScreenOptions} />
+      <Tabs.Screen name="proformas/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="proformas/[id]" options={hiddenScreenOptions} />
       <Tabs.Screen
         name="proformas/create-from-simulation"
-        options={{ href: null }}
+        options={hiddenScreenOptions}
       />
 
-      <Tabs.Screen name="orders" options={{ href: null }} />
+      <Tabs.Screen name="orders" options={hiddenScreenOptions} />
+      <Tabs.Screen name="orders/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="orders/new" options={hiddenScreenOptions} />
+      <Tabs.Screen name="orders/[id]" options={hiddenScreenOptions} />
+      <Tabs.Screen name="orders/from-simulation" options={hiddenScreenOptions} />
+      <Tabs.Screen name="orders/operational/[id]" options={hiddenScreenOptions} />
+
+      <Tabs.Screen name="invoices" options={hiddenScreenOptions} />
+      <Tabs.Screen name="invoices/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="invoices/[id]" options={hiddenScreenOptions} />
+      <Tabs.Screen name="invoices/cancel/[id]" options={hiddenScreenOptions} />
       <Tabs.Screen
-        name="orders/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-        }}
+        name="invoices/credit-note/[id]"
+        options={hiddenScreenOptions}
       />
-      <Tabs.Screen name="orders/new" options={{ href: null }} />
-      <Tabs.Screen name="orders/[id]" options={{ href: null }} />
-      <Tabs.Screen name="orders/from-simulation" options={{ href: null }} />
-
-      <Tabs.Screen name="invoices" options={{ href: null }} />
+      <Tabs.Screen name="invoices/history/[id]" options={hiddenScreenOptions} />
+      <Tabs.Screen name="invoices/replace/[id]" options={hiddenScreenOptions} />
+      <Tabs.Screen name="invoices/edit/[id]" options={hiddenScreenOptions} />
       <Tabs.Screen
-        name="invoices/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-        }}
+        name="invoices/credit-note/edit/[id]"
+        options={hiddenScreenOptions}
       />
-      <Tabs.Screen name="invoices/[id]" options={{ href: null }} />
 
-      <Tabs.Screen name="clients" options={{ href: null }} />
-      <Tabs.Screen
-        name="clients/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-        }}
-      />
-      <Tabs.Screen name="clients/[id]" options={{ href: null }} />
+      <Tabs.Screen name="clients" options={hiddenScreenOptions} />
+      <Tabs.Screen name="clients/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="clients/[id]" options={hiddenScreenOptions} />
 
-      <Tabs.Screen name="dishes" options={{ href: null }} />
-      <Tabs.Screen
-        name="dishes/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-        }}
-      />
-      <Tabs.Screen name="dishes/[id]" options={{ href: null }} />
+      <Tabs.Screen name="dishes" options={hiddenScreenOptions} />
+      <Tabs.Screen name="dishes/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="dishes/[id]" options={hiddenScreenOptions} />
 
-      <Tabs.Screen name="ingredients" options={{ href: null }} />
-      <Tabs.Screen
-        name="ingredients/index"
-        options={{
-          href: null,
-          headerLeft: () => null,
-        }}
-      />
-      <Tabs.Screen name="ingredients/[id]" options={{ href: null }} />
+      <Tabs.Screen name="ingredients" options={hiddenScreenOptions} />
+      <Tabs.Screen name="ingredients/index" options={hiddenScreenOptions} />
+      <Tabs.Screen name="ingredients/[id]" options={hiddenScreenOptions} />
 
-      <Tabs.Screen name="analytics" options={{ href: null }} />
-      <Tabs.Screen name="analytics/index" options={{ href: null }} />
+      <Tabs.Screen name="analytics" options={hiddenScreenOptions} />
+      <Tabs.Screen name="analytics/index" options={hiddenScreenOptions} />
 
-      <Tabs.Screen name="invoices/cancel/[id]" options={{ href: null }} />
-      <Tabs.Screen name="invoices/credit-note/[id]" options={{ href: null }} />
+      <Tabs.Screen name="documents" options={hiddenScreenOptions} />
+      <Tabs.Screen name="documents/editor" options={hiddenScreenOptions} />
 
-      <Tabs.Screen name="documents" options={{ href: null }} />
-      <Tabs.Screen name="documents/editor" options={{ href: null }} />
-
-      <Tabs.Screen name="orders/operational/[id]" options={{ href: null }} />
-      <Tabs.Screen name="invoices/history/[id]" options={{ href: null }} />
-      <Tabs.Screen name="invoices/replace/[id]" options={{ href: null }} />
-      <Tabs.Screen name="config/help" options={{ href: null }} />
-       <Tabs.Screen name="invoices/edit/[id]" options={{ href: null }} />
-        <Tabs.Screen name="invoices/credit-note/edit/[id]" options={{ href: null }} />
+      <Tabs.Screen name="config/help" options={hiddenScreenOptions} />
     </Tabs>
   );
 }

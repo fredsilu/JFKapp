@@ -343,10 +343,10 @@ body {
 .col-designation { width: 40%; }
 .col-days { width: 10%; }
 .col-qty { width: 12%; }
-.col-pu-currency { width: 5%; }
-.col-pu { width: 17%; }
-.col-pt-currency { width: 5%; }
-.col-pt { width: 16%; }
+.col-pu-currency { width: 3%; }
+.col-pu { width: 19%; }
+.col-pt-currency { width: 3%; }
+.col-pt { width: 18%; }
 
 .designation {
   text-align: left;
@@ -357,15 +357,19 @@ body {
 }
 
 .currency {
-  text-align: center;
-  border-right: 0 !important;
-  padding-right: 0 !important;
+  text-align: right;
+  border-right: none !important;
+  padding-right: 2px !important;
+  padding-left: 0 !important;
+  font-weight: 700;
 }
 
 .price {
   text-align: right;
-  border-left: 0 !important;
-  padding-left: 0 !important;
+  border-left: none !important;
+  padding-left: 2px !important;
+  padding-right: 6px !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .main-table td.currency + td.price {
@@ -380,7 +384,7 @@ body {
 
 .subtotal {
   display: grid;
-  grid-template-columns: 1fr 35px 115px;
+  grid-template-columns: 1fr 22px 128px;
   background: #dce8ee;
   border-top: 2px solid #111827;
   border-right: 1px solid #6f9eb8;
@@ -393,7 +397,7 @@ body {
 
 .grand-total {
   display: grid;
-  grid-template-columns: 1fr 35px 115px;
+  grid-template-columns: 1fr 22px 128px;
   background: #2f3b4f;
   color: white;
   padding: 8px 10px;

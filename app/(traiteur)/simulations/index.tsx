@@ -6,9 +6,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  BackHandler,
+  TextInput,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 
 import {
   deleteCateringSimulation,
@@ -17,9 +20,7 @@ import {
 import { CateringSimulation } from '@/types/catering';
 import { fetchClients } from '@/src/services/clientService';
 
-import ClientDropdownFilter, {
-  ClientFilterValue,
-} from '@/src/components/ClientDropdownFilter';
+
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
@@ -29,8 +30,8 @@ export default function CateringSimulationsScreen() {
 
   const [simulations, setSimulations] = useState<CateringSimulation[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-  const [selectedClientId, setSelectedClientId] =
-    useState<ClientFilterValue>('ALL');
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +62,26 @@ export default function CateringSimulationsScreen() {
       setLoading(false);
     }
   }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (toDelete) {
+          setToDelete(null);
+          return true;
+        }
+
+        router.replace('/(traiteur)/sales');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [toDelete, router])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -68,16 +89,62 @@ export default function CateringSimulationsScreen() {
     }, [loadAll])
   );
 
-  const filteredSimulations = useMemo(() => {
-    const list =
-      !selectedClientId || selectedClientId === 'ALL'
-        ? simulations
-        : simulations.filter((sim) => sim.clientId === selectedClientId);
+  function getMillis(value: any): number {
+    if (!value) return 0;
 
-    return [...list].sort((a, b) =>
-      (a.dateLivraison || '').localeCompare(b.dateLivraison || '')
-    );
-  }, [simulations, selectedClientId]);
+    if (value?.toMillis) {
+      return value.toMillis();
+    }
+
+    if (value?.toDate) {
+      return value.toDate().getTime();
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+  }
+
+  function normalizeText(value: any): string {
+    return String(value ?? '').trim().toLowerCase();
+  }
+
+  function formatTimestamp(value: any): string {
+    const millis = getMillis(value);
+
+    if (!millis) return 'Non définie';
+
+    return new Date(millis).toLocaleDateString('fr-FR');
+  }
+
+  const filteredSimulations = useMemo(() => {
+    const q = normalizeText(searchQuery);
+
+    return [...simulations]
+      .filter((sim) => {
+        if (!q) return true;
+
+        const clientLabel = clientsById[sim.clientId] || sim.clientId || '';
+
+        return [
+          sim.name,
+          sim.clientId,
+          clientLabel,
+          sim.designation,
+          sim.dateLivraison,
+          sim.deliveryAddress,
+          sim.deliveryTime,
+          sim.comment,
+          sim.status,
+          sim.globalTurnover,
+          sim.globalCost,
+          sim.globalMargin,
+        ]
+          .map(normalizeText)
+          .join(' ')
+          .includes(q);
+      })
+      .sort((a, b) => getMillis(b.createdAt) - getMillis(a.createdAt));
+  }, [simulations, searchQuery, clientsById]);
 
   function formatDate(date?: string) {
     if (!date) return 'Non définie';
@@ -138,12 +205,17 @@ export default function CateringSimulationsScreen() {
           <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
         </TouchableOpacity>
 
-        <ClientDropdownFilter
-          clients={clients}
-          selectedClientId={selectedClientId}
-          onSelect={setSelectedClientId}
-          labelAll="Tous les clients"
-        />
+
+        <View style={styles.searchContainer}>
+          <Icon name="search" size={20} color="#6B7280" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher simulation, client, date, montant..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
         {filteredSimulations.length === 0 ? (
           <Text style={styles.empty}>Aucune simulation</Text>
@@ -159,10 +231,18 @@ export default function CateringSimulationsScreen() {
 
                 <Text style={styles.client}>Client : {clientLabel}</Text>
 
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    📅 {formatDate(sim.dateLivraison)}
-                  </Text>
+                <View style={styles.datesBlock}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      Créée le : {formatTimestamp(sim.createdAt)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      Livraison : {formatDate(sim.dateLivraison)}
+                    </Text>
+                  </View>
                 </View>
 
                 <TouchableOpacity
@@ -362,5 +442,28 @@ const styles = StyleSheet.create({
     color: '#0F4C81',
     fontSize: 14,
     fontWeight: '700',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
+  },
+
+  datesBlock: {
+    marginTop: 8,
+    gap: 6,
   },
 });

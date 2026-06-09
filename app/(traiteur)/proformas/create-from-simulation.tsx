@@ -55,11 +55,16 @@ function calculateServiceUnitPriceFromCost(cost: number): number {
 }
 
 export default function CreateProformaFromSimulationScreen() {
-  const params = useLocalSearchParams<{ simulationId?: string }>();
+  const params = useLocalSearchParams<{
+    simulationId?: string;
+    backTo?: string;
+  }>();
   const simulationId = Array.isArray(params.simulationId)
     ? params.simulationId[0]
     : params.simulationId;
-
+  const backTo = Array.isArray(params.backTo)
+    ? params.backTo[0]
+    : params.backTo;
 
   const [simulation, setSimulation] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
@@ -338,7 +343,10 @@ export default function CreateProformaFromSimulationScreen() {
 
       router.replace({
         pathname: '/(traiteur)/proformas/[id]',
-        params: { id: proformaId },
+        params: {
+          id: proformaId,
+          backTo: backTo || '/(traiteur)/simulations',
+        },
       });
     } catch (e: any) {
       console.error('❌ create proforma error:', e);
@@ -501,7 +509,11 @@ export default function CreateProformaFromSimulationScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.replace('/(traiteur)/simulations')}
+        onPress={() =>
+          router.replace(
+            (backTo || '/(traiteur)/simulations') as any
+          )
+        }
       >
         <Text style={styles.backButtonText}>Retour aux simulations</Text>
       </TouchableOpacity>

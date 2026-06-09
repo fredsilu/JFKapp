@@ -191,6 +191,15 @@ export default function OrdersScreen() {
       Alert.alert('Erreur', 'Impossible de modifier le statut');
     }
   }
+  function formatTimestamp(value: any) {
+    if (!value) return '—';
+
+    if (value?.toDate) {
+      return value.toDate().toLocaleDateString('fr-FR');
+    }
+
+    return '—';
+  }
 
   function confirmStatusChange(
     orderId?: string,
@@ -238,6 +247,11 @@ export default function OrdersScreen() {
         order.dateLivraison,
         order.deliveryAddress,
         order.status,
+        order.designation,
+        order.eventName,
+        order.comment,
+        order.guestCount,
+        order.deliveryTime,
       ]
         .filter(Boolean)
         .join(' ')
@@ -273,6 +287,19 @@ export default function OrdersScreen() {
 
 
       <Text style={styles.title}>Commandes</Text>
+
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryLabel}>Commandes créées</Text>
+        <Text style={styles.summaryValue}>{totalOrders}</Text>
+
+        <Text style={styles.summaryLabel}>Valeur totale</Text>
+        <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+      </View>
+
+      <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
+        <Text style={styles.summaryLabel}>Commandes terminées</Text>
+        <Text style={styles.summaryAmount}>{completedOrders}</Text>
+      </View>
 
       <TextInput
         style={styles.searchInput}
@@ -312,21 +339,6 @@ export default function OrdersScreen() {
         ))}
       </View>
 
-
-
-
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Commandes créées</Text>
-        <Text style={styles.summaryValue}>{totalOrders}</Text>
-
-        <Text style={styles.summaryLabel}>Valeur totale</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
-      </View>
-
-      <View style={[styles.summaryCard, { backgroundColor: '#065F46' }]}>
-        <Text style={styles.summaryLabel}>Commandes terminées</Text>
-        <Text style={styles.summaryAmount}>{completedOrders}</Text>
-      </View>
 
       {displayedOrders.length === 0 ? (
         <Text style={styles.empty}>Aucune commande créée</Text>
@@ -368,6 +380,10 @@ export default function OrdersScreen() {
               {order.proformaNumber ? (
                 <Text style={styles.line}>Proforma : {order.proformaNumber}</Text>
               ) : null}
+
+              <Text style={styles.line}>
+                Créée le : {formatTimestamp(order.createdAt)}
+              </Text>
 
               <Text style={styles.line}>
                 Date événement : {formatDate(order.dateLivraison)}
@@ -704,31 +720,31 @@ const styles = StyleSheet.create({
 
 
 
-filterRow: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 8,
-  marginBottom: 14,
-},
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
 
-filterChip: {
-  backgroundColor: '#E5E7EB',
-  paddingHorizontal: 10,
-  paddingVertical: 7,
-  borderRadius: 999,
-},
+  filterChip: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
 
-activeFilterChip: {
-  backgroundColor: '#111827',
-},
+  activeFilterChip: {
+    backgroundColor: '#111827',
+  },
 
-filterChipText: {
-  color: '#374151',
-  fontSize: 12,
-  fontWeight: '800',
-},
+  filterChipText: {
+    color: '#374151',
+    fontSize: 12,
+    fontWeight: '800',
+  },
 
-activeFilterChipText: {
-  color: '#fff',
-},
+  activeFilterChipText: {
+    color: '#fff',
+  },
 });

@@ -34,7 +34,7 @@ import {
 } from '@/src/services/cateringSimulation.service';
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 
 /* =========================
    DEFAULT BUILDERS
@@ -70,13 +70,14 @@ export default function CateringCalculator() {
     clientName?: string | string[];
     simulationId?: string | string[];
     reuseSimulationId?: string | string[];
+    backTo?: string | string[];
   }>();
 
   const clientId = paramToString(params.clientId);
   const clientName = paramToString(params.clientName);
   const simulationId = paramToString(params.simulationId);
   const reuseSimulationId = paramToString(params.reuseSimulationId);
-
+  const backTo = paramToString(params.backTo);
   const mode: Mode = simulationId ? 'view' : reuseSimulationId ? 'reuse' : 'new';
   const readOnly = mode === 'view';
 
@@ -135,13 +136,14 @@ export default function CateringCalculator() {
       const subscription = BackHandler.addEventListener(
         'hardwareBackPress',
         () => {
-          router.push('/simulations');
+          // Back Android
+          router.replace((backTo || '/(traiteur)/simulations') as any);
           return true;
         }
       );
 
       return () => subscription.remove();
-    }, [])
+    }, [backTo, router])
   );
 
   /* =========================
@@ -283,7 +285,8 @@ export default function CateringCalculator() {
 
       Alert.alert('Succès', 'Simulation enregistrée avec succès.');
 
-      router.replace('/simulations');
+      // Après sauvegarde
+      router.replace((backTo || '/(traiteur)/simulations') as any);
 
     } catch (e) {
       console.error('❌ save error:', e);
@@ -343,9 +346,7 @@ export default function CateringCalculator() {
       <Text style={styles.title}>
         {mode === 'view'
           ? 'Détails de la simulation'
-          : mode === 'reuse'
-            ? 'Réutiliser une simulation'
-            : 'Nouvelle simulation'}
+          : 'Création de simulation'}
       </Text>
 
       {/* CLIENT + META */}

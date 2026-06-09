@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { BackHandler } from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import {
@@ -46,7 +47,7 @@ export default function ProformasScreen() {
       const data = await getCateringProformas();
 
       const visibleData = data.filter((p) => p.isDeleted !== true);
-  
+
 
       const sortedData = [...visibleData].sort((a, b) => {
         const dateA = a.createdAt?.toMillis?.() || new Date(a.issueDate || '').getTime() || 0;
@@ -63,6 +64,21 @@ export default function ProformasScreen() {
       setLoading(false);
     }
   }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        router.replace('/(traiteur)/sales');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -291,13 +307,7 @@ export default function ProformasScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Proformas</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Rechercher par client, numéro, statut..."
-        placeholderTextColor="#9CA3AF"
-        value={search}
-        onChangeText={setSearch}
-      />
+
 
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Proformas en cours</Text>
@@ -330,6 +340,14 @@ export default function ProformasScreen() {
         <Text style={styles.summaryLabel}>Total facturé</Text>
         <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
       </View>
+
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Rechercher par client, numéro, statut..."
+        placeholderTextColor="#9CA3AF"
+        value={search}
+        onChangeText={setSearch}
+      />
 
       <View style={styles.tabs}>
         <TouchableOpacity

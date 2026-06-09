@@ -1,5 +1,5 @@
 //app/(traiteur)/clients/index.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  BackHandler,
 } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
+import { useWebModalBack } from '@/src/hooks/useWebModalBack';
 import { useClients, useOrders } from '@/src/hooks/useFirestore';
 import { addClient } from '@/src/services/firestore';
 import Modal from '@/components/Modal';
@@ -66,6 +67,37 @@ export default function ClientsScreen() {
     return orders.find(order => order.id === selectedOrderId) || null;
   }, [orders, selectedOrderId]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (selectedClientId) {
+          setSelectedClientId(null);
+          return true;
+        }
+
+        if (selectedOrderId) {
+          setSelectedOrderId(null);
+          return true;
+        }
+
+        if (isFormModalVisible) {
+          setIsFormModalVisible(false);
+          return true;
+        }
+
+        router.replace('/(traiteur)/config');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [selectedClientId, selectedOrderId, isFormModalVisible, router])
+  );
+
   const handleCreateClient = async (values: Partial<Client>) => {
     try {
       await addClient(
@@ -91,6 +123,34 @@ export default function ClientsScreen() {
       return acc;
     }, {});
   }, [orders]);
+
+  const closeClientModal = useCallback(() => {
+    setSelectedClientId(null);
+  }, []);
+
+  const closeOrderModal = useCallback(() => {
+    setSelectedOrderId(null);
+  }, []);
+
+  const closeFormModal = useCallback(() => {
+    setIsFormModalVisible(false);
+  }, []);
+
+  useWebModalBack({
+    visible: !!selectedClientId,
+    onClose: closeClientModal,
+  });
+
+  useWebModalBack({
+    visible: !!selectedOrderId,
+    onClose: closeOrderModal,
+  });
+
+  useWebModalBack({
+    visible: isFormModalVisible,
+    onClose: closeFormModal,
+  });
+
 
   if (loadingClients || loadingOrders) {
     return <LoadingSpinner />;

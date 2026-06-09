@@ -1,5 +1,5 @@
 // app/(traiteur)/ingredients/index.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,11 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
+import { useWebModalBack } from '@/src/hooks/useWebModalBack';
 import { useIngredients } from '@/src/hooks/useFirestore';
 import { addIngredient } from '@/src/services/firestore';
 import IngredientDetails from '@/components/IngredientDetails';
@@ -23,8 +24,34 @@ export default function Ingredients() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<string | null>(null);
-
   const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (selectedIngredientId) {
+          setSelectedIngredientId(null);
+          return true;
+        }
+
+        if (isModalVisible) {
+          setIsModalVisible(false);
+          return true;
+        }
+
+        router.replace('/(traiteur)/config');
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [selectedIngredientId, isModalVisible, router])
+  );
+
 
   const {
     data: ingredients = [],
@@ -35,6 +62,8 @@ export default function Ingredients() {
   });
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
+
+
 
   const filteredIngredients = useMemo(() => {
     if (!normalizedSearch) return ingredients;
@@ -54,6 +83,24 @@ export default function Ingredients() {
     ? ingredients.find((ingredient) => ingredient.id === selectedIngredientId) ?? null
     : null;
 
+  const closeIngredientModal = useCallback(() => {
+    setSelectedIngredientId(null);
+  }, []);
+
+  const closeFormModal = useCallback(() => {
+    setIsModalVisible(false);
+  }, []);
+
+  useWebModalBack({
+    visible: !!selectedIngredientId,
+    onClose: closeIngredientModal,
+  });
+
+  useWebModalBack({
+    visible: isModalVisible,
+    onClose: closeFormModal,
+  });
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -61,6 +108,7 @@ export default function Ingredients() {
   if (error) {
     return <ErrorMessage message="Erreur lors du chargement des ingrédients" />;
   }
+
 
   return (
     <View style={styles.container}>

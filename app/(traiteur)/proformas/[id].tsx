@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -31,9 +32,17 @@ import {
 } from '@/src/services/cateringProforma.service';
 
 export default function ProformaDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    backTo?: string;
+  }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-
+  const backTo = Array.isArray(params.backTo)
+    ? params.backTo[0]
+    : params.backTo;
+  const goBack = useCallback(() => {
+    router.replace((backTo || '/(traiteur)/proformas') as any);
+  }, [backTo]);
   const [proforma, setProforma] = useState<CateringProforma | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -51,7 +60,7 @@ export default function ProformaDetailScreen() {
 
       if (!data) {
         Alert.alert('Erreur', 'Proforma introuvable');
-        router.replace('/(traiteur)/proformas'); 
+        router.replace('/(traiteur)/proformas');
         return;
       }
 
@@ -63,6 +72,20 @@ export default function ProformaDetailScreen() {
       setLoading(false);
     }
   }, [id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          goBack();
+          return true;
+        }
+      );
+
+      return () => subscription.remove();
+    }, [goBack])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -496,7 +519,7 @@ export default function ProformaDetailScreen() {
 
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.replace('/(traiteur)/proformas')}
+        onPress={goBack}
       >
         <Text style={styles.backButtonText}>Retour à la liste</Text>
       </TouchableOpacity>
