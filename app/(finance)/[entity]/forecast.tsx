@@ -12,6 +12,7 @@ import {
   markForecastExecuted,
   Forecast,
 } from "@/src/finance/services/financeForecastService";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 export default function MaisonForecast() {
   const [data, setData] = useState<Forecast[]>([]);
@@ -38,7 +39,7 @@ export default function MaisonForecast() {
 
             <Text>{item.category}</Text>
             <Text>
-              {item.plannedDate.toLocaleDateString()}
+              {formatShortDocumentDate(new Date(item.plannedDate))}
             </Text>
 
             <Text

@@ -30,6 +30,28 @@ export function formatDocumentDate(
   });
 }
 
+export function isPastDate(value: any): boolean {
+  const date = toDate(value);
+
+  if (!date) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+
+  return target < today;
+}
+
+export function toInputDateValue(value: any): string {
+  const date = toDate(value);
+
+  if (!date) return "";
+
+  return date.toISOString().slice(0, 10);
+}
+
 export function formatShortDocumentDate(
   value: any,
   language: DocumentLanguage = 'fr'

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 import { Transaction } from "@/types/finance.types";
 import {
   Entity,
@@ -30,7 +30,7 @@ export default function TransactionItem({
 
   const formattedDate =
     transaction.date instanceof Date
-      ? transaction.date.toLocaleDateString()
+      ? formatShortDocumentDate(transaction.date)
       : "";
 
   const handleEdit = () => {

@@ -282,7 +282,9 @@ export default function OrdersScreen() {
         activeOpacity={0.75}
       >
         <Icon name="arrow-back" size={18} color="#0F4C81" />
-        <Text style={styles.backPillText}>Ventes</Text>
+        <Text style={styles.backPillText}>
+          Retour aux ventes
+        </Text>
       </TouchableOpacity>
 
 

@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 import {
   createTransaction,
@@ -243,7 +244,7 @@ export default function NewTransaction() {
           style={styles.input}
           onPress={() => setShowDatePicker(true)}
         >
-          <Text>{date.toLocaleDateString()}</Text>
+          <Text>{formatShortDocumentDate(date)}</Text>
         </TouchableOpacity>
 
         {showDatePicker && (

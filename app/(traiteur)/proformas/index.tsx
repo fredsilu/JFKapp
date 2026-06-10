@@ -11,9 +11,10 @@ import {
   ActivityIndicator, TextInput,
   Alert,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, Stack } from 'expo-router';
 import { BackHandler } from 'react-native';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 import {
   CateringProforma,
@@ -199,17 +200,7 @@ export default function ProformasScreen() {
     );
   }, [invoicedProformas]);
 
-  function formatDate(date?: string) {
-    if (!date) return '—';
 
-    const d = new Date(date);
-
-    if (Number.isNaN(d.getTime())) {
-      return date;
-    }
-
-    return d.toLocaleDateString('fr-FR');
-  }
 
   function getClientLabel(p: CateringProforma) {
     return p.clientName || p.clientId || 'Client non défini';
@@ -294,161 +285,170 @@ export default function ProformasScreen() {
       </View>
     );
   }
-
   return (
-    <ScrollView style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.replace('/(traiteur)/sales')}
-        style={styles.backPill}
-        activeOpacity={0.75}
-      >
-        <Icon name="arrow-back" size={18} color="#0F4C81" />
-        <Text style={styles.backPillText}>Ventes</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.title}>Proformas</Text>
-
-
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Proformas en cours</Text>
-        <Text style={styles.summaryValue}>{activeProformas.length}</Text>
-
-        <Text style={styles.summaryLabel}>Total en cours</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
-      </View>
-
-      <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
-        <Text style={styles.summaryLabel}>Proformas acceptées non converties</Text>
-        <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
-
-        <Text style={styles.summaryLabel}>Total accepté</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
-      </View>
-
-      <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
-        <Text style={styles.summaryLabel}>Proformas converties</Text>
-        <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
-
-        <Text style={styles.summaryLabel}>Total converti</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
-      </View>
-
-      <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
-        <Text style={styles.summaryLabel}>Proformas facturées</Text>
-        <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
-
-        <Text style={styles.summaryLabel}>Total facturé</Text>
-        <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
-      </View>
-
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Rechercher par client, numéro, statut..."
-        placeholderTextColor="#9CA3AF"
-        value={search}
-        onChangeText={setSearch}
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
       />
 
-      <View style={styles.tabs}>
+      <ScrollView style={styles.container}>
         <TouchableOpacity
-          style={[styles.tab, view === 'active' && styles.activeTab]}
-          onPress={() => setView('active')}
+          onPress={() => router.replace('/(traiteur)/sales')}
+          style={styles.backPill}
+          activeOpacity={0.75}
         >
-          <Text style={[styles.tabText, view === 'active' && styles.activeTabText]}>
-            En cours
+          <Icon name="arrow-back" size={18} color="#0F4C81" />
+          <Text style={styles.backPillText}>
+            Retour aux ventes
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tab, view === 'converted' && styles.activeTab]}
-          onPress={() => setView('converted')}
-        >
-          <Text style={[styles.tabText, view === 'converted' && styles.activeTabText]}>
-            Converties
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Proformas</Text>
 
-        <TouchableOpacity
-          style={[styles.tab, view === 'all' && styles.activeTab]}
-          onPress={() => setView('all')}
-        >
-          <Text style={[styles.tabText, view === 'all' && styles.activeTabText]}>
-            Toutes
-          </Text>
-        </TouchableOpacity>
-      </View>
 
-      {displayedProformas.length === 0 ? (
-        <Text style={styles.empty}>Aucune proforma dans cette vue</Text>
-      ) : (
-        displayedProformas.map((p) => {
-          const statusStyle = getStatusStyle(p);
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Proformas en cours</Text>
+          <Text style={styles.summaryValue}>{activeProformas.length}</Text>
 
-          return (
-            <View key={p.id || p.number} style={styles.card}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => openProforma(p.id)}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>
-                      {p.number || 'Proforma sans numéro'}
-                    </Text>
+          <Text style={styles.summaryLabel}>Total en cours</Text>
+          <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
+        </View>
 
-                    <Text style={styles.client}>{getClientLabel(p)}</Text>
-                  </View>
+        <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
+          <Text style={styles.summaryLabel}>Proformas acceptées non converties</Text>
+          <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
 
-                  <View style={[styles.statusBadge, statusStyle.badge]}>
-                    <Text style={[styles.statusText, statusStyle.text]}>
-                      {getStatusLabel(p)}
-                    </Text>
-                  </View>
-                </View>
+          <Text style={styles.summaryLabel}>Total accepté</Text>
+          <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
+        </View>
 
-                <Text style={styles.line}>Date : {formatDate(p.issueDate)}</Text>
+        <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
+          <Text style={styles.summaryLabel}>Proformas converties</Text>
+          <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
 
-                {p.eventDate ? (
-                  <Text style={styles.line}>
-                    Événement : {formatDate(p.eventDate)}
-                  </Text>
-                ) : null}
+          <Text style={styles.summaryLabel}>Total converti</Text>
+          <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
+        </View>
 
-                {p.orderNumber ? (
-                  <Text style={styles.line}>Commande : {p.orderNumber}</Text>
-                ) : null}
+        <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
+          <Text style={styles.summaryLabel}>Proformas facturées</Text>
+          <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
 
-                {p.invoiceNumber ? (
-                  <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
-                ) : null}
+          <Text style={styles.summaryLabel}>Total facturé</Text>
+          <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
+        </View>
 
-                <Text style={styles.amount}>
-                  Total : {formatCurrency(Number(p.totals?.total || 0))}
-                </Text>
-              </TouchableOpacity>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher par client, numéro, statut..."
+          placeholderTextColor="#9CA3AF"
+          value={search}
+          onChangeText={setSearch}
+        />
 
-              <View style={styles.actions}>
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, view === 'active' && styles.activeTab]}
+            onPress={() => setView('active')}
+          >
+            <Text style={[styles.tabText, view === 'active' && styles.activeTabText]}>
+              En cours
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, view === 'converted' && styles.activeTab]}
+            onPress={() => setView('converted')}
+          >
+            <Text style={[styles.tabText, view === 'converted' && styles.activeTabText]}>
+              Converties
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, view === 'all' && styles.activeTab]}
+            onPress={() => setView('all')}
+          >
+            <Text style={[styles.tabText, view === 'all' && styles.activeTabText]}>
+              Toutes
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {displayedProformas.length === 0 ? (
+          <Text style={styles.empty}>Aucune proforma dans cette vue</Text>
+        ) : (
+          displayedProformas.map((p) => {
+            const statusStyle = getStatusStyle(p);
+
+            return (
+              <View key={p.id || p.number} style={styles.card}>
                 <TouchableOpacity
-                  style={styles.primaryAction}
+                  activeOpacity={0.85}
                   onPress={() => openProforma(p.id)}
                 >
-                  <Text style={styles.primaryActionText}>Voir</Text>
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>
+                        {p.number || 'Proforma sans numéro'}
+                      </Text>
+
+                      <Text style={styles.client}>{getClientLabel(p)}</Text>
+                    </View>
+
+                    <View style={[styles.statusBadge, statusStyle.badge]}>
+                      <Text style={[styles.statusText, statusStyle.text]}>
+                        {getStatusLabel(p)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.line}>Date : {formatShortDocumentDate(p.issueDate)}</Text>
+
+                  {p.eventDate ? (
+                    <Text style={styles.line}>
+                      Événement : {formatShortDocumentDate(p.eventDate)}
+                    </Text>
+                  ) : null}
+
+                  {p.orderNumber ? (
+                    <Text style={styles.line}>Commande : {p.orderNumber}</Text>
+                  ) : null}
+
+                  {p.invoiceNumber ? (
+                    <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
+                  ) : null}
+
+                  <Text style={styles.amount}>
+                    Total : {formatCurrency(Number(p.totals?.total || 0))}
+                  </Text>
                 </TouchableOpacity>
 
-                <View style={styles.readOnlyBadge}>
-                  <Icon name="lock-outline" size={14} color="#6B7280" />
-                  <Text style={styles.readOnlyText}>
-                    Suppression désactivée
-                  </Text>
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={styles.primaryAction}
+                    onPress={() => openProforma(p.id)}
+                  >
+                    <Text style={styles.primaryActionText}>Voir</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.readOnlyBadge}>
+                    <Icon name="lock-outline" size={14} color="#6B7280" />
+                    <Text style={styles.readOnlyText}>
+                      Suppression désactivée
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          );
-        })
-      )}
+            );
+          })
+        )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </>
   );
 }
 

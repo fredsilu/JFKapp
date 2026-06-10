@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DishAnalytics, ClientAnalytics, IngredientUsage } from '@/src/utils/analytics';
 import { formatCurrency } from '@/src/utils/costs';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 interface TopDishesListProps {
   dishes: DishAnalytics[];
@@ -77,7 +78,7 @@ export function TopClientsList({ clients }: TopClientsListProps) {
                   <View style={styles.stat}>
                     <MaterialIcons name="event" size={14} color="#666" />
                     <Text style={styles.statText}>
-                      {new Date(client.lastOrderDate).toLocaleDateString()}
+                      {formatShortDocumentDate(new Date(client.lastOrderDate))}
                     </Text>
                   </View>
                 )}

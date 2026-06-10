@@ -17,6 +17,7 @@ import {
   deleteTransactionForever,
 } from "@/src/finance/services/financeTransactionService";
 import { Transaction } from "@/types/finance.types";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 export default function ArchiveScreen() {
   const params = useLocalSearchParams();
@@ -103,7 +104,7 @@ export default function ArchiveScreen() {
 
                 <Text style={styles.date}>
                   {item.date
-                    ? new Date(item.date).toLocaleDateString()
+                    ? formatShortDocumentDate(new Date(item.date))
                     : ""}
                 </Text>
               </View>

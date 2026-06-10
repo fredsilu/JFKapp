@@ -255,10 +255,11 @@ export default function InvoicesScreen() {
       <ScrollView style={styles.container}>
         <TouchableOpacity
           onPress={() => router.replace('/(traiteur)/sales')}
-          style={styles.topBackButton}
+          style={styles.backPill}
+          activeOpacity={0.75}
         >
-          <Text style={styles.backIcon}>←</Text>
-          <Text style={styles.backText}>Retour Sales</Text>
+          <Text style={styles.backPillIcon}>←</Text>
+          <Text style={styles.backPillText}>Retour aux ventes</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Factures</Text>
@@ -457,13 +458,6 @@ export default function InvoicesScreen() {
             );
           })
         )}
-
-        <TouchableOpacity
-          style={styles.bottomBackButton}
-          onPress={() => router.replace('/(traiteur)/sales')}
-        >
-          <Text style={styles.backButtonText}>Retour Sales</Text>
-        </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -805,5 +799,30 @@ const styles = StyleSheet.create({
 
   activeFilterChipText: {
     color: '#fff',
+  },
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 12,
+  },
+
+  backPillIcon: {
+    color: '#0F4C81',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

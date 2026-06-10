@@ -154,6 +154,7 @@ export default function TraiteurLayout() {
         name="invoices/credit-note/edit/[id]"
         options={hiddenScreenOptions}
       />
+      <Tabs.Screen name="invoices/edit-v2/[id]" options={hiddenScreenOptions} />
 
       <Tabs.Screen name="clients" options={hiddenScreenOptions} />
       <Tabs.Screen name="clients/index" options={hiddenScreenOptions} />
@@ -175,6 +176,7 @@ export default function TraiteurLayout() {
       
 
       <Tabs.Screen name="config/help" options={hiddenScreenOptions} />
+      <Tabs.Screen name="config/service-settings" options={hiddenScreenOptions} />
     </Tabs>
   );
 }

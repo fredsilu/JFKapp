@@ -1,5 +1,6 @@
 //src/utils/analytics.ts
 import { Order, Dish, Client } from '@/types';
+import { formatShortDocumentDate } from './dateFormat';
 
 export interface KPI {
   label: string;
@@ -225,14 +226,14 @@ export function getDailyRevenueData(orders: Order[], days: number = 7): DailyRev
   for (let i = 0; i < days; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - (days - 1 - i));
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatShortDocumentDate(date);
     revenueMap.set(dateStr, { revenue: 0, count: 0 });
   }
 
   orders.forEach(order => {
     const orderDate = new Date(order.createdAt || 0);
     orderDate.setHours(0, 0, 0, 0);
-    const dateStr = orderDate.toISOString().split('T')[0];
+    const dateStr = formatShortDocumentDate(orderDate);
 
     if (revenueMap.has(dateStr)) {
       const existing = revenueMap.get(dateStr)!;

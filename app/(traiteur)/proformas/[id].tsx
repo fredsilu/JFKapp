@@ -14,6 +14,7 @@ import {
 import { Asset } from 'expo-asset';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 import { downloadHtmlAsPdfWeb } from '@/src/utils/downloadHtmlAsPdfWeb';
 import { createOrderFromProforma } from '@/src/services/cateringOrderService';
@@ -282,17 +283,7 @@ export default function ProformaDetailScreen() {
     ]);
   }
 
-  function formatDate(date?: string) {
-    if (!date) return '—';
 
-    const d = new Date(date);
-
-    if (Number.isNaN(d.getTime())) {
-      return date;
-    }
-
-    return d.toLocaleDateString('fr-FR');
-  }
 
   function getStatusLabel(status?: string) {
     switch (status) {
@@ -354,13 +345,30 @@ export default function ProformaDetailScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Informations</Text>
-        <Text style={styles.line}>Date émission : {formatDate(proforma.issueDate)}</Text>
-        <Text style={styles.line}>Validité : {formatDate(proforma.validityDate)}</Text>
-        <Text style={styles.line}>Date événement : {formatDate(proforma.eventDate)}</Text>
+        <Text style={styles.line}>Date émission : {formatShortDocumentDate(proforma.issueDate)}</Text>
+        <Text style={styles.line}>Validité : {formatShortDocumentDate(proforma.validityDate)}</Text>
+        <Text style={styles.line}>Date événement : {formatShortDocumentDate(proforma.eventDate)}</Text>
 
-        {proforma.orderNumber ? (
-          <Text style={styles.line}>Commande : {proforma.orderNumber}</Text>
+        {proforma.orderId && proforma.orderNumber ? (
+          <TouchableOpacity
+            onPress={() => {
+              const orderId = String(proforma.orderId);
+
+              router.push({
+                pathname: '/(traiteur)/orders/[id]',
+                params: {
+                  id: orderId,
+                },
+              });
+            }}
+          >
+            <Text style={styles.linkText}>
+              Commande : {proforma.orderNumber}
+            </Text>
+          </TouchableOpacity>
         ) : null}
+
+
       </View>
 
       <View style={styles.card}>
@@ -756,6 +764,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 14,
     fontWeight: '700',
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#0F4C81',
+    fontWeight: '800',
+    marginBottom: 5,
+    textDecorationLine: 'underline',
   },
 
 });
