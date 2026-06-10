@@ -173,7 +173,7 @@ export async function createInvoiceFromOrder(
     sourceProformaId: order.proformaId ?? order.sourceProformaId ?? null,
 
     number: invoiceNumber,
-    status: "issued",
+    status: "draft",
 
     clientId: order.clientId ?? "",
     client: {
@@ -257,13 +257,13 @@ export async function createInvoiceFromOrder(
     createdAt: serverTimestamp() as any,
     updatedAt: serverTimestamp() as any,
 
-    issuedAt: serverTimestamp() as any,
+    issuedAt: null as any,
 
     createdBy: null,
     issuedBy: null,
 
     version: 1,
-    isLocked: true,
+    isLocked: false,
   };
 
   const ref = await addDoc(collection(db, COLLECTION), invoice);
@@ -275,7 +275,7 @@ export async function createInvoiceFromOrder(
 
   await addInvoiceHistory(ref.id, {
     type: "CREATED",
-    message: "Facture créée depuis la commande",
+    message: "Brouillon de facture créé depuis la commande",
     snapshot: {
       number: invoice.number,
       status: invoice.status,
@@ -284,15 +284,7 @@ export async function createInvoiceFromOrder(
     },
   });
 
-  await addInvoiceHistory(ref.id, {
-    type: "ISSUED",
-    message: "Facture émise et verrouillée",
-    snapshot: {
-      number: invoice.number,
-      status: invoice.status,
-      isLocked: true,
-    },
-  });
+
 
   const createdInvoiceSnap = await getDoc(ref);
 
@@ -782,7 +774,54 @@ export async function issueReplacementDraftInvoice(
     isLocked: true,
   };
 }
+export async function issueDraftInvoice(
+  invoiceId: string
+): Promise<CateringInvoice> {
+  if (!invoiceId) {
+    throw new Error("Facture invalide");
+  }
 
+  const ref = doc(db, COLLECTION, invoiceId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error("Facture introuvable");
+  }
+
+  const invoice = {
+    id: snap.id,
+    ...(snap.data() as Omit<CateringInvoice, "id">),
+  };
+
+  if (invoice.status !== "draft") {
+    throw new Error("Seule une facture brouillon peut être émise");
+  }
+
+  await updateDoc(ref, {
+    status: "issued",
+    isLocked: true,
+    issuedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    issuedBy: null,
+  });
+
+  await addInvoiceHistory(invoiceId, {
+    type: "ISSUED",
+    message: "Facture émise et verrouillée",
+    snapshot: {
+      number: invoice.number,
+      previousStatus: invoice.status,
+      newStatus: "issued",
+      isLocked: true,
+    },
+  });
+
+  return {
+    ...invoice,
+    status: "issued",
+    isLocked: true,
+  };
+}
 export async function updateDraftInvoice(
   invoiceId: string,
   data: Partial<Pick<

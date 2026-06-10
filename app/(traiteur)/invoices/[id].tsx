@@ -21,7 +21,10 @@ import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import InvoiceAccountingNotice from "@/src/components/invoices/InvoiceAccountingNotice";
 
 import { CateringInvoice } from "@/types/catering";
-import { getCateringInvoiceById } from "@/src/services/cateringInvoice.service";
+import {
+  getCateringInvoiceById,
+  issueDraftInvoice,
+} from "@/src/services/cateringInvoice.service";
 
 import { formatCurrency } from "@/src/utils/costs";
 import { generateInvoicePDF } from "@/src/services/invoicePdf.service";
@@ -146,6 +149,52 @@ export default function InvoiceDetailScreen() {
 
   const canReplace =
     invoice?.status === "issued" && !isFullyCredited;
+const isDraft =
+  invoice?.status === "draft";
+
+  function handleIssueDraftInvoice() {
+    if (!invoice?.id) {
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      return;
+    }
+
+    const confirmIssue = async () => {
+      try {
+        setLoading(true);
+        await issueDraftInvoice(invoice.id!);
+        Alert.alert("Succès", "Facture émise avec succès.");
+        await loadInvoice();
+      } catch (error) {
+        console.error("❌ issue draft invoice error:", error);
+        Alert.alert(
+          "Erreur",
+          error instanceof Error
+            ? error.message
+            : "Impossible d'émettre la facture"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Confirmer l'émission de cette facture ? Après émission, elle ne sera plus modifiable."
+      );
+
+      if (confirmed) confirmIssue();
+      return;
+    }
+
+    Alert.alert(
+      "Émettre la facture",
+      "Après émission, la facture ne sera plus modifiable. Continuer ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        { text: "Émettre", onPress: confirmIssue },
+      ]
+    );
+  }
   function getInvoicePdfFileName(invoice: CateringInvoice) {
     const documentType = (invoice as any)?.documentType;
     const status = invoice?.status;
@@ -292,7 +341,17 @@ export default function InvoiceDetailScreen() {
       setPdfLoading(false);
     }
   }
+  function goToEditInvoice() {
+    if (!invoice?.id) {
+      Alert.alert("Erreur", "Identifiant facture introuvable");
+      return;
+    }
 
+    router.push({
+      pathname: "/(traiteur)/invoices/edit-v2/[id]",
+      params: { id: invoice.id },
+    });
+  }
   function goToReplaceInvoice() {
     if (!invoice?.id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
@@ -578,6 +637,30 @@ export default function InvoiceDetailScreen() {
             </View>
           ))}
         </View>
+      ) : null}
+
+      {isDraft ? (
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={goToEditInvoice}
+        >
+          <Text style={styles.editButtonText}>
+            Modifier la facture
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
+
+
+      {isDraft ? (
+        <TouchableOpacity
+          style={styles.issueButton}
+          onPress={handleIssueDraftInvoice}
+        >
+          <Text style={styles.issueButtonText}>
+            Émettre la facture
+          </Text>
+        </TouchableOpacity>
       ) : null}
 
       <TouchableOpacity
@@ -910,6 +993,32 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 12,
+  },
+  editButton: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  editButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  issueButton: {
+    backgroundColor: "#16A34A",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  issueButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
   },
 
 });

@@ -240,7 +240,17 @@ export default function ProformaDetailScreen() {
       { text: 'Envoyer', onPress: () => handleChangeStatus('sent') },
     ]);
   }
+  function goToEditProforma() {
+    if (!proforma?.id) {
+      Alert.alert("Erreur", "Identifiant proforma introuvable");
+      return;
+    }
 
+    router.push({
+      pathname: "/(traiteur)/proformas/edit/[id]",
+      params: { id: proforma.id },
+    });
+  }
   function handleApprove() {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(
@@ -437,6 +447,17 @@ export default function ProformaDetailScreen() {
           </Text>
         </View>
       </View>
+
+      {proforma.status === "draft" ? (
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={goToEditProforma}
+        >
+          <Text style={styles.editButtonText}>
+            Modifier la proforma
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       {proforma.status === 'approved' && !isConverted && (
         <TouchableOpacity
@@ -771,6 +792,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 5,
     textDecorationLine: 'underline',
+  },
+  editButton: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  editButtonText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
   },
 
 });
