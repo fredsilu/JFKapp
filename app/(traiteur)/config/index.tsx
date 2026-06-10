@@ -1,6 +1,13 @@
-//app/(traiteur)/config/index.tsx
+// app/(traiteur)/config/index.tsx
+
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function ConfigHome() {
   const router = useRouter();
@@ -31,6 +38,13 @@ export default function ConfigHome() {
       route: "/(traiteur)/config/service-settings",
     },
     {
+      title: "Numérotation",
+      subtitle:
+        "Gérer les compteurs des factures et proformas",
+      icon: "🔢",
+      route: "/(traiteur)/config/numbering",
+    },
+    {
       title: "Aide & règles",
       subtitle: "Comprendre les règles comptables et métier",
       icon: "📘",
@@ -41,7 +55,10 @@ export default function ConfigHome() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Configuration</Text>
-      <Text style={styles.subtitle}>Référentiels et paramètres du module traiteur</Text>
+
+      <Text style={styles.subtitle}>
+        Référentiels et paramètres du module traiteur
+      </Text>
 
       <View style={styles.grid}>
         {items.map((item) => (
@@ -58,8 +75,14 @@ export default function ConfigHome() {
             }
           >
             <Text style={styles.icon}>{item.icon}</Text>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+
+            <Text style={styles.cardTitle}>
+              {item.title}
+            </Text>
+
+            <Text style={styles.cardSubtitle}>
+              {item.subtitle}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -73,19 +96,24 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#F4F6F8",
   },
+
   title: {
     fontSize: 24,
     fontWeight: "800",
     marginBottom: 4,
+    color: "#111827",
   },
+
   subtitle: {
     fontSize: 14,
     color: "#6B7280",
     marginBottom: 16,
   },
+
   grid: {
     gap: 12,
   },
+
   card: {
     backgroundColor: "#fff",
     borderRadius: 14,
@@ -93,15 +121,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+
   icon: {
     fontSize: 28,
     marginBottom: 8,
   },
+
   cardTitle: {
     fontSize: 17,
     fontWeight: "800",
     marginBottom: 4,
+    color: "#111827",
   },
+
   cardSubtitle: {
     fontSize: 13,
     color: "#6B7280",
