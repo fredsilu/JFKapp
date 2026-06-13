@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image,
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 import { Ingredient, DishIngredient, Dish } from '@/types';
-import { updateDish } from '@/src/services/firestore';
 import ErrorMessage from '@/src/components/ErrorMessage';
 
 interface DishFormProps {
@@ -207,7 +206,7 @@ export default function DishForm({ dish, ingredients, onClose, onSubmit }: DishF
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>URL de l'image (optionnel)</Text>
+            <Text style={styles.label}>URL de l&apos;image (optionnel)</Text>
             <TextInput
               style={styles.input}
               value={image}

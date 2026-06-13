@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DishAnalytics, ClientAnalytics, IngredientUsage } from '@/src/utils/analytics';
 import { formatCurrency } from '@/src/utils/costs';

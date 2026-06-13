@@ -110,7 +110,7 @@ export default function CancelInvoiceScreen() {
         Cette action va marquer la facture comme annulée. Le motif sera conservé dans l’historique.
       </Text>
 
-      <Text style={styles.label}>Motif d'annulation</Text>
+      <Text style={styles.label}>Motif d&apos;annulation</Text>
 
       <TextInput
         style={styles.input}

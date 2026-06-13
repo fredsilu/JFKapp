@@ -158,7 +158,7 @@ export default function CateringSimulationDetailsScreen() {
               </Text>
 
               <Text style={styles.lineText}>
-                Chiffre d'affaires : {formatCurrency(section.total)}
+                Chiffre d&apos;affaires : {formatCurrency(section.total)}
               </Text>
 
               <Text style={styles.lineText}>

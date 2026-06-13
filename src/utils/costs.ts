@@ -48,7 +48,7 @@ export function calculateOrderTotalCost(order: Order, margin: number = 0.3): num
   if (!order) {
     return 0;
   }
-  
+
   // Calcul du coût des plats
   const dishesCost = order.dishes && Array.isArray(order.dishes) ? order.dishes.reduce((total, { dish, quantity }) => {
     if (!dish) {
@@ -59,7 +59,9 @@ export function calculateOrderTotalCost(order: Order, margin: number = 0.3): num
   }, 0) : 0;
 
   // Calcul du coût des ingrédients supplémentaires
-  const additionalIngredientsCost = calculateAdditionalIngredientsCost(order.additionalIngredients);
+  const additionalIngredientsCost = calculateAdditionalIngredientsCost(
+    order.additionalIngredients ?? []
+  );
 
   return dishesCost + additionalIngredientsCost;
 }

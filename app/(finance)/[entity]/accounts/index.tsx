@@ -4,7 +4,7 @@ import { useAccounts } from "@/src/finance/hooks/useAccounts";
 
 export default function MaisonAccounts() {
   const router = useRouter();
-  const { accounts, loading } = useAccounts("maison");
+  const { accounts } = useAccounts("maison");
 
   return (
     <View style={styles.container}>

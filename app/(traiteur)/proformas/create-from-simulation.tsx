@@ -44,15 +44,7 @@ async function fetchCateringDishes(): Promise<CateringDish[]> {
     .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
-function calculateServiceUnitPriceFromCost(cost: number): number {
-  if (cost <= 0) return 0;
 
-  if (cost < 100) {
-    return 100;
-  }
-
-  return Math.ceil(cost / 50) * 50;
-}
 
 export default function CreateProformaFromSimulationScreen() {
   const params = useLocalSearchParams<{

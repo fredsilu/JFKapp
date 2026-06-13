@@ -74,7 +74,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Détails de l'ingrédient</Text>
+          <Text style={styles.title}>Détails de l&apos;ingrédient</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.editButton}
@@ -171,7 +171,7 @@ export default function IngredientDetails({ ingredient, onClose }: IngredientDet
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Statistiques d'utilisation</Text>
+            <Text style={styles.sectionTitle}>Statistiques d&apos;utilisation</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>45</Text>

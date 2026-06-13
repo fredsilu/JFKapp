@@ -31,22 +31,6 @@ import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
 import { downloadHtmlAsPdfWeb } from "@/src/utils/downloadHtmlAsPdfWeb";
 import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
-function toIsoDate(value: any): string {
-    if (!value) return "";
-
-    if (typeof value === "string") return value;
-
-    if (value?.toDate) {
-        return value.toDate().toISOString();
-    }
-
-    if (value instanceof Date) {
-        return value.toISOString();
-    }
-
-    return "";
-}
-
 
 
 function getStatusLabel(status?: string) {

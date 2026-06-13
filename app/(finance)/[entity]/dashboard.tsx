@@ -22,19 +22,15 @@ export default function DashboardScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  let currentEntity: EntityType;
+  let currentEntity: EntityType | null = null;
 
   try {
     currentEntity = getEntity(params);
   } catch {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Entité invalide</Text>
-        </View>
-      </SafeAreaView>
-    );
+    currentEntity = null;
   }
+
+  const safeEntity: EntityType = currentEntity ?? "maison";
 
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(
@@ -44,7 +40,7 @@ export default function DashboardScreen() {
   const selectedMonth = selectedDate.getMonth();
   const selectedYear = selectedDate.getFullYear();
 
-  const { data, loading } = useFinanceDashboard(currentEntity, {
+  const { data, loading } = useFinanceDashboard(safeEntity, {
     month: selectedMonth,
     year: selectedYear,
   });
@@ -72,6 +68,16 @@ export default function DashboardScreen() {
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
     );
   };
+
+  if (!currentEntity) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>Entité invalide</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return (

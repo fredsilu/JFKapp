@@ -29,5 +29,6 @@ export function simulationToDraft(
     serviceCosts,
     name,
     clientId,
+    dateLivraison: "",
   };
 }
