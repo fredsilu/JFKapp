@@ -24,6 +24,7 @@ import { fetchClients } from '@/src/services/clientService';
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 export default function CateringSimulationsScreen() {
   const router = useRouter();
@@ -108,13 +109,6 @@ export default function CateringSimulationsScreen() {
     return String(value ?? '').trim().toLowerCase();
   }
 
-  function formatTimestamp(value: any): string {
-    const millis = getMillis(value);
-
-    if (!millis) return 'Non définie';
-
-    return new Date(millis).toLocaleDateString('fr-FR');
-  }
 
   const filteredSimulations = useMemo(() => {
     const q = normalizeText(searchQuery);
@@ -146,17 +140,6 @@ export default function CateringSimulationsScreen() {
       .sort((a, b) => getMillis(b.createdAt) - getMillis(a.createdAt));
   }, [simulations, searchQuery, clientsById]);
 
-  function formatDate(date?: string) {
-    if (!date) return 'Non définie';
-
-    const d = new Date(date);
-
-    if (Number.isNaN(d.getTime())) {
-      return date;
-    }
-
-    return d.toLocaleDateString('fr-FR');
-  }
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -236,13 +219,13 @@ export default function CateringSimulationsScreen() {
                 <View style={styles.datesBlock}>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      Créée le : {formatTimestamp(sim.createdAt)}
+                      Créée le : {formatShortDocumentDate(sim.createdAt)}
                     </Text>
                   </View>
 
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      Livraison : {formatDate(sim.dateLivraison)}
+                      Livraison : {formatShortDocumentDate(sim.dateLivraison)}
                     </Text>
                   </View>
                 </View>

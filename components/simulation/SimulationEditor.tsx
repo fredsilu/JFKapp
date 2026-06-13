@@ -1,3 +1,4 @@
+// components/simulation/SimulationEditor.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -45,6 +46,7 @@ const ARTICLE_LABELS = [
 
 type SimulationEditorSubmitPayload = {
   eventName: string;
+  eventDate: string;
   clientName: string;
   numberOfPeople: number;
   dateLivraison: string;
@@ -73,6 +75,8 @@ type Props = {
   initialDeliveryAddress?: string;
   initialComment?: string;
   submitLabel?: string;
+  initialEventDate?: string;
+  initialDiscount?: number;
   saving?: boolean;
   onSubmit: (payload: SimulationEditorSubmitPayload) => Promise<void>;
 };
@@ -86,12 +90,15 @@ export default function SimulationEditor({
   initialDeliveryAddress = "",
   initialComment = "",
   initialNumberOfPeople = 0,
+  initialEventDate = "",
+  initialDiscount = 0,
   initialSections,
   submitLabel = "Enregistrer",
   saving = false,
   onSubmit,
 }: Props) {
   const [eventName, setEventName] = useState(initialEventName);
+  const [eventDate, setEventDate] = useState(initialEventDate);
   const [clientName, setClientName] = useState(initialClientName);
   const [numberOfPeople, setNumberOfPeople] = useState(
     String(initialNumberOfPeople || 0)
@@ -102,13 +109,14 @@ export default function SimulationEditor({
   const [deliveryAddress, setDeliveryAddress] = useState(initialDeliveryAddress);
   const [comment, setComment] = useState(initialComment);
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showEventDatePicker, setShowEventDatePicker] = useState(false);
+  const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState(false);
 
   const [sections, setSections] = useState<CateringSection[]>([]);
   const [serviceSettings, setServiceSettings] =
     useState<CateringServiceSettings | null>(null);
 
-  const [discountAmount, setDiscountAmount] = useState("0");
+  const [discountAmount, setDiscountAmount] = useState(String(initialDiscount || 0));
 
   const [loading, setLoading] = useState(true);
 
@@ -172,7 +180,7 @@ export default function SimulationEditor({
         templates = [];
       }
 
-      const emptySections = createEmptySectionsFromTemplates([]);
+      const emptySections = createEmptySectionsFromTemplates(templates);
       const fallbackSections: CateringSection[] = [
         {
           id: "article_dejeuner",
@@ -248,11 +256,6 @@ export default function SimulationEditor({
     } finally {
       setLoading(false);
     }
-  }
-
-  function valueOrDefault(value: any, fallback: number) {
-    const numberValue = Number(value);
-    return numberValue > 0 ? numberValue : fallback;
   }
 
   function formatDateFr(date: Date) {
@@ -405,6 +408,7 @@ export default function SimulationEditor({
 
       await onSubmit({
         eventName: eventName.trim(),
+        eventDate,
         dateLivraison,
         deliveryTime,
         deliveryAddress,
@@ -455,6 +459,50 @@ export default function SimulationEditor({
             placeholder="Ex: Cocktail entreprise"
             style={styles.input}
           />
+          <Text style={styles.label}>Date événement</Text>
+
+          {Platform.OS === "web" ? (
+            <TextInput
+              value={eventDate}
+              onChangeText={(value) => setEventDate(formatFrenchDate(value))}
+              placeholder="JJ/MM/AAAA"
+              keyboardType="numeric"
+              maxLength={10}
+              style={styles.input}
+            />
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={() => setShowEventDatePicker(true)}
+                style={styles.datePickerButton}
+              >
+                <Text
+                  style={[
+                    styles.datePickerText,
+                    !eventDate && styles.datePickerPlaceholder,
+                  ]}
+                >
+                  {eventDate || "Choisir une date"}
+                </Text>
+              </TouchableOpacity>
+
+              {showEventDatePicker && (
+                <DateTimePicker
+                  value={eventDate ? parseFrenchDate(eventDate) : new Date()}
+                  mode="date"
+                  display="default"
+                  locale="fr-FR"
+                  onChange={(event, selectedDate) => {
+                    setShowEventDatePicker(false);
+
+                    if (selectedDate) {
+                      setEventDate(formatDateFr(selectedDate));
+                    }
+                  }}
+                />
+              )}
+            </>
+          )}
 
           <Text style={styles.label}>Client</Text>
           <TextInput
@@ -480,7 +528,7 @@ export default function SimulationEditor({
           ) : (
             <>
               <TouchableOpacity
-                onPress={() => setShowDatePicker(true)}
+                onPress={() => setShowDeliveryDatePicker(true)}
                 style={styles.datePickerButton}
               >
                 <Text
@@ -493,14 +541,14 @@ export default function SimulationEditor({
                 </Text>
               </TouchableOpacity>
 
-              {showDatePicker && (
+              {showDeliveryDatePicker && (
                 <DateTimePicker
                   value={dateLivraison ? parseFrenchDate(dateLivraison) : new Date()}
                   mode="date"
                   display="default"
                   locale="fr-FR"
                   onChange={(event, selectedDate) => {
-                    setShowDatePicker(false);
+                    setShowDeliveryDatePicker(false);
 
                     if (selectedDate) {
                       setDateLivraison(formatDateFr(selectedDate));

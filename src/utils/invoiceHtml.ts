@@ -20,11 +20,33 @@ function safe(value?: string | null) {
 
 function toDate(value: any): Date | null {
   if (!value) return null;
+
   if (value?.toDate) return value.toDate();
+
   if (value instanceof Date) return value;
 
-  const parsed = new Date(value);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    // Format français : JJ/MM/AAAA
+    const frenchMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (frenchMatch) {
+      const [, day, month, year] = frenchMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    // Format ISO : AAAA-MM-JJ
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsed = new Date(trimmed);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
 }
 
 function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
@@ -166,7 +188,10 @@ export function buildInvoiceHTML(
   const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
 
   const eventDateFormatted = formatShortDate(
-    (invoice as any).eventDate || (invoice as any).dateLivraison,
+    (invoice as any).eventDate ||
+    (invoice as any).dateEvenement ||
+    (invoice as any).deliveryDate ||
+    (invoice as any).dateLivraison,
     'fr'
   );
   const eventName =
@@ -332,9 +357,10 @@ body {
 
 .main-table .event td {
   background: #c8dbe5;
-  height: 82px;
   vertical-align: top;
-  line-height: 1.65;
+  line-height: 1.35;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .main-table .event td:first-child {

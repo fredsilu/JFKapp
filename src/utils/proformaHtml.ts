@@ -35,8 +35,28 @@ function toDate(value: any): Date | null {
 
   if (value instanceof Date) return value;
 
-  const parsed = new Date(value);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    // Format français : JJ/MM/AAAA
+    const frenchMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (frenchMatch) {
+      const [, day, month, year] = frenchMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    // Format ISO : AAAA-MM-JJ
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsed = new Date(trimmed);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
 }
 
 // Date complète → mercredi 06/05/2026

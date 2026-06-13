@@ -21,7 +21,8 @@ export type ProformaStatus =
   | 'approved'
   | 'rejected'
   | 'converted'
-  | 'invoiced';
+  | 'invoiced'
+  | 'cancelled';
 
 export type CateringProformaItem = {
   label: string;
@@ -401,6 +402,18 @@ export async function markProformaAsConvertedToOrder(
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
+  const current = await getCateringProformaById(id);
+
+  if (!current) {
+    throw new Error('Proforma introuvable');
+  }
+
+  if ((current as any).status === 'cancelled') {
+    throw new Error(
+      'Cette proforma est annulée et ne peut plus être convertie.'
+    );
+  }
+
   await updateDoc(ref, {
     status: 'converted',
     orderId,
@@ -420,13 +433,35 @@ export async function markProformaAsInvoiced(
   invoiceNumber: string
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
+  const current = await getCateringProformaById(id);
 
+  if (!current) {
+    throw new Error('Proforma introuvable');
+  }
+
+  if ((current as any).status === 'cancelled') {
+    throw new Error(
+      'Cette proforma est annulée et ne peut plus être facturée.'
+    );
+  }
   await updateDoc(ref, {
     status: 'invoiced',
     isInvoiced: true,
     invoiceId,
     invoiceNumber,
     invoicedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function cancelCateringProforma(
+  id: string
+): Promise<void> {
+  const ref = doc(db, COLLECTION, id);
+
+  await updateDoc(ref, {
+    status: 'cancelled',
+    cancelledAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }

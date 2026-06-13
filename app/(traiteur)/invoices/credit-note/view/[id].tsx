@@ -29,6 +29,7 @@ import { generateInvoicePDF } from "@/src/services/invoicePdf.service";
 import { buildCreditNotePdfData } from "@/src/services/creditNotePdf.service";
 import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
 import { downloadHtmlAsPdfWeb } from "@/src/utils/downloadHtmlAsPdfWeb";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 function toIsoDate(value: any): string {
     if (!value) return "";
@@ -46,19 +47,7 @@ function toIsoDate(value: any): string {
     return "";
 }
 
-function formatDate(value?: any) {
-    const iso = toIsoDate(value);
 
-    if (!iso) return "—";
-
-    const d = new Date(iso);
-
-    if (Number.isNaN(d.getTime())) {
-        return "—";
-    }
-
-    return d.toLocaleDateString("fr-FR");
-}
 
 function getStatusLabel(status?: string) {
     switch (status) {
@@ -282,7 +271,7 @@ export default function CreditNoteViewScreen() {
                 </Text>
                 <Text style={styles.line}>Type : {getTypeLabel(creditNote.type)}</Text>
                 <Text style={styles.line}>
-                    Date émission : {formatDate(creditNote.issuedAt)}
+                    Date émission : {formatShortDocumentDate(creditNote.issuedAt)}
                 </Text>
             </View>
 

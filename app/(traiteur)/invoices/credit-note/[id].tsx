@@ -16,6 +16,7 @@ import { CateringInvoice } from "@/types/catering";
 import { getCateringInvoiceById } from "@/src/services/cateringInvoice.service";
 import { createDraftCreditNote } from "@/src/services/creditNote.service";
 import { formatCurrency } from "@/src/utils/costs";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 export default function CreateCreditNoteScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -180,6 +181,10 @@ export default function CreateCreditNoteScreen() {
       <View style={styles.card}>
         <Text style={styles.label}>Facture concernée</Text>
         <Text style={styles.value}>{invoice.number}</Text>
+        <Text style={styles.label}>Date facture</Text>
+        <Text style={styles.value}>
+          {formatShortDocumentDate(invoice.issuedAt)}
+        </Text>
 
         <Text style={styles.label}>Client</Text>
         <Text style={styles.value}>

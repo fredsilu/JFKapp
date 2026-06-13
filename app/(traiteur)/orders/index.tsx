@@ -18,6 +18,7 @@ import {
 
 import { CateringOrder } from '@/types/catering';
 import { formatCurrency } from '@/src/utils/costs';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 export default function OrdersScreen() {
@@ -87,15 +88,7 @@ export default function OrdersScreen() {
     }, 0);
   }, [orders]);
 
-  function formatDate(date?: string) {
-    if (!date) return '—';
-
-    const d = new Date(date);
-
-    if (Number.isNaN(d.getTime())) return date;
-
-    return d.toLocaleDateString('fr-FR');
-  }
+  
 
   function getStatusLabel(status?: string) {
     switch (status) {
@@ -191,15 +184,7 @@ export default function OrdersScreen() {
       Alert.alert('Erreur', 'Impossible de modifier le statut');
     }
   }
-  function formatTimestamp(value: any) {
-    if (!value) return '—';
-
-    if (value?.toDate) {
-      return value.toDate().toLocaleDateString('fr-FR');
-    }
-
-    return '—';
-  }
+ 
 
   function confirmStatusChange(
     orderId?: string,
@@ -384,11 +369,17 @@ export default function OrdersScreen() {
               ) : null}
 
               <Text style={styles.line}>
-                Créée le : {formatTimestamp(order.createdAt)}
+                Créée le : {formatShortDocumentDate(order.createdAt)}
               </Text>
 
               <Text style={styles.line}>
-                Date événement : {formatDate(order.dateLivraison)}
+                Date événement : {
+                  formatShortDocumentDate(
+                    (order as any).eventDate ||
+                    (order as any).dateEvenement ||
+                    order.dateLivraison
+                  )
+                }
               </Text>
 
               {order.deliveryTime ? (

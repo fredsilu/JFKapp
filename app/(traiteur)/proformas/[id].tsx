@@ -30,6 +30,7 @@ import {
   getCateringProformaById,
   updateCateringProforma,
   markProformaAsConvertedToOrder,
+  cancelCateringProforma,
 } from '@/src/services/cateringProforma.service';
 
 export default function ProformaDetailScreen() {
@@ -100,7 +101,13 @@ export default function ProformaDetailScreen() {
         Alert.alert('Erreur', 'Proforma invalide');
         return;
       }
-
+      if (proforma.status === 'cancelled') {
+        Alert.alert(
+          'Proforma annulée',
+          'Cette proforma est annulée et ne peut plus être convertie en commande.'
+        );
+        return;
+      }
       if (proforma.orderId || proforma.status === 'converted') {
         Alert.alert('Information', 'Cette proforma a déjà été convertie en commande.');
         return;
@@ -211,6 +218,13 @@ export default function ProformaDetailScreen() {
   }
 
   async function handleChangeStatus(status: ProformaStatus) {
+    if (proforma?.status === 'cancelled') {
+      Alert.alert(
+        'Proforma annulée',
+        'Cette proforma est annulée et ne peut plus être modifiée.'
+      );
+      return;
+    }
     if (!proforma?.id) return;
 
     try {
@@ -293,7 +307,66 @@ export default function ProformaDetailScreen() {
     ]);
   }
 
+  function handleCancelProforma() {
+    if (!proforma?.id) return;
 
+    if (
+      proforma.status === 'converted' ||
+      proforma.status === 'invoiced' ||
+      proforma.orderId ||
+      proforma.invoiceId
+    ) {
+      Alert.alert(
+        'Annulation impossible',
+        'Cette proforma est déjà convertie ou facturée.'
+      );
+      return;
+    }
+
+    if (proforma.status === 'cancelled') {
+      Alert.alert('Information', 'Cette proforma est déjà annulée.');
+      return;
+    }
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        `Confirmer l’annulation de la proforma ${proforma.number || ''} ?`
+      );
+
+      if (confirmed) {
+        cancelCateringProforma(proforma.id)
+          .then(loadProforma)
+          .catch((e) => {
+            console.error('❌ cancel proforma error:', e);
+            Alert.alert('Erreur', 'Impossible d’annuler la proforma');
+          });
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      'Annuler proforma',
+      `Confirmer l’annulation de la proforma ${proforma.number || ''} ?`,
+      [
+        { text: 'Non', style: 'cancel' },
+        {
+          text: 'Oui, annuler',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await cancelCateringProforma(proforma.id!);
+              await loadProforma();
+              Alert.alert('Succès', 'Proforma annulée.');
+            } catch (e) {
+              console.error('❌ cancel proforma error:', e);
+              Alert.alert('Erreur', 'Impossible d’annuler la proforma');
+            }
+          },
+        },
+      ]
+    );
+  }
 
   function getStatusLabel(status?: string) {
     switch (status) {
@@ -307,6 +380,8 @@ export default function ProformaDetailScreen() {
         return 'Convertie en commande';
       case 'invoiced':
         return 'Facturée';
+      case 'cancelled':
+        return 'Annulée';
       case 'rejected':
         return 'Rejetée';
       default:
@@ -353,10 +428,37 @@ export default function ProformaDetailScreen() {
         </Text>
       </View>
 
+      {proforma.status === 'cancelled' && (
+        <View
+          style={{
+            backgroundColor: '#FEE2E2',
+            borderWidth: 1,
+            borderColor: '#FCA5A5',
+            padding: 12,
+            borderRadius: 10,
+            marginBottom: 14,
+          }}
+        >
+          <Text
+            style={{
+              color: '#991B1B',
+              fontWeight: '800',
+              textAlign: 'center',
+            }}
+          >
+            PROFORMA ANNULÉE
+          </Text>
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Informations</Text>
         <Text style={styles.line}>Date émission : {formatShortDocumentDate(proforma.issueDate)}</Text>
-        <Text style={styles.line}>Validité : {formatShortDocumentDate(proforma.validityDate)}</Text>
+        {proforma.validityDate ? (
+          <Text style={styles.line}>
+            Validité : {formatShortDocumentDate(proforma.validityDate)}
+          </Text>
+        ) : null}
         <Text style={styles.line}>Date événement : {formatShortDocumentDate(proforma.eventDate)}</Text>
 
         {proforma.orderId && proforma.orderNumber ? (
@@ -515,7 +617,18 @@ export default function ProformaDetailScreen() {
           ))}
         </View>
       ) : null}
-
+      {proforma.status !== 'cancelled' &&
+        !isConverted &&
+        proforma.status !== 'invoiced' && (
+          <TouchableOpacity
+            style={styles.cancelProformaButton}
+            onPress={handleCancelProforma}
+          >
+            <Text style={styles.cancelProformaButtonText}>
+              Annuler la proforma
+            </Text>
+          </TouchableOpacity>
+        )}
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -804,6 +917,21 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: "#fff",
     fontWeight: "900",
+    fontSize: 15,
+  },
+  cancelProformaButton: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  cancelProformaButtonText: {
+    color: '#991B1B',
+    fontWeight: '900',
     fontSize: 15,
   },
 

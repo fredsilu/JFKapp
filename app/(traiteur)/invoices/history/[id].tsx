@@ -17,6 +17,7 @@ import {
 } from "@/src/services/cateringInvoice.service";
 
 import { CateringInvoice } from "@/types/catering";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 type HistoryItem = {
   id: string;
@@ -27,17 +28,7 @@ type HistoryItem = {
   snapshot?: any;
 };
 
-function formatDate(value?: any) {
-  if (!value) return "—";
 
-  const date =
-    value?.toDate?.() ??
-    (typeof value === "string" ? new Date(value) : null);
-
-  if (!date || Number.isNaN(date.getTime())) return "—";
-
-  return date.toLocaleString("fr-FR");
-}
 
 function getHistoryColor(type?: string) {
   switch (type) {
@@ -185,7 +176,7 @@ export default function InvoiceHistoryScreen() {
             </Text>
 
             <Text style={styles.historyDate}>
-              {formatDate(item.createdAt)}
+              {formatShortDocumentDate(item.createdAt)}
             </Text>
             {item.createdBy ? (
               <Text style={styles.createdBy}>

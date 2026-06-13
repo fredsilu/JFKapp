@@ -13,7 +13,7 @@ import {
   TextInput,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import { CateringInvoice } from '@/types/catering';
 
 import {
@@ -121,13 +121,7 @@ export default function InvoicesScreen() {
     });
   }, [invoices, search, statusFilter]);
 
-  function formatDateFromTimestamp(dateValue?: any) {
-    const date = dateValue?.toDate?.();
 
-    if (!date) return '—';
-
-    return date.toLocaleDateString('fr-FR');
-  }
 
   function getStatusLabel(status?: string) {
     switch (status) {
@@ -263,6 +257,24 @@ export default function InvoicesScreen() {
         </TouchableOpacity>
 
         <Text style={styles.title}>Factures</Text>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryLabel}>Nombre total de factures</Text>
+          <Text style={styles.summaryValue}>{invoices.length}</Text>
+
+          <Text style={styles.summaryLabel}>Factures actives</Text>
+          <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
+
+          <Text style={styles.summaryLabel}>
+            Chiffre d’affaires facturé actif
+          </Text>
+          <Text style={styles.summaryAmount}>
+            {formatCurrency(totalAmount)}
+          </Text>
+
+          <Text style={styles.summaryHint}>
+            Les factures annulées ou remplacées ne sont pas incluses.
+          </Text>
+        </View>
 
         <TextInput
           style={styles.searchInput}
@@ -305,24 +317,7 @@ export default function InvoicesScreen() {
           ))}
         </View>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Nombre total de factures</Text>
-          <Text style={styles.summaryValue}>{invoices.length}</Text>
 
-          <Text style={styles.summaryLabel}>Factures actives</Text>
-          <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
-
-          <Text style={styles.summaryLabel}>
-            Chiffre d’affaires facturé actif
-          </Text>
-          <Text style={styles.summaryAmount}>
-            {formatCurrency(totalAmount)}
-          </Text>
-
-          <Text style={styles.summaryHint}>
-            Les factures annulées ou remplacées ne sont pas incluses.
-          </Text>
-        </View>
 
         {displayedInvoices.length === 0 ? (
           <Text style={styles.empty}>Aucune facture créée</Text>
@@ -361,7 +356,11 @@ export default function InvoicesScreen() {
                 </View>
 
                 <Text style={styles.line}>
-                  Date facture : {formatDateFromTimestamp(invoice.issuedAt)}
+                  Date facture : {formatShortDocumentDate(invoice.issuedAt)}
+                </Text>
+
+                <Text style={styles.line}>
+                  Créée le : {formatShortDocumentDate(invoice.createdAt)}
                 </Text>
 
                 {invoice.orderNumber ? (

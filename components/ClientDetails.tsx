@@ -18,6 +18,7 @@ import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import Modal from '@/components/Modal';
 import ClientForm from '@/components/ClientForm';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 interface ClientDetailsProps {
   clientId: string;
@@ -249,7 +250,7 @@ export default function ClientDetails({
                 </View>
 
                 <Text style={styles.date}>
-                  Créée le : {formatDate(order.createdAt)}
+                  Créée le : {formatShortDocumentDate(order.createdAt)}
                 </Text>
 
                 <View style={styles.orderFooter}>
@@ -331,13 +332,7 @@ function getDateTime(value: any): number {
   return new Date(value).getTime() || 0;
 }
 
-function formatDate(value: any): string {
-  const time = getDateTime(value);
 
-  if (!time) return '—';
-
-  return new Date(time).toLocaleDateString('fr-FR');
-}
 
 function formatAmount(value: any): string {
   if (value === undefined || value === null || isNaN(Number(value))) {

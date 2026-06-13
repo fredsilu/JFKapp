@@ -1,5 +1,4 @@
 //app/(traiteur)/proformas/index.tsx
-// app/(traiteur)/proformas/index.tsx
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator, TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import { router, useFocusEffect, Stack } from 'expo-router';
 import { BackHandler } from 'react-native';
@@ -19,6 +19,7 @@ import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import {
   CateringProforma,
   getCateringProformas,
+  cancelCateringProforma,
 } from '@/src/services/cateringProforma.service';
 import { formatCurrency } from '@/src/utils/costs';
 
@@ -31,6 +32,7 @@ type ProformaStatus =
   | 'rejected'
   | 'converted'
   | 'invoiced'
+  | 'cancelled'
   | 'expired';
 
 const ACTIVE_STATUSES: ProformaStatus[] = ['draft', 'sent', 'approved'];
@@ -95,6 +97,7 @@ export default function ProformasScreen() {
       status === 'rejected' ||
       status === 'converted' ||
       status === 'invoiced' ||
+      status === 'cancelled' ||
       status === 'expired'
     ) {
       return status;
@@ -216,6 +219,8 @@ export default function ProformasScreen() {
         return 'Brouillon';
       case 'sent':
         return 'Envoyée';
+      case 'cancelled':
+        return 'Annulée';
       case 'approved':
         return 'Acceptée';
       case 'rejected':
@@ -238,6 +243,12 @@ export default function ProformasScreen() {
       return {
         badge: styles.invoicedBadge,
         text: styles.invoicedBadgeText,
+      };
+    }
+    if (status === 'cancelled') {
+      return {
+        badge: styles.closedBadge,
+        text: styles.closedBadgeText,
       };
     }
 
@@ -266,6 +277,60 @@ export default function ProformasScreen() {
       badge: styles.statusBadge,
       text: styles.statusText,
     };
+  }
+
+  function canCancelProforma(p: CateringProforma) {
+    const status = normalizeStatus(p.status);
+
+    return (
+      p.id &&
+      !isConvertedProforma(p) &&
+      status !== 'cancelled' &&
+      status !== 'invoiced'
+    );
+  }
+
+  async function handleCancelProforma(p: CateringProforma) {
+    if (!p.id) return;
+
+    const message = `Voulez-vous vraiment annuler la proforma ${p.number || ''} ?`;
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(message);
+
+      if (!confirmed) return;
+
+      try {
+        await cancelCateringProforma(p.id);
+        window.alert('Proforma annulée.');
+        await loadProformas();
+      } catch (e: any) {
+        console.error('❌ cancel proforma error:', e);
+        window.alert(e?.message || 'Impossible d’annuler la proforma.');
+      }
+
+      return;
+    }
+
+    Alert.alert('Annuler proforma', message, [
+      { text: 'Non', style: 'cancel' },
+      {
+        text: 'Oui, annuler',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await cancelCateringProforma(p.id!);
+            Alert.alert('Succès', 'Proforma annulée.');
+            await loadProformas();
+          } catch (e: any) {
+            Alert.alert(
+              'Erreur',
+              e?.message || 'Impossible d’annuler la proforma.'
+            );
+          }
+        },
+      },
+    ]);
   }
 
   function openProforma(id?: string) {
@@ -434,12 +499,21 @@ export default function ProformasScreen() {
                     <Text style={styles.primaryActionText}>Voir</Text>
                   </TouchableOpacity>
 
-                  <View style={styles.readOnlyBadge}>
-                    <Icon name="lock-outline" size={14} color="#6B7280" />
-                    <Text style={styles.readOnlyText}>
-                      Suppression désactivée
-                    </Text>
-                  </View>
+                  {canCancelProforma(p) ? (
+                    <TouchableOpacity
+                      style={styles.cancelAction}
+                      onPress={() => handleCancelProforma(p)}
+                    >
+                      <Text style={styles.cancelActionText}>Annuler</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.readOnlyBadge}>
+                      <Icon name="lock-outline" size={14} color="#6B7280" />
+                      <Text style={styles.readOnlyText}>
+                        Lecture seule
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             );
@@ -701,6 +775,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     marginBottom: 12,
+  },
+  cancelAction: {
+    flex: 1,
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  cancelActionText: {
+    color: '#DC2626',
+    fontWeight: '800',
+    fontSize: 13,
   },
 
   backPillText: {

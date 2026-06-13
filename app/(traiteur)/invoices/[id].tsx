@@ -30,6 +30,7 @@ import { formatCurrency } from "@/src/utils/costs";
 import { generateInvoicePDF } from "@/src/services/invoicePdf.service";
 import { downloadHtmlAsPdfWeb } from "@/src/utils/downloadHtmlAsPdfWeb";
 import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 type InvoiceItem = CateringInvoice["items"][number];
 
@@ -45,19 +46,7 @@ function toIsoDate(value: any): string {
   return "";
 }
 
-function formatDate(value?: any) {
-  const iso = toIsoDate(value);
 
-  if (!iso) return "—";
-
-  const d = new Date(iso);
-
-  if (Number.isNaN(d.getTime())) {
-    return iso;
-  }
-
-  return d.toLocaleDateString("fr-FR");
-}
 
 function getStatusLabel(status?: string) {
   switch (status) {
@@ -149,8 +138,8 @@ export default function InvoiceDetailScreen() {
 
   const canReplace =
     invoice?.status === "issued" && !isFullyCredited;
-const isDraft =
-  invoice?.status === "draft";
+  const isDraft =
+    invoice?.status === "draft";
 
   function handleIssueDraftInvoice() {
     if (!invoice?.id) {
@@ -484,7 +473,7 @@ const isDraft =
           <Text style={styles.line}>
             Date :
             {" "}
-            {formatDate(invoice.cancellation.cancelledAt)}
+            {formatShortDocumentDate(invoice.cancellation.cancelledAt)}
           </Text>
         </View>
       ) : null}
@@ -505,7 +494,11 @@ const isDraft =
           Ville : {invoice.client?.city || "Kinshasa / RDC"}
         </Text>
         <Text style={styles.line}>
-          Date facture : {formatDate(invoice.issuedAt)}
+          Date facture : {formatShortDocumentDate(invoice.issuedAt)}
+        </Text>
+
+        <Text style={styles.line}>
+          Créée le : {formatShortDocumentDate(invoice.createdAt)}
         </Text>
       </View>
 

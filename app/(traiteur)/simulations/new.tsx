@@ -1,3 +1,4 @@
+//app/(traiteur)/simulations/new.tsx
 import { useEffect, useMemo, useState } from 'react';
 import {
   View,

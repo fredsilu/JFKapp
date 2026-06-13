@@ -1,3 +1,4 @@
+//components/simulation/ServiceSectionCard.tsx
 import React from "react";
 import {
   View,

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 
 import { formatCurrency } from "@/src/utils/costs";
 import { getCateringSimulations } from "@/src/services/cateringSimulation.service";
@@ -18,23 +19,7 @@ function toNumber(value: any, fallback = 0): number {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
-function formatFirestoreDate(value: any): string {
-  if (!value) return "Non définie";
 
-  if (typeof value?.toDate === "function") {
-    return value.toDate().toLocaleDateString("fr-FR");
-  }
-
-  if (value instanceof Date) {
-    return value.toLocaleDateString("fr-FR");
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return "Non définie";
-}
 
 export default function CateringSimulationDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,11 +127,11 @@ export default function CateringSimulationDetailsScreen() {
       <Text style={styles.subtitle}>Client : {clientName}</Text>
 
       <Text style={styles.subtitle}>
-        Date livraison : {sim.dateLivraison || "Non définie"}
+        Date événement/livraison : {formatShortDocumentDate(sim.dateLivraison)}
       </Text>
 
       <Text style={styles.subtitle}>
-        Date création : {formatFirestoreDate(sim.createdAt)}
+        Date création : {formatShortDocumentDate(sim.createdAt)}
       </Text>
 
       <Text style={styles.status}>Statut : {sim.status || "draft"}</Text>

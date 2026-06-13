@@ -6,7 +6,17 @@ import { InvoicePdfData } from "@/types/invoicePdf.types";
 function toIsoDate(value: any): string {
     if (!value) return new Date().toISOString();
 
-    if (typeof value === "string") return value;
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+
+        const frenchMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (frenchMatch) {
+            const [, day, month, year] = frenchMatch;
+            return new Date(Number(year), Number(month) - 1, Number(day)).toISOString();
+        }
+
+        return trimmed;
+    }
 
     if (value?.toDate) {
         return value.toDate().toISOString();

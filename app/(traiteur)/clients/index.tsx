@@ -24,6 +24,7 @@ import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import { Client } from '@/types';
 import { normalizeText } from '@/src/utils/search';
+import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 export default function ClientsScreen() {
   const router = useRouter();
@@ -268,7 +269,7 @@ export default function ClientsScreen() {
 
                       {client.lastOrderDate ? (
                         <Text style={styles.lastOrder}>
-                          Dernière : {formatDate(client.lastOrderDate)}
+                          Dernière : {formatShortDocumentDate(client.lastOrderDate)}
                         </Text>
                       ) : null}
                     </View>
@@ -313,15 +314,7 @@ export default function ClientsScreen() {
   );
 }
 
-function formatDate(value: any): string {
-  if (!value) return '—';
 
-  if (value?.toDate) {
-    return value.toDate().toLocaleDateString('fr-FR');
-  }
-
-  return new Date(value).toLocaleDateString('fr-FR');
-}
 
 const styles = StyleSheet.create({
   container: {
