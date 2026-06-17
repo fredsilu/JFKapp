@@ -842,6 +842,7 @@ Oui. Ton workflow est bon dans l’idée, mais il mélange les noms de branches 
 
 ## Workflow recommandé JFKApp
 
+### PHASE BETA - TEST
 # Nouvelle feature
 git checkout develop
 git pull origin develop
@@ -873,14 +874,17 @@ eas build -p android --profile beta / npm run build:web:test
 
 # Correction bug sur release
 git add .
-git commit -m "fix(v3.1.0): correct production testing issues"
+git commit -m "fix(v3.1.0): correct testing issues"
 git push origin release/v3.2.0
 
 # Nouvelle beta
 git tag v3.2.0-beta.2
 git push origin v3.2.0-beta.2
-eas build -p android --profile beta
+eas build -p android --profile beta  / npm run build:web:test 
 
+-----------------
+
+### PHASE BETA - TEST
 # Validation production
 git checkout main
 git pull origin main
@@ -892,7 +896,7 @@ git tag v3.2.0
 git push origin v3.2.0
 eas build -p android --profile production / npm run build:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
 
-# Ramener les corrections dans develop
+# Ramener la version production dans develop
 git checkout develop
 git pull origin develop
 git merge release/v3.2.0
