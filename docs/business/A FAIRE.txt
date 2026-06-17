@@ -872,7 +872,8 @@ git tag V3.2.0-beta.1
 git push origin v3.2.0-beta.1
 eas build -p android --profile beta / npm run build:web:test 
 
-# Correction bug sur release
+----le cycle -----
+# Correction on beta.1 bug sur release
 git add .
 git commit -m "fix(v3.1.0): correct testing issues"
 git push origin release/v3.2.0
@@ -884,7 +885,7 @@ eas build -p android --profile beta  / npm run build:web:test
 
 -----------------
 
-### PHASE BETA - TEST
+### PHASE PRODUCTION
 # Validation production
 git checkout main
 git pull origin main
