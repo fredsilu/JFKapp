@@ -886,6 +886,23 @@ eas build -p android --profile beta  / npm run build:web:test
 -----------------
 
 ### PHASE PRODUCTION
+
+npm run lint
+npx tsc --noEmit
+npx knip
+Vérifier app.json / app.config.js
+
+git add .
+git commit -m "chore: clean code before production release"
+git push origin release/v3.2.0
+eas build -p android --profile production / npm run build:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
+
+git add .
+git commit -m "release: publish JFKApp v3.2.0"
+git push origin release/v3.2.0
+as build -p android --profile production / npm run build:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
+
+
 # Validation production
 git checkout main
 git pull origin main
