@@ -12,7 +12,12 @@ import {
 import { db } from '@/lib/firebase';
 import { Ingredient, Dish, Order, Client } from '@/types';
 
-type CollectionName = 'ingredients' | 'dishes' | 'orders' | 'clients';
+type CollectionName =
+  | "ingredients"
+  | "dishes"
+  | "orders"
+  | "clients"
+  | "catering_invoices";
 
 interface UseFirestoreOptions<T> {
   where?: [string, '==' | '!=' | '>' | '<' | '>=' | '<=', any];
@@ -114,4 +119,8 @@ export function useOrders(options?: UseFirestoreOptions<Order>) {
 
 export function useClients(options?: UseFirestoreOptions<Client>) {
   return useFirestore<Client>('clients', options);
+}
+
+export function useInvoices(options?: UseFirestoreOptions<any>) {
+  return useFirestore<any>("catering_invoices", options);
 }

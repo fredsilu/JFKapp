@@ -45,6 +45,12 @@ export default function ConfigHome() {
       route: "/(traiteur)/config/numbering",
     },
     {
+      title: "Documents / Archives",
+      subtitle: "Factures, proformas, avoirs et PDF",
+      icon: "📁",
+      route: "/(traiteur)/documents",
+    },
+    {
       title: "Aide & règles",
       subtitle: "Comprendre les règles comptables et métier",
       icon: "📘",
