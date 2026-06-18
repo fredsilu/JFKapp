@@ -48,3 +48,13 @@ app-example
 .env.production
 
 serviceAccountKey.json
+
+# Firebase service accounts
+serviceAccountKey*.json
+
+# Data backups
+backups/
+
+# Logs
+logs/
+*.log

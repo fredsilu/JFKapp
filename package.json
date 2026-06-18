@@ -14,6 +14,7 @@
     "android:test": "dotenv -e .env.test -- expo run:android",
     "android:production": "dotenv -e .env.production -- expo run:android",
     "web:test": "dotenv -e .env.test -- expo start --web",
+    "data:migrate:seed:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/restoreSeedToProduction.ts",
     "web:production": "dotenv -e .env.production -- expo start --web",
     "build:web:test": "dotenv -e .env.test -- expo export --platform web",
     "build:web:production": "dotenv -e .env.production -- cross-env EXPO_PUBLIC_APP_ENV=production expo export --platform web --clear",
