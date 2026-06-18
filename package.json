@@ -16,7 +16,7 @@
     "web:test": "dotenv -e .env.test -- expo start --web",
     "web:production": "dotenv -e .env.production -- expo start --web",
     "build:web:test": "dotenv -e .env.test -- expo export --platform web",
-    "build:web:production": "dotenv -e .env.production -- expo export --platform web",
+    "build:web:production": "dotenv -e .env.production -- cross-env EXPO_PUBLIC_APP_ENV=production expo export --platform web --clear",
     "data:backup:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/backup.ts",
     "data:restore:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/restore.ts",
     "data:reset:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/reset.ts",
