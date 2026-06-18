@@ -94,40 +94,7 @@ function formatClientCity(value?: string | null) {
   return `${city} / RDC`;
 }
 
-function getStatusLabel(
-  status?: string,
-  documentType?: string
-) {
-  if (documentType === 'CREDIT_NOTE') {
-    return 'FACTURE D’AVOIR';
-  }
 
-  switch (status) {
-    case 'draft':
-      return 'BROUILLON';
-
-    case 'issued':
-      return 'FACTURE ÉMISE';
-
-    case 'cancelled':
-      return 'FACTURE ANNULÉE';
-
-    case 'replaced':
-      return 'FACTURE REMPLACÉE';
-
-    case 'partial':
-      return 'FACTURE PARTIELLEMENT PAYÉE';
-
-    case 'paid':
-      return 'FACTURE PAYÉE';
-
-    case 'credited':
-      return 'FACTURE CRÉDITÉE';
-
-    default:
-      return 'FACTURE';
-  }
-}
 
 function getDocumentTitle(
   status?: string,

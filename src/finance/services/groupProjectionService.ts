@@ -1,18 +1,14 @@
 import {
   collection,
   getDocs,
-  query,
-  where,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { EntityType } from "@/types/finance.types";
+
 
 const FORECAST_COLLECTION = "finance_forecasts";
 const ACCOUNT_COLLECTION = "finance_accounts";
-const TX_COLLECTION = "finance_transactions";
 
-const ENTITIES: EntityType[] = ["maison", "crepolia"];
 
 export async function getGroupProjection90Days() {
   const now = new Date();

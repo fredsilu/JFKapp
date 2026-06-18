@@ -1,5 +1,5 @@
 //src/utils/analytics.ts
-import { Order, Dish, Client } from '@/types';
+import { Order} from '@/types';
 import { formatShortDocumentDate } from './dateFormat';
 
 export interface KPI {

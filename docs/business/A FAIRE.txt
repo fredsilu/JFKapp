@@ -862,7 +862,7 @@ git push origin develop
 # Créer release
 git checkout -b release/v3.2.0   
 git push origin release/v3.2.0
-Change package.json version to 3.2.0
+Change package.json/app.json/app.config.js version to 3.2.0 
 git add .
 git commit -m "chore: bump version to 3.2.0"
 git push origin release/v3.2.0
@@ -890,7 +890,7 @@ eas build -p android --profile beta  / npm run build:web:test
 npm run lint
 npx tsc --noEmit
 npx knip
-Vérifier app.json / app.config.js
+Vérifier app.json / app.config.js / Package.json
 
 git add .
 git commit -m "chore: clean code before production release"

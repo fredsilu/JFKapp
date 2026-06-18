@@ -5,8 +5,6 @@ import {
   query,
   where,
   Timestamp,
-  updateDoc,
-  doc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { EntityType, Budget } from "@/types/finance.types";

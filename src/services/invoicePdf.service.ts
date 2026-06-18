@@ -19,11 +19,7 @@ function getInvoicePdfFileName(invoice: InvoicePdfData): string {
   const status = invoice.status;
   const number = invoice.invoiceNumber || "document";
 
-  const eventName =
-    (invoice as any).eventName ||
-    (invoice as any).eventTitle ||
-    invoice.clientName ||
-    "Evenement";
+  
 
   if (documentType === "CREDIT_NOTE") {
     return `AVOIR_${number}.pdf`;

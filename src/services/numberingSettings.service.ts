@@ -29,8 +29,7 @@ function extractNumber(value?: string | null): number {
 export async function getNumberingCounters(
   year = new Date().getFullYear()
 ): Promise<NumberingCounters> {
-  const invoiceRef = doc(db, "counters", `invoice_${year}`);
-  const proformaRef = doc(db, "counters", `proforma_${year}`);
+  
 
   const [invoiceSnap, proformaSnap] = await Promise.all([
     getDocs(collection(db, "catering_invoices")),

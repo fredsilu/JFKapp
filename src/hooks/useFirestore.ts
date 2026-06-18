@@ -1,11 +1,12 @@
 // src/hooks/useFirestore.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   onSnapshot,
   query,
   orderBy as firestoreOrderBy,
   where,
+  QueryConstraint,
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
@@ -38,17 +39,29 @@ export function useFirestore<T>(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const colRef = collection(db, collectionName);
-    const constraints = [];
+  const whereOption = useMemo(
+    () => options.where,
+    [JSON.stringify(options.where)]
+  );
 
-    if (options.where) {
-      constraints.push(where(...options.where));
+  const orderByOption = useMemo(
+    () => options.orderBy,
+    [JSON.stringify(options.orderBy)]
+  );
+
+  useEffect(() => {
+    setLoading(true);
+
+    const colRef = collection(db, collectionName);
+    const constraints: QueryConstraint[] = [];
+
+    if (whereOption) {
+      constraints.push(where(...whereOption));
     }
 
-    if (options.orderBy) {
+    if (orderByOption) {
       constraints.push(
-        firestoreOrderBy(options.orderBy[0] as string, options.orderBy[1])
+        firestoreOrderBy(orderByOption[0] as string, orderByOption[1])
       );
     }
 
@@ -63,7 +76,6 @@ export function useFirestore<T>(
           return {
             id: docSnap.id,
             ...docData,
-
             createdAt: safeDate(docData.createdAt),
             updatedAt: safeDate(docData.updatedAt),
             scheduledFor: safeDate(docData.scheduledFor),
@@ -82,7 +94,7 @@ export function useFirestore<T>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, JSON.stringify(options)]);
+  }, [collectionName, whereOption, orderByOption]);
 
   return { data, loading, error };
 }

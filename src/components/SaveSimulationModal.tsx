@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native'
+import { Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native'
 import Modal from '@/components/Modal'
 import { Client } from '@/types'
 import { saveSimulation } from '@/src/services/simulationService'
