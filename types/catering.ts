@@ -460,6 +460,8 @@ export type CateringInvoice = {
   deliveryAddress?: string;
   eventName?: string;
 
+  eventDate?: string;
+
   guestCount?: number;
 
   comment?: string;

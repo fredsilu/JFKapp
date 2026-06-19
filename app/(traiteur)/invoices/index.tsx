@@ -1,6 +1,6 @@
 // app/(traiteur)/invoices/index.tsx
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,40 +11,64 @@ import {
   Alert,
   Modal,
   TextInput,
-} from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { formatShortDocumentDate } from '@/src/utils/dateFormat';
-import { CateringInvoice } from '@/types/catering';
+} from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { formatShortDocumentDate } from "@/src/utils/dateFormat";
+import { CateringInvoice } from "@/types/catering";
 
 import {
   getCateringInvoices,
   cancelCateringInvoice,
-} from '@/src/services/cateringInvoice.service';
+} from "@/src/services/cateringInvoice.service";
 
-import { formatCurrency } from '@/src/utils/costs';
+import { formatCurrency } from "@/src/utils/costs";
 
 type InvoiceStatus =
-  | 'draft'
-  | 'issued'
-  | 'paid'
-  | 'cancelled'
-  | 'partial'
-  | 'replaced';
+  | "draft"
+  | "issued"
+  | "paid"
+  | "cancelled"
+  | "partial"
+  | "replaced";
+
+function getInvoiceDate(invoice: any) {
+  return (
+    invoice?.issuedAt ??
+    invoice?.invoiceDate ??
+    invoice?.dateFacture ??
+    invoice?.createdAt ??
+    null
+  );
+}
+
+function getDateMillis(value: any): number {
+  if (!value) return 0;
+
+  if (typeof value?.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (typeof value?.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
 
 export default function InvoicesScreen() {
   const [invoices, setInvoices] = useState<CateringInvoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
-
-
   const [selectedInvoice, setSelectedInvoice] =
     useState<CateringInvoice | null>(null);
 
-  const [cancelReason, setCancelReason] = useState('');
-  const [search, setSearch] = useState('');
+  const [cancelReason, setCancelReason] = useState("");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
-    useState<'all' | InvoiceStatus>('all');
+    useState<"all" | InvoiceStatus>("all");
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -53,23 +77,16 @@ export default function InvoicesScreen() {
       const data = await getCateringInvoices();
 
       const sorted = [...data].sort((a, b) => {
-        const aTime =
-          a.createdAt?.toMillis?.() ||
-          a.issuedAt?.toMillis?.() ||
-          0;
-
-        const bTime =
-          b.createdAt?.toMillis?.() ||
-          b.issuedAt?.toMillis?.() ||
-          0;
+        const aTime = getDateMillis(getInvoiceDate(a));
+        const bTime = getDateMillis(getInvoiceDate(b));
 
         return bTime - aTime;
       });
 
       setInvoices(sorted);
     } catch (e) {
-      console.error('❌ load invoices error:', e);
-      Alert.alert('Erreur', 'Impossible de charger les factures');
+      console.error("❌ load invoices error:", e);
+      Alert.alert("Erreur", "Impossible de charger les factures");
     } finally {
       setLoading(false);
     }
@@ -84,8 +101,7 @@ export default function InvoicesScreen() {
   const activeInvoices = useMemo(() => {
     return invoices.filter(
       (invoice) =>
-        invoice.status !== 'cancelled' &&
-        invoice.status !== 'replaced'
+        invoice.status !== "cancelled" && invoice.status !== "replaced"
     );
   }, [invoices]);
 
@@ -100,8 +116,7 @@ export default function InvoicesScreen() {
 
     return invoices.filter((invoice) => {
       const matchesStatus =
-        statusFilter === 'all' ||
-        invoice.status === statusFilter;
+        statusFilter === "all" || invoice.status === statusFilter;
 
       const searchable = [
         invoice.number,
@@ -111,129 +126,116 @@ export default function InvoicesScreen() {
         invoice.status,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase();
 
-      const matchesSearch =
-        !q || searchable.includes(q);
+      const matchesSearch = !q || searchable.includes(q);
 
       return matchesStatus && matchesSearch;
     });
   }, [invoices, search, statusFilter]);
 
-
-
   function getStatusLabel(status?: string) {
     switch (status) {
-      case 'draft':
-        return 'Brouillon';
-      case 'issued':
-        return 'Émise';
-      case 'paid':
-        return 'Payée';
-      case 'cancelled':
-        return 'Annulée';
-      case 'partial':
-        return 'Partiellement payée';
-      case 'replaced':
-        return 'Annulée et remplacée';
+      case "draft":
+        return "Brouillon";
+      case "issued":
+        return "Émise";
+      case "paid":
+        return "Payée";
+      case "cancelled":
+        return "Annulée";
+      case "partial":
+        return "Partiellement payée";
+      case "replaced":
+        return "Annulée et remplacée";
       default:
-        return status || 'Émise';
+        return status || "Émise";
     }
   }
 
   function getStatusColors(status?: string) {
     switch (status as InvoiceStatus) {
-      case 'draft':
+      case "draft":
         return {
-          backgroundColor: '#E5E7EB',
-          color: '#374151',
+          backgroundColor: "#E5E7EB",
+          color: "#374151",
         };
 
-      case 'issued':
+      case "issued":
         return {
-          backgroundColor: '#DBEAFE',
-          color: '#1D4ED8',
+          backgroundColor: "#DBEAFE",
+          color: "#1D4ED8",
         };
 
-      case 'paid':
+      case "paid":
         return {
-          backgroundColor: '#D1FAE5',
-          color: '#065F46',
+          backgroundColor: "#D1FAE5",
+          color: "#065F46",
         };
 
-      case 'partial':
+      case "partial":
         return {
-          backgroundColor: '#FEF3C7',
-          color: '#92400E',
+          backgroundColor: "#FEF3C7",
+          color: "#92400E",
         };
 
-      case 'cancelled':
+      case "cancelled":
         return {
-          backgroundColor: '#FEE2E2',
-          color: '#991B1B',
+          backgroundColor: "#FEE2E2",
+          color: "#991B1B",
         };
 
-      case 'replaced':
+      case "replaced":
         return {
-          backgroundColor: '#F3E8FF',
-          color: '#6B21A8',
+          backgroundColor: "#F3E8FF",
+          color: "#6B21A8",
         };
 
       default:
         return {
-          backgroundColor: '#E5E7EB',
-          color: '#374151',
+          backgroundColor: "#E5E7EB",
+          color: "#374151",
         };
     }
   }
 
   function canCancel(invoice: CateringInvoice) {
-    return invoice.status === 'issued';
+    return invoice.status === "issued";
   }
 
   function canCredit(invoice: CateringInvoice) {
-    return invoice.status === 'issued';
+    return invoice.status === "issued";
   }
 
   function openCancelModal(invoice: CateringInvoice) {
     setSelectedInvoice(invoice);
-    setCancelReason('');
+    setCancelReason("");
     setCancelModalVisible(true);
   }
-
-
 
   async function handleCancelInvoice() {
     try {
       if (!selectedInvoice?.id) return;
 
       if (!cancelReason || cancelReason.trim().length < 3) {
-        Alert.alert('Erreur', 'Veuillez saisir un motif valide');
+        Alert.alert("Erreur", "Veuillez saisir un motif valide");
         return;
       }
 
-      await cancelCateringInvoice(
-        selectedInvoice.id,
-        cancelReason.trim()
-      );
+      await cancelCateringInvoice(selectedInvoice.id, cancelReason.trim());
 
       setCancelModalVisible(false);
       setSelectedInvoice(null);
-      setCancelReason('');
+      setCancelReason("");
 
-      Alert.alert('Succès', 'Facture annulée');
+      Alert.alert("Succès", "Facture annulée");
 
       loadInvoices();
     } catch (e: any) {
-      Alert.alert(
-        'Erreur',
-        e?.message || 'Erreur lors de l’annulation'
-      );
+      Alert.alert("Erreur", e?.message || "Erreur lors de l’annulation");
     }
   }
-
-
 
   if (loading) {
     return (
@@ -248,7 +250,7 @@ export default function InvoicesScreen() {
     <>
       <ScrollView style={styles.container}>
         <TouchableOpacity
-          onPress={() => router.replace('/(traiteur)/sales')}
+          onPress={() => router.replace("/(traiteur)/sales")}
           style={styles.backPill}
           activeOpacity={0.75}
         >
@@ -257,6 +259,7 @@ export default function InvoicesScreen() {
         </TouchableOpacity>
 
         <Text style={styles.title}>Factures</Text>
+
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Nombre total de factures</Text>
           <Text style={styles.summaryValue}>{invoices.length}</Text>
@@ -267,9 +270,7 @@ export default function InvoicesScreen() {
           <Text style={styles.summaryLabel}>
             Chiffre d’affaires facturé actif
           </Text>
-          <Text style={styles.summaryAmount}>
-            {formatCurrency(totalAmount)}
-          </Text>
+          <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
 
           <Text style={styles.summaryHint}>
             Les factures annulées ou remplacées ne sont pas incluses.
@@ -286,29 +287,25 @@ export default function InvoicesScreen() {
 
         <View style={styles.filterRow}>
           {[
-            { label: 'Toutes', value: 'all' },
-            { label: 'Émises', value: 'issued' },
-            { label: 'Payées', value: 'paid' },
-            { label: 'Partielles', value: 'partial' },
-            { label: 'Annulées', value: 'cancelled' },
-            { label: 'Remplacées', value: 'replaced' },
+            { label: "Toutes", value: "all" },
+            { label: "Émises", value: "issued" },
+            { label: "Payées", value: "paid" },
+            { label: "Partielles", value: "partial" },
+            { label: "Annulées", value: "cancelled" },
+            { label: "Remplacées", value: "replaced" },
           ].map((item) => (
             <TouchableOpacity
               key={item.value}
               style={[
                 styles.filterChip,
-                statusFilter === item.value &&
-                styles.activeFilterChip,
+                statusFilter === item.value && styles.activeFilterChip,
               ]}
-              onPress={() =>
-                setStatusFilter(item.value as any)
-              }
+              onPress={() => setStatusFilter(item.value as any)}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  statusFilter === item.value &&
-                  styles.activeFilterChipText,
+                  statusFilter === item.value && styles.activeFilterChipText,
                 ]}
               >
                 {item.label}
@@ -316,8 +313,6 @@ export default function InvoicesScreen() {
             </TouchableOpacity>
           ))}
         </View>
-
-
 
         {displayedInvoices.length === 0 ? (
           <Text style={styles.empty}>Aucune facture créée</Text>
@@ -330,11 +325,11 @@ export default function InvoicesScreen() {
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitle}>
-                      {invoice.number || 'Facture sans numéro'}
+                      {invoice.number || "Facture sans numéro"}
                     </Text>
 
                     <Text style={styles.client}>
-                      {invoice.client?.name || 'Client non défini'}
+                      {invoice.client?.name || "Client non défini"}
                     </Text>
                   </View>
 
@@ -356,7 +351,7 @@ export default function InvoicesScreen() {
                 </View>
 
                 <Text style={styles.line}>
-                  Date facture : {formatShortDocumentDate(invoice.issuedAt)}
+                  Date facture : {formatShortDocumentDate(getInvoiceDate(invoice))}
                 </Text>
 
                 <Text style={styles.line}>
@@ -379,13 +374,13 @@ export default function InvoicesScreen() {
                   Total : {formatCurrency(invoice.totals?.total ?? 0)}
                 </Text>
 
-                {invoice.status === 'cancelled' ? (
+                {invoice.status === "cancelled" ? (
                   <Text style={styles.auditWarning}>
                     Facture annulée — exclue du chiffre d’affaires actif.
                   </Text>
                 ) : null}
 
-                {invoice.status === 'replaced' ? (
+                {invoice.status === "replaced" ? (
                   <Text style={styles.auditWarning}>
                     Facture remplacée — exclue du chiffre d’affaires actif.
                   </Text>
@@ -400,7 +395,8 @@ export default function InvoicesScreen() {
                       if (invoice.status === "draft") {
                         if ((invoice as any).documentType === "CREDIT_NOTE") {
                           router.push({
-                            pathname: "/(traiteur)/invoices/credit-note/edit/[id]",
+                            pathname:
+                              "/(traiteur)/invoices/credit-note/edit/[id]",
                             params: { id: String(invoice.id) },
                           });
                           return;
@@ -429,9 +425,7 @@ export default function InvoicesScreen() {
                       style={styles.cancelAction}
                       onPress={() => openCancelModal(invoice)}
                     >
-                      <Text style={styles.cancelActionText}>
-                        Annuler
-                      </Text>
+                      <Text style={styles.cancelActionText}>Annuler</Text>
                     </TouchableOpacity>
                   ) : null}
 
@@ -447,9 +441,7 @@ export default function InvoicesScreen() {
                         });
                       }}
                     >
-                      <Text style={styles.creditActionText}>
-                        Avoir
-                      </Text>
+                      <Text style={styles.creditActionText}>Avoir</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
@@ -488,25 +480,19 @@ export default function InvoicesScreen() {
                 style={styles.secondaryModalButton}
                 onPress={() => setCancelModalVisible(false)}
               >
-                <Text style={styles.secondaryModalButtonText}>
-                  Fermer
-                </Text>
+                <Text style={styles.secondaryModalButtonText}>Fermer</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.dangerModalButton}
                 onPress={handleCancelInvoice}
               >
-                <Text style={styles.primaryModalButtonText}>
-                  Confirmer
-                </Text>
+                <Text style={styles.primaryModalButtonText}>Confirmer</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-
     </>
   );
 }
@@ -514,80 +500,80 @@ export default function InvoicesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F6F8',
+    backgroundColor: "#F4F6F8",
     padding: 16,
   },
   center: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#4B5563',
+    color: "#4B5563",
   },
   title: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 16,
-    color: '#111827',
+    color: "#111827",
   },
   summaryCard: {
-    backgroundColor: '#065F46',
+    backgroundColor: "#065F46",
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
   },
   summaryLabel: {
-    color: '#D1FAE5',
+    color: "#D1FAE5",
     fontSize: 13,
     marginBottom: 2,
   },
   summaryValue: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 10,
   },
   summaryAmount: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: "900",
   },
   summaryHint: {
-    color: '#D1FAE5',
+    color: "#D1FAE5",
     fontSize: 12,
     marginTop: 8,
   },
   empty: {
-    textAlign: 'center',
-    color: '#6B7280',
+    textAlign: "center",
+    color: "#6B7280",
     marginTop: 40,
     marginBottom: 20,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     elevation: 2,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 8,
     gap: 8,
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
   },
   client: {
     fontSize: 14,
-    color: '#4B5563',
+    color: "#4B5563",
     marginTop: 3,
   },
   statusBadge: {
@@ -597,231 +583,184 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   line: {
     fontSize: 14,
-    color: '#4B5563',
+    color: "#4B5563",
     marginBottom: 4,
   },
   amount: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
     marginTop: 6,
   },
   auditWarning: {
     marginTop: 6,
     fontSize: 12,
-    color: '#991B1B',
-    fontWeight: '700',
+    color: "#991B1B",
+    fontWeight: "700",
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 14,
   },
   primaryAction: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 9,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryActionText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 13,
   },
   cancelAction: {
     flex: 1,
-    backgroundColor: '#DC2626',
+    backgroundColor: "#DC2626",
     paddingVertical: 9,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginLeft: 8,
   },
   cancelActionText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 13,
   },
   creditAction: {
     flex: 1,
-    backgroundColor: '#D97706',
+    backgroundColor: "#D97706",
     paddingVertical: 9,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginLeft: 8,
   },
   creditActionText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 13,
-  },
-  topBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 13,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-  bottomBackButton: {
-    alignItems: 'center',
-    marginTop: 10,
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 13,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-  backButtonText: {
-    color: '#111827',
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  backIcon: {
-    fontSize: 24,
-    marginRight: 10,
-    color: '#111827',
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 18,
   },
   modalCard: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 18,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '900',
-    color: '#111827',
+    fontWeight: "900",
+    color: "#111827",
     marginBottom: 8,
   },
   modalText: {
     fontSize: 14,
-    color: '#4B5563',
+    color: "#4B5563",
     marginBottom: 10,
   },
   input: {
     minHeight: 46,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
+    color: "#111827",
+    backgroundColor: "#F9FAFB",
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 16,
   },
   secondaryModalButton: {
     flex: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginRight: 8,
   },
   secondaryModalButtonText: {
-    color: '#111827',
-    fontWeight: '800',
+    color: "#111827",
+    fontWeight: "800",
   },
   dangerModalButton: {
     flex: 1,
-    backgroundColor: '#DC2626',
+    backgroundColor: "#DC2626",
     paddingVertical: 12,
     borderRadius: 10,
-    alignItems: 'center',
-  },
-  warningModalButton: {
-    flex: 1,
-    backgroundColor: '#D97706',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryModalButtonText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
   },
-
   searchInput: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
     marginBottom: 10,
   },
-
   filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 14,
   },
-
   filterChip: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 999,
   },
-
   activeFilterChip: {
-    backgroundColor: '#111827',
+    backgroundColor: "#111827",
   },
-
   filterChipText: {
-    color: '#374151',
+    color: "#374151",
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
   },
-
   activeFilterChipText: {
-    color: '#fff',
+    color: "#fff",
   },
   backPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    backgroundColor: '#EEF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: "#EEF6FF",
+    borderColor: "#BFDBFE",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
     marginBottom: 12,
   },
-
   backPillIcon: {
-    color: '#0F4C81',
+    color: "#0F4C81",
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: "800",
   },
-
   backPillText: {
-    color: '#0F4C81',
+    color: "#0F4C81",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

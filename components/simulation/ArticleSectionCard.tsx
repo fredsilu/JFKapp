@@ -58,10 +58,21 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
 
       <Text>Nombre de jours</Text>
       <TextInput
-        value={String(section.numberOfDays ?? 1)}
-        onChangeText={(value) =>
-          onUpdate(section.id, "numberOfDays", Number(value) || 1)
-        }
+        value={String(section.numberOfDays ?? "")}
+        onChangeText={(value) => {
+          const cleanValue = value.replace(/[^0-9]/g, "");
+
+          onUpdate(
+            section.id,
+            "numberOfDays",
+            cleanValue === "" ? "" : Number(cleanValue)
+          );
+        }}
+        onBlur={() => {
+          if (!section.numberOfDays || Number(section.numberOfDays) < 1) {
+            onUpdate(section.id, "numberOfDays", 1);
+          }
+        }}
         keyboardType="numeric"
         style={inputStyle}
       />

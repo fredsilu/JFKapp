@@ -1,4 +1,4 @@
-//app/(traiteur)/config/numbering.tsx
+// app/(traiteur)/config/numbering.tsx
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -29,10 +29,11 @@ export default function NumberingSettingsScreen() {
   const loadCounters = useCallback(async () => {
     try {
       setLoading(true);
+
       const counters = await getNumberingCounters();
 
-      setInvoice(String(counters.invoice));
-      setProforma(String(counters.proforma));
+      setInvoice(String(counters.invoice ?? 0));
+      setProforma(String(counters.proforma ?? 0));
     } catch (error) {
       console.error("❌ load counters error:", error);
       Alert.alert("Erreur", "Impossible de charger les compteurs");
@@ -47,16 +48,20 @@ export default function NumberingSettingsScreen() {
     }, [loadCounters])
   );
 
-  async function handleSave() {
-    const invoiceValue = Number(invoice);
-    const proformaValue = Number(proforma);
+  function sanitizeNumber(value: string) {
+    return value.replace(/[^0-9]/g, "");
+  }
 
-    if (!Number.isFinite(invoiceValue) || invoiceValue < 0) {
+  async function handleSave() {
+    const invoiceValue = Number(invoice || 0);
+    const proformaValue = Number(proforma || 0);
+
+    if (!Number.isInteger(invoiceValue) || invoiceValue < 0) {
       Alert.alert("Erreur", "Compteur facture invalide");
       return;
     }
 
-    if (!Number.isFinite(proformaValue) || proformaValue < 0) {
+    if (!Number.isInteger(proformaValue) || proformaValue < 0) {
       Alert.alert("Erreur", "Compteur proforma invalide");
       return;
     }
@@ -69,8 +74,10 @@ export default function NumberingSettingsScreen() {
         setProformaCounter(proformaValue),
       ]);
 
+      setInvoice(String(invoiceValue));
+      setProforma(String(proformaValue));
+
       Alert.alert("Succès", "Compteurs mis à jour.");
-      await loadCounters();
     } catch (error) {
       console.error("❌ save counters error:", error);
       Alert.alert("Erreur", "Impossible de sauvegarder les compteurs");
@@ -85,8 +92,8 @@ export default function NumberingSettingsScreen() {
 
       const counters = await recalculateCounters();
 
-      setInvoice(String(counters.invoice));
-      setProforma(String(counters.proforma));
+      setInvoice(String(counters.invoice ?? 0));
+      setProforma(String(counters.proforma ?? 0));
 
       Alert.alert(
         "Recalcul terminé",
@@ -99,6 +106,10 @@ export default function NumberingSettingsScreen() {
       setSaving(false);
     }
   }
+
+  const nextInvoice = String(Number(invoice || 0) + 1).padStart(3, "0");
+  const nextProforma = String(Number(proforma || 0) + 1).padStart(3, "0");
+  const year = new Date().getFullYear();
 
   if (loading) {
     return (
@@ -114,38 +125,39 @@ export default function NumberingSettingsScreen() {
       <Text style={styles.title}>Numérotation</Text>
 
       <Text style={styles.notice}>
-        Ces valeurs représentent le dernier numéro officiel utilisé. La prochaine facture ou proforma prendra le numéro suivant.
+        Ces valeurs représentent le dernier numéro officiel utilisé. La prochaine
+        facture ou proforma prendra le numéro suivant.
       </Text>
 
       <View style={styles.card}>
         <Text style={styles.label}>Dernière facture officielle</Text>
+
         <TextInput
           style={styles.input}
           value={invoice}
-          onChangeText={setInvoice}
+          onChangeText={(value) => setInvoice(sanitizeNumber(value))}
           keyboardType="numeric"
           placeholder="Ex: 57"
         />
 
         <Text style={styles.preview}>
-          Prochaine facture : CR{new Date().getFullYear()}-FC-
-          {String(Number(invoice || 0) + 1).padStart(3, "0")}
+          Prochaine facture : CR{year}-FC-{nextInvoice}
         </Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.label}>Dernière proforma officielle</Text>
+
         <TextInput
           style={styles.input}
           value={proforma}
-          onChangeText={setProforma}
+          onChangeText={(value) => setProforma(sanitizeNumber(value))}
           keyboardType="numeric"
           placeholder="Ex: 34"
         />
 
         <Text style={styles.preview}>
-          Prochaine proforma : CR{new Date().getFullYear()}-PR-
-          {String(Number(proforma || 0) + 1).padStart(3, "0")}
+          Prochaine proforma : CR{year}-PR-{nextProforma}
         </Text>
       </View>
 
@@ -155,7 +167,7 @@ export default function NumberingSettingsScreen() {
         disabled={saving}
       >
         <Text style={styles.primaryButtonText}>
-          Enregistrer les compteurs
+          {saving ? "Enregistrement..." : "Enregistrer les compteurs"}
         </Text>
       </TouchableOpacity>
 
@@ -169,10 +181,7 @@ export default function NumberingSettingsScreen() {
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Retour</Text>
       </TouchableOpacity>
 

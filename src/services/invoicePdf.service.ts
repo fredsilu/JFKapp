@@ -19,7 +19,7 @@ function getInvoicePdfFileName(invoice: InvoicePdfData): string {
   const status = invoice.status;
   const number = invoice.invoiceNumber || "document";
 
-  
+
 
   if (documentType === "CREDIT_NOTE") {
     return `AVOIR_${number}.pdf`;
@@ -114,4 +114,60 @@ export async function generateInvoicePDF(
     console.error("❌ Erreur génération PDF facture:", error);
     throw error;
   }
+}
+
+export async function generateInvoicePDFFile(
+  invoice: InvoicePdfData,
+  filename?: string
+): Promise<{
+  uri: string;
+  fileName: string;
+  blob: Blob;
+}> {
+  if (!invoice?.invoiceNumber) {
+    throw new Error("Données facture invalides : numéro manquant");
+  }
+
+  const html = buildInvoiceHTML(invoice, {
+    logoBase64:
+      (invoice as any).logoBase64 ||
+      (invoice as any).assets?.logoBase64 ||
+      (invoice as any).assets?.logoUri,
+
+    stampBase64:
+      (invoice as any).stampBase64 ||
+      (invoice as any).assets?.stampBase64 ||
+      (invoice as any).assets?.stampUri,
+
+    signatureBase64:
+      (invoice as any).signatureBase64 ||
+      (invoice as any).assets?.signatureBase64 ||
+      (invoice as any).assets?.signatureUri,
+  });
+
+  const { uri } = await Print.printToFileAsync({
+    html,
+    base64: false,
+  });
+
+  const finalFilename =
+    sanitizeFileName(
+      (filename || getInvoicePdfFileName(invoice)).replace(/\.pdf$/i, "")
+    ) + ".pdf";
+
+  const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
+
+  await FileSystem.copyAsync({
+    from: uri,
+    to: finalUri,
+  });
+
+  const response = await fetch(finalUri);
+  const blob = await response.blob();
+
+  return {
+    uri: finalUri,
+    fileName: finalFilename,
+    blob,
+  };
 }

@@ -67,14 +67,21 @@ export default function ServiceSectionCard({
         <>
           <Text style={styles.label}>Nombre de jours</Text>
           <TextInput
-            value={String(section.numberOfDays ?? 1)}
-            onChangeText={(value) =>
+            value={String(section.numberOfDays ?? "")}
+            onChangeText={(value) => {
+              const cleanValue = value.replace(/[^0-9]/g, "");
+
               onUpdateSection(
                 section.id,
                 "numberOfDays",
-                Number(value) || 1
-              )
-            }
+                cleanValue === "" ? "" : Number(cleanValue)
+              );
+            }}
+            onBlur={() => {
+              if (!section.numberOfDays || Number(section.numberOfDays) < 1) {
+                onUpdateSection(section.id, "numberOfDays", 1);
+              }
+            }}
             keyboardType="numeric"
             style={styles.input}
           />
@@ -469,16 +476,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
- 
+
 
   header: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  gap: 12,
-  marginBottom: 12,
-  flexWrap: "wrap",
-},
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 12,
+    marginBottom: 12,
+    flexWrap: "wrap",
+  },
 
   title: {
     fontSize: 18,

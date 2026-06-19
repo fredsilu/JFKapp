@@ -828,6 +828,7 @@ export async function updateDraftInvoice(
     CateringInvoice,
     | "designation"
     | "eventName"
+    | "eventDate"
     | "dateLivraison"
     | "deliveryTime"
     | "deliveryAddress"

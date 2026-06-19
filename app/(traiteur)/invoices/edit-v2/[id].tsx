@@ -100,6 +100,7 @@ export default function EditInvoiceV2Screen() {
         eventName: payload.eventName,
 
         guestCount: payload.numberOfPeople,
+        eventDate: payload.eventDate,
 
         dateLivraison: payload.dateLivraison,
         deliveryTime: payload.deliveryTime,
@@ -110,7 +111,7 @@ export default function EditInvoiceV2Screen() {
 
         items: items as any,
         totals: totals as any,
-      });
+      } );
 
       Alert.alert("Succès", "Facture sauvegardée.");
 
@@ -168,6 +169,8 @@ export default function EditInvoiceV2Screen() {
       initialEventName={invoice.eventName ?? invoice.designation ?? ""}
       initialClientName={invoice.client?.name ?? ""}
       initialNumberOfPeople={invoice.guestCount ?? 0}
+
+      initialEventDate={(invoice as any).eventDate ?? ""}
 
       initialDateLivraison={invoice.dateLivraison ?? ""}
       initialDeliveryTime={invoice.deliveryTime ?? ""}
