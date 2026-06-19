@@ -49,27 +49,7 @@ function getInvoiceAmount(invoice: any) {
     );
 }
 
-function getDesignation(invoice: any) {
-    if (invoice?.designation) return invoice.designation;
 
-    if (Array.isArray(invoice?.items) && invoice.items.length > 0) {
-        return invoice.items
-            .slice(0, 2)
-            .map((item: any) => item.label || item.name || item.designation)
-            .filter(Boolean)
-            .join(", ");
-    }
-
-    if (Array.isArray(invoice?.sections) && invoice.sections.length > 0) {
-        return invoice.sections
-            .slice(0, 2)
-            .map((section: any) => section.name || section.label)
-            .filter(Boolean)
-            .join(", ");
-    }
-
-    return "-";
-}
 
 function getClientName(invoice: any) {
     return invoice?.client?.name ?? "-";
@@ -99,6 +79,7 @@ function getDeliveryAddress(invoice: any) {
     );
 }
 
+
 function getStatusLabel(status?: string) {
     switch (status) {
         case "draft":
@@ -115,6 +96,52 @@ function getStatusLabel(status?: string) {
             return "Annulée";
         default:
             return status || "-";
+    }
+}
+
+function getStatusColors(status?: string) {
+    switch (status) {
+        case "draft":
+            return {
+                background: "#FEF3C7",
+                text: "#92400E",
+            };
+
+        case "issued":
+            return {
+                background: "#DCFCE7",
+                text: "#166534",
+            };
+
+        case "paid":
+            return {
+                background: "#DBEAFE",
+                text: "#1D4ED8",
+            };
+
+        case "partial":
+            return {
+                background: "#F3E8FF",
+                text: "#7E22CE",
+            };
+
+        case "cancelled":
+            return {
+                background: "#FEE2E2",
+                text: "#B91C1C",
+            };
+
+        case "replaced":
+            return {
+                background: "#E5E7EB",
+                text: "#374151",
+            };
+
+        default:
+            return {
+                background: "#F3F4F6",
+                text: "#374151",
+            };
     }
 }
 
@@ -150,13 +177,22 @@ export default function DocumentInvoicesScreen() {
     const { width } = useWindowDimensions();
     const isMobile = width < 768;
 
+
+
     const filteredInvoices = useMemo(() => {
         const query = search.trim().toLowerCase();
 
         return [...(invoices || [])]
             .sort((a: any, b: any) => {
-                const dateA = a?.issuedAt?.toDate?.() ?? new Date(a?.issuedAt || 0);
-                const dateB = b?.issuedAt?.toDate?.() ?? new Date(b?.issuedAt || 0);
+                const dateA =
+                    a?.createdAt?.toDate?.() ??
+                    a?.issuedAt?.toDate?.() ??
+                    new Date(a?.createdAt || a?.issuedAt || 0);
+
+                const dateB =
+                    b?.createdAt?.toDate?.() ??
+                    b?.issuedAt?.toDate?.() ??
+                    new Date(b?.createdAt || b?.issuedAt || 0);
 
                 return dateB.getTime() - dateA.getTime();
             })
@@ -240,6 +276,35 @@ export default function DocumentInvoicesScreen() {
                         Consultez toutes les factures émises.
                     </Text>
                 </View>
+                <View style={styles.statsGrid}>
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Total factures</Text>
+                        <Text style={styles.statValue}>
+                            {invoiceStats.totalInvoices}
+                        </Text>
+                    </View>
+
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Montant total</Text>
+                        <Text style={styles.statValue}>
+                            {formatAmount(invoiceStats.totalAmount)}
+                        </Text>
+                    </View>
+
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>Payées</Text>
+                        <Text style={styles.statValue}>
+                            {formatAmount(invoiceStats.paidAmount)}
+                        </Text>
+                    </View>
+
+                    <View style={styles.statCard}>
+                        <Text style={styles.statLabel}>En attente</Text>
+                        <Text style={styles.statValue}>
+                            {formatAmount(invoiceStats.pendingAmount)}
+                        </Text>
+                    </View>
+                </View>
 
                 <View style={styles.searchBox}>
                     <MaterialIcons name="search" size={20} color="#6B7280" />
@@ -251,7 +316,41 @@ export default function DocumentInvoicesScreen() {
                         placeholderTextColor="#9CA3AF"
                     />
                 </View>
+                <View style={styles.filterBarWrapper}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.filterBar}
+                    >
+                        {statusFilters.map((filter) => {
+                            const active = statusFilter === filter.value;
 
+                            return (
+                                <TouchableOpacity
+                                    key={filter.value}
+                                    style={[
+                                        styles.filterChip,
+                                        active && styles.filterChipActive,
+                                    ]}
+                                    onPress={() => setStatusFilter(filter.value)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.filterChipText,
+                                            active && styles.filterChipTextActive,
+                                        ]}
+                                    >
+                                        {filter.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+
+                <Text style={styles.resultCount}>
+                    {filteredInvoices.length} facture(s)
+                </Text>
                 <FlatList
                     data={filteredInvoices}
                     keyExtractor={(item: any) => item.id}
@@ -265,9 +364,28 @@ export default function DocumentInvoicesScreen() {
                                 <Text style={styles.mobileInvoiceNumber}>
                                     {item?.number || "-"}
                                 </Text>
-                                <Text style={styles.mobileStatus}>
-                                    {getStatusLabel(item?.status)}
-                                </Text>
+                                <View>
+                                    <View
+                                        style={[
+                                            styles.statusBadge,
+                                            {
+                                                backgroundColor: getStatusColors(item?.status).background,
+                                            },
+                                        ]}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.statusBadgeText,
+                                                {
+                                                    color: getStatusColors(item?.status).text,
+                                                },
+                                            ]}
+                                        >
+                                            {getStatusLabel(item?.status)}
+                                        </Text>
+                                    </View>
+                                </View>
+
                             </View>
 
                             <Text style={styles.mobileClient}>
@@ -283,6 +401,21 @@ export default function DocumentInvoicesScreen() {
                                 <Text style={styles.mobileLabel}>Date livraison</Text>
                                 <Text style={styles.mobileValue}>
                                     {formatDate(getDeliveryDate(item))}
+                                </Text>
+                            </View>
+                            <View style={styles.mobileInfoRow}>
+                                <Text style={styles.mobileLabel}>
+                                    Date facture
+                                </Text>
+
+                                <Text style={styles.mobileValue}>
+                                    {formatDate(item?.issuedAt)}
+                                </Text>
+                            </View>
+                            <View style={styles.mobileInfoRow}>
+                                <Text style={styles.mobileLabel}>Date création</Text>
+                                <Text style={styles.mobileValue}>
+                                    {formatDate(item?.createdAt)}
                                 </Text>
                             </View>
 
@@ -413,14 +546,15 @@ export default function DocumentInvoicesScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator>
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>
-                        <Text style={[styles.th, styles.colInvoice]}>Factures</Text>
+                        <Text style={[styles.th, styles.colInvoice]}>N° Facture</Text>
                         <Text style={[styles.th, styles.colClient]}>Client</Text>
-                        <Text style={[styles.th, styles.colEvent]}>Evénement</Text>
+                        <Text style={[styles.th, styles.colEvent]}>Événement</Text>
                         <Text style={[styles.th, styles.colDate]}>Date livraison</Text>
                         <Text style={[styles.th, styles.colAddress]}>Adresse</Text>
                         <Text style={[styles.th, styles.colPeople]}>#</Text>
                         <Text style={[styles.th, styles.colAmount]}>Montant</Text>
                         <Text style={[styles.th, styles.colDate]}>Date facture</Text>
+                        <Text style={[styles.th, styles.colDate]}>Date création</Text>
                         <Text style={[styles.th, styles.colStatus]}>Statut</Text>
                         <Text style={[styles.th, styles.colActions]}>Actions</Text>
                     </View>
@@ -464,23 +598,56 @@ export default function DocumentInvoicesScreen() {
                                 </Text>
 
                                 <Text style={[styles.td, styles.colDate]}>
-                                    {formatDate(item?.issuedAt || item?.createdAt)}
+                                    {formatDate(item?.issuedAt)}
                                 </Text>
 
-                                <Text style={[styles.td, styles.colStatus]}>
-                                    {getStatusLabel(item?.status)}
+                                <Text style={[styles.td, styles.colDate]}>
+                                    {formatDate(item?.createdAt)}
                                 </Text>
+
+                                <View style={[styles.colStatus]}>
+                                    <View
+                                        style={[
+                                            styles.statusBadge,
+                                            {
+                                                backgroundColor: getStatusColors(item?.status).background,
+                                            },
+                                        ]}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.statusBadgeText,
+                                                {
+                                                    color: getStatusColors(item?.status).text,
+                                                },
+                                            ]}
+                                        >
+                                            {getStatusLabel(item?.status)}
+                                        </Text>
+                                    </View>
+                                </View>
 
                                 <View style={[styles.actions, styles.colActions]}>
                                     <TouchableOpacity
                                         style={styles.actionButton}
                                         onPress={() => openInvoice(item.id)}
                                     >
-                                        <MaterialIcons name="visibility" size={18} color="#065F46" />
+                                        <MaterialIcons
+                                            name="visibility"
+                                            size={18}
+                                            color="#065F46"
+                                        />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity style={styles.actionButton}>
-                                        <MaterialIcons name="picture-as-pdf" size={18} color="#065F46" />
+                                    <TouchableOpacity style={styles.actionButton}
+                                        onPress={() =>
+                                            console.log("PDF invoice", item.id)
+                                        }>
+                                        <MaterialIcons
+                                            name="picture-as-pdf"
+                                            size={18}
+                                            color="#065F46"
+                                        />
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -534,7 +701,7 @@ const styles = StyleSheet.create({
         color: "#111827",
     },
     table: {
-        minWidth: 1250,
+        minWidth: 1490,
         backgroundColor: "#FFFFFF",
         borderRadius: 12,
         overflow: "hidden",
@@ -580,11 +747,12 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     colAmount: {
-        width: 120,
+        width: 140,
         textAlign: "right",
     },
     colStatus: {
         width: 110,
+        justifyContent: "center",
     },
     colActions: {
         width: 110,
@@ -722,7 +890,8 @@ const styles = StyleSheet.create({
 
     statCard: {
         flex: 1,
-        minWidth: 150,
+        minWidth: 140,
+        maxWidth: "48%",
         backgroundColor: "#FFFFFF",
         borderRadius: 14,
         padding: 14,
@@ -784,5 +953,21 @@ const styles = StyleSheet.create({
 
     filterChipTextActive: {
         color: "#FFFFFF",
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 999,
+        alignSelf: "flex-start",
+    },
+
+    statusBadgeText: {
+        fontSize: 12,
+        fontWeight: "700",
+    },
+    resultCount: {
+        fontSize: 13,
+        color: "#6B7280",
+        marginBottom: 12,
     },
 });

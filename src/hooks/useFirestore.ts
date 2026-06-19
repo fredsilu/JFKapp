@@ -17,7 +17,8 @@ type CollectionName =
   | "dishes"
   | "orders"
   | "clients"
-  | "catering_invoices";
+  | "catering_invoices"
+  | "catering_proformas";
 
 interface UseFirestoreOptions<T> {
   where?: [string, '==' | '!=' | '>' | '<' | '>=' | '<=', any];
@@ -123,4 +124,8 @@ export function useClients(options?: UseFirestoreOptions<Client>) {
 
 export function useInvoices(options?: UseFirestoreOptions<any>) {
   return useFirestore<any>("catering_invoices", options);
+}
+
+export function useProformas(options?: UseFirestoreOptions<any>) {
+  return useFirestore<any>("catering_proformas", options);
 }
