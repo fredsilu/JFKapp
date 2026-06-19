@@ -449,8 +449,17 @@ export default function DocumentInvoicesScreen() {
                                     <Text style={styles.mobileButtonText}>Voir</Text>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity style={styles.mobileButton}>
-                                    <MaterialIcons name="picture-as-pdf" size={18} color="#065F46" />
+                                <TouchableOpacity
+                                    style={styles.mobileButton}
+                                    onPress={() =>
+                                        console.log("PDF invoice", item.id)
+                                    }
+                                >
+                                    <MaterialIcons
+                                        name="picture-as-pdf"
+                                        size={18}
+                                        color="#065F46"
+                                    />
                                     <Text style={styles.mobileButtonText}>PDF</Text>
                                 </TouchableOpacity>
                             </View>
