@@ -18,7 +18,8 @@ type CollectionName =
   | "orders"
   | "clients"
   | "catering_invoices"
-  | "catering_proformas";
+  | "catering_proformas"
+  | "credit_notes";
 
 interface UseFirestoreOptions<T> {
   where?: [string, '==' | '!=' | '>' | '<' | '>=' | '<=', any];
@@ -128,4 +129,13 @@ export function useInvoices(options?: UseFirestoreOptions<any>) {
 
 export function useProformas(options?: UseFirestoreOptions<any>) {
   return useFirestore<any>("catering_proformas", options);
+}
+
+export function useCreditNotes(
+  options?: UseFirestoreOptions<any>
+) {
+  return useFirestore<any>(
+    "credit_notes",
+    options
+  );
 }
