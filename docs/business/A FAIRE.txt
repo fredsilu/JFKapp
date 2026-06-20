@@ -881,7 +881,7 @@ git push origin release/v3.2.0
 # Nouvelle beta
 git tag v3.2.0-beta.2
 git push origin v3.2.0-beta.2
-eas build -p android --profile beta  / npm run build:web:test 
+eas build -p android --profile beta  / npm run export:web:test
 
 -----------------
 
@@ -900,7 +900,7 @@ eas build -p android --profile production / npm run build:web:production (npx do
 git add .
 git commit -m "release: publish JFKApp v3.2.0"
 git push origin release/v3.2.0
-as build -p android --profile production / npm run build:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
+as build -p android --profile production / npm run export:web:production (npx dotenv -e .env.production -- npx expo export --platform web)
 
 
 # Validation production
