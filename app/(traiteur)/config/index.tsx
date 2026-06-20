@@ -32,6 +32,12 @@ export default function ConfigHome() {
       route: "/(traiteur)/ingredients",
     },
     {
+      title: "Société & Banque",
+      subtitle: "Configurer les informations légales et bancaires",
+      icon: "🏦",
+      route: "/(traiteur)/config/company-settings",
+    },
+    {
       title: "Service traiteur",
       subtitle: "Configurer les coûts et ratios du service",
       icon: "🧑‍🍳",

@@ -182,6 +182,8 @@ export default function TraiteurLayout() {
       <Tabs.Screen name="config/help" options={hiddenScreenOptions} />
       <Tabs.Screen name="config/service-settings" options={hiddenScreenOptions} />
       <Tabs.Screen name="config/numbering" options={hiddenScreenOptions} />
+      <Tabs.Screen name="config/company-settings" options={hiddenScreenOptions} />
+      
     </Tabs>
   );
 }
