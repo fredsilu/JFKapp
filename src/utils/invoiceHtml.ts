@@ -174,6 +174,37 @@ export function buildInvoiceHTML(
     safe((invoice as any).eventTitle) ||
     'Évènement sans nom';
 
+  const companyPhone =
+    safe((invoice as any).companyPhone) || "+243 898111165";
+
+  const companyEmail =
+    safe((invoice as any).companyEmail) || "contact@crepolia.com";
+
+  const companyAddress = (
+    safe((invoice as any).companyAddress) ||
+    "54, Avenue de la Justice\nC/Gombe"
+  ).replace(/\n/g, "<br/>");
+
+  const companyRccm =
+    safe((invoice as any).companyRccm) || "CD/KNG/RCCM/20-A-00139";
+
+  const companyIdNat =
+    safe((invoice as any).companyIdNat) || "01-852-N58548R";
+
+  const companyNif =
+    safe((invoice as any).companyNif) || "A2171348B";
+
+  const bankName =
+    safe((invoice as any).bankName) || "EQUITYBCDC";
+
+  const bankAccountNumber =
+    safe((invoice as any).bankAccountNumber) || "0242000001008";
+
+  const bankCurrency =
+    safe((invoice as any).bankCurrency) || "USD";
+
+  const bankText = `${bankName} : ${bankAccountNumber} ${bankCurrency}`;
+
   const headerHTML = `
 <div class="header">
   <div class="logo">
@@ -181,10 +212,9 @@ export function buildInvoiceHTML(
   </div>
 
   <div class="address">
-    Tél. : +243 898111165<br/>
-    contact@crepolia.com<br/>
-    54, Avenue de la Justice<br/>
-    C/Gombe
+    Tél. : ${companyPhone}<br/>
+    ${companyEmail}<br/>
+    ${companyAddress}
   </div>
 </div>
 
@@ -193,9 +223,9 @@ export function buildInvoiceHTML(
 
   const footerHTML = `
 <div class="page-footer">
-  RCCM : CD/KNG/RCCM/20-A-00139&nbsp;&nbsp;
-  ID Nat : 01-852-N58548R&nbsp;&nbsp;
-  NIF : A2171348B
+  RCCM : ${companyRccm}&nbsp;&nbsp;
+  ID Nat : ${companyIdNat}&nbsp;&nbsp;
+  NIF : ${companyNif}
 </div>
 `;
 
@@ -719,7 +749,7 @@ ${isCreditNote
       : `
 <div class="payment-block">
   <div class="payment-title">
-    Les paiements peuvent se faire en espèces, par chèque ou par virement bancaire - EQUITYBCDC : 0242000001008 50 USD
+    Les paiements peuvent se faire en espèces, par chèque ou par virement bancaire - ${bankText}
   </div>
 
   <div class="payment-text">
@@ -728,7 +758,7 @@ ${isCreditNote
 
   <div class="payment-contact">
     Pour toute question sur la présente facture, vous pouvez contacter :
-    contact@crepolia.com – Tél. 0898111165
+    ${companyEmail} – Tél. ${companyPhone}
   </div>
 
   <div class="payment-thanks">
