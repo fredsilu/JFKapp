@@ -3,6 +3,16 @@
 import { CateringSection } from "@/types/catering";
 import { CateringDocumentItem } from "@/types/documents";
 
+function toNumber(value: unknown, fallback = 0): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function safeDays(value: unknown): number {
+  const days = toNumber(value, 1);
+  return days > 0 ? days : 1;
+}
+
 export function sectionsToDocumentItems(
   sections: CateringSection[]
 ): CateringDocumentItem[] {
@@ -13,7 +23,7 @@ export function sectionsToDocumentItems(
         section.kind === "service" || section.type === "service";
 
       if (isService && section.serviceMode === "different_days") {
-        const totalPrice = Number(section.total ?? 0);
+        const totalPrice = toNumber(section.total);
 
         return {
           label: "Forfait Service traiteur",
@@ -25,9 +35,9 @@ export function sectionsToDocumentItems(
       }
 
       if (isService) {
-        const days = Number(section.numberOfDays ?? 1);
-        const unitPrice = Number(section.unitPrice ?? 0);
-        const totalPrice = Number(section.total ?? days * unitPrice);
+        const days = safeDays(section.numberOfDays);
+        const unitPrice = toNumber(section.unitPrice);
+        const totalPrice = toNumber(section.total, days * unitPrice);
 
         return {
           label: "Service traiteur",
@@ -38,14 +48,21 @@ export function sectionsToDocumentItems(
         };
       }
 
-      const quantity = Number(section.quantity ?? 0);
-      const unitPrice = Number(section.unitPrice ?? 0);
-      const days = Number(section.numberOfDays ?? 1);
-      const totalPrice = Number(section.total ?? quantity * unitPrice * days);
+      const quantity = toNumber(section.quantity);
+      const unitPrice = toNumber(section.unitPrice);
+      const days = safeDays(section.numberOfDays);
+      const billingMode = section.billingMode ?? "perDay";
+
+      const multiplier = billingMode === "fixed" ? 1 : days;
+
+      const totalPrice = toNumber(
+        section.total,
+        quantity * unitPrice * multiplier
+      );
 
       return {
         label: section.name,
-        days,
+        days: billingMode === "fixed" ? 0 : days,
         quantity,
         unitPrice,
         totalPrice,
@@ -61,11 +78,11 @@ export function buildDocumentTotalsFromSections(
   const items = sectionsToDocumentItems(sections);
 
   const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.totalPrice ?? 0),
+    (sum, item) => sum + toNumber(item.totalPrice),
     0
   );
 
-  const discountAmount = subtotal * (Number(discount ?? 0) / 100);
+  const discountAmount = subtotal * (toNumber(discount) / 100);
   const total = Math.max(subtotal - discountAmount, 0);
 
   return {

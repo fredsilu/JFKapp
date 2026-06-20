@@ -127,7 +127,7 @@ export function buildInvoiceHTML(
       (item: any) => `
 <tr>
   <td class="designation">${safe(item.label)}</td>
-  <td class="center">${item.days || 1}</td>
+  <td class="center">${item.days && item.days > 0 ? item.days : "-"}</td>
   <td class="center">${item.quantity || 0}</td>
   <td class="currency">$</td>
   <td class="price">${money(item.unitPrice)}</td>
@@ -161,6 +161,14 @@ export function buildInvoiceHTML(
     (invoice as any).dateLivraison,
     'fr'
   );
+  const servicePeriod =
+    safe((invoice as any).servicePeriod);
+
+  const guestCount =
+    (invoice as any).guestCount ||
+    (invoice as any).numberOfPeople ||
+    items?.[0]?.quantity ||
+    0;
   const eventName =
     safe((invoice as any).eventName) ||
     safe((invoice as any).eventTitle) ||
@@ -410,6 +418,48 @@ body {
   color: #777;
 }
 
+.payment-block {
+  margin-top: 38px;
+  border-top: 1.5px solid #333;
+  padding-top: 7px;
+  text-align: center;
+  color: #111;
+}
+
+.payment-title {
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: left;
+  color: #111;
+}
+
+.payment-text {
+  margin-top: 7px;
+  font-size: 9.5px;
+  font-style: italic;
+  line-height: 1.35;
+  text-align: left;
+  color: #111;
+}
+
+.payment-contact {
+  margin-top: 18px;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-align: center;
+  color: #111;
+}
+
+.payment-thanks {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+  color: #111;
+  letter-spacing: 0.2px;
+}
+
 .signature-area {
   position: relative;
   height: 155px;
@@ -606,8 +656,12 @@ ${(invoice as any).creditNoteForInvoiceNumber
     <tr class="event">
       <td>
         <strong>Evénement :</strong> ${eventName}<br/>
-        <strong>Date événement :</strong> ${eventDateFormatted}<br/>
-        <strong>Nbr de personnes :</strong> ${items?.[0]?.quantity || ''}
+        ${servicePeriod
+      ? `<strong>Période prestation :</strong> ${servicePeriod}<br/>`
+      : `<strong>Date événement :</strong> ${eventDateFormatted}<br/>`
+    }
+
+<strong>Nbr de personnes :</strong> ${guestCount}
       </td>
       <td></td>
       <td></td>
@@ -656,11 +710,32 @@ ${(invoice as any).cancellation?.reason
       : ''
     }
 
+${isCreditNote
+      ? `
 <div class="payment">
-  ${isCreditNote
-      ? "Cet avoir vient en déduction de la facture concernée."
-      : "La totalité de la facture est payable conformément aux conditions convenues."}
+  Cet avoir vient en déduction de la facture concernée.
 </div>
+`
+      : `
+<div class="payment-block">
+  <div class="payment-title">
+    Les paiements peuvent se faire en espèces, par chèque ou par virement bancaire - EQUITYBCDC : 0242000001008 50 USD
+  </div>
+
+  <div class="payment-text">
+    Les paiements par virement bancaire doivent se faire en mode OUR-prise en charge des frais par le donneur d'ordre- afin que l'intégralité de la facture soit encaissée par CREPOLIA; dans le cas contraire, la facture sera considérée non soldée.
+  </div>
+
+  <div class="payment-contact">
+    Pour toute question sur la présente facture, vous pouvez contacter :
+    contact@crepolia.com – Tél. 0898111165
+  </div>
+
+  <div class="payment-thanks">
+    MERCI DE NOUS FAIRE CONFIANCE
+  </div>
+</div>
+`}
 
 <div class="signature-area">
     <div class="stamp">

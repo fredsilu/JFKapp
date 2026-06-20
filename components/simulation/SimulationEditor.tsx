@@ -144,6 +144,7 @@ export default function SimulationEditor({
       type: label === "Boissons" ? "drink" : "food",
       position: sections.length + 1,
       enabled: true,
+      billingMode: "perDay",
       quantity: Number(numberOfPeople) || 0,
       unitPrice: 0,
       numberOfDays: 1,
@@ -193,6 +194,7 @@ export default function SimulationEditor({
           type: "food",
           position: 1,
           enabled: true,
+          billingMode: "perDay",
           quantity: 0,
           unitPrice: 0,
           numberOfDays: 1,
@@ -229,13 +231,20 @@ export default function SimulationEditor({
         emptySections.length > 0 ? emptySections : fallbackSections;
 
       const hydratedSections = sectionsSource.map((section) => {
-        if (section.kind !== "service") return section;
+        const normalizedSection: CateringSection = {
+          ...section,
+          billingMode: section.billingMode ?? "perDay",
+        };
+
+        if (normalizedSection.kind !== "service") {
+          return normalizedSection;
+        }
 
         return {
-          ...section,
+          ...normalizedSection,
           serviceDays: [
             {
-              ...(section.serviceDays?.[0] ?? createServiceDay(1, settings)),
+              ...(normalizedSection.serviceDays?.[0] ?? createServiceDay(1, settings)),
               serverRate: settings.defaultServerRate ?? 25,
               cookRate: settings.defaultCookRate ?? 50,
               serverDailyCost: settings.serverDailyCost ?? 20,
@@ -399,7 +408,7 @@ export default function SimulationEditor({
   const finalMargin = grandTotal - totals.totalCost;
 
   async function handleSubmit() {
-    
+
     try {
       setFormError("");
 
@@ -408,7 +417,7 @@ export default function SimulationEditor({
         return;
       }
 
-    
+
       await onSubmit({
         eventName: eventName.trim(),
         eventDate,

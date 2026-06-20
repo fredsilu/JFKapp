@@ -97,6 +97,7 @@ export function createEmptySectionFromTemplate(
     position: toNumber(template.position, 0),
 
     enabled: !isService,
+    billingMode: isService ? undefined : "perDay",
 
     quantity: 0,
     unitPrice: 0,
@@ -135,12 +136,17 @@ function calculateArticleSection(section: CateringSection): CateringSection {
   const numberOfDays = safeDays(section.numberOfDays);
   const costRate = toNumber(section.costRate);
 
-  const total = section.enabled ? quantity * unitPrice * numberOfDays : 0;
+  const billingMode = section.billingMode ?? "perDay";
+
+  const multiplier = billingMode === "fixed" ? 1 : numberOfDays;
+
+  const total = section.enabled ? quantity * unitPrice * multiplier : 0;
   const costAmount = section.enabled ? total * (costRate / 100) : 0;
   const margin = total - costAmount;
 
   return {
     ...section,
+    billingMode,
     quantity,
     unitPrice,
     numberOfDays,
