@@ -19,7 +19,20 @@ function toNumber(value: any, fallback = 0): number {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
+function displayValue(value: any): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
 
+function displayDate(value: any): string {
+  if (!value) return "—";
+
+  if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    return value;
+  }
+
+  return formatShortDocumentDate(value);
+}
 
 export default function CateringSimulationDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,16 +90,13 @@ export default function CateringSimulationDetailsScreen() {
       toNumber(sim.globalTurnover) + toNumber(sim.discount);
 
     const discount =
-      toNumber(sim.totals?.discountAmount) ||
-      toNumber(sim.discount);
+      toNumber(sim.totals?.discountAmount) || toNumber(sim.discount);
 
     const grandTotal =
-      toNumber(sim.totals?.grandTotal) ||
-      Math.max(subtotal - discount, 0);
+      toNumber(sim.totals?.grandTotal) || Math.max(subtotal - discount, 0);
 
     const totalCost =
-      toNumber(sim.totals?.totalCost) ||
-      toNumber(sim.globalCost);
+      toNumber(sim.totals?.totalCost) || toNumber(sim.globalCost);
 
     const margin =
       toNumber(sim.totals?.margin) ||
@@ -124,17 +134,42 @@ export default function CateringSimulationDetailsScreen() {
         {sim.eventName || sim.name || "Simulation sans nom"}
       </Text>
 
-      <Text style={styles.subtitle}>Client : {clientName}</Text>
 
-      <Text style={styles.subtitle}>
-        Date événement/livraison : {formatShortDocumentDate(sim.dateLivraison)}
-      </Text>
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>Informations générales</Text>
 
-      <Text style={styles.subtitle}>
-        Date création : {formatShortDocumentDate(sim.createdAt)}
-      </Text>
+        <Text style={styles.subtitle}>Client : {clientName}</Text>
 
-      <Text style={styles.status}>Statut : {sim.status || "draft"}</Text>
+        <Text style={styles.subtitle}>
+          Nombre de personnes : {displayValue(sim.guestCount)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Date livraison : {displayDate(sim.dateLivraison)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Heure livraison : {displayValue(sim.deliveryTime)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Date événement : {displayDate(sim.eventDate)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Période prestation : {displayValue(sim.servicePeriod)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Adresse livraison : {displayValue(sim.deliveryAddress)}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Date création : {displayDate(sim.createdAt)}
+        </Text>
+
+        <Text style={styles.status}>Statut : {sim.status || "draft"}</Text>
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Rubriques</Text>
@@ -146,6 +181,11 @@ export default function CateringSimulationDetailsScreen() {
               <Text style={styles.lineTitle}>{section.name}</Text>
 
               <Text style={styles.lineText}>
+                Mode de calcul :{" "}
+                {section.billingMode === "perDay" ? "Par jour" : "Fixe"}
+              </Text>
+
+              <Text style={styles.lineText}>
                 Quantité : {section.quantity}
               </Text>
 
@@ -153,9 +193,11 @@ export default function CateringSimulationDetailsScreen() {
                 Prix unitaire : {formatCurrency(section.unitPrice)}
               </Text>
 
-              <Text style={styles.lineText}>
-                Nombre de jours : {section.numberOfDays}
-              </Text>
+              {section.billingMode === "perDay" && (
+                <Text style={styles.lineText}>
+                  Nombre de jours : {section.numberOfDays}
+                </Text>
+              )}
 
               <Text style={styles.lineText}>
                 Chiffre d&apos;affaires : {formatCurrency(section.total)}
@@ -277,21 +319,36 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "800",
-    marginBottom: 6,
+    marginBottom: 12,
+    color: "#111827",
+  },
+
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 18,
+    elevation: 2,
+  },
+
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 10,
     color: "#111827",
   },
 
   subtitle: {
     fontSize: 14,
     color: "#4B5563",
-    marginBottom: 4,
+    marginBottom: 6,
   },
 
   status: {
     fontSize: 13,
     fontWeight: "700",
     color: "#007AFF",
-    marginBottom: 16,
+    marginTop: 6,
   },
 
   section: {

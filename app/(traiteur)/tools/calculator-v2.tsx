@@ -115,8 +115,11 @@ export default function CalculatorV2Screen() {
         eventDate: payload.eventDate || "",
         dateEvenement: payload.eventDate || "",
 
-        numberOfPeople: payload.numberOfPeople,
-        guestCount: payload.numberOfPeople,
+        servicePeriod: payload.servicePeriod || "",
+
+        numberOfPeople: Number(payload.numberOfPeople) || 0,
+        guestCount: Number(payload.numberOfPeople) || 0,
+
 
         dateLivraison: payload.dateLivraison || "",
         deliveryDate: payload.dateLivraison || "",
@@ -203,8 +206,8 @@ export default function CalculatorV2Screen() {
         initialSections={reuseSimulation?.sections ?? undefined}
         initialDiscount={Number(
           reuseSimulation?.discount ??
-            reuseSimulation?.totals?.discountAmount ??
-            0
+          reuseSimulation?.totals?.discountAmount ??
+          0
         )}
         submitLabel="Enregistrer"
         saving={saving}

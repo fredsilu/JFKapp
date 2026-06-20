@@ -111,8 +111,6 @@ export default function ClientForm({
     try {
       setSubmitting(true);
 
-      console.log('CLIENT FORM PAYLOAD:', payload);
-
       await onSubmit(payload);
     } catch (err) {
       console.error('ClientForm submit error:', err);

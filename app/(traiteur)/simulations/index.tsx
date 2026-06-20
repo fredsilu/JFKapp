@@ -109,7 +109,15 @@ export default function CateringSimulationsScreen() {
     return String(value ?? '').trim().toLowerCase();
   }
 
+  function displayDate(value: any): string {
+    if (!value) return "—";
 
+    if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+      return value;
+    }
+
+    return formatShortDocumentDate(value);
+  }
   const filteredSimulations = useMemo(() => {
     const q = normalizeText(searchQuery);
 
@@ -216,6 +224,10 @@ export default function CateringSimulationsScreen() {
 
                 <Text style={styles.client}>Client : {clientLabel}</Text>
 
+                <Text style={styles.client}>
+                  Nombre de personnes : {sim.guestCount ?? 0}
+                </Text>
+
                 <View style={styles.datesBlock}>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
@@ -225,9 +237,16 @@ export default function CateringSimulationsScreen() {
 
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>
-                      Livraison : {formatShortDocumentDate(sim.dateLivraison)}
+                      Livraison : {displayDate(sim.dateLivraison)}
                     </Text>
                   </View>
+                  {sim.deliveryTime ? (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>
+                        Heure : {sim.deliveryTime}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
 
                 <TouchableOpacity
@@ -335,19 +354,21 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 14,
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 18,
   },
 
   name: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
+    marginBottom: 4,
   },
 
   client: {
-    marginTop: 4,
+    marginTop: 6,
     color: '#555',
+    fontSize: 14,
   },
 
   badge: {

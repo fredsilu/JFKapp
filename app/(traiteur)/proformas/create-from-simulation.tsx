@@ -266,9 +266,6 @@ export default function CreateProformaFromSimulationScreen() {
 
     try {
       setSaving(true);
-
-      console.log('🧾 PROFORMA ITEMS:', JSON.stringify(items, null, 2));
-
       const proformaId = await createCateringProforma({
         simulationId: simulation.id,
         clientId: simulation.clientId,

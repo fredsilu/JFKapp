@@ -64,9 +64,6 @@ export default function ClientDetails({
     }
 
     try {
-      console.log('CLIENT ID TO UPDATE:', client.id);
-      console.log('UPDATED DATA:', updatedData);
-
       await updateClient(client.id, {
         ...updatedData,
         updatedAt: new Date(),

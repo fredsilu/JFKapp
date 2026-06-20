@@ -52,6 +52,7 @@ type SimulationEditorSubmitPayload = {
   dateLivraison: string;
   discount: number;
   deliveryTime: string;
+  servicePeriod: string;
   deliveryAddress: string;
   comment: string;
   sections: CateringSection[];
@@ -111,6 +112,8 @@ export default function SimulationEditor({
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [showEventDatePicker, setShowEventDatePicker] = useState(false);
   const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState(false);
+
+  const [servicePeriod, setServicePeriod] = useState("");
 
   const [sections, setSections] = useState<CateringSection[]>([]);
   const [serviceSettings, setServiceSettings] =
@@ -396,8 +399,7 @@ export default function SimulationEditor({
   const finalMargin = grandTotal - totals.totalCost;
 
   async function handleSubmit() {
-    console.log("🔥 handleSubmit lancé");
-
+    
     try {
       setFormError("");
 
@@ -406,10 +408,12 @@ export default function SimulationEditor({
         return;
       }
 
+    
       await onSubmit({
         eventName: eventName.trim(),
         eventDate,
         dateLivraison,
+        servicePeriod,
         deliveryTime,
         deliveryAddress,
         comment,
@@ -512,7 +516,14 @@ export default function SimulationEditor({
             style={styles.input}
           />
 
-
+          <Text style={styles.label}>Nombre de personnes</Text>
+          <TextInput
+            value={numberOfPeople}
+            onChangeText={setNumberOfPeople}
+            keyboardType="numeric"
+            placeholder="Ex : 100"
+            style={styles.input}
+          />
 
           <Text style={styles.label}>Date livraison</Text>
 
@@ -558,7 +569,13 @@ export default function SimulationEditor({
               )}
             </>
           )}
-
+          <Text style={styles.label}>Période de prestation</Text>
+          <TextInput
+            value={servicePeriod}
+            onChangeText={setServicePeriod}
+            placeholder="Ex : Du 12/06/2026 au 26/06/2026"
+            style={styles.input}
+          />
           <Text style={styles.label}>Heure livraison</Text>
           <TextInput
             value={deliveryTime}
@@ -690,7 +707,6 @@ export default function SimulationEditor({
 
         <TouchableOpacity
           onPress={() => {
-            console.log("🔥 BOUTON ENREGISTRER CLIQUÉ");
             handleSubmit();
           }}
           activeOpacity={0.8}

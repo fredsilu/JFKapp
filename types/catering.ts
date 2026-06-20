@@ -97,6 +97,8 @@ export interface CateringSectionTemplate {
 
 export type CateringSectionKind = "article" | "service";
 
+export type CateringBillingMode = "fixed" | "perDay";
+
 export type CateringServiceMode =
   | "identical_days"
   | "different_days";
@@ -136,6 +138,7 @@ export interface CateringSection {
   position: number;
 
   enabled: boolean;
+  billingMode?: CateringBillingMode;
 
   /**
    * Ligne commerciale simple
@@ -159,6 +162,8 @@ export interface CateringSection {
   notes?: string;
 }
 
+
+
 /**
  * =========================
  * SIMULATION – DRAFT (UI / CALCUL)
@@ -171,6 +176,9 @@ export interface CateringSimulationDraft {
   drinks: CateringMealInput;
   service: CateringServiceInput;
   sections?: CateringSection[];
+
+  eventDate?: string;
+  servicePeriod?: string;
 
   serviceCosts: CateringServiceCosts;
 
@@ -284,6 +292,9 @@ export type CateringOrder = {
 
   simulationId: string | null;
 
+  eventDate?: string;
+  servicePeriod?: string;
+
   documentType: CateringOrderDocumentType;
   status: CateringOrderStatus;
 
@@ -387,6 +398,8 @@ export interface CateringInvoiceCancellation {
   reason?: string;
 }
 
+
+
 export interface CateringInvoiceCorrection {
   correctionType: CateringInvoiceCorrectionType;
 
@@ -436,6 +449,9 @@ export type CateringInvoice = {
   sourceProformaId?: string | null;
   sourceProformaNumber?: string;
 
+  eventDate?: string;
+  servicePeriod?: string;
+
 
 
   /**
@@ -460,7 +476,7 @@ export type CateringInvoice = {
   deliveryAddress?: string;
   eventName?: string;
 
-  eventDate?: string;
+
 
   guestCount?: number;
 

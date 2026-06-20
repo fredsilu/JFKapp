@@ -228,6 +228,9 @@ export async function createInvoiceFromOrder(
 
     designation: order.designation ?? order.name ?? "Prestation traiteur",
 
+    eventDate: order.eventDate ?? "",
+    servicePeriod: order.servicePeriod ?? "",
+
     dateLivraison: order.dateLivraison ?? "",
     deliveryTime: order.deliveryTime ?? order.heureLivraison ?? "",
     deliveryAddress: order.deliveryAddress ?? order.lieu ?? "",
@@ -829,6 +832,7 @@ export async function updateDraftInvoice(
     | "designation"
     | "eventName"
     | "eventDate"
+    | "servicePeriod"
     | "dateLivraison"
     | "deliveryTime"
     | "deliveryAddress"

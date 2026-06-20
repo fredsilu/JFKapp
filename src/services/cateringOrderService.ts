@@ -86,6 +86,9 @@ export async function createProformaFromSimulation(simulationId: string) {
   const proforma: Omit<CateringOrder, 'id'> = {
     simulationId,
 
+    eventDate: simulation.eventDate ?? '',
+    servicePeriod: simulation.servicePeriod ?? '',
+
     documentType: 'proforma',
     status: 'draft',
 
@@ -265,6 +268,8 @@ export async function updateOrder(
 
   const payload = cleanUndefinedValues({
     ...data,
+    eventDate: data.eventDate ?? '',
+    servicePeriod: data.servicePeriod ?? '',
 
     dishes: data.dishes ?? [],
     additionalIngredients: data.additionalIngredients ?? [],
@@ -359,6 +364,9 @@ export async function createOrderFromProforma(proforma: any) {
 
   const order: Omit<CateringOrder, 'id'> = {
     simulationId: proforma.simulationId ?? null,
+
+    eventDate: proforma.eventDate ?? '',
+    servicePeriod: proforma.servicePeriod ?? '',
 
     documentType: 'order',
     status: 'confirmed',
