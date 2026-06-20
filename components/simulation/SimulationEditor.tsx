@@ -73,6 +73,7 @@ type Props = {
   initialSections?: CateringSection[];
   initialDateLivraison?: string;
   initialDeliveryTime?: string;
+  initialServicePeriod?: string;
   initialDeliveryAddress?: string;
   initialComment?: string;
   submitLabel?: string;
@@ -88,6 +89,7 @@ export default function SimulationEditor({
   initialClientName = "",
   initialDateLivraison = "",
   initialDeliveryTime = "",
+  initialServicePeriod = "",
   initialDeliveryAddress = "",
   initialComment = "",
   initialNumberOfPeople = 0,
@@ -113,7 +115,8 @@ export default function SimulationEditor({
   const [showEventDatePicker, setShowEventDatePicker] = useState(false);
   const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState(false);
 
-  const [servicePeriod, setServicePeriod] = useState("");
+  const [servicePeriod, setServicePeriod] =
+    useState(initialServicePeriod);
 
   const [sections, setSections] = useState<CateringSection[]>([]);
   const [serviceSettings, setServiceSettings] =

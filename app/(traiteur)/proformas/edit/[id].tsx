@@ -1,3 +1,4 @@
+// app/(traiteur)/proformas/edit/[id].tsx
 import React, { useCallback, useState } from "react";
 import { View, Text, ActivityIndicator, Alert } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -80,12 +81,20 @@ export default function EditProformaScreen() {
       setSaving(true);
 
       const items = sectionsToDocumentItems(payload.sections);
-      const totals = buildDocumentTotalsFromSections(payload.sections);
+      const totals = buildDocumentTotalsFromSections(
+        payload.sections,
+        payload.discount
+      );
 
       await updateCateringProforma(proforma.id, {
         eventName: payload.eventName,
-        eventDate: payload.dateLivraison,
-
+        eventDate: payload.eventDate,
+        dateLivraison: payload.dateLivraison,
+        servicePeriod: payload.servicePeriod,
+        numberOfPeople: payload.numberOfPeople,
+        deliveryTime: payload.deliveryTime,
+        deliveryAddress: payload.deliveryAddress,
+       
         sections: payload.sections,
 
         items: items.map((item: any) => ({
@@ -145,22 +154,19 @@ export default function EditProformaScreen() {
   return (
     <SimulationEditor
       title={`Modifier ${proforma.number}`}
-
       initialEventName={proforma.eventName ?? ""}
       initialClientName={proforma.clientName ?? ""}
-      initialNumberOfPeople={0}
-
-      initialDateLivraison={proforma.eventDate ?? ""}
-      initialDeliveryTime=""
-      initialDeliveryAddress=""
+      initialNumberOfPeople={Number(proforma.numberOfPeople ?? 0)}
+      initialEventDate={proforma.eventDate ?? ""}
+      initialDateLivraison={(proforma as any).dateLivraison ?? ""}
+      initialServicePeriod={(proforma as any).servicePeriod ?? ""}
+      initialDeliveryTime={(proforma as any).deliveryTime ?? ""}
+      initialDeliveryAddress={(proforma as any).deliveryAddress ?? ""}
       initialComment=""
-
+      initialDiscount={Number((proforma as any).totals?.discount ?? 0)}
       initialSections={proforma.sections ?? []}
-
       submitLabel="Sauvegarder la proforma"
-
       saving={saving}
-
       onSubmit={handleSave}
     />
   );
