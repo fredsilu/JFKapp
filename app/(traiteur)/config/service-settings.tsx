@@ -1,3 +1,4 @@
+//app/(traiteur)/config/service-settings.tsx
 import React, { useEffect, useState } from "react";
 import {
     View,
