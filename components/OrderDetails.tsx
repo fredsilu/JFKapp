@@ -9,7 +9,8 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Alert, Platform,
+  Alert,
+  Platform,
 } from 'react-native';
 
 import { router } from 'expo-router';
@@ -35,6 +36,11 @@ interface OrderDetailsProps {
   onUpdated?: () => void;
 }
 
+function displayValue(value: any): string {
+  if (value === null || value === undefined || value === '') return '-';
+  return String(value);
+}
+
 export default function OrderDetails({
   order,
   onClose,
@@ -44,31 +50,19 @@ export default function OrderDetails({
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
 
-
-
-  /**
-   * =========================
-   * NORMALISATION DES ITEMS
-   * =========================
-   */
-
   const items = useMemo(() => {
     if (!order) return [];
 
-    // Nouveau format
     if (Array.isArray((order as any).items)) {
       return (order as any).items;
     }
 
-    // Ancien format
     if (Array.isArray((order as any).dishes)) {
       return (order as any).dishes;
     }
 
     return [];
   }, [order]);
-
-
 
   const openInvoice = () => {
     const invoiceId = (order as any)?.invoiceId;
@@ -84,24 +78,7 @@ export default function OrderDetails({
     } as any);
   };
 
-  /**
-   * =========================
-   * INGREDIENTS
-   * =========================
-   */
-
-  const additionalIngredients =
-    order.additionalIngredients || [];
-
-  const hasIngredientsData =
-    items.length > 0 ||
-    additionalIngredients.length > 0;
-
-  /**
-   * =========================
-   * TOTALS
-   * =========================
-   */
+  const additionalIngredients = order.additionalIngredients || [];
 
   const calculatedTotal = useMemo(() => {
     if ((order as any)?.billedAmount > 0) {
@@ -121,54 +98,44 @@ export default function OrderDetails({
     return items.reduce((sum: number, item: any) => {
       const itemTotal =
         item?.total ||
-        (
-          (item?.quantity || 0) *
+        (item?.quantity || 0) *
           (item?.numberOfDays || 1) *
-          (item?.unitPrice || 0)
-        );
+          (item?.unitPrice || 0);
 
       return sum + itemTotal;
     }, 0);
   }, [items, order]);
 
   const billedAmount = useMemo(() => {
-    // priorité au montant brut venant des totals
     if ((order as any)?.totals?.subtotal) {
       return (order as any).totals.subtotal;
     }
 
-    // fallback calcul manuel avant remise
     return items.reduce((sum: number, item: any) => {
       const quantity = item?.quantity || 0;
       const unitPrice = item?.unitPrice || 0;
 
-      return (
-        sum +
-        (
-          quantity *
-          (item?.numberOfDays || 1) *
-          unitPrice
-        )
-      );
+      return sum + quantity * (item?.numberOfDays || 1) * unitPrice;
     }, 0);
   }, [items, order]);
 
   const deliveryDate =
-    order.deliveryDate ||
-    (order as any).eventDate ||
     (order as any).dateLivraison ||
+    (order as any).deliveryDate ||
+    (order as any).proforma?.dateLivraison ||
     (order as any).proforma?.deliveryDate ||
     '-';
 
   const deliveryTime =
-    order.deliveryTime ||
+    (order as any).deliveryTime ||
+    (order as any).heureLivraison ||
     (order as any).eventTime ||
     (order as any).proforma?.deliveryTime ||
     '-';
 
   const deliveryAddress =
-    order.deliveryAddress ||
-    order.address ||
+    (order as any).deliveryAddress ||
+    (order as any).address ||
     (order as any).eventLocation ||
     (order as any).proforma?.deliveryAddress ||
     order.client?.address ||
@@ -176,72 +143,78 @@ export default function OrderDetails({
     order.client?.city ||
     '-';
 
-  /**
-   * =========================
-   * STATUS COLOR
-   * =========================
-   */
+  const eventDate =
+    (order as any).eventDate ||
+    (order as any).dateEvenement ||
+    (order as any).proforma?.eventDate ||
+    '-';
+
+  const guestCount =
+    (order as any).guestCount ||
+    (order as any).numberOfPeople ||
+    (order as any).numberOfGuests ||
+    (order as any).proforma?.guestCount ||
+    0;
+
+  const servicePeriod =
+    (order as any).servicePeriod ||
+    (order as any).proforma?.servicePeriod ||
+    '-';
 
   const getStatusColor = (status?: string) => {
-  switch (status) {
-    case 'confirmed':
-      return '#2563EB';
-    case 'in-production':
-      return '#D97706';
-    case 'delivered':
-      return '#059669';
-    case 'cancelled':
-      return '#DC2626';
-    default:
-      return '#6B7280';
-  }
-};
+    switch (status) {
+      case 'confirmed':
+        return '#2563EB';
+      case 'in-production':
+        return '#D97706';
+      case 'delivered':
+        return '#059669';
+      case 'cancelled':
+        return '#DC2626';
+      default:
+        return '#6B7280';
+    }
+  };
 
-const getStatusLabel = (status?: string) => {
-  switch (status) {
-    case 'draft':
-      return 'Brouillon';
-    case 'sent':
-      return 'Envoyée';
-    case 'confirmed':
-      return 'Confirmée';
-    case 'in-production':
-      return 'En préparation';
-    case 'delivered':
-      return 'Livrée';
-    case 'cancelled':
-      return 'Annulée';
-    default:
-      return 'Confirmée';
-  }
-};
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case 'draft':
+        return 'Brouillon';
+      case 'sent':
+        return 'Envoyée';
+      case 'confirmed':
+        return 'Confirmée';
+      case 'in-production':
+        return 'En préparation';
+      case 'delivered':
+        return 'Livrée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return 'Confirmée';
+    }
+  };
 
   const statusColor = getStatusColor(order.status);
 
-  /**
-   * =========================
-   * UPDATE STATUS
-   * =========================
-   */
+  const getNextStatus = (status?: string) => {
+    switch (status) {
+      case 'draft':
+      case 'sent':
+      case 'confirmed':
+        return 'in-production';
 
- const getNextStatus = (status?: string) => {
-  switch (status) {
-    case 'draft':
-    case 'sent':
-    case 'confirmed':
-      return 'in-production';
+      case 'in-production':
+        return 'delivered';
 
-    case 'in-production':
-      return 'delivered';
+      case 'delivered':
+      case 'cancelled':
+        return null;
 
-    case 'delivered':
-    case 'cancelled':
-      return null;
-
-    default:
-      return 'in-production';
-  }
-};
+      default:
+        return 'in-production';
+    }
+  };
 
   const confirmAction = async (title: string, message: string) => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -291,20 +264,9 @@ const getStatusLabel = (status?: string) => {
       await onUpdated?.();
     } catch (error) {
       console.error(error);
-
-      if (Platform.OS === 'web') {
-        window.alert('Impossible de modifier le statut.');
-      } else {
-        Alert.alert('Erreur', 'Impossible de modifier le statut.');
-      }
+      Alert.alert('Erreur', 'Impossible de modifier le statut.');
     }
   };
-
-  /**
-   * =========================
-   * UPDATE ORDER
-   * =========================
-   */
 
   const handleUpdateOrder = async (
     updatedOrder: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>
@@ -312,9 +274,34 @@ const getStatusLabel = (status?: string) => {
     try {
       await updateOrder(order.id, {
         ...updatedOrder,
-        deliveryTime: (updatedOrder as any).deliveryTime ?? order.deliveryTime ?? '',
-        deliveryDate: (updatedOrder as any).deliveryDate ?? order.deliveryDate ?? '',
-        deliveryAddress: (updatedOrder as any).deliveryAddress ?? order.deliveryAddress ?? '',
+        eventDate:
+          (updatedOrder as any).eventDate ??
+          (order as any).eventDate ??
+          '',
+        servicePeriod:
+          (updatedOrder as any).servicePeriod ??
+          (order as any).servicePeriod ??
+          '',
+        guestCount:
+          (updatedOrder as any).guestCount ??
+          (order as any).guestCount ??
+          0,
+        deliveryTime:
+          (updatedOrder as any).deliveryTime ??
+          (order as any).deliveryTime ??
+          '',
+        deliveryDate:
+          (updatedOrder as any).deliveryDate ??
+          (order as any).deliveryDate ??
+          '',
+        dateLivraison:
+          (updatedOrder as any).dateLivraison ??
+          (order as any).dateLivraison ??
+          '',
+        deliveryAddress:
+          (updatedOrder as any).deliveryAddress ??
+          (order as any).deliveryAddress ??
+          '',
       } as any);
 
       setShowEditForm(false);
@@ -328,43 +315,26 @@ const getStatusLabel = (status?: string) => {
     }
   };
 
-  /**
-   * =========================
-   * CREATE INVOICE
-   * =========================
-   */
-
   const handleCreateInvoice = async () => {
     try {
       setLoadingInvoice(true);
 
       if (!order?.id) {
-        Alert.alert(
-          'Erreur',
-          'Commande invalide.'
-        );
-
+        Alert.alert('Erreur', 'Commande invalide.');
         return;
       }
 
       if (items.length === 0) {
-        Alert.alert(
-          'Erreur',
-          'Aucun élément à facturer.'
-        );
-
+        Alert.alert('Erreur', 'Aucun élément à facturer.');
         return;
       }
+
       if ((order as any)?.invoiceId) {
-        Alert.alert(
-          'Information',
-          'Une facture existe déjà pour cette commande.'
-        );
-
+        Alert.alert('Information', 'Une facture existe déjà pour cette commande.');
         return;
       }
-      const invoice =
-        await createInvoiceFromOrder(order as any);
+
+      const invoice = await createInvoiceFromOrder(order as any);
 
       if (Platform.OS === 'web') {
         router.push({
@@ -401,37 +371,24 @@ const getStatusLabel = (status?: string) => {
         pathname: '/(traiteur)/orders/[id]',
         params: { id: order.id },
       } as any);
-
     } catch (error: any) {
       console.error(error);
 
       Alert.alert(
         'Erreur',
-        error?.message ||
-        'Impossible de générer la facture.'
+        error?.message || 'Impossible de générer la facture.'
       );
     } finally {
       setLoadingInvoice(false);
     }
   };
 
-  /**
-   * =========================
-   * OPEN PROFORMA
-   * =========================
-   */
-
   const openSourceProforma = () => {
     const proformaId =
-      (order as any)?.proformaId ||
-      (order as any)?.sourceProformaId;
+      (order as any)?.proformaId || (order as any)?.sourceProformaId;
 
     if (!proformaId) {
-      Alert.alert(
-        'Information',
-        'Aucune proforma liée.'
-      );
-
+      Alert.alert('Information', 'Aucune proforma liée.');
       return;
     }
 
@@ -446,64 +403,36 @@ const getStatusLabel = (status?: string) => {
   return (
     <>
       <View style={styles.container}>
-        {/* HEADER */}
-
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onClose}
-          >
-            <MaterialIcons
-              name="arrow-back"
-              size={22}
-              color="#111827"
-            />
+          <TouchableOpacity style={styles.iconButton} onPress={onClose}>
+            <MaterialIcons name="arrow-back" size={22} color="#111827" />
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>
-              Détails commande
-            </Text>
+            <Text style={styles.headerTitle}>Détails commande</Text>
 
             <Text style={styles.headerSubtitle}>
-              {(order as any).number ||
-                (order as any).orderNumber ||
-                'CMD-XXXX'}
+              {(order as any).number || (order as any).orderNumber || 'CMD-XXXX'}
             </Text>
           </View>
 
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() =>
-              setShowEditForm(true)
-            }
+            onPress={() => setShowEditForm(true)}
           >
-            <MaterialIcons
-              name="edit"
-              size={22}
-              color="#2563EB"
-            />
+            <MaterialIcons name="edit" size={22} color="#2563EB" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          contentContainerStyle={
-            styles.scrollContent
-          }
-        >
-          {/* HERO */}
-
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.heroCard}>
             <View style={styles.heroTop}>
               <View>
                 <Text style={styles.heroLabel}>
-                  {order.designation ||
-                    'Commande traiteur'}
+                  {order.designation || 'Commande traiteur'}
                 </Text>
 
-                <Text style={styles.heroSmallLabel}>
-                  Montant facturé
-                </Text>
+                <Text style={styles.heroSmallLabel}>Montant facturé</Text>
 
                 <Text style={styles.heroAmount}>
                   {formatCurrency(billedAmount)}
@@ -514,8 +443,7 @@ const getStatusLabel = (status?: string) => {
                 style={[
                   styles.statusBadge,
                   {
-                    backgroundColor:
-                      `${statusColor}18`,
+                    backgroundColor: `${statusColor}18`,
                   },
                 ]}
               >
@@ -536,48 +464,34 @@ const getStatusLabel = (status?: string) => {
 
             <View style={styles.heroGrid}>
               <View style={styles.heroItem}>
-                <MaterialIcons
-                  name="event"
-                  size={18}
-                  color="#9CA3AF"
-                />
-
+                <MaterialIcons name="event" size={18} color="#9CA3AF" />
                 <Text style={styles.heroItemText}>
-                  {deliveryDate}
+                  Livraison : {displayValue(deliveryDate)}
                 </Text>
               </View>
 
               <View style={styles.heroItem}>
-                <MaterialIcons
-                  name="schedule"
-                  size={18}
-                  color="#9CA3AF"
-                />
-
+                <MaterialIcons name="schedule" size={18} color="#9CA3AF" />
                 <Text style={styles.heroItemText}>
-                  {deliveryTime}
+                  Heure : {displayValue(deliveryTime)}
+                </Text>
+              </View>
+
+              <View style={styles.heroItem}>
+                <MaterialIcons name="groups" size={18} color="#9CA3AF" />
+                <Text style={styles.heroItemText}>
+                  {guestCount} personne(s)
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* ACTIONS */}
-
           <View style={styles.actionsGrid}>
             {(order as any)?.invoiceId ? (
-              <TouchableOpacity
-                style={styles.secondaryAction}
-                onPress={openInvoice}
-              >
-                <MaterialIcons
-                  name="receipt-long"
-                  size={20}
-                  color="#059669"
-                />
+              <TouchableOpacity style={styles.secondaryAction} onPress={openInvoice}>
+                <MaterialIcons name="receipt-long" size={20} color="#059669" />
 
-                <Text style={styles.secondaryActionText}>
-                  Voir facture
-                </Text>
+                <Text style={styles.secondaryActionText}>Voir facture</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -589,42 +503,19 @@ const getStatusLabel = (status?: string) => {
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <MaterialIcons
-                      name="receipt-long"
-                      size={20}
-                      color="#fff"
-                    />
+                    <MaterialIcons name="receipt-long" size={20} color="#fff" />
 
-                    <Text style={styles.primaryActionText}>
-                      Créer facture
-                    </Text>
+                    <Text style={styles.primaryActionText}>Créer facture</Text>
                   </>
                 )}
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={styles.secondaryAction}
-              onPress={
-                openSourceProforma
-              }
-            >
-              <MaterialIcons
-                name="visibility"
-                size={20}
-                color="#2563EB"
-              />
+            <TouchableOpacity style={styles.secondaryAction} onPress={openSourceProforma}>
+              <MaterialIcons name="visibility" size={20} color="#2563EB" />
 
-              <Text
-                style={
-                  styles.secondaryActionText
-                }
-              >
-                Voir proforma
-              </Text>
+              <Text style={styles.secondaryActionText}>Voir proforma</Text>
             </TouchableOpacity>
-
-
 
             <TouchableOpacity
               style={styles.secondaryAction}
@@ -640,362 +531,188 @@ const getStatusLabel = (status?: string) => {
             </TouchableOpacity>
           </View>
 
-          {/* STATUS BUTTON */}
-
           {order.status !== 'delivered' && order.status !== 'cancelled' && (
             <TouchableOpacity
               style={[
                 styles.nextStatusButton,
                 {
-                  backgroundColor:
-                    getStatusColor(
-                      getNextStatus(order.status as any) as any
-                    ),
+                  backgroundColor: getStatusColor(
+                    getNextStatus(order.status as any) as any
+                  ),
                 },
               ]}
-              onPress={
-                handleUpdateStatus
-              }
+              onPress={handleUpdateStatus}
             >
-              <Text
-                style={
-                  styles.nextStatusText
-                }
-              >
-                Passer au statut : {getStatusLabel(getNextStatus(order.status as any) as any)}
+              <Text style={styles.nextStatusText}>
+                Passer au statut :{' '}
+                {getStatusLabel(getNextStatus(order.status as any) as any)}
               </Text>
 
-              <MaterialIcons
-                name="arrow-forward"
-                size={20}
-                color="#fff"
-              />
+              <MaterialIcons name="arrow-forward" size={20} color="#fff" />
             </TouchableOpacity>
           )}
 
-          {/* CLIENT */}
-
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>
-              Client
-            </Text>
+            <Text style={styles.sectionTitle}>Client</Text>
 
             <View style={styles.clientRow}>
               <Image
                 source={
-                  order.client
-                    ?.profilePicture
+                  order.client?.profilePicture
                     ? {
-                      uri: order.client
-                        .profilePicture,
-                    }
+                        uri: order.client.profilePicture,
+                      }
                     : require('@/assets/images/no_client_picture.jpg')
                 }
                 style={styles.clientImage}
               />
 
               <View style={styles.clientInfo}>
-                <Text
-                  style={
-                    styles.clientName
-                  }
-                >
-                  {order.client?.name ||
-                    'Client non défini'}
+                <Text style={styles.clientName}>
+                  {order.client?.name || 'Client non défini'}
                 </Text>
 
-                {!!order.client
-                  ?.phone && (
-                    <Text
-                      style={
-                        styles.clientMeta
-                      }
-                    >
-                      {
-                        order.client
-                          .phone
-                      }
-                    </Text>
-                  )}
+                {!!order.client?.phone && (
+                  <Text style={styles.clientMeta}>{order.client.phone}</Text>
+                )}
 
-                {!!order.client
-                  ?.email && (
-                    <Text
-                      style={
-                        styles.clientMeta
-                      }
-                    >
-                      {
-                        order.client
-                          .email
-                      }
-                    </Text>
-                  )}
+                {!!order.client?.email && (
+                  <Text style={styles.clientMeta}>{order.client.email}</Text>
+                )}
               </View>
             </View>
           </View>
 
-          {/* LIVRAISON */}
-
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>
-              Livraison
-            </Text>
+            <Text style={styles.sectionTitle}>Informations événement</Text>
 
             <View style={styles.infoLine}>
-              <MaterialIcons
-                name="location-on"
-                size={18}
-                color="#6B7280"
-              />
-
+              <MaterialIcons name="groups" size={18} color="#6B7280" />
               <Text style={styles.infoText}>
-                {deliveryAddress}
+                Nombre de personnes : {guestCount}
               </Text>
             </View>
 
             <View style={styles.infoLine}>
-              <MaterialIcons
-                name="event"
-                size={18}
-                color="#6B7280"
-              />
-
+              <MaterialIcons name="celebration" size={18} color="#6B7280" />
               <Text style={styles.infoText}>
-                {deliveryDate}
+                Date événement : {displayValue(eventDate)}
               </Text>
             </View>
 
             <View style={styles.infoLine}>
-              <MaterialIcons
-                name="schedule"
-                size={18}
-                color="#6B7280"
-              />
-
+              <MaterialIcons name="event" size={18} color="#6B7280" />
               <Text style={styles.infoText}>
-                {deliveryTime}
+                Date livraison : {displayValue(deliveryDate)}
+              </Text>
+            </View>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons name="schedule" size={18} color="#6B7280" />
+              <Text style={styles.infoText}>
+                Heure livraison : {displayValue(deliveryTime)}
+              </Text>
+            </View>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons name="date-range" size={18} color="#6B7280" />
+              <Text style={styles.infoText}>
+                Période prestation : {displayValue(servicePeriod)}
+              </Text>
+            </View>
+
+            <View style={styles.infoLine}>
+              <MaterialIcons name="location-on" size={18} color="#6B7280" />
+              <Text style={styles.infoText}>
+                Adresse livraison : {displayValue(deliveryAddress)}
               </Text>
             </View>
           </View>
 
-          {/* ITEMS */}
-
           <View style={styles.card}>
-            <View
-              style={
-                styles.sectionHeaderRow
-              }
-            >
-              <Text
-                style={
-                  styles.sectionTitle
-                }
-              >
-                Éléments commandés
-              </Text>
-
-              <Text
-                style={
-                  styles.countBadge
-                }
-              >
-                {items.length}
-              </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Éléments commandés</Text>
+              <Text style={styles.countBadge}>{items.length}</Text>
             </View>
 
             {items.length > 0 ? (
-              items.map(
-                (
-                  item: any,
-                  index: number
-                ) => {
-                  const itemName =
-                    item?.dish?.name ||
-                    item?.label ||
-                    item?.name ||
-                    'Élément';
+              items.map((item: any, index: number) => {
+                const itemName =
+                  item?.dish?.name || item?.label || item?.name || 'Élément';
 
-                  const quantity =
-                    item?.quantity || 0;
+                const quantity = item?.quantity || 0;
 
-                  const total =
-                    item?.total ||
-                    (
-                      quantity *
-                      (item?.numberOfDays || 1) *
-                      (item?.unitPrice || 0)
-                    );
+                const total =
+                  item?.total ||
+                  quantity * (item?.numberOfDays || 1) * (item?.unitPrice || 0);
 
-                  return (
-                    <View
-                      key={
-                        item?.id ||
-                        item?.dish?.id ||
-                        index
-                      }
-                      style={
-                        styles.dishRow
-                      }
-                    >
-                      <View
-                        style={
-                          styles.dishIcon
-                        }
-                      >
-                        <MaterialIcons
-                          name="restaurant"
-                          size={18}
-                          color="#2563EB"
-                        />
-                      </View>
+                return (
+                  <View
+                    key={item?.id || item?.dish?.id || index}
+                    style={styles.dishRow}
+                  >
+                    <View style={styles.dishIcon}>
+                      <MaterialIcons
+                        name="restaurant"
+                        size={18}
+                        color="#2563EB"
+                      />
+                    </View>
 
-                      <View
-                        style={
-                          styles.dishInfo
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.dishName
-                          }
-                        >
-                          {itemName}
-                        </Text>
+                    <View style={styles.dishInfo}>
+                      <Text style={styles.dishName}>{itemName}</Text>
 
-                        <Text style={styles.dishMeta}>
-                          Qté : {quantity}
-                          {' • '}
-                          Jours : {item?.numberOfDays || 1}
-                        </Text>
-                      </View>
-
-                      <Text
-                        style={
-                          styles.itemAmount
-                        }
-                      >
-                        {formatCurrency(
-                          total
-                        )}
+                      <Text style={styles.dishMeta}>
+                        Qté : {quantity}
+                        {' • '}
+                        Jours : {item?.numberOfDays || 1}
                       </Text>
                     </View>
-                  );
-                }
-              )
+
+                    <Text style={styles.itemAmount}>
+                      {formatCurrency(total)}
+                    </Text>
+                  </View>
+                );
+              })
             ) : (
-              <Text style={styles.emptyText}>
-                Aucun élément
-              </Text>
+              <Text style={styles.emptyText}>Aucun élément</Text>
             )}
           </View>
-          {/* PLATS COMMANDES */}
+
           {Array.isArray((order as any).operationalDishes) &&
             (order as any).operationalDishes.length > 0 && (
               <View style={styles.card}>
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>
-                    Plats à produire
-                  </Text>
+                  <Text style={styles.sectionTitle}>Plats à produire</Text>
 
                   <Text style={styles.countBadge}>
                     {(order as any).operationalDishes.length}
                   </Text>
                 </View>
 
-                {(order as any).operationalDishes.map((dish: any, index: number) => (
-                  <View
-                    key={dish?.dishId || dish?.id || index}
-                    style={styles.dishRow}
-                  >
-                    <View style={styles.dishIcon}>
-                      <MaterialIcons
-                        name="restaurant-menu"
-                        size={18}
-                        color="#059669"
-                      />
-                    </View>
-
-                    <View style={styles.dishInfo}>
-                      <Text style={styles.dishName}>
-                        {dish?.name || 'Plat'}
-                      </Text>
-
-
-                    </View>
-
-                    <Text style={styles.quantityBadge}>
-                      x {dish?.quantity || 0}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-
-          {/* INGREDIENTS */}
-
-          {additionalIngredients.length >
-            0 && (
-              <View style={styles.card}>
-                <View
-                  style={
-                    styles.sectionHeaderRow
-                  }
-                >
-                  <Text
-                    style={
-                      styles.sectionTitle
-                    }
-                  >
-                    Ingrédients
-                    supplémentaires
-                  </Text>
-
-                  <Text
-                    style={
-                      styles.countBadge
-                    }
-                  >
-                    {
-                      additionalIngredients.length
-                    }
-                  </Text>
-                </View>
-
-                {additionalIngredients.map(
-                  (
-                    item: any,
-                    index: number
-                  ) => (
+                {(order as any).operationalDishes.map(
+                  (dish: any, index: number) => (
                     <View
-                      key={
-                        item?.ingredient
-                          ?.id || index
-                      }
-                      style={
-                        styles.ingredientRow
-                      }
+                      key={dish?.dishId || dish?.id || index}
+                      style={styles.dishRow}
                     >
-                      <Text
-                        style={
-                          styles.ingredientName
-                        }
-                      >
-                        {item?.ingredient
-                          ?.name ||
-                          'Ingrédient'}
-                      </Text>
+                      <View style={styles.dishIcon}>
+                        <MaterialIcons
+                          name="restaurant-menu"
+                          size={18}
+                          color="#059669"
+                        />
+                      </View>
 
-                      <Text
-                        style={
-                          styles.ingredientQty
-                        }
-                      >
-                        {item?.quantity || 0}
-                        {' '}
-                        {item?.ingredient
-                          ?.unit || ''}
+                      <View style={styles.dishInfo}>
+                        <Text style={styles.dishName}>
+                          {dish?.name || 'Plat'}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.quantityBadge}>
+                        x {dish?.quantity || 0}
                       </Text>
                     </View>
                   )
@@ -1003,35 +720,47 @@ const getStatusLabel = (status?: string) => {
               </View>
             )}
 
-          {/* TOTAL */}
+          {additionalIngredients.length > 0 && (
+            <View style={styles.card}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Ingrédients supplémentaires</Text>
+
+                <Text style={styles.countBadge}>
+                  {additionalIngredients.length}
+                </Text>
+              </View>
+
+              {additionalIngredients.map((item: any, index: number) => (
+                <View key={item?.ingredient?.id || index} style={styles.ingredientRow}>
+                  <Text style={styles.ingredientName}>
+                    {item?.ingredient?.name || 'Ingrédient'}
+                  </Text>
+
+                  <Text style={styles.ingredientQty}>
+                    {item?.quantity || 0} {item?.ingredient?.unit || ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>
-              Montant facturé
-            </Text>
+            <Text style={styles.totalLabel}>Montant facturé</Text>
 
             <Text style={styles.totalValue}>
-              {formatCurrency(
-                calculatedTotal
-              )}
+              {formatCurrency(calculatedTotal)}
             </Text>
           </View>
         </ScrollView>
       </View>
 
-      {/* EDIT MODAL */}
-
       <Modal visible={showEditForm}>
         <OrderForm
           order={order}
-          onClose={() =>
-            setShowEditForm(false)
-          }
+          onClose={() => setShowEditForm(false)}
           onSubmit={handleUpdateOrder}
         />
       </Modal>
-
-      {/* INGREDIENTS MODAL */}
 
       <OrderIngredientsModal
         visible={showIngredientsModal}
@@ -1326,6 +1055,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 2,
   },
+
   heroSmallLabel: {
     fontSize: 12,
     color: '#9CA3AF',
@@ -1384,6 +1114,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#047857',
   },
+
   quantityBadge: {
     paddingHorizontal: 10,
     paddingVertical: 6,

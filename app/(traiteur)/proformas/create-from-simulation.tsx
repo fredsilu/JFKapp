@@ -171,10 +171,10 @@ export default function CreateProformaFromSimulationScreen() {
   }, [items]);
 
   const generalDiscount = Number(
-  simulation?.totals?.discountAmount ??
-  simulation?.discount ??
-  0
-);
+    simulation?.totals?.discountAmount ??
+    simulation?.discount ??
+    0
+  );
 
   const totalAfterDiscount = Math.max(
     subtotal - generalDiscount,
@@ -279,11 +279,48 @@ export default function CreateProformaFromSimulationScreen() {
         issueDate: new Date().toISOString().slice(0, 10),
         validityDate: getValidityDate(),
 
-        eventDate: getEventDate(),
+        eventDate:
+          simulation.eventDate ||
+          simulation.dateEvenement ||
+          "",
+
         eventName:
           simulation.name ||
           simulation.eventName ||
-          'Évènement sans nom',
+          "Évènement sans nom",
+
+        dateLivraison:
+          simulation.dateLivraison ||
+          simulation.deliveryDate ||
+          "",
+
+        deliveryDate:
+          simulation.deliveryDate ||
+          simulation.dateLivraison ||
+          "",
+
+        deliveryTime:
+          simulation.deliveryTime || "",
+
+        deliveryAddress:
+          simulation.deliveryAddress || "",
+
+        guestCount:
+          Number(
+            simulation.guestCount ||
+            simulation.numberOfPeople ||
+            0
+          ),
+
+        numberOfPeople:
+          Number(
+            simulation.numberOfPeople ||
+            simulation.guestCount ||
+            0
+          ),
+
+        servicePeriod:
+          simulation.servicePeriod || "",
 
         status: 'draft',
 

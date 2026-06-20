@@ -58,6 +58,16 @@ export type CateringProforma = {
   eventDate?: string;
   eventName?: string;
 
+  dateLivraison?: string;
+  deliveryDate?: string;
+  deliveryTime?: string;
+  deliveryAddress?: string;
+
+  guestCount?: number;
+  numberOfPeople?: number;
+
+  servicePeriod?: string;
+
   status: ProformaStatus;
 
   orderId?: string;
@@ -190,6 +200,27 @@ function normalizeProformaData(
     eventDate: cleanText(data.eventDate),
     eventName: cleanText(data.eventName),
 
+    dateLivraison: cleanText(data.dateLivraison || data.deliveryDate),
+    deliveryDate: cleanText(data.deliveryDate || data.dateLivraison),
+    deliveryTime: cleanText(data.deliveryTime),
+    deliveryAddress: cleanText(data.deliveryAddress || (data as any).address),
+
+    servicePeriod: cleanText(data.servicePeriod),
+
+    guestCount: Number(
+      data.guestCount ||
+      data.numberOfPeople ||
+      (data as any).numberOfGuests ||
+      0
+    ),
+
+    numberOfPeople: Number(
+      data.numberOfPeople ||
+      data.guestCount ||
+      (data as any).numberOfGuests ||
+      0
+    ),
+
     status: data.status || 'draft',
     isInvoiced: Boolean(data.isInvoiced),
 
@@ -239,6 +270,34 @@ export async function getCateringProformas(): Promise<CateringProforma[]> {
     return {
       id: d.id,
       ...raw,
+
+      eventDate:
+        raw.eventDate ||
+        (raw as any).dateEvenement ||
+        raw.dateLivraison ||
+        raw.deliveryDate ||
+        "",
+
+      dateLivraison: raw.dateLivraison || raw.deliveryDate || "",
+      deliveryDate: raw.deliveryDate || raw.dateLivraison || "",
+      deliveryTime: raw.deliveryTime || "",
+      deliveryAddress:
+        raw.deliveryAddress || (raw as any).address || "",
+
+      guestCount:
+        raw.guestCount ||
+        raw.numberOfPeople ||
+        (raw as any).numberOfGuests ||
+        0,
+
+      numberOfPeople:
+        raw.numberOfPeople ||
+        raw.guestCount ||
+        (raw as any).numberOfGuests ||
+        0,
+
+      servicePeriod: raw.servicePeriod || "",
+
       items: normalizeItems(raw.items),
       menu: normalizeMenu(raw.menu),
       totals: normalizeTotals(raw.totals),
@@ -273,6 +332,26 @@ export async function getCateringProformaById(
   return {
     id: snap.id,
     ...data,
+
+    dateLivraison: data.dateLivraison || data.deliveryDate || "",
+    deliveryDate: data.deliveryDate || data.dateLivraison || "",
+    deliveryTime: data.deliveryTime || "",
+    deliveryAddress: data.deliveryAddress || (data as any).address || "",
+
+    guestCount:
+      data.guestCount ||
+      data.numberOfPeople ||
+      (data as any).numberOfGuests ||
+      0,
+
+    numberOfPeople:
+      data.numberOfPeople ||
+      data.guestCount ||
+      (data as any).numberOfGuests ||
+      0,
+
+    servicePeriod: data.servicePeriod || "",
+
     items: normalizeItems(data.items),
     menu: normalizeMenu(data.menu),
     totals: normalizeTotals(data.totals),
@@ -372,6 +451,34 @@ export async function updateCateringProforma(
 
   if (typeof data.totals !== 'undefined') {
     payload.totals = normalizeTotals(data.totals);
+  }
+
+  if (typeof data.dateLivraison !== 'undefined') {
+    payload.dateLivraison = cleanText(data.dateLivraison);
+  }
+
+  if (typeof data.deliveryDate !== 'undefined') {
+    payload.deliveryDate = cleanText(data.deliveryDate);
+  }
+
+  if (typeof data.deliveryTime !== 'undefined') {
+    payload.deliveryTime = cleanText(data.deliveryTime);
+  }
+
+  if (typeof data.deliveryAddress !== 'undefined') {
+    payload.deliveryAddress = cleanText(data.deliveryAddress);
+  }
+
+  if (typeof data.servicePeriod !== 'undefined') {
+    payload.servicePeriod = cleanText(data.servicePeriod);
+  }
+
+  if (typeof data.guestCount !== 'undefined') {
+    payload.guestCount = Number(data.guestCount || 0);
+  }
+
+  if (typeof data.numberOfPeople !== 'undefined') {
+    payload.numberOfPeople = Number(data.numberOfPeople || 0);
   }
 
   await updateDoc(ref, {

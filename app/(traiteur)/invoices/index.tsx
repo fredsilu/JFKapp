@@ -350,13 +350,15 @@ export default function InvoicesScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.line}>
-                  Date facture : {formatShortDocumentDate(getInvoiceDate(invoice))}
-                </Text>
-
-                <Text style={styles.line}>
-                  Créée le : {formatShortDocumentDate(invoice.createdAt)}
-                </Text>
+                {invoice.status === "draft" ? (
+                  <Text style={styles.line}>
+                    Créée le : {formatShortDocumentDate(invoice.createdAt)}
+                  </Text>
+                ) : (
+                  <Text style={styles.line}>
+                    Date facture : {formatShortDocumentDate(getInvoiceDate(invoice))}
+                  </Text>
+                )}
 
                 {invoice.orderNumber ? (
                   <Text style={styles.line}>

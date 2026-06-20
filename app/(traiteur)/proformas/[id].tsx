@@ -33,6 +33,16 @@ import {
   cancelCateringProforma,
 } from '@/src/services/cateringProforma.service';
 
+
+function displayDate(value: any): string {
+  if (!value) return "—";
+
+  if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    return value;
+  }
+
+  return formatShortDocumentDate(value);
+}
 export default function ProformaDetailScreen() {
   const params = useLocalSearchParams<{
     id?: string;
@@ -411,7 +421,7 @@ export default function ProformaDetailScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Détail proforma</Text>
-
+      
       <View style={styles.headerCard}>
         <Text style={styles.number}>
           {proforma.number || 'Proforma sans numéro'}
@@ -453,13 +463,40 @@ export default function ProformaDetailScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Informations</Text>
-        <Text style={styles.line}>Date émission : {formatShortDocumentDate(proforma.issueDate)}</Text>
+
+        <Text style={styles.line}>
+          Date émission : {formatShortDocumentDate(proforma.issueDate)}
+        </Text>
+
         {proforma.validityDate ? (
           <Text style={styles.line}>
             Validité : {formatShortDocumentDate(proforma.validityDate)}
           </Text>
         ) : null}
-        <Text style={styles.line}>Date événement : {formatShortDocumentDate(proforma.eventDate)}</Text>
+
+        <Text style={styles.line}>
+          Nombre de personnes : {proforma.guestCount ?? 0}
+        </Text>
+
+        <Text style={styles.line}>
+          Date livraison : {displayDate(proforma.dateLivraison)}
+        </Text>
+
+        <Text style={styles.line}>
+          Heure livraison : {proforma.deliveryTime || "—"}
+        </Text>
+
+        <Text style={styles.line}>
+          Date événement : {displayDate(proforma.eventDate)}
+        </Text>
+
+        <Text style={styles.line}>
+          Période prestation : {proforma.servicePeriod || "—"}
+        </Text>
+
+        <Text style={styles.line}>
+          Adresse livraison : {proforma.deliveryAddress || "—"}
+        </Text>
 
         {proforma.orderId && proforma.orderNumber ? (
           <TouchableOpacity
@@ -467,7 +504,7 @@ export default function ProformaDetailScreen() {
               const orderId = String(proforma.orderId);
 
               router.push({
-                pathname: '/(traiteur)/orders/[id]',
+                pathname: "/(traiteur)/orders/[id]",
                 params: {
                   id: orderId,
                 },
@@ -479,8 +516,6 @@ export default function ProformaDetailScreen() {
             </Text>
           </TouchableOpacity>
         ) : null}
-
-
       </View>
 
       <View style={styles.card}>

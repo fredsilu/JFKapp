@@ -86,6 +86,8 @@ export default function InvoiceDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+
+
   const loadInvoice = useCallback(async () => {
     if (!id) {
       Alert.alert("Erreur", "Identifiant facture introuvable");
@@ -256,7 +258,33 @@ export default function InvoiceDetailScreen() {
           require("@/assets/images/crepolia-signature.png")
         );
       } catch { }
+      const eventDate =
+        (invoice as any).eventDate ||
+        (invoice as any).dateEvenement ||
+        "-";
 
+      const guestCount =
+        (invoice as any).guestCount ||
+        (invoice as any).numberOfPeople ||
+        (invoice as any).numberOfGuests ||
+        0;
+
+      const deliveryDate =
+        (invoice as any).dateLivraison ||
+        (invoice as any).deliveryDate ||
+        "-";
+
+      const deliveryTime =
+        (invoice as any).deliveryTime ||
+        "-";
+
+      const deliveryAddress =
+        (invoice as any).deliveryAddress ||
+        "-";
+
+      const servicePeriod =
+        (invoice as any).servicePeriod ||
+        "-";
       const totals: any = invoice.totals ?? {};
       const client: any = invoice.client ?? {};
 
@@ -406,6 +434,34 @@ export default function InvoiceDetailScreen() {
     );
   }
 
+  const eventDate =
+    (invoice as any).eventDate ||
+    (invoice as any).dateEvenement ||
+    "-";
+
+  const guestCount =
+    (invoice as any).guestCount ||
+    (invoice as any).numberOfPeople ||
+    (invoice as any).numberOfGuests ||
+    0;
+
+  const deliveryDate =
+    (invoice as any).dateLivraison ||
+    (invoice as any).deliveryDate ||
+    "-";
+
+  const deliveryTime =
+    (invoice as any).deliveryTime ||
+    "-";
+
+  const deliveryAddress =
+    (invoice as any).deliveryAddress ||
+    "-";
+
+  const servicePeriod =
+    (invoice as any).servicePeriod ||
+    "-";
+
   const totals: any = invoice.totals ?? {};
   const discountAmount = Number(totals.discountAmount ?? totals.discount ?? 0);
 
@@ -499,6 +555,36 @@ export default function InvoiceDetailScreen() {
 
         <Text style={styles.line}>
           Créée le : {formatShortDocumentDate(invoice.createdAt)}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>
+          Informations événement
+        </Text>
+
+        <Text style={styles.line}>
+          Nombre de personnes : {guestCount}
+        </Text>
+
+        <Text style={styles.line}>
+          Date événement : {eventDate}
+        </Text>
+
+        <Text style={styles.line}>
+          Date livraison : {deliveryDate}
+        </Text>
+
+        <Text style={styles.line}>
+          Heure livraison : {deliveryTime}
+        </Text>
+
+        <Text style={styles.line}>
+          Période prestation : {servicePeriod}
+        </Text>
+
+        <Text style={styles.line}>
+          Adresse livraison : {deliveryAddress}
         </Text>
       </View>
 

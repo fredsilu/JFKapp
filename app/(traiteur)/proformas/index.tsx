@@ -89,6 +89,16 @@ export default function ProformasScreen() {
     }, [loadProformas])
   );
 
+  function displayDate(value: any): string {
+    if (!value) return "—";
+
+    if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+      return value;
+    }
+
+    return formatShortDocumentDate(value);
+  }
+
   function normalizeStatus(status?: string): ProformaStatus {
     if (
       status === 'draft' ||
@@ -472,9 +482,9 @@ export default function ProformasScreen() {
 
                   <Text style={styles.line}>Date : {formatShortDocumentDate(p.issueDate)}</Text>
 
-                  {p.eventDate ? (
+                  {(p.eventDate || (p as any).dateEvenement) ? (
                     <Text style={styles.line}>
-                      Événement : {formatShortDocumentDate(p.eventDate)}
+                      Événement : {displayDate(p.eventDate || (p as any).dateEvenement)}
                     </Text>
                   ) : null}
 
