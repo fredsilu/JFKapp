@@ -13,6 +13,34 @@ function money(value?: number) {
     maximumFractionDigits: 2,
   });
 }
+function getDocumentCurrency(proforma: CateringProforma): "USD" | "CDF" {
+  return ((proforma as any).currency as "USD" | "CDF") || "USD";
+}
+
+function getExchangeRate(proforma: CateringProforma): number {
+  const rate = Number((proforma as any).exchangeRate || 0);
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+function convertFromUsd(
+  value: number | undefined,
+  currency: "USD" | "CDF",
+  exchangeRate: number
+): number {
+  const amount = Number(value || 0);
+  return currency === "CDF" ? amount * exchangeRate : amount;
+}
+
+function currencySymbol(currency: "USD" | "CDF") {
+  return currency === "CDF" ? "CDF" : "$";
+}
+
+function formatMoneyByCurrency(value: number, currency: "USD" | "CDF") {
+  return Number(value || 0).toLocaleString("fr-FR", {
+    minimumFractionDigits: currency === "CDF" ? 0 : 2,
+    maximumFractionDigits: currency === "CDF" ? 0 : 2,
+  });
+}
 
 function safe(value?: string | null) {
   return value && value.trim() ? value.trim() : '';
@@ -89,9 +117,14 @@ function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
 }
 
 export function buildProformaHTML(
+
+
   proforma: CateringProforma,
   assets?: ProformaPdfAssets
 ): string {
+  const documentCurrency = getDocumentCurrency(proforma);
+  const exchangeRate = getExchangeRate(proforma);
+  const currency = currencySymbol(documentCurrency);
   const rows = (proforma.items || [])
     .map(
       (item) => `
@@ -99,10 +132,20 @@ export function buildProformaHTML(
   <td class="designation">${safe(item.label)}</td>
   <td class="center">${Number(item.numberOfDays || 1)}</td>
   <td class="center">${item.quantity || 0}</td>
-  <td class="currency">$</td>
-  <td class="price">${money(item.unitPrice)}</td>
-  <td class="currency">$</td>
-  <td class="price">${money(item.total)}</td>
+  <td class="currency">${currency}</td>
+<td class="price">
+  ${formatMoneyByCurrency(
+        convertFromUsd(item.unitPrice, documentCurrency, exchangeRate),
+        documentCurrency
+      )}
+</td>
+<td class="currency">${currency}</td>
+<td class="price">
+  ${formatMoneyByCurrency(
+        convertFromUsd(item.total, documentCurrency, exchangeRate),
+        documentCurrency
+      )}
+</td>
 </tr>`
     )
     .join('');
@@ -110,6 +153,13 @@ export function buildProformaHTML(
   const subtotal = proforma.totals?.subtotal ?? 0;
   const discount = proforma.totals?.discount ?? 0;
   const total = proforma.totals?.total ?? subtotal - discount;
+
+
+
+
+  const displayedSubtotal = convertFromUsd(subtotal, documentCurrency, exchangeRate);
+  const displayedDiscount = convertFromUsd(discount, documentCurrency, exchangeRate);
+  const displayedTotal = convertFromUsd(total, documentCurrency, exchangeRate);
 
   const clientName = safeClientName(proforma);
   const clientRccm = safe(proforma.clientRccm);
@@ -600,23 +650,44 @@ body {
   <div class="totals">
     <div class="subtotal">
       <div>Sous-total :</div>
-      <div>$</div>
-      <div style="text-align:right;">${money(subtotal)}</div>
+      <div>${currency}</div>
+<div style="text-align:right;">
+  ${formatMoneyByCurrency(displayedSubtotal, documentCurrency)}
+</div>
     </div>
 
     ${discount > 0 ? `
 <div class="subtotal">
   <div>Remise :</div>
-  <div>$</div>
-  <div style="text-align:right;">-${money(discount)}</div>
+  <div>${currency}</div>
+<div style="text-align:right;">
+  -${formatMoneyByCurrency(
+    displayedDiscount,
+    documentCurrency
+  )}
+</div>
 </div>
 ` : ''}
 
     <div class="grand-total">
       <div>Total à payer :</div>
-      <div>$</div>
-      <div style="text-align:right;">${money(total)}</div>
+      <div>${currency}</div>
+<div style="text-align:right;">
+  ${formatMoneyByCurrency(
+    displayedTotal,
+    documentCurrency
+  )}
+</div>
     </div>
+    ${documentCurrency === "CDF"
+      ? `
+  <div style="text-align:right; font-size:10px; margin-top:5px; color:#6b7280;">
+    Équivalent indicatif : USD ${money(total)}<br/>
+    Taux appliqué : 1 USD = ${formatMoneyByCurrency(exchangeRate, "CDF")} CDF
+  </div>
+  `
+      : ''
+    }
   </div>
 
   <div class="payment">
