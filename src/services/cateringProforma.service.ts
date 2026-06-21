@@ -52,6 +52,10 @@ export type CateringProforma = {
   clientAddress?: string;
   clientCity?: string;
 
+  currency?: "USD" | "CDF";
+  exchangeRate?: number;
+  baseCurrency?: "USD";
+
   number?: string;
   issueDate: string;
   validityDate?: string;
@@ -189,7 +193,14 @@ function normalizeProformaData(
     clientNif: cleanText(data.clientNif),
     clientCity: cleanText(data.clientCity) || 'Kinshasa / RDC',
 
+    currency: data.currency ?? "USD",
 
+    exchangeRate:
+      Number(data.exchangeRate || 0) > 0
+        ? Number(data.exchangeRate)
+        : 1,
+
+    baseCurrency: "USD",
 
     service: cleanText(data.service),
     serviceType: cleanText(data.serviceType),

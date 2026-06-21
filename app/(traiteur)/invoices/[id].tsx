@@ -556,6 +556,20 @@ export default function InvoiceDetailScreen() {
         <Text style={styles.line}>
           Date facture : {formatShortDocumentDate(invoice.issuedAt)}
         </Text>
+        <View style={styles.currencyCard}>
+          <Text style={styles.currencyTitle}>
+            Paramètres monétaires
+          </Text>
+
+          <Text style={styles.line}>
+            Devise : {invoice.currency ?? "USD"}
+          </Text>
+
+          <Text style={styles.line}>
+            Taux : 1 USD ={" "}
+            {Number(invoice.exchangeRate ?? 1).toLocaleString("fr-FR")} CDF
+          </Text>
+        </View>
 
         <Text style={styles.line}>
           Créée le : {formatShortDocumentDate(invoice.createdAt)}
@@ -642,6 +656,12 @@ export default function InvoiceDetailScreen() {
           <Text style={styles.grandTotalValue}>
             {formatCurrency(Number(totals.total ?? 0))}
           </Text>
+          {invoice.currency === "CDF" ? (
+            <Text style={styles.currencyHint}>
+              Taux figé : 1 USD ={" "}
+              {Number(invoice.exchangeRate ?? 1).toLocaleString("fr-FR")} CDF
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -842,6 +862,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
+  },
+  currencyCard: {
+    backgroundColor: "#EEF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+
+  currencyTitle: {
+    fontWeight: "800",
+    color: "#1E40AF",
+    marginBottom: 4,
+  },
+
+  currencyHint: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 4,
+    textAlign: "right",
   },
   statusText: { color: "#065F46", fontSize: 12, fontWeight: "800" },
   card: {

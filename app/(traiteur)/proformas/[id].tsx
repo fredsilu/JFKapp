@@ -421,7 +421,7 @@ export default function ProformaDetailScreen() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Détail proforma</Text>
-      
+
       <View style={styles.headerCard}>
         <Text style={styles.number}>
           {proforma.number || 'Proforma sans numéro'}
@@ -467,6 +467,36 @@ export default function ProformaDetailScreen() {
         <Text style={styles.line}>
           Date émission : {formatShortDocumentDate(proforma.issueDate)}
         </Text>
+
+        <View
+          style={{
+            backgroundColor: "#EEF6FF",
+            borderWidth: 1,
+            borderColor: "#BFDBFE",
+            padding: 12,
+            borderRadius: 10,
+            marginBottom: 12,
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: "800",
+              color: "#1E40AF",
+              marginBottom: 4,
+            }}
+          >
+            Paramètres monétaires
+          </Text>
+
+          <Text style={styles.line}>
+            Devise : {proforma.currency ?? "USD"}
+          </Text>
+
+          <Text style={styles.line}>
+            Taux : 1 USD ={" "}
+            {Number(proforma.exchangeRate ?? 1).toLocaleString("fr-FR")} CDF
+          </Text>
+        </View> 
 
         {proforma.validityDate ? (
           <Text style={styles.line}>
@@ -582,6 +612,20 @@ export default function ProformaDetailScreen() {
           <Text style={styles.grandTotalValue}>
             {formatCurrency(proforma.totals?.total ?? 0)}
           </Text>
+
+          {proforma.currency === "CDF" && (
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#6B7280",
+                marginTop: 4,
+                textAlign: "right",
+              }}
+            >
+              Taux figé : 1 USD ={" "}
+              {Number(proforma.exchangeRate ?? 1).toLocaleString("fr-FR")} CDF
+            </Text>
+          )}
         </View>
       </View>
 

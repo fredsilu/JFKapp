@@ -12,6 +12,10 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
+import {
+  getCompanySettings,
+  DocumentCurrency,
+} from "@/src/services/companySettings.service";
 
 import { db } from '@/lib/firebase';
 import { getCateringSimulations } from '@/src/services/cateringSimulation.service';
@@ -67,16 +71,21 @@ export default function CreateProformaFromSimulationScreen() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [documentCurrency, setDocumentCurrency] =
+    useState<DocumentCurrency>("USD");
+
+  const [usdToCdfRate, setUsdToCdfRate] = useState("2850");
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
 
-        const [sims, clients, dishesData] = await Promise.all([
+        const [sims, clients, dishesData, settings] = await Promise.all([
           getCateringSimulations(),
           fetchClients(),
           fetchCateringDishes(),
+          getCompanySettings(),
         ]);
 
         const foundSimulation = sims.find((s) => s.id === simulationId);
@@ -95,6 +104,8 @@ export default function CreateProformaFromSimulationScreen() {
         setDishes(dishesData);
         setSelectedMenu([]);
         setMenuNotesByDishId({});
+        setDocumentCurrency(settings.defaultDocumentCurrency);
+        setUsdToCdfRate(String(settings.usdToCdfRate ?? 2850));
       } catch (e) {
         console.error('❌ load simulation proforma error:', e);
         Alert.alert('Erreur', 'Impossible de charger la simulation');
@@ -255,6 +266,12 @@ export default function CreateProformaFromSimulationScreen() {
 
   async function handleCreate() {
     if (!simulation) return;
+    const exchangeRate = Number(usdToCdfRate);
+
+    if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+      Alert.alert("Erreur", "Le taux USD vers CDF doit être supérieur à 0.");
+      return;
+    }
 
     if (items.length === 0) {
       Alert.alert(
@@ -275,6 +292,9 @@ export default function CreateProformaFromSimulationScreen() {
         clientNif: getClientNif(),
         clientAddress: getClientAddress(),
         clientCity: getClientCity(),
+        currency: documentCurrency,
+        exchangeRate,
+        baseCurrency: "USD",
 
         issueDate: new Date().toISOString().slice(0, 10),
         validityDate: getValidityDate(),
@@ -334,7 +354,7 @@ export default function CreateProformaFromSimulationScreen() {
           subtotal,
           discount: generalDiscount,
           total: totalAfterDiscount,
-          currency: 'USD',
+          currency: documentCurrency,
         },
       });
 
@@ -382,7 +402,59 @@ export default function CreateProformaFromSimulationScreen() {
         <Text style={styles.line}>Client : {getClientName()}</Text>
         <Text style={styles.line}>Date événement : {getEventDate() || '—'}</Text>
       </View>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Devise du document</Text>
 
+        <View style={styles.currencyRow}>
+          <TouchableOpacity
+            onPress={() => setDocumentCurrency("USD")}
+            style={[
+              styles.currencyButton,
+              documentCurrency === "USD" && styles.currencyButtonActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.currencyButtonText,
+                documentCurrency === "USD" && styles.currencyButtonTextActive,
+              ]}
+            >
+              USD
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setDocumentCurrency("CDF")}
+            style={[
+              styles.currencyButton,
+              documentCurrency === "CDF" && styles.currencyButtonActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.currencyButtonText,
+                documentCurrency === "CDF" && styles.currencyButtonTextActive,
+              ]}
+            >
+              CDF
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.line}>Taux USD vers CDF</Text>
+
+        <TextInput
+          value={usdToCdfRate}
+          onChangeText={setUsdToCdfRate}
+          keyboardType="numeric"
+          style={styles.rateInput}
+          placeholder="Ex: 2850"
+        />
+
+        <Text style={styles.helperText}>
+          Taux figé sur cette proforma : 1 USD = {usdToCdfRate || "0"} CDF
+        </Text>
+      </View>
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Lignes proforma</Text>
 
@@ -702,5 +774,44 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#111827',
     fontWeight: '800',
+  },
+  currencyRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  currencyButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+
+  currencyButtonActive: {
+    backgroundColor: "#111827",
+    borderColor: "#111827",
+  },
+
+  currencyButtonText: {
+    fontWeight: "900",
+    color: "#111827",
+  },
+
+  currencyButtonTextActive: {
+    color: "#fff",
+  },
+
+  rateInput: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 4,
+    marginBottom: 8,
+    backgroundColor: "#fff",
   },
 });

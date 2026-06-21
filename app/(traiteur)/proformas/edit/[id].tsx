@@ -105,12 +105,16 @@ export default function EditProformaScreen() {
           numberOfDays: Number(item.days ?? item.numberOfDays ?? 1),
         })),
 
+        currency: proforma.currency ?? "USD",
+        exchangeRate: Number(proforma.exchangeRate ?? 1),
+        baseCurrency: proforma.baseCurrency ?? "USD",
+
         totals: {
           subtotal: Number(totals.subtotal ?? 0),
           discount: Number((totals as any).discount ?? 0),
           tax: Number((totals as any).tax ?? 0),
           total: Number(totals.total ?? 0),
-          currency: "USD",
+          currency: proforma.currency ?? "USD",
         },
       });
 
