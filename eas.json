@@ -3,47 +3,73 @@
     "version": ">= 16.1.0",
     "appVersionSource": "remote"
   },
-
   "build": {
     "development": {
-      "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "development"
+        "EXPO_PUBLIC_APP_ENV": "test",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyAX36VChlxdx6DltY5mPAnK9qYxyIif9g4",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokeyproject.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "tokeyproject",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "tokeyproject.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "212272618971",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:212272618971:web:8495015b2c115cf8895bfe",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-YYV92PXNMQ",
+        "EXPO_PUBLIC_DOCUMENT_PREFIX": "TEST-"
       }
     },
-
     "beta": {
       "distribution": "internal",
-
       "android": {
         "buildType": "apk"
       },
-
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "test"
+        "EXPO_PUBLIC_APP_ENV": "test",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyAX36VChlxdx6DltY5mPAnK9qYxyIif9g4",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokeyproject.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "tokeyproject",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "tokeyproject.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "212272618971",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:212272618971:web:8495015b2c115cf8895bfe",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-YYV92PXNMQ",
+        "EXPO_PUBLIC_DOCUMENT_PREFIX": "TEST-"
       }
     },
-
     "preview": {
+      "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
-
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "preview"
+        "EXPO_PUBLIC_APP_ENV": "test",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyAX36VChlxdx6DltY5mPAnK9qYxyIif9g4",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "tokeyproject.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "tokeyproject",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "tokeyproject.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "212272618971",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:212272618971:web:8495015b2c115cf8895bfe",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-YYV92PXNMQ",
+        "EXPO_PUBLIC_DOCUMENT_PREFIX": "TEST-"
       }
     },
-
     "production": {
       "autoIncrement": true,
-
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "production"
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyA3WJ--W6OVsM5_wZkh2fkE9YgbFWuV2Eo",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "jfkapp-production.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "jfkapp-production",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "jfkapp-production.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "920811829209",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:920811829209:web:6f4b217b3a0f3fdb2d8bc8",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-V19YY5E8J6",
+        "EXPO_PUBLIC_DOCUMENT_PREFIX": "PROD-"
       }
     }
   },
-
   "submit": {
     "production": {}
   }

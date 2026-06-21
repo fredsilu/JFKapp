@@ -1,3 +1,4 @@
+//scripts/dataManager/config.ts
 export type DataGroupName =
     | "master"
     | "operations"
