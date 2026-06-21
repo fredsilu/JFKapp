@@ -375,8 +375,11 @@ export async function cancelCateringInvoice(
     snapshot: {
       number: invoice.number,
       previousStatus: invoice.status,
-      newStatus: "cancelled",
-      reason: cleanReason,
+      newStatus: "issued",
+      isLocked: true,
+      currency: invoice.currency ?? "USD",
+      exchangeRate: Number(invoice.exchangeRate ?? 1),
+      baseCurrency: invoice.baseCurrency ?? "USD",
     },
   });
 
@@ -842,6 +845,9 @@ export async function updateDraftInvoice(
     | "comment"
     | "sections"
     | "items"
+    | "currency"
+    | "exchangeRate"
+    | "baseCurrency"
     | "totals"
   >>
 ): Promise<boolean> {

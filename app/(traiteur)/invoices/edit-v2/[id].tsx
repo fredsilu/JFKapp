@@ -109,8 +109,16 @@ export default function EditInvoiceV2Screen() {
 
         sections: payload.sections,
 
+        currency: invoice.currency ?? "USD",
+        exchangeRate: Number(invoice.exchangeRate ?? 1),
+        baseCurrency: invoice.baseCurrency ?? "USD",
+
         items: items as any,
-        totals: totals as any,
+
+        totals: {
+          ...(totals as any),
+          currency: invoice.currency ?? "USD",
+        },
       });
 
       Alert.alert("Succès", "Facture sauvegardée.");
