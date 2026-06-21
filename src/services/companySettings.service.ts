@@ -1,4 +1,3 @@
-// src/services/companySettings.service.ts
 import {
     doc,
     getDoc,
@@ -19,6 +18,8 @@ export type CompanyBankAccount = {
     isDefault?: boolean;
 };
 
+export type DocumentCurrency = "USD" | "CDF";
+
 export type CompanySettings = {
     companyName: string;
     phone: string;
@@ -30,6 +31,15 @@ export type CompanySettings = {
     nif: string;
 
     bankAccounts: CompanyBankAccount[];
+
+    /**
+     * Multi-devise JFKApp
+     * Calcul interne = USD
+     * Document client = USD ou CDF
+     */
+    baseCurrency: "USD";
+    defaultDocumentCurrency: DocumentCurrency;
+    usdToCdfRate: number;
 
     updatedAt?: any;
 };
@@ -53,6 +63,10 @@ export const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
             isDefault: true,
         },
     ],
+
+    baseCurrency: "USD",
+    defaultDocumentCurrency: "USD",
+    usdToCdfRate: 2850,
 };
 
 export async function getCompanySettings(): Promise<CompanySettings> {
@@ -78,6 +92,14 @@ export async function getCompanySettings(): Promise<CompanySettings> {
             data.bankAccounts && data.bankAccounts.length > 0
                 ? data.bankAccounts
                 : DEFAULT_COMPANY_SETTINGS.bankAccounts,
+
+        baseCurrency: "USD",
+        defaultDocumentCurrency:
+            data.defaultDocumentCurrency === "CDF" ? "CDF" : "USD",
+        usdToCdfRate:
+            Number(data.usdToCdfRate || 0) > 0
+                ? Number(data.usdToCdfRate)
+                : DEFAULT_COMPANY_SETTINGS.usdToCdfRate,
     };
 }
 
@@ -104,4 +126,15 @@ export function getDefaultBankAccount(
         settings.bankAccounts[0] ??
         DEFAULT_COMPANY_SETTINGS.bankAccounts[0]
     );
+}
+
+export function getCurrencySettings(settings: CompanySettings) {
+    return {
+        baseCurrency: settings.baseCurrency || "USD",
+        defaultDocumentCurrency: settings.defaultDocumentCurrency || "USD",
+        usdToCdfRate:
+            Number(settings.usdToCdfRate || 0) > 0
+                ? Number(settings.usdToCdfRate)
+                : DEFAULT_COMPANY_SETTINGS.usdToCdfRate,
+    };
 }

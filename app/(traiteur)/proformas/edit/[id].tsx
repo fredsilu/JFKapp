@@ -90,11 +90,11 @@ export default function EditProformaScreen() {
         eventName: payload.eventName,
         eventDate: payload.eventDate,
         dateLivraison: payload.dateLivraison,
-        servicePeriod: payload.servicePeriod,
+        servicePeriod: payload.servicePeriod || "",
         numberOfPeople: payload.numberOfPeople,
         deliveryTime: payload.deliveryTime,
         deliveryAddress: payload.deliveryAddress,
-       
+
         sections: payload.sections,
 
         items: items.map((item: any) => ({
@@ -159,7 +159,12 @@ export default function EditProformaScreen() {
       initialNumberOfPeople={Number(proforma.numberOfPeople ?? 0)}
       initialEventDate={proforma.eventDate ?? ""}
       initialDateLivraison={(proforma as any).dateLivraison ?? ""}
-      initialServicePeriod={(proforma as any).servicePeriod ?? ""}
+      initialServicePeriod={
+        (proforma as any).servicePeriod ??
+        (proforma as any).period ??
+        (proforma as any).prestationPeriod ??
+        ""
+      }
       initialDeliveryTime={(proforma as any).deliveryTime ?? ""}
       initialDeliveryAddress={(proforma as any).deliveryAddress ?? ""}
       initialComment=""

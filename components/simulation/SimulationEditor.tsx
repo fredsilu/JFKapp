@@ -118,6 +118,46 @@ export default function SimulationEditor({
   const [servicePeriod, setServicePeriod] =
     useState(initialServicePeriod);
 
+  useEffect(() => {
+    setEventName(initialEventName || "");
+  }, [initialEventName]);
+
+  useEffect(() => {
+    setEventDate(initialEventDate || "");
+  }, [initialEventDate]);
+
+  useEffect(() => {
+    setClientName(initialClientName || "");
+  }, [initialClientName]);
+
+  useEffect(() => {
+    setNumberOfPeople(String(initialNumberOfPeople || 0));
+  }, [initialNumberOfPeople]);
+
+  useEffect(() => {
+    setDateLivraison(initialDateLivraison || "");
+  }, [initialDateLivraison]);
+
+  useEffect(() => {
+    setDeliveryTime(initialDeliveryTime || "");
+  }, [initialDeliveryTime]);
+
+  useEffect(() => {
+    setServicePeriod(initialServicePeriod || "");
+  }, [initialServicePeriod]);
+
+  useEffect(() => {
+    setDeliveryAddress(initialDeliveryAddress || "");
+  }, [initialDeliveryAddress]);
+
+  useEffect(() => {
+    setComment(initialComment || "");
+  }, [initialComment]);
+
+  useEffect(() => {
+    setDiscountAmount(String(initialDiscount || 0));
+  }, [initialDiscount]);
+
   const [sections, setSections] = useState<CateringSection[]>([]);
   const [serviceSettings, setServiceSettings] =
     useState<CateringServiceSettings | null>(null);

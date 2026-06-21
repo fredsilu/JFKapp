@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from '@/lib/firebase';
+import { getCompanySettings } from "@/src/services/companySettings.service";
 
 import { CateringOrder } from '@/types/catering';
 
@@ -69,6 +70,7 @@ function cleanUndefinedValues<T>(value: T): T {
 ========================================= */
 export async function createProformaFromSimulation(simulationId: string) {
   const simulation = await getSimulationById(simulationId);
+  const settings = await getCompanySettings();
 
   if (!simulation) {
     throw new Error('Simulation introuvable');
@@ -125,6 +127,10 @@ export async function createProformaFromSimulation(simulationId: string) {
     },
 
     designation: eventName,
+
+    currency: settings.defaultDocumentCurrency,
+    exchangeRate: settings.usdToCdfRate,
+    baseCurrency: settings.baseCurrency,
 
     dateLivraison: simulation.dateLivraison ?? '',
     deliveryDate: simulation.dateLivraison ?? '',
@@ -433,6 +439,9 @@ export async function createOrderFromProforma(proforma: any) {
     },
 
     designation: proforma.designation ?? '',
+    currency: proforma.currency ?? "USD",
+    exchangeRate: Number(proforma.exchangeRate ?? 1),
+    baseCurrency: proforma.baseCurrency ?? "USD",
 
     dateLivraison: deliveryDateValue,
     deliveryDate: deliveryDateValue,

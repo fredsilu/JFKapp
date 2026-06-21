@@ -1,20 +1,22 @@
-//app/(traiteur)/proformas/index.tsx
+// app/(traiteur)/proformas/index.tsx
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator, TextInput,
+  ActivityIndicator,
   Alert,
-  Platform,
   BackHandler,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
-
 import { router, useFocusEffect, Stack } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+
 import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import {
   CateringProforma,
@@ -38,6 +40,9 @@ type ProformaStatus =
 const ACTIVE_STATUSES: ProformaStatus[] = ['draft', 'sent', 'approved'];
 
 export default function ProformasScreen() {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
+
   const [proformas, setProformas] = useState<CateringProforma[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ProformaView>('active');
@@ -48,13 +53,18 @@ export default function ProformasScreen() {
       setLoading(true);
 
       const data = await getCateringProformas();
-
       const visibleData = data.filter((p) => p.isDeleted !== true);
 
-
       const sortedData = [...visibleData].sort((a, b) => {
-        const dateA = a.createdAt?.toMillis?.() || new Date(a.issueDate || '').getTime() || 0;
-        const dateB = b.createdAt?.toMillis?.() || new Date(b.issueDate || '').getTime() || 0;
+        const dateA =
+          a.createdAt?.toMillis?.() ||
+          new Date(a.issueDate || '').getTime() ||
+          0;
+
+        const dateB =
+          b.createdAt?.toMillis?.() ||
+          new Date(b.issueDate || '').getTime() ||
+          0;
 
         return dateB - dateA;
       });
@@ -67,6 +77,7 @@ export default function ProformasScreen() {
       setLoading(false);
     }
   }, []);
+
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -90,9 +101,9 @@ export default function ProformasScreen() {
   );
 
   function displayDate(value: any): string {
-    if (!value) return "—";
+    if (!value) return '—';
 
-    if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
       return value;
     }
 
@@ -135,7 +146,6 @@ export default function ProformasScreen() {
   const activeProformas = useMemo(() => {
     return proformas.filter((p) => {
       const status = normalizeStatus(p.status);
-
       return ACTIVE_STATUSES.includes(status) && !isConvertedProforma(p);
     });
   }, [proformas]);
@@ -143,7 +153,6 @@ export default function ProformasScreen() {
   const approvedProformas = useMemo(() => {
     return proformas.filter((p) => {
       const status = normalizeStatus(p.status);
-
       return status === 'approved' && !isConvertedProforma(p);
     });
   }, [proformas]);
@@ -213,8 +222,6 @@ export default function ProformasScreen() {
     );
   }, [invoicedProformas]);
 
-
-
   function getClientLabel(p: CateringProforma) {
     return p.clientName || p.clientId || 'Client non défini';
   }
@@ -246,47 +253,26 @@ export default function ProformasScreen() {
     }
   }
 
-  function getStatusStyle(p: CateringProforma) {
+  function getStatusColors(p: CateringProforma) {
     const status = normalizeStatus(p.status);
 
     if (isInvoicedProforma(p)) {
-      return {
-        badge: styles.invoicedBadge,
-        text: styles.invoicedBadgeText,
-      };
+      return { backgroundColor: '#DBEAFE', color: '#1E40AF' };
     }
-    if (status === 'cancelled') {
-      return {
-        badge: styles.closedBadge,
-        text: styles.closedBadgeText,
-      };
+
+    if (status === 'cancelled' || status === 'rejected' || status === 'expired') {
+      return { backgroundColor: '#FEE2E2', color: '#991B1B' };
     }
 
     if (status === 'converted' || Boolean(p.orderId)) {
-      return {
-        badge: styles.convertedBadge,
-        text: styles.convertedBadgeText,
-      };
+      return { backgroundColor: '#DCFCE7', color: '#166534' };
     }
 
     if (status === 'approved') {
-      return {
-        badge: styles.approvedBadge,
-        text: styles.approvedBadgeText,
-      };
+      return { backgroundColor: '#FEF3C7', color: '#92400E' };
     }
 
-    if (status === 'rejected' || status === 'expired') {
-      return {
-        badge: styles.closedBadge,
-        text: styles.closedBadgeText,
-      };
-    }
-
-    return {
-      badge: styles.statusBadge,
-      text: styles.statusText,
-    };
+    return { backgroundColor: '#E8F0FE', color: '#1A73E8' };
   }
 
   function canCancelProforma(p: CateringProforma) {
@@ -307,7 +293,6 @@ export default function ProformasScreen() {
 
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(message);
-
       if (!confirmed) return;
 
       try {
@@ -352,6 +337,23 @@ export default function ProformasScreen() {
     });
   }
 
+  function renderStatusBadge(p: CateringProforma) {
+    const colors = getStatusColors(p);
+
+    return (
+      <View
+        style={[
+          styles.statusBadge,
+          { backgroundColor: colors.backgroundColor },
+        ]}
+      >
+        <Text style={[styles.statusText, { color: colors.color }]}>
+          {getStatusLabel(p)}
+        </Text>
+      </View>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -360,60 +362,107 @@ export default function ProformasScreen() {
       </View>
     );
   }
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          isDesktop && styles.desktopContent,
+        ]}
+      >
         <TouchableOpacity
           onPress={() => router.replace('/(traiteur)/sales')}
           style={styles.backPill}
           activeOpacity={0.75}
         >
           <Icon name="arrow-back" size={18} color="#0F4C81" />
-          <Text style={styles.backPillText}>
-            Retour aux ventes
-          </Text>
+          <Text style={styles.backPillText}>Retour aux ventes</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Proformas</Text>
-
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Proformas en cours</Text>
-          <Text style={styles.summaryValue}>{activeProformas.length}</Text>
-
-          <Text style={styles.summaryLabel}>Total en cours</Text>
-          <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Proformas</Text>
+            <Text style={styles.subtitle}>
+              Suivez les proformas en cours, converties et facturées.
+            </Text>
+          </View>
         </View>
 
-        <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
-          <Text style={styles.summaryLabel}>Proformas acceptées non converties</Text>
-          <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
+        {isDesktop ? (
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Icon name="pending-actions" size={24} color="#007AFF" />
+              <View>
+                <Text style={styles.statLabel}>En cours</Text>
+                <Text style={styles.statValue}>{activeProformas.length}</Text>
+                <Text style={styles.statAmount}>{formatCurrency(activeTotal)}</Text>
+              </View>
+            </View>
 
-          <Text style={styles.summaryLabel}>Total accepté</Text>
-          <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
-        </View>
+            <View style={styles.statCard}>
+              <Icon name="check-circle" size={24} color="#92400E" />
+              <View>
+                <Text style={styles.statLabel}>Acceptées</Text>
+                <Text style={styles.statValue}>{approvedProformas.length}</Text>
+                <Text style={styles.statAmount}>{formatCurrency(approvedTotal)}</Text>
+              </View>
+            </View>
 
-        <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
-          <Text style={styles.summaryLabel}>Proformas converties</Text>
-          <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
+            <View style={styles.statCard}>
+              <Icon name="swap-horiz" size={24} color="#065F46" />
+              <View>
+                <Text style={styles.statLabel}>Converties</Text>
+                <Text style={styles.statValue}>{convertedProformas.length}</Text>
+                <Text style={styles.statAmount}>{formatCurrency(convertedTotal)}</Text>
+              </View>
+            </View>
 
-          <Text style={styles.summaryLabel}>Total converti</Text>
-          <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
-        </View>
+            <View style={styles.statCard}>
+              <Icon name="receipt-long" size={24} color="#1E3A8A" />
+              <View>
+                <Text style={styles.statLabel}>Facturées</Text>
+                <Text style={styles.statValue}>{invoicedProformas.length}</Text>
+                <Text style={styles.statAmount}>{formatCurrency(invoicedTotal)}</Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Proformas en cours</Text>
+              <Text style={styles.summaryValue}>{activeProformas.length}</Text>
+              <Text style={styles.summaryLabel}>Total en cours</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
+            </View>
 
-        <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
-          <Text style={styles.summaryLabel}>Proformas facturées</Text>
-          <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
+            <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
+              <Text style={styles.summaryLabel}>
+                Proformas acceptées non converties
+              </Text>
+              <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
+              <Text style={styles.summaryLabel}>Total accepté</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
+            </View>
 
-          <Text style={styles.summaryLabel}>Total facturé</Text>
-          <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
-        </View>
+            <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
+              <Text style={styles.summaryLabel}>Proformas converties</Text>
+              <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
+              <Text style={styles.summaryLabel}>Total converti</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
+            </View>
+
+            <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
+              <Text style={styles.summaryLabel}>Proformas facturées</Text>
+              <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
+              <Text style={styles.summaryLabel}>Total facturé</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
+            </View>
+          </>
+        )}
 
         <TextInput
           style={styles.searchInput}
@@ -428,7 +477,12 @@ export default function ProformasScreen() {
             style={[styles.tab, view === 'active' && styles.activeTab]}
             onPress={() => setView('active')}
           >
-            <Text style={[styles.tabText, view === 'active' && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                view === 'active' && styles.activeTabText,
+              ]}
+            >
               En cours
             </Text>
           </TouchableOpacity>
@@ -437,7 +491,12 @@ export default function ProformasScreen() {
             style={[styles.tab, view === 'converted' && styles.activeTab]}
             onPress={() => setView('converted')}
           >
-            <Text style={[styles.tabText, view === 'converted' && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                view === 'converted' && styles.activeTabText,
+              ]}
+            >
               Converties
             </Text>
           </TouchableOpacity>
@@ -446,7 +505,12 @@ export default function ProformasScreen() {
             style={[styles.tab, view === 'all' && styles.activeTab]}
             onPress={() => setView('all')}
           >
-            <Text style={[styles.tabText, view === 'all' && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                view === 'all' && styles.activeTabText,
+              ]}
+            >
               Toutes
             </Text>
           </TouchableOpacity>
@@ -454,80 +518,148 @@ export default function ProformasScreen() {
 
         {displayedProformas.length === 0 ? (
           <Text style={styles.empty}>Aucune proforma dans cette vue</Text>
+        ) : isDesktop ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.th, styles.colNumber]}>N° Proforma</Text>
+                <Text style={[styles.th, styles.colClient]}>Client</Text>
+                <Text style={[styles.th, styles.colDate]}>Date</Text>
+                <Text style={[styles.th, styles.colEvent]}>Événement</Text>
+                <Text style={[styles.th, styles.colAmount]}>Montant</Text>
+                <Text style={[styles.th, styles.colStatus]}>Statut</Text>
+                <Text style={[styles.th, styles.colDate]}>Commande</Text>
+                <Text style={[styles.th, styles.colDate]}>Facture</Text>
+                <Text style={[styles.th, styles.colActions]}>Actions</Text>
+              </View>
+
+              {displayedProformas.map((p) => (
+                <View key={p.id || p.number} style={styles.tableRow}>
+                  <Text style={[styles.td, styles.colNumber]} numberOfLines={1}>
+                    {p.number || '—'}
+                  </Text>
+
+                  <Text style={[styles.td, styles.colClient]} numberOfLines={1}>
+                    {getClientLabel(p)}
+                  </Text>
+
+                  <Text style={[styles.td, styles.colDate]}>
+                    {formatShortDocumentDate(p.issueDate)}
+                  </Text>
+
+                  <Text style={[styles.td, styles.colEvent]} numberOfLines={1}>
+                    {p.eventName || '—'}
+                  </Text>
+
+                  <Text style={[styles.td, styles.colAmount]}>
+                    {formatCurrency(Number(p.totals?.total || 0))}
+                  </Text>
+
+                  <View style={styles.colStatus}>{renderStatusBadge(p)}</View>
+
+                  <Text style={[styles.td, styles.colDate]} numberOfLines={1}>
+                    {p.orderNumber || '—'}
+                  </Text>
+
+                  <Text style={[styles.td, styles.colDate]} numberOfLines={1}>
+                    {p.invoiceNumber || '—'}
+                  </Text>
+
+                  <View style={[styles.rowActions, styles.colActions]}>
+                    <TouchableOpacity
+                      style={styles.smallActionButton}
+                      onPress={() => openProforma(p.id)}
+                    >
+                      <Icon name="visibility" size={16} color="#007AFF" />
+                      <Text style={styles.smallActionText}>Voir</Text>
+                    </TouchableOpacity>
+
+                    {canCancelProforma(p) ? (
+                      <TouchableOpacity
+                        style={styles.deleteActionButtonLarge}
+                        onPress={() => handleCancelProforma(p)}
+                      >
+                        <Icon name="close" size={16} color="#DC2626" />
+                        <Text style={styles.deleteActionText}>Annuler</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.readOnlyBadge}>
+                        <Icon name="lock-outline" size={14} color="#6B7280" />
+                        <Text style={styles.readOnlyText}>Lecture seule</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         ) : (
-          displayedProformas.map((p) => {
-            const statusStyle = getStatusStyle(p);
+          displayedProformas.map((p) => (
+            <View key={p.id || p.number} style={styles.card}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => openProforma(p.id)}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>
+                      {p.number || 'Proforma sans numéro'}
+                    </Text>
 
-            return (
-              <View key={p.id || p.number} style={styles.card}>
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={() => openProforma(p.id)}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.cardTitle}>
-                        {p.number || 'Proforma sans numéro'}
-                      </Text>
-
-                      <Text style={styles.client}>{getClientLabel(p)}</Text>
-                    </View>
-
-                    <View style={[styles.statusBadge, statusStyle.badge]}>
-                      <Text style={[styles.statusText, statusStyle.text]}>
-                        {getStatusLabel(p)}
-                      </Text>
-                    </View>
+                    <Text style={styles.client}>{getClientLabel(p)}</Text>
                   </View>
 
-                  <Text style={styles.line}>Date : {formatShortDocumentDate(p.issueDate)}</Text>
+                  {renderStatusBadge(p)}
+                </View>
 
-                  {(p.eventDate || (p as any).dateEvenement) ? (
-                    <Text style={styles.line}>
-                      Événement : {displayDate(p.eventDate || (p as any).dateEvenement)}
-                    </Text>
-                  ) : null}
+                <Text style={styles.line}>
+                  Date : {formatShortDocumentDate(p.issueDate)}
+                </Text>
 
-                  {p.orderNumber ? (
-                    <Text style={styles.line}>Commande : {p.orderNumber}</Text>
-                  ) : null}
-
-                  {p.invoiceNumber ? (
-                    <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
-                  ) : null}
-
-                  <Text style={styles.amount}>
-                    Total : {formatCurrency(Number(p.totals?.total || 0))}
+                {(p.eventDate || (p as any).dateEvenement) ? (
+                  <Text style={styles.line}>
+                    Événement :{' '}
+                    {displayDate(p.eventDate || (p as any).dateEvenement)}
                   </Text>
+                ) : null}
+
+                {p.orderNumber ? (
+                  <Text style={styles.line}>Commande : {p.orderNumber}</Text>
+                ) : null}
+
+                {p.invoiceNumber ? (
+                  <Text style={styles.line}>Facture : {p.invoiceNumber}</Text>
+                ) : null}
+
+                <Text style={styles.amount}>
+                  Total : {formatCurrency(Number(p.totals?.total || 0))}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.primaryAction}
+                  onPress={() => openProforma(p.id)}
+                >
+                  <Text style={styles.primaryActionText}>Voir</Text>
                 </TouchableOpacity>
 
-                <View style={styles.actions}>
+                {canCancelProforma(p) ? (
                   <TouchableOpacity
-                    style={styles.primaryAction}
-                    onPress={() => openProforma(p.id)}
+                    style={styles.cancelAction}
+                    onPress={() => handleCancelProforma(p)}
                   >
-                    <Text style={styles.primaryActionText}>Voir</Text>
+                    <Text style={styles.cancelActionText}>Annuler</Text>
                   </TouchableOpacity>
-
-                  {canCancelProforma(p) ? (
-                    <TouchableOpacity
-                      style={styles.cancelAction}
-                      onPress={() => handleCancelProforma(p)}
-                    >
-                      <Text style={styles.cancelActionText}>Annuler</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View style={styles.readOnlyBadge}>
-                      <Icon name="lock-outline" size={14} color="#6B7280" />
-                      <Text style={styles.readOnlyText}>
-                        Lecture seule
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                ) : (
+                  <View style={styles.mobileReadOnlyBadge}>
+                    <Icon name="lock-outline" size={14} color="#6B7280" />
+                    <Text style={styles.readOnlyText}>Lecture seule</Text>
+                  </View>
+                )}
               </View>
-            );
-          })
+            </View>
+          ))
         )}
 
         <View style={{ height: 40 }} />
@@ -543,6 +675,16 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
+  content: {
+    paddingBottom: 30,
+  },
+
+  desktopContent: {
+    width: '100%',
+    maxWidth: 1500,
+    alignSelf: 'center',
+  },
+
   center: {
     flex: 1,
     backgroundColor: '#fff',
@@ -556,11 +698,82 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
 
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 20,
+  },
+
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
     marginBottom: 16,
+  },
+
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
     color: '#111827',
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  statCard: {
+    flex: 1,
+    minHeight: 96,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+
+  statLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  statAmount: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '700',
+    marginTop: 2,
   },
 
   summaryCard: {
@@ -601,6 +814,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
+  searchInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    marginBottom: 14,
+  },
+
   tabs: {
     flexDirection: 'row',
     backgroundColor: '#E5E7EB',
@@ -637,6 +862,148 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 
+  table: {
+    minWidth: 1450,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  tableHeader: {
+    flexDirection: 'row',
+    minHeight: 44,
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  tableRow: {
+    flexDirection: 'row',
+    minHeight: 66,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  th: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#374151',
+    paddingHorizontal: 12,
+  },
+
+  td: {
+    fontSize: 13,
+    color: '#111827',
+    paddingHorizontal: 12,
+  },
+
+  colNumber: {
+    width: 150,
+  },
+
+  colClient: {
+    width: 180,
+  },
+
+  colDate: {
+    width: 130,
+  },
+
+  colEvent: {
+    width: 230,
+  },
+
+  colAmount: {
+    width: 140,
+    textAlign: 'right',
+  },
+
+  colStatus: {
+    width: 130,
+    justifyContent: 'center',
+  },
+
+  colActions: {
+    width: 290,
+  },
+
+  rowActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+
+  smallActionButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  smallActionText: {
+    color: '#007AFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  deleteActionButtonLarge: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  deleteActionText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  readOnlyBadge: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  mobileReadOnlyBadge: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 9,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 4,
+  },
+
+  readOnlyText: {
+    color: '#6B7280',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -665,65 +1032,21 @@ const styles = StyleSheet.create({
   },
 
   statusBadge: {
-    backgroundColor: '#E8F0FE',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
+    alignSelf: 'flex-start',
   },
 
   statusText: {
-    color: '#1A73E8',
     fontSize: 11,
     fontWeight: '700',
-  },
-
-  approvedBadge: {
-    backgroundColor: '#FEF3C7',
-  },
-
-  approvedBadgeText: {
-    color: '#92400E',
-  },
-
-  convertedBadge: {
-    backgroundColor: '#DCFCE7',
-  },
-
-  convertedBadgeText: {
-    color: '#166534',
-  },
-
-  invoicedBadge: {
-    backgroundColor: '#DBEAFE',
-  },
-
-  invoicedBadgeText: {
-    color: '#1E40AF',
-  },
-
-  closedBadge: {
-    backgroundColor: '#FEE2E2',
-  },
-
-  closedBadgeText: {
-    color: '#991B1B',
   },
 
   line: {
     fontSize: 14,
     color: '#4B5563',
     marginBottom: 4,
-  },
-  searchInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#111827',
-    marginBottom: 14,
   },
 
   amount: {
@@ -755,37 +1078,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  readOnlyBadge: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 9,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-
-  readOnlyText: {
-    color: '#6B7280',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-
-  backPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#EEF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginBottom: 12,
-  },
   cancelAction: {
     flex: 1,
     backgroundColor: '#FEE2E2',
@@ -798,11 +1090,5 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '800',
     fontSize: 13,
-  },
-
-  backPillText: {
-    color: '#0F4C81',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

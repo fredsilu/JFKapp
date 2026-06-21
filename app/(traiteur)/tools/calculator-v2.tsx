@@ -188,6 +188,7 @@ export default function CalculatorV2Screen() {
             : "Création de simulation"
         }
         initialEventName={reuseSimulation?.eventName || reuseSimulation?.name || ""}
+        initialServicePeriod={reuseSimulation?.servicePeriod || ""}
         initialClientName={
           reuseSimulation?.clientName || clientName || ""
         }

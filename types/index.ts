@@ -164,14 +164,14 @@ export interface Order {
 
   // Statut
   status?:
-    | 'draft'
-    | 'sent'
-    | 'confirmed'
-    | 'converted'
-    | 'in-production'
-    | 'delivered'
-    | 'cancelled'
-   
+  | 'draft'
+  | 'sent'
+  | 'confirmed'
+  | 'converted'
+  | 'in-production'
+  | 'delivered'
+  | 'cancelled'
+
 
   // Liens documents
   proformaId?: string;
@@ -204,6 +204,7 @@ export interface Order {
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
+  servicePeriod?: string;
 
   // Informations business
   designation?: string;

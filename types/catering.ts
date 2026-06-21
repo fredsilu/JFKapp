@@ -269,6 +269,8 @@ export interface CateringDocumentClient {
   nif?: string;
 }
 
+export type CateringCurrency = "USD" | "CDF";
+
 /**
  * =========================
  * ORDER / PROFORMA
@@ -308,6 +310,10 @@ export type CateringOrder = {
 
   designation: string;
   eventName?: string;
+
+  currency?: CateringCurrency;
+  exchangeRate?: number;
+  baseCurrency?: "USD";
 
   dateLivraison: string;
   deliveryTime?: string;
@@ -363,6 +369,7 @@ export type CateringOrder = {
  * FACTURE
  * =========================
  */
+
 
 export type CateringInvoiceStatus =
   | "draft"
@@ -470,6 +477,20 @@ export type CateringInvoice = {
   client: CateringDocumentClient;
 
   designation: string;
+
+  /**
+ * Multi-devise
+ * Calcul interne JFKApp = USD
+ * Document client = USD ou CDF
+ */
+  currency?: CateringCurrency;
+
+  exchangeRate?: number;
+
+  /**
+   * Toujours USD pour les calculs internes
+   */
+  baseCurrency?: "USD";
 
   dateLivraison: string;
   deliveryTime?: string;

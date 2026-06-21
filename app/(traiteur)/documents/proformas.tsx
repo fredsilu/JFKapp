@@ -480,6 +480,10 @@ export default function DocumentProformasScreen() {
 
           <FlatList
             data={filteredProformas}
+            style={{
+              flex: 1,
+              minHeight: 0,
+            }}
             keyExtractor={(item: any) => item.id}
             ListEmptyComponent={
               <View style={styles.emptyBox}>
@@ -604,6 +608,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    height: 700,
   },
   tableHeader: {
     flexDirection: "row",

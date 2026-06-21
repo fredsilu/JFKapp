@@ -1,4 +1,4 @@
-//app/_layout.tsx
+// app/_layout.tsx
 import {
   DarkTheme,
   DefaultTheme,
@@ -9,6 +9,12 @@ import { Stack, useSegments, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Text,
+  View,
+} from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -18,6 +24,44 @@ import {
 } from '@/src/contexts/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
+
+function AppLoadingScreen() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        minHeight: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ffffff',
+        padding: 24,
+      }}
+    >
+      <Image
+        source={require('../assets/images/splash-icon.png')}
+        resizeMode="contain"
+        style={{
+          width: 160,
+          height: 160,
+          marginBottom: 24,
+        }}
+      />
+
+      <ActivityIndicator size="large" />
+
+      <Text
+        style={{
+          marginTop: 16,
+          fontSize: 16,
+          fontWeight: '600',
+          color: '#333',
+        }}
+      >
+        Démarrage de JFKApp...
+      </Text>
+    </View>
+  );
+}
 
 function RootNavigation() {
   const { user, loading } = useAuth();
@@ -37,7 +81,9 @@ function RootNavigation() {
     }
   }, [user, loading, segments]);
 
-  if (loading) return null;
+  if (loading) {
+    return <AppLoadingScreen />;
+  }
 
   return (
     <Stack
@@ -77,7 +123,9 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) return null;
+  if (!loaded) {
+    return <AppLoadingScreen />;
+  }
 
   return (
     <AuthProvider>

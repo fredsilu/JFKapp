@@ -13,7 +13,6 @@ import {
 
 import { db } from "@/lib/firebase";
 import { getNextInvoiceNumber } from "@/src/services/invoiceNumber.service";
-
 import {
   CateringInvoice,
   isCateringInvoiceLocked,
@@ -227,6 +226,9 @@ export async function createInvoiceFromOrder(
     },
 
     designation: order.designation ?? order.name ?? "Prestation traiteur",
+    currency: order.currency ?? "USD",
+    exchangeRate: Number(order.exchangeRate ?? 1),
+    baseCurrency: order.baseCurrency ?? "USD",
 
     eventDate: order.eventDate ?? "",
     servicePeriod: order.servicePeriod ?? "",

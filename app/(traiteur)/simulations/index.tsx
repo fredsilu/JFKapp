@@ -1,17 +1,17 @@
-//app/(traiteur)/simulations/index.tsx
+// app/(traiteur)/simulations/index.tsx
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   BackHandler,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-
 
 import {
   deleteCateringSimulation,
@@ -20,7 +20,6 @@ import {
 import { CateringSimulation } from '@/types/catering';
 import { fetchClients } from '@/src/services/clientService';
 
-
 import ConfirmDeleteModal from '@/src/components/ConfirmDeleteModal';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
 import ErrorMessage from '@/src/components/ErrorMessage';
@@ -28,12 +27,13 @@ import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
 export default function CateringSimulationsScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+
+  const isDesktop = width >= 1024;
 
   const [simulations, setSimulations] = useState<CateringSimulation[]>([]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-
   const [searchQuery, setSearchQuery] = useState('');
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<CateringSimulation | null>(null);
@@ -63,6 +63,7 @@ export default function CateringSimulationsScreen() {
       setLoading(false);
     }
   }, []);
+
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -92,14 +93,8 @@ export default function CateringSimulationsScreen() {
 
   function getMillis(value: any): number {
     if (!value) return 0;
-
-    if (value?.toMillis) {
-      return value.toMillis();
-    }
-
-    if (value?.toDate) {
-      return value.toDate().getTime();
-    }
+    if (value?.toMillis) return value.toMillis();
+    if (value?.toDate) return value.toDate().getTime();
 
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? 0 : date.getTime();
@@ -110,14 +105,24 @@ export default function CateringSimulationsScreen() {
   }
 
   function displayDate(value: any): string {
-    if (!value) return "—";
+    if (!value) return '—';
 
-    if (typeof value === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
       return value;
     }
 
     return formatShortDocumentDate(value);
   }
+
+  function formatAmount(value?: number) {
+    if (!value) return '0,00 $';
+
+    return `${value.toLocaleString('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} $`;
+  }
+
   const filteredSimulations = useMemo(() => {
     const q = normalizeText(searchQuery);
 
@@ -148,6 +153,30 @@ export default function CateringSimulationsScreen() {
       .sort((a, b) => getMillis(b.createdAt) - getMillis(a.createdAt));
   }, [simulations, searchQuery, clientsById]);
 
+  const stats = useMemo(() => {
+    const totalSimulations = filteredSimulations.length;
+
+    const totalPeople = filteredSimulations.reduce(
+      (sum, sim) => sum + Number(sim.guestCount || 0),
+      0
+    );
+
+    const totalTurnover = filteredSimulations.reduce(
+      (sum, sim) => sum + Number(sim.globalTurnover || sim.totals?.grandTotal || 0),
+      0
+    );
+
+    const convertedCount = filteredSimulations.filter(
+      (sim) => sim.convertedToOrder
+    ).length;
+
+    return {
+      totalSimulations,
+      totalPeople,
+      totalTurnover,
+      convertedCount,
+    };
+  }, [filteredSimulations]);
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -162,42 +191,128 @@ export default function CateringSimulationsScreen() {
     }
   }
 
+  function goToNewSimulation() {
+    router.push({
+      pathname: '/(traiteur)/simulations/new',
+      params: {
+        backTo: '/(traiteur)/simulations',
+      },
+    });
+  }
+
+  function openSimulation(simulationId: string) {
+    router.push({
+      pathname: '/(traiteur)/simulations/[id]',
+      params: {
+        id: simulationId,
+        backTo: '/(traiteur)/simulations',
+      },
+    });
+  }
+
+  function reuseSimulation(simulationId: string) {
+    router.push({
+      pathname: '/(traiteur)/tools/calculator-v2',
+      params: {
+        reuseSimulationId: simulationId,
+        backTo: '/(traiteur)/simulations',
+      },
+    });
+  }
+
+  function createProforma(simulationId: string) {
+    router.push({
+      pathname: '/(traiteur)/proformas/create-from-simulation',
+      params: {
+        simulationId,
+        backTo: '/(traiteur)/simulations',
+      },
+    });
+  }
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
     <>
-
-      <ScrollView style={styles.container}>
-
-        {/* BACK BUTTON */}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          isDesktop && styles.desktopContent,
+        ]}
+      >
         <TouchableOpacity
           onPress={() => router.replace('/(traiteur)/sales')}
           style={styles.backPill}
           activeOpacity={0.75}
         >
           <Icon name="arrow-back" size={18} color="#0F4C81" />
-          <Text style={styles.backPillText}>
-            Retour aux ventes
-          </Text>
+          <Text style={styles.backPillText}>Retour aux ventes</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Simulations traiteur</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Simulations traiteur</Text>
+            <Text style={styles.subtitle}>
+              Gérez vos simulations et créez des proformas.
+            </Text>
+          </View>
 
-        <TouchableOpacity
-          style={styles.newButton}
-          onPress={() =>
-            router.push({
-              pathname: '/(traiteur)/simulations/new',
-              params: {
-                backTo: '/(traiteur)/simulations',
-              },
-            })
-          }
-        >
-          <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
-        </TouchableOpacity>
+          {isDesktop ? (
+            <TouchableOpacity
+              style={styles.desktopNewButton}
+              onPress={goToNewSimulation}
+            >
+              <Icon name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.newButtonText}>Nouvelle simulation</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
+        {!isDesktop ? (
+          <TouchableOpacity style={styles.newButton} onPress={goToNewSimulation}>
+            <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {isDesktop ? (
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Icon name="list-alt" size={24} color="#007AFF" />
+              <View>
+                <Text style={styles.statLabel}>Total simulations</Text>
+                <Text style={styles.statValue}>{stats.totalSimulations}</Text>
+              </View>
+            </View>
+
+            <View style={styles.statCard}>
+              <Icon name="attach-money" size={24} color="#16A34A" />
+              <View>
+                <Text style={styles.statLabel}>CA potentiel</Text>
+                <Text style={styles.statValue}>
+                  {formatAmount(stats.totalTurnover)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.statCard}>
+              <Icon name="groups" size={24} color="#7C3AED" />
+              <View>
+                <Text style={styles.statLabel}>Total personnes</Text>
+                <Text style={styles.statValue}>{stats.totalPeople}</Text>
+              </View>
+            </View>
+
+            <View style={styles.statCard}>
+              <Icon name="description" size={24} color="#EA580C" />
+              <View>
+                <Text style={styles.statLabel}>Converties</Text>
+                <Text style={styles.statValue}>{stats.convertedCount}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.searchContainer}>
           <Icon name="search" size={20} color="#6B7280" />
@@ -212,15 +327,106 @@ export default function CateringSimulationsScreen() {
 
         {filteredSimulations.length === 0 ? (
           <Text style={styles.empty}>Aucune simulation</Text>
+        ) : isDesktop ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.th, styles.colName]}>Simulation</Text>
+                <Text style={[styles.th, styles.colClient]}>Client</Text>
+                <Text style={[styles.th, styles.colPeople]}>Pers.</Text>
+                <Text style={[styles.th, styles.colDate]}>Livraison</Text>
+                <Text style={[styles.th, styles.colTime]}>Heure</Text>
+                <Text style={[styles.th, styles.colAmount]}>Montant</Text>
+                <Text style={[styles.th, styles.colDate]}>Créée le</Text>
+                <Text style={[styles.th, styles.colActions]}>Actions</Text>
+              </View>
+
+              {filteredSimulations.map((sim) => {
+                const clientLabel =
+                  clientsById[sim.clientId] || sim.clientId || '-';
+
+                const amount =
+                  sim.globalTurnover || sim.totals?.grandTotal || 0;
+
+                return (
+                  <View key={sim.id} style={styles.tableRow}>
+                    <View style={styles.colName}>
+                      <Text style={styles.tableName} numberOfLines={1}>
+                        {sim.name || 'Simulation sans nom'}
+                      </Text>
+                      <Text style={styles.tableSubText} numberOfLines={1}>
+                        {sim.designation || sim.status || '—'}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.td, styles.colClient]} numberOfLines={1}>
+                      {clientLabel}
+                    </Text>
+
+                    <Text style={[styles.td, styles.colPeople]}>
+                      {sim.guestCount ?? 0}
+                    </Text>
+
+                    <Text style={[styles.td, styles.colDate]}>
+                      {displayDate(sim.dateLivraison)}
+                    </Text>
+
+                    <Text style={[styles.td, styles.colTime]}>
+                      {sim.deliveryTime || '—'}
+                    </Text>
+
+                    <Text style={[styles.td, styles.colAmount]}>
+                      {formatAmount(amount)}
+                    </Text>
+
+                    <Text style={[styles.td, styles.colDate]}>
+                      {formatShortDocumentDate(sim.createdAt)}
+                    </Text>
+
+                    <View style={[styles.rowActions, styles.colActions]}>
+                      <TouchableOpacity
+                        style={styles.smallActionButton}
+                        onPress={() => openSimulation(sim.id)}
+                      >
+                        <Icon name="visibility" size={16} color="#007AFF" />
+                        <Text style={styles.smallActionText}>Voir</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.smallActionButton}
+                        onPress={() => reuseSimulation(sim.id)}
+                      >
+                        <Icon name="refresh" size={16} color="#007AFF" />
+                        <Text style={styles.smallActionText}>Réutiliser</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.proformaActionButton}
+                        onPress={() => createProforma(sim.id)}
+                      >
+                        <Icon name="description" size={16} color="#16A34A" />
+                        <Text style={styles.proformaActionText}>Proforma</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.deleteActionButton}
+                        onPress={() => setToDelete(sim)}
+                      >
+                        <Icon name="delete" size={16} color="#DC2626" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
         ) : (
           filteredSimulations.map((sim) => {
             const clientLabel = clientsById[sim.clientId] || sim.clientId || '-';
 
             return (
               <View key={sim.id} style={styles.card}>
-                <Text style={styles.name}>
-                  {sim.name || 'Simulation sans nom'}
-                </Text>
+                <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
 
                 <Text style={styles.client}>Client : {clientLabel}</Text>
 
@@ -240,6 +446,7 @@ export default function CateringSimulationsScreen() {
                       Livraison : {displayDate(sim.dateLivraison)}
                     </Text>
                   </View>
+
                   {sim.deliveryTime ? (
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>
@@ -251,54 +458,22 @@ export default function CateringSimulationsScreen() {
 
                 <TouchableOpacity
                   style={styles.createProformaBtn}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/(traiteur)/proformas/create-from-simulation',
-                      params: {
-                        simulationId: sim.id,
-                        backTo: '/(traiteur)/simulations',
-                      },
-                    })
-                  }
+                  onPress={() => createProforma(sim.id)}
                 >
-                  <Text style={styles.createProformaText}>
-                    Créer proforma
-                  </Text>
+                  <Text style={styles.createProformaText}>Créer proforma</Text>
                 </TouchableOpacity>
 
                 <View style={styles.actions}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      router.push({
-                        pathname: '/(traiteur)/simulations/[id]',
-                        params: {
-                          id: sim.id,
-                          backTo: '/(traiteur)/simulations',
-                        },
-                      })
-                    }
-                  >
+                  <TouchableOpacity onPress={() => openSimulation(sim.id)}>
                     <Text style={styles.link}>Voir</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    onPress={() =>
-                      router.push({
-                        pathname: '/(traiteur)/tools/calculator-v2',
-                        params: {
-                          reuseSimulationId: sim.id,
-                          backTo: '/(traiteur)/simulations',
-                        },
-                      })
-                    }
-                  >
+                  <TouchableOpacity onPress={() => reuseSimulation(sim.id)}>
                     <Text style={styles.link}>Réutiliser</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setToDelete(sim)}>
-                    <Text style={[styles.link, styles.delete]}>
-                      Supprimer
-                    </Text>
+                    <Text style={[styles.link, styles.delete]}>Supprimer</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -323,14 +498,58 @@ export default function CateringSimulationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8FAFC',
     padding: 16,
   },
 
+  content: {
+    paddingBottom: 30,
+  },
+
+  desktopContent: {
+    width: '100%',
+    maxWidth: 1500,
+    alignSelf: 'center',
+  },
+
+  backPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginBottom: 20,
+  },
+
+  backPillText: {
+    color: '#0F4C81',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
+    marginBottom: 16,
+  },
+
   title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
 
   newButton: {
@@ -341,9 +560,69 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
+  desktopNewButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+
   newButtonText: {
     color: '#fff',
     fontWeight: '700',
+  },
+
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+
+  statCard: {
+    flex: 1,
+    minHeight: 86,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+
+  statLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+
+  statValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
   },
 
   empty: {
@@ -352,11 +631,149 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
+  table: {
+    minWidth: 1450,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  tableHeader: {
+    flexDirection: 'row',
+    minHeight: 44,
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  tableRow: {
+    flexDirection: 'row',
+    minHeight: 66,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  th: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#374151',
+    paddingHorizontal: 12,
+  },
+
+  td: {
+    fontSize: 13,
+    color: '#111827',
+    paddingHorizontal: 12,
+  },
+
+  colName: {
+    width: 230,
+    paddingHorizontal: 12,
+  },
+
+  colClient: {
+    width: 170,
+  },
+
+  colPeople: {
+    width: 90,
+    textAlign: 'center',
+  },
+
+  colDate: {
+    width: 130,
+  },
+
+  colTime: {
+    width: 90,
+  },
+
+  colAmount: {
+    width: 140,
+    textAlign: 'right',
+  },
+
+  colActions: {
+    width: 470,
+  },
+
+  tableName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  tableSubText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 3,
+  },
+
+  rowActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+
+  smallActionButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  smallActionText: {
+    color: '#007AFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  proformaActionButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  proformaActionText: {
+    color: '#16A34A',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  deleteActionButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   card: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 18,
     marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 
   name: {
@@ -387,11 +804,13 @@ const styles = StyleSheet.create({
   },
 
   createProformaBtn: {
-    marginTop: 10,
+    marginTop: 12,
     backgroundColor: '#28a745',
     paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 8,
     alignItems: 'center',
+    alignSelf: 'flex-start',
   },
 
   createProformaText: {
@@ -401,8 +820,9 @@ const styles = StyleSheet.create({
 
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
+    flexWrap: 'wrap',
+    gap: 18,
+    marginTop: 16,
   },
 
   link: {
@@ -412,60 +832,6 @@ const styles = StyleSheet.create({
 
   delete: {
     color: '#d9534f',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  backIcon: {
-    fontSize: 24,
-    marginRight: 10,
-    color: '#111827',
-  },
-
-  backText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  backPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#EEF6FF',
-    borderColor: '#BFDBFE',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    marginBottom: 12,
-  },
-
-  backPillText: {
-    color: '#0F4C81',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
-  },
-
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#111827',
   },
 
   datesBlock: {

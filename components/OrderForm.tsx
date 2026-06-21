@@ -26,7 +26,27 @@ import { useIngredients } from '@/src/hooks/useFirestore';
 import { OrderFormProps } from '@/types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+function normalizeTime(value?: string): string {
+  if (!value) return "";
 
+  const clean = String(value).trim();
+
+  if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(clean)) {
+    return clean;
+  }
+
+  const hFormat = clean.match(/^([01]?\d|2[0-3])[hH]([0-5]\d)$/);
+  if (hFormat) {
+    return `${hFormat[1].padStart(2, "0")}:${hFormat[2]}`;
+  }
+
+  const compact = clean.match(/^([01]?\d|2[0-3])([0-5]\d)$/);
+  if (compact) {
+    return `${compact[1].padStart(2, "0")}:${compact[2]}`;
+  }
+
+  return clean.replace(/[hH]/g, ":");
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -652,8 +672,15 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
     ''
   );
 
+  
+
   const [deliveryTime, setDeliveryTime] = useState(
-    order?.deliveryTime || ''
+    normalizeTime(
+      order?.deliveryTime ||
+      (order as any)?.heureLivraison ||
+      (order as any)?.eventTime ||
+      ""
+    )
   );
 
   const [address, setAddress] = useState(
@@ -770,7 +797,14 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
       ''
     );
 
-    setDeliveryTime(order.deliveryTime || '');
+    setDeliveryTime(
+      normalizeTime(
+        order.deliveryTime ||
+        (order as any)?.heureLivraison ||
+        (order as any)?.eventTime ||
+        ""
+      )
+    );
 
     setAddress(
       order.address ||
@@ -1142,7 +1176,9 @@ export default function OrderForm({ order, onClose, onSubmit }: OrderFormProps) 
 
         deliveryDate,
         dateLivraison: deliveryDate,
-        deliveryTime,
+        servicePeriod: (order as any)?.servicePeriod || '',
+        deliveryTime: normalizeTime(deliveryTime),
+        heureLivraison: normalizeTime(deliveryTime),
         address,
         deliveryAddress: address,
         designation: designation || '',

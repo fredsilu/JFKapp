@@ -13,6 +13,34 @@ function money(value?: number) {
     maximumFractionDigits: 2,
   });
 }
+function getDocumentCurrency(invoice: InvoicePdfData): "USD" | "CDF" {
+  return (invoice.currency as "USD" | "CDF") || "USD";
+}
+
+function getExchangeRate(invoice: InvoicePdfData): number {
+  const rate = Number(invoice.exchangeRate || 0);
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+function convertFromUsd(
+  value: number | undefined,
+  currency: "USD" | "CDF",
+  exchangeRate: number
+): number {
+  const amount = Number(value || 0);
+  return currency === "CDF" ? amount * exchangeRate : amount;
+}
+
+function currencySymbol(currency: "USD" | "CDF") {
+  return currency === "CDF" ? "CDF" : "$";
+}
+
+function formatMoneyByCurrency(value: number, currency: "USD" | "CDF") {
+  return Number(value || 0).toLocaleString("fr-FR", {
+    minimumFractionDigits: currency === "CDF" ? 0 : 2,
+    maximumFractionDigits: currency === "CDF" ? 0 : 2,
+  });
+}
 
 function safe(value?: string | null) {
   return value && value.trim() ? value.trim() : '';
@@ -121,6 +149,9 @@ export function buildInvoiceHTML(
 ): string {
   const items = invoice.items || [];
   const isCreditNote = (invoice as any).documentType === 'CREDIT_NOTE';
+  const documentCurrency = getDocumentCurrency(invoice);
+  const exchangeRate = getExchangeRate(invoice);
+  const currency = currencySymbol(documentCurrency);
 
   const rows = items
     .map(
@@ -129,10 +160,29 @@ export function buildInvoiceHTML(
   <td class="designation">${safe(item.label)}</td>
   <td class="center">${item.days && item.days > 0 ? item.days : "-"}</td>
   <td class="center">${item.quantity || 0}</td>
-  <td class="currency">$</td>
-  <td class="price">${money(item.unitPrice)}</td>
-  <td class="currency">$</td>
-  <td class="price">${money(item.totalPrice ?? item.total)}</td>
+  <td class="currency">${currency}</td>
+<td class="price">
+  ${formatMoneyByCurrency(
+        convertFromUsd(
+          item.unitPrice,
+          documentCurrency,
+          exchangeRate
+        ),
+        documentCurrency
+      )}
+</td>
+
+<td class="currency">${currency}</td>
+<td class="price">
+  ${formatMoneyByCurrency(
+        convertFromUsd(
+          item.totalPrice ?? item.total,
+          documentCurrency,
+          exchangeRate
+        ),
+        documentCurrency
+      )}
+</td>
 </tr>`
     )
     .join('');
@@ -142,6 +192,24 @@ export function buildInvoiceHTML(
 
   const totalAfterDiscount =
     (invoice as any).totalAfterDiscount ?? invoice.total ?? subtotal;
+
+  const displayedSubtotal = convertFromUsd(
+    subtotal,
+    documentCurrency,
+    exchangeRate
+  );
+
+  const displayedDiscountAmount = convertFromUsd(
+    discountAmount,
+    documentCurrency,
+    exchangeRate
+  );
+
+  const displayedTotalAfterDiscount = convertFromUsd(
+    totalAfterDiscount,
+    documentCurrency,
+    exchangeRate
+  );
 
   const status = (invoice as any).status ?? 'issued';
 
@@ -706,16 +774,20 @@ ${(invoice as any).creditNoteForInvoiceNumber
 <div class="totals">
   <div class="subtotal">
     <div>Sous-total :</div>
-    <div>$</div>
-    <div style="text-align:right;">${money(subtotal)}</div>
+<div>${currency}</div>
+<div style="text-align:right;">
+  ${formatMoneyByCurrency(displayedSubtotal, documentCurrency)}
+</div>
   </div>
 
   ${discountAmount > 0
       ? `
   <div class="subtotal">
     <div>Remise :</div>
-    <div>$</div>
-    <div style="text-align:right;">- ${money(discountAmount)}</div>
+<div>${currency}</div>
+<div style="text-align:right;">
+  - ${formatMoneyByCurrency(displayedDiscountAmount, documentCurrency)}
+</div>
   </div>
   `
       : ''
@@ -723,9 +795,20 @@ ${(invoice as any).creditNoteForInvoiceNumber
 
   <div class="grand-total">
     <div>${isCreditNote ? "Montant de l’avoir :" : "Total à payer :"}</div>
-    <div>$</div>
-    <div style="text-align:right;">${money(totalAfterDiscount)}</div>
+<div>${currency}</div>
+<div style="text-align:right;">
+  ${formatMoneyByCurrency(displayedTotalAfterDiscount, documentCurrency)}
+</div>
   </div>
+  ${documentCurrency === "CDF"
+      ? `
+  <div style="text-align:right; font-size:10px; margin-top:5px; color:#6b7280;">
+    Équivalent indicatif : USD ${money(totalAfterDiscount)}<br/>
+    Taux appliqué : 1 USD = ${formatMoneyByCurrency(exchangeRate, "CDF")} CDF
+  </div>
+  `
+      : ''
+    }
 </div>
 
 ${(invoice as any).cancellation?.reason

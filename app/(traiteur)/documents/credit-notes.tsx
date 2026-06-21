@@ -23,11 +23,11 @@ const statusFilters: {
   label: string;
   value: CreditNoteStatusFilter;
 }[] = [
-  { label: "Tous", value: "all" },
-  { label: "Brouillons", value: "draft" },
-  { label: "Émis", value: "issued" },
-  { label: "Annulés", value: "cancelled" },
-];
+    { label: "Tous", value: "all" },
+    { label: "Brouillons", value: "draft" },
+    { label: "Émis", value: "issued" },
+    { label: "Annulés", value: "cancelled" },
+  ];
 
 function formatAmount(value?: number) {
   if (!value) return "0,00 $";
@@ -433,6 +433,10 @@ export default function DocumentCreditNotesScreen() {
 
           <FlatList
             data={filteredCreditNotes}
+            style={{
+              flex: 1,
+              minHeight: 0,
+            }}
             keyExtractor={(item: any) => item.id}
             ListEmptyComponent={
               <View style={styles.emptyBox}>
@@ -549,6 +553,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    height: 700,
   },
   tableHeader: {
     flexDirection: "row",

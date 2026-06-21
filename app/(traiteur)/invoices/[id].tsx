@@ -300,6 +300,10 @@ export default function InvoiceDetailScreen() {
         documentType: invoice.documentType,
         status: invoice.status ?? "issued",
 
+        baseCurrency: "USD",
+        currency: (invoice as any).currency ?? "USD",
+        exchangeRate: Number((invoice as any).exchangeRate ?? 1),
+
         clientName: client.name ?? "",
         clientRccm: client.rccm ?? client.RCCM ?? "",
         clientIdNat: client.idNat ?? client.idnat ?? client.idNAT ?? "",
