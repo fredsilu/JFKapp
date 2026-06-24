@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect, Stack } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import * as Linking from "expo-linking";
 
 import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import {
@@ -337,6 +338,18 @@ export default function ProformasScreen() {
     });
   }
 
+  function openPdf(pdfUrl?: string) {
+    if (!pdfUrl) {
+      Alert.alert(
+        "PDF indisponible",
+        "Cette proforma ne possède pas encore de PDF archivé."
+      );
+      return;
+    }
+
+    Linking.openURL(pdfUrl);
+  }
+
   function renderStatusBadge(p: CateringProforma) {
     const colors = getStatusColors(p);
 
@@ -573,6 +586,15 @@ export default function ProformasScreen() {
                       <Icon name="visibility" size={16} color="#007AFF" />
                       <Text style={styles.smallActionText}>Voir</Text>
                     </TouchableOpacity>
+                    {(p as any)?.pdfUrl ? (
+                      <TouchableOpacity
+                        style={styles.pdfActionButton}
+                        onPress={() => openPdf((p as any).pdfUrl)}
+                      >
+                        <Icon name="picture-as-pdf" size={16} color="#059669" />
+                        <Text style={styles.pdfActionText}>PDF</Text>
+                      </TouchableOpacity>
+                    ) : null}
 
                     {canCancelProforma(p) ? (
                       <TouchableOpacity
@@ -928,7 +950,7 @@ const styles = StyleSheet.create({
   },
 
   colActions: {
-    width: 290,
+    width: 420,
   },
 
   rowActions: {
@@ -1090,5 +1112,21 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '800',
     fontSize: 13,
+  }, pdfActionButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+    backgroundColor: "#ECFDF5",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+
+  pdfActionText: {
+    color: "#059669",
+    fontSize: 13,
+    fontWeight: "700",
   },
 });
