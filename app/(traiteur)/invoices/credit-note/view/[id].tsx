@@ -12,6 +12,7 @@ import {
     Alert,
     Platform,
 } from "react-native";
+import * as Linking from "expo-linking";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import {
@@ -131,7 +132,17 @@ export default function CreditNoteViewScreen() {
 
         return `data:image/png;base64,${base64}`;
     }
+    function openArchivedPdf() {
+        if (!creditNote?.pdfUrl) {
+            Alert.alert(
+                "PDF indisponible",
+                "Aucun PDF archivé n'est disponible pour cet avoir."
+            );
+            return;
+        }
 
+        Linking.openURL(creditNote.pdfUrl);
+    }
     async function handleGeneratePDF() {
         if (!creditNote || !invoice) return;
 
@@ -288,7 +299,16 @@ export default function CreditNoteViewScreen() {
                     {creditNote.reason || "—"}
                 </Text>
             </View>
-
+            {creditNote?.pdfUrl ? (
+                <TouchableOpacity
+                    style={styles.archivedPdfButton}
+                    onPress={openArchivedPdf}
+                >
+                    <Text style={styles.archivedPdfButtonText}>
+                        Voir PDF archivé
+                    </Text>
+                </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
                 style={[
                     styles.pdfButton,
@@ -515,5 +535,18 @@ const styles = StyleSheet.create({
         color: "#111827",
         fontWeight: "800",
         fontSize: 14,
+    },
+    archivedPdfButton: {
+        backgroundColor: "#059669",
+        paddingVertical: 14,
+        borderRadius: 10,
+        alignItems: "center",
+        marginBottom: 10,
+    },
+
+    archivedPdfButtonText: {
+        color: "#fff",
+        fontWeight: "900",
+        fontSize: 15,
     },
 });

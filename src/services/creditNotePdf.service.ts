@@ -2,6 +2,10 @@
 import { CreditNote } from "@/src/services/creditNote.service";
 import { CateringInvoice } from "@/types/catering";
 import { InvoicePdfData } from "@/types/invoicePdf.types";
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system/legacy";
+import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
+
 
 function toIsoDate(value: any): string {
     if (!value) return new Date().toISOString();
@@ -76,5 +80,40 @@ export function buildCreditNotePdfData(
         creditNoteForInvoiceNumber?: string;
         creditNoteReason?: string;
         originalInvoiceId?: string;
+    };
+}
+
+export async function generateCreditNotePDFFile(
+    creditNote: CreditNote,
+    invoice: CateringInvoice
+): Promise<{
+    uri: string;
+    fileName: string;
+    blob: Blob;
+}> {
+    const pdfData: any = buildCreditNotePdfData(creditNote, invoice);
+
+    const html = buildInvoiceHTML(pdfData, {});
+
+    const { uri } = await Print.printToFileAsync({
+        html,
+        base64: false,
+    });
+
+    const fileName = `AVOIR_${creditNote.number}.pdf`;
+    const finalUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+    await FileSystem.copyAsync({
+        from: uri,
+        to: finalUri,
+    });
+
+    const response = await fetch(finalUri);
+    const blob = await response.blob();
+
+    return {
+        uri: finalUri,
+        fileName,
+        blob,
     };
 }
