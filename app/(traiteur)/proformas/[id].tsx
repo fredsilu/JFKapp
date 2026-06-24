@@ -17,6 +17,8 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 
+import { issueProforma } from "@/src/services/issueProforma";
+
 import { downloadHtmlAsPdfWeb } from '@/src/utils/downloadHtmlAsPdfWeb';
 import { createOrderFromProforma } from '@/src/services/cateringOrderService';
 import { buildProformaHTML } from '@/src/utils/proformaHtml';
@@ -246,7 +248,31 @@ export default function ProformaDetailScreen() {
       Alert.alert('Erreur', 'Impossible de mettre à jour le statut');
     }
   }
+  async function handleIssueProforma() {
+    if (!proforma?.id) {
+      Alert.alert("Erreur", "Identifiant proforma introuvable");
+      return;
+    }
 
+    try {
+      setLoading(true);
+
+      await issueProforma(proforma.id);
+      await loadProforma();
+
+      Alert.alert("Succès", "Proforma envoyée et PDF archivé.");
+    } catch (error) {
+      console.error("❌ issue proforma error:", error);
+      Alert.alert(
+        "Erreur",
+        error instanceof Error
+          ? error.message
+          : "Impossible d'envoyer la proforma"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
   function handleSend() {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm(
@@ -254,7 +280,7 @@ export default function ProformaDetailScreen() {
       );
 
       if (confirmed) {
-        handleChangeStatus('sent');
+        handleIssueProforma();
       }
 
       return;
@@ -262,7 +288,7 @@ export default function ProformaDetailScreen() {
 
     Alert.alert('Envoyer proforma', 'Confirmer l’envoi au client ?', [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Envoyer', onPress: () => handleChangeStatus('sent') },
+      { text: 'Envoyer', onPress: handleIssueProforma },
     ]);
   }
   function goToEditProforma() {
