@@ -8,22 +8,10 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { Platform } from "react-native";
-
 import { CateringInvoice } from "@/types/catering";
-import { generateInvoicePDFFile } from "@/src/services/invoicePdf.service";
-import { uploadOfficialPdf } from "@/src/services/documentStorage.service";
 
 const COLLECTION = "catering_invoices";
 
-/**
- * Valide une facture
- * draft → issued
- *
- * Règle PDF :
- * - si pdfUrl existe déjà : ne pas re-uploader
- * - sinon : générer le PDF officiel une seule fois
- */
 export async function issueInvoice(
   invoiceId: string
 ): Promise<CateringInvoice> {
@@ -37,61 +25,10 @@ export async function issueInvoice(
   const invoice = {
     ...(snap.data() as Omit<CateringInvoice, "id">),
     id: snap.id,
-  } as CateringInvoice & {
-    pdfUrl?: string;
-    pdfPath?: string;
-    pdfGeneratedAt?: any;
-  };
+  } as CateringInvoice;
 
   if (invoice.status !== "draft") {
     throw new Error("La facture ne peut pas être émise");
-  }
-
-  let pdfPayload: {
-    pdfUrl?: string;
-    pdfPath?: string;
-    pdfGeneratedAt?: any;
-  } = {};
-
-  if (!invoice.pdfUrl && Platform.OS !== "web") {
-    const pdfFile = await generateInvoicePDFFile({
-      invoiceNumber: invoice.number,
-      documentType: invoice.documentType,
-      status: "issued",
-
-      date: new Date().toISOString(),
-
-      clientName: invoice.client?.name ?? "",
-      clientRccm: invoice.client?.rccm ?? "",
-      clientIdNat: invoice.client?.idNat ?? "",
-      clientNif: invoice.client?.nif ?? "",
-      clientAddress: invoice.client?.address ?? "",
-      clientCity: invoice.client?.city ?? "Kinshasa / RDC",
-
-      items: invoice.items ?? [],
-
-      subtotal: invoice.totals?.subtotal ?? 0,
-      discount: invoice.totals?.discount ?? 0,
-      discountAmount: 0,
-      totalAfterDiscount: invoice.totals?.total ?? 0,
-      total: invoice.totals?.total ?? 0,
-
-      eventName: invoice.eventName ?? invoice.designation ?? "",
-      eventDate: invoice.dateLivraison ?? "",
-      guestCount: invoice.guestCount ?? 0,
-    } as any);
-
-    pdfPayload = await uploadOfficialPdf({
-      kind: "invoices",
-      documentNumber: invoice.number,
-      pdfBlob: pdfFile.blob,
-    });
-  }
-
-  if (!invoice.pdfUrl && Platform.OS === "web") {
-    console.warn(
-      "PDF Storage ignoré sur Web : génération Blob PDF non supportée."
-    );
   }
 
   const now = serverTimestamp();
@@ -100,7 +37,6 @@ export async function issueInvoice(
     status: "issued",
     issuedAt: now,
     updatedAt: now,
-    ...pdfPayload,
   });
 
   return {
@@ -108,6 +44,5 @@ export async function issueInvoice(
     status: "issued",
     issuedAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
-    ...pdfPayload,
   } as CateringInvoice;
 }

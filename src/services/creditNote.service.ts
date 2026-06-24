@@ -12,15 +12,8 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import {
-  uploadOfficialPdf,
-} from "@/src/services/documentStorage.service";
 
-import { Platform } from "react-native";
 
-import {
-  generateCreditNotePDFFile,
-} from "@/src/services/creditNotePdf.service";
 
 import {
   CateringInvoice,
@@ -402,25 +395,7 @@ export async function issueCreditNote(
 
   const newCreditTotal = existingCreditTotal + cleanAmount;
   const isFullCredit = newCreditTotal >= invoiceTotal;
-  let pdfPayload = {};
 
-  if (!creditNote.pdfUrl && Platform.OS !== "web") {
-    const pdfFile = await generateCreditNotePDFFile(
-      creditNote,
-      invoice
-    );
-
-    pdfPayload = await uploadOfficialPdf({
-      kind: "credit-notes",
-      documentNumber: creditNote.number,
-      pdfBlob: pdfFile.blob,
-    });
-  }
-  if (!creditNote.pdfUrl && Platform.OS === "web") {
-    console.warn(
-      "PDF Storage ignoré sur Web : génération Blob PDF non supportée."
-    );
-  }
 
   await updateDoc(ref, {
     status: "issued",
@@ -428,7 +403,6 @@ export async function issueCreditNote(
     type: isFullCredit ? "full" : "partial",
     issuedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    ...pdfPayload,
   });
 
   await updateDoc(invoiceRef, {
@@ -469,7 +443,6 @@ export async function issueCreditNote(
     status: "issued",
     isLocked: true,
     type: isFullCredit ? "full" : "partial",
-    ...pdfPayload,
   };
 }
 

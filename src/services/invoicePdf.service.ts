@@ -2,6 +2,8 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
+import { Platform } from "react-native";
+import { htmlToPdfBlobWeb } from "@/src/utils/htmlToPdfBlobWeb";
 
 import { buildProformaHTML } from "@/src/utils/proformaHtml";
 import { CateringProforma } from "@/src/services/cateringProforma.service";
@@ -27,17 +29,9 @@ function getInvoicePdfFileName(invoice: InvoicePdfData): string {
   const status = invoice.status;
   const number = invoice.invoiceNumber || "document";
 
-  if (documentType === "CREDIT_NOTE") {
-    return `AVOIR_${number}.pdf`;
-  }
-
-  if (status === "cancelled") {
-    return `FACTURE_ANNULEE_${number}.pdf`;
-  }
-
-  if (status === "replaced") {
-    return `FACTURE_REMPLACEE_${number}.pdf`;
-  }
+  if (documentType === "CREDIT_NOTE") return `AVOIR_${number}.pdf`;
+  if (status === "cancelled") return `FACTURE_ANNULEE_${number}.pdf`;
+  if (status === "replaced") return `FACTURE_REMPLACEE_${number}.pdf`;
 
   return `FACTURE_${number}.pdf`;
 }
@@ -47,17 +41,9 @@ function getPdfDialogTitle(invoice: InvoicePdfData) {
   const status = invoice.status;
   const number = invoice.invoiceNumber || "document";
 
-  if (documentType === "CREDIT_NOTE") {
-    return `Avoir ${number}`;
-  }
-
-  if (status === "cancelled") {
-    return `Facture annulée ${number}`;
-  }
-
-  if (status === "replaced") {
-    return `Facture remplacée ${number}`;
-  }
+  if (documentType === "CREDIT_NOTE") return `Avoir ${number}`;
+  if (status === "cancelled") return `Facture annulée ${number}`;
+  if (status === "replaced") return `Facture remplacée ${number}`;
 
   return `Facture ${number}`;
 }
@@ -70,9 +56,7 @@ async function enrichInvoiceWithCompanySettings(
 
   return {
     ...invoice,
-
     companySettings,
-
     companyName: companySettings.companyName,
     companyPhone: companySettings.phone,
     companyEmail: companySettings.email,
@@ -80,7 +64,6 @@ async function enrichInvoiceWithCompanySettings(
     companyRccm: companySettings.rccm,
     companyIdNat: companySettings.idNat,
     companyNif: companySettings.nif,
-
     bankName: bankAccount.bankName,
     bankAccountNumber: bankAccount.accountNumber,
     bankCurrency: bankAccount.currency,
@@ -122,11 +105,6 @@ export async function generateInvoicePDF(
       getInvoiceAssets(enrichedInvoice)
     );
 
-    const { uri } = await Print.printToFileAsync({
-      html,
-      base64: false,
-    });
-
     const finalFilename =
       sanitizeFileName(
         (filename || getInvoicePdfFileName(enrichedInvoice)).replace(
@@ -134,6 +112,16 @@ export async function generateInvoicePDF(
           ""
         )
       ) + ".pdf";
+
+    if (Platform.OS === "web") {
+      await htmlToPdfBlobWeb(html, finalFilename);
+      return "";
+    }
+
+    const { uri } = await Print.printToFileAsync({
+      html,
+      base64: false,
+    });
 
     const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
 
@@ -178,11 +166,6 @@ export async function generateInvoicePDFFile(
     getInvoiceAssets(enrichedInvoice)
   );
 
-  const { uri } = await Print.printToFileAsync({
-    html,
-    base64: false,
-  });
-
   const finalFilename =
     sanitizeFileName(
       (filename || getInvoicePdfFileName(enrichedInvoice)).replace(
@@ -190,6 +173,21 @@ export async function generateInvoicePDFFile(
         ""
       )
     ) + ".pdf";
+
+  if (Platform.OS === "web") {
+    const blob = await htmlToPdfBlobWeb(html, finalFilename);
+
+    return {
+      uri: "",
+      fileName: finalFilename,
+      blob,
+    };
+  }
+
+  const { uri } = await Print.printToFileAsync({
+    html,
+    base64: false,
+  });
 
   const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
 
@@ -230,15 +228,25 @@ export async function generateProformaPDFFile(
     {}
   );
 
-  const { uri } = await Print.printToFileAsync({
-    html,
-    base64: false,
-  });
-
   const finalFilename =
     sanitizeFileName(
       (filename || `PROFORMA_${proforma.number}.pdf`).replace(/\.pdf$/i, "")
     ) + ".pdf";
+
+  if (Platform.OS === "web") {
+    const blob = await htmlToPdfBlobWeb(html, finalFilename);
+
+    return {
+      uri: "",
+      fileName: finalFilename,
+      blob,
+    };
+  }
+
+  const { uri } = await Print.printToFileAsync({
+    html,
+    base64: false,
+  });
 
   const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
 
