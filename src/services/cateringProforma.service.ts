@@ -73,6 +73,7 @@ export type CateringProforma = {
   servicePeriod?: string;
 
   status: ProformaStatus;
+  sentAt?: any;
 
   orderId?: string;
   orderNumber?: string;
@@ -88,6 +89,8 @@ export type CateringProforma = {
   invoiceNumber?: string;
   invoicedAt?: any;
   pdfUrl?: string;
+  pdfPath?: string;
+  pdfGeneratedAt?: any;
 
   items: CateringProformaItem[];
   menu: CateringProformaMenuItem[];
@@ -455,6 +458,14 @@ export async function updateCateringProforma(
   }
   if (typeof data.pdfUrl !== 'undefined') {
     payload.pdfUrl = data.pdfUrl;
+  }
+
+  if (typeof data.pdfPath !== 'undefined') {
+    payload.pdfPath = data.pdfPath;
+  }
+
+  if (typeof data.pdfGeneratedAt !== 'undefined') {
+    payload.pdfGeneratedAt = data.pdfGeneratedAt;
   }
   if (typeof data.items !== 'undefined') {
     payload.items = normalizeItems(data.items);
