@@ -87,6 +87,7 @@ export type CateringProforma = {
   invoiceId?: string;
   invoiceNumber?: string;
   invoicedAt?: any;
+  pdfUrl?: string;
 
   items: CateringProformaItem[];
   menu: CateringProformaMenuItem[];
@@ -384,6 +385,7 @@ export async function updateCateringProforma(
   }
 
 
+
   if (typeof data.clientId !== 'undefined') {
     payload.clientId = cleanText(data.clientId);
   }
@@ -451,7 +453,9 @@ export async function updateCateringProforma(
   if (typeof data.invoiceNumber !== 'undefined') {
     payload.invoiceNumber = cleanText(data.invoiceNumber);
   }
-
+  if (typeof data.pdfUrl !== 'undefined') {
+    payload.pdfUrl = data.pdfUrl;
+  }
   if (typeof data.items !== 'undefined') {
     payload.items = normalizeItems(data.items);
   }

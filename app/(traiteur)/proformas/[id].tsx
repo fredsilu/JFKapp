@@ -12,6 +12,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { Asset } from 'expo-asset';
+import * as Linking from "expo-linking";
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
 import { formatShortDocumentDate } from '@/src/utils/dateFormat';
@@ -399,6 +400,18 @@ export default function ProformaDetailScreen() {
     }
   }
 
+  function openArchivedPdf() {
+    if (!proforma?.pdfUrl) {
+      Alert.alert(
+        "PDF indisponible",
+        "Aucun PDF archivé n'est disponible pour cette proforma."
+      );
+      return;
+    }
+
+    Linking.openURL(proforma.pdfUrl);
+  }
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -496,7 +509,7 @@ export default function ProformaDetailScreen() {
             Taux : 1 USD ={" "}
             {Number(proforma.exchangeRate ?? 1).toLocaleString("fr-FR")} CDF
           </Text>
-        </View> 
+        </View>
 
         {proforma.validityDate ? (
           <Text style={styles.line}>
@@ -708,6 +721,16 @@ export default function ProformaDetailScreen() {
             </Text>
           </TouchableOpacity>
         )}
+      {proforma?.pdfUrl ? (
+        <TouchableOpacity
+          style={styles.archivedPdfButton}
+          onPress={openArchivedPdf}
+        >
+          <Text style={styles.archivedPdfButtonText}>
+            Voir PDF archivé
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -1011,6 +1034,19 @@ const styles = StyleSheet.create({
   cancelProformaButtonText: {
     color: '#991B1B',
     fontWeight: '900',
+    fontSize: 15,
+  },
+  archivedPdfButton: {
+    backgroundColor: "#059669",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  archivedPdfButtonText: {
+    color: "#fff",
+    fontWeight: "900",
     fontSize: 15,
   },
 
