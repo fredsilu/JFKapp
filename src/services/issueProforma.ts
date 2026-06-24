@@ -52,18 +52,24 @@ export async function issueProforma(
         pdfGeneratedAt?: any;
     } = {};
 
-    if (!proforma.pdfUrl) {
-        const pdfFile = await generateProformaPDFFile(proforma);
-
+    if (!proforma.pdfUrl && Platform.OS !== "web") {
         if (!proforma.number) {
             throw new Error("Numéro de proforma manquant");
         }
+
+        const pdfFile = await generateProformaPDFFile(proforma);
 
         pdfPayload = await uploadOfficialPdf({
             kind: "proformas",
             documentNumber: proforma.number,
             pdfBlob: pdfFile.blob,
         });
+    }
+
+    if (!proforma.pdfUrl && Platform.OS === "web") {
+        console.warn(
+            "PDF Storage ignoré sur Web : génération Blob PDF non supportée."
+        );
     }
 
     const now = serverTimestamp();

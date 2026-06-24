@@ -16,6 +16,8 @@ import {
   uploadOfficialPdf,
 } from "@/src/services/documentStorage.service";
 
+import { Platform } from "react-native";
+
 import {
   generateCreditNotePDFFile,
 } from "@/src/services/creditNotePdf.service";
@@ -402,7 +404,7 @@ export async function issueCreditNote(
   const isFullCredit = newCreditTotal >= invoiceTotal;
   let pdfPayload = {};
 
-  if (!creditNote.pdfUrl) {
+  if (!creditNote.pdfUrl && Platform.OS !== "web") {
     const pdfFile = await generateCreditNotePDFFile(
       creditNote,
       invoice
@@ -413,6 +415,11 @@ export async function issueCreditNote(
       documentNumber: creditNote.number,
       pdfBlob: pdfFile.blob,
     });
+  }
+  if (!creditNote.pdfUrl && Platform.OS === "web") {
+    console.warn(
+      "PDF Storage ignoré sur Web : génération Blob PDF non supportée."
+    );
   }
 
   await updateDoc(ref, {

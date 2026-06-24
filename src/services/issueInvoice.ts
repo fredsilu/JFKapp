@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { Platform } from "react-native";
 
 import { CateringInvoice } from "@/types/catering";
 import { generateInvoicePDFFile } from "@/src/services/invoicePdf.service";
@@ -52,7 +53,7 @@ export async function issueInvoice(
     pdfGeneratedAt?: any;
   } = {};
 
-  if (!invoice.pdfUrl) {
+  if (!invoice.pdfUrl && Platform.OS !== "web") {
     const pdfFile = await generateInvoicePDFFile({
       invoiceNumber: invoice.number,
       documentType: invoice.documentType,
@@ -85,6 +86,12 @@ export async function issueInvoice(
       documentNumber: invoice.number,
       pdfBlob: pdfFile.blob,
     });
+  }
+
+  if (!invoice.pdfUrl && Platform.OS === "web") {
+    console.warn(
+      "PDF Storage ignoré sur Web : génération Blob PDF non supportée."
+    );
   }
 
   const now = serverTimestamp();
