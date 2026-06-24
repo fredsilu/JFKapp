@@ -3,6 +3,9 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 
+import { buildProformaHTML } from "@/src/utils/proformaHtml";
+import { CateringProforma } from "@/src/services/cateringProforma.service";
+
 import { buildInvoiceHTML } from "@/src/utils/invoiceHtml";
 import { InvoicePdfData } from "@/types/invoicePdf.types";
 
@@ -186,6 +189,55 @@ export async function generateInvoicePDFFile(
         /\.pdf$/i,
         ""
       )
+    ) + ".pdf";
+
+  const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
+
+  await FileSystem.copyAsync({
+    from: uri,
+    to: finalUri,
+  });
+
+  const response = await fetch(finalUri);
+  const blob = await response.blob();
+
+  return {
+    uri: finalUri,
+    fileName: finalFilename,
+    blob,
+  };
+}
+
+export async function generateProformaPDFFile(
+  proforma: CateringProforma,
+  filename?: string
+): Promise<{
+  uri: string;
+  fileName: string;
+  blob: Blob;
+}> {
+  if (!proforma?.number) {
+    throw new Error("Données proforma invalides : numéro manquant");
+  }
+
+  const companySettings = await getCompanySettings();
+
+  const html = buildProformaHTML(
+    {
+      ...proforma,
+      companySettings,
+    } as any,
+    {}
+  );
+
+  const { uri } = await Print.printToFileAsync({
+    html,
+    base64: false,
+  });
+
+  const finalFilename =
+    sanitizeFileName(
+      (filename || `PROFORMA_${proforma.number}.pdf`).replace(/\.pdf$/i, "")
     ) + ".pdf";
 
   const finalUri = `${FileSystem.cacheDirectory}${finalFilename}`;
