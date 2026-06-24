@@ -105,7 +105,7 @@ export default function CalculatorV2Screen() {
         name: payload.eventName || "Simulation traiteur",
         eventName: payload.eventName || "Simulation traiteur",
 
-        clientId: clientId || reuseSimulation?.clientId || "",
+        clientId: payload.clientId || clientId || reuseSimulation?.clientId || "",
         clientName:
           payload.clientName ||
           clientName ||
@@ -189,6 +189,10 @@ export default function CalculatorV2Screen() {
         }
         initialEventName={reuseSimulation?.eventName || reuseSimulation?.name || ""}
         initialServicePeriod={reuseSimulation?.servicePeriod || ""}
+
+        initialClientId={
+          reuseSimulation?.clientId || clientId || ""
+        }
         initialClientName={
           reuseSimulation?.clientName || clientName || ""
         }

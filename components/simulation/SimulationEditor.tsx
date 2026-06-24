@@ -1,5 +1,7 @@
 // components/simulation/SimulationEditor.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { fetchClients } from "@/src/services/clientService";
+import { Client } from "@/types";
 import {
   View,
   Text,
@@ -47,6 +49,7 @@ const ARTICLE_LABELS = [
 type SimulationEditorSubmitPayload = {
   eventName: string;
   eventDate: string;
+  clientId: string;
   clientName: string;
   numberOfPeople: number;
   dateLivraison: string;
@@ -69,6 +72,7 @@ type Props = {
   title?: string;
   initialEventName?: string;
   initialClientName?: string;
+  initialClientId?: string;
   initialNumberOfPeople?: number;
   initialSections?: CateringSection[];
   initialDateLivraison?: string;
@@ -97,12 +101,16 @@ export default function SimulationEditor({
   initialDiscount = 0,
   initialSections,
   submitLabel = "Enregistrer",
+  initialClientId = "",
   saving = false,
   onSubmit,
 }: Props) {
   const [eventName, setEventName] = useState(initialEventName);
   const [eventDate, setEventDate] = useState(initialEventDate);
   const [clientName, setClientName] = useState(initialClientName);
+  const [clientId, setClientId] = useState(initialClientId);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [showClientModal, setShowClientModal] = useState(false);
   const [numberOfPeople, setNumberOfPeople] = useState(
     String(initialNumberOfPeople || 0)
   );
@@ -129,6 +137,9 @@ export default function SimulationEditor({
   useEffect(() => {
     setClientName(initialClientName || "");
   }, [initialClientName]);
+  useEffect(() => {
+    setClientId(initialClientId || "");
+  }, [initialClientId]);
 
   useEffect(() => {
     setNumberOfPeople(String(initialNumberOfPeople || 0));
@@ -212,6 +223,9 @@ export default function SimulationEditor({
 
       const settings = await getCateringServiceSettings();
       setServiceSettings(settings);
+
+      const loadedClients = await fetchClients();
+      setClients(loadedClients);
 
       if (initialSections?.length) {
         setSections(initialSections.map(calculateSection));
@@ -459,6 +473,10 @@ export default function SimulationEditor({
         setFormError("Veuillez saisir le nom de l’événement.");
         return;
       }
+      if (!clientId || !clientName.trim()) {
+        setFormError("Veuillez choisir un client existant.");
+        return;
+      }
 
 
       await onSubmit({
@@ -469,6 +487,7 @@ export default function SimulationEditor({
         deliveryTime,
         deliveryAddress,
         comment,
+        clientId,
         clientName: clientName.trim(),
         numberOfPeople: Number(numberOfPeople) || 0,
         discount,
@@ -561,12 +580,20 @@ export default function SimulationEditor({
           )}
 
           <Text style={styles.label}>Client</Text>
-          <TextInput
-            value={clientName}
-            onChangeText={setClientName}
-            placeholder="Nom du client"
-            style={styles.input}
-          />
+
+          <TouchableOpacity
+            onPress={() => setShowClientModal(true)}
+            style={styles.selectButton}
+          >
+            <Text
+              style={[
+                styles.selectButtonText,
+                !clientName && styles.selectPlaceholder,
+              ]}
+            >
+              {clientName || "Choisir un client existant"}
+            </Text>
+          </TouchableOpacity>
 
           <Text style={styles.label}>Nombre de personnes</Text>
           <TextInput
@@ -665,6 +692,46 @@ export default function SimulationEditor({
               onUpdate={updateSectionField}
             />
           ))}
+
+        <Modal
+          visible={showClientModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowClientModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Choisir un client</Text>
+
+              {clients.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  Aucun client trouvé. Crée d’abord un client dans le référentiel.
+                </Text>
+              ) : (
+                clients.map((client) => (
+                  <TouchableOpacity
+                    key={client.id}
+                    onPress={() => {
+                      setClientId(client.id);
+                      setClientName(client.name);
+                      setShowClientModal(false);
+                    }}
+                    style={styles.modalOption}
+                  >
+                    <Text style={styles.modalOptionText}>{client.name}</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+
+              <TouchableOpacity
+                onPress={() => setShowClientModal(false)}
+                style={styles.modalCancelButton}
+              >
+                <Text style={styles.modalCancelText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         <TouchableOpacity
           onPress={() => setShowAddSectionModal(true)}
@@ -1000,6 +1067,31 @@ const styles = StyleSheet.create({
     color: "#B91C1C",
     fontWeight: "700",
     fontSize: 13,
+  },
+  selectButton: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    marginBottom: 12,
+  },
+
+  selectButtonText: {
+    color: "#0F172A",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  selectPlaceholder: {
+    color: "#94A3B8",
+    fontWeight: "500",
+  },
+
+  emptyText: {
+    color: "#64748B",
+    fontSize: 14,
+    marginBottom: 12,
   },
 
 });

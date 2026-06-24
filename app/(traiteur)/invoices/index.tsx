@@ -19,6 +19,8 @@ import { MaterialIcons as Icon } from "@expo/vector-icons";
 import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 import { CateringInvoice } from "@/types/catering";
 
+import * as Linking from "expo-linking";
+
 import {
   cancelCateringInvoice,
   getCateringInvoices,
@@ -265,6 +267,20 @@ export default function InvoicesScreen() {
       pathname: "/(traiteur)/invoices/[id]",
       params: { id: String(invoice.id) },
     });
+  }
+
+  function openPdf(invoice: CateringInvoice) {
+    const pdfUrl = (invoice as any)?.pdfUrl;
+
+    if (!pdfUrl) {
+      Alert.alert(
+        "PDF indisponible",
+        "Aucun PDF archivé pour cette facture."
+      );
+      return;
+    }
+
+    Linking.openURL(pdfUrl);
   }
 
   function createCreditNote(invoice: CateringInvoice) {
@@ -515,7 +531,15 @@ export default function InvoicesScreen() {
                         {invoice.status === "draft" ? "Modifier" : "Voir"}
                       </Text>
                     </TouchableOpacity>
-
+                    <TouchableOpacity
+                      style={styles.pdfActionButton}
+                      onPress={() => openPdf(invoice)}
+                    >
+                      <Icon name="picture-as-pdf" size={16} color="#059669" />
+                      <Text style={styles.pdfActionButtonText}>
+                        PDF
+                      </Text>
+                    </TouchableOpacity>
                     {canCancel(invoice) ? (
                       <TouchableOpacity
                         style={styles.cancelActionButton}
@@ -601,6 +625,15 @@ export default function InvoicesScreen() {
                 >
                   <Text style={styles.primaryActionText}>
                     {invoice.status === "draft" ? "Modifier" : "Voir"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.pdfAction}
+                  onPress={() => openPdf(invoice)}
+                >
+                  <Text style={styles.pdfActionText}>
+                    PDF
                   </Text>
                 </TouchableOpacity>
 
@@ -1170,5 +1203,37 @@ const styles = StyleSheet.create({
   primaryModalButtonText: {
     color: "#fff",
     fontWeight: "800",
+  },
+  pdfActionButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+    backgroundColor: "#ECFDF5",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+
+  pdfActionButtonText: {
+    color: "#059669",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  pdfAction: {
+    flex: 1,
+    backgroundColor: "#059669",
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: "center",
+    marginLeft: 8,
+  },
+
+  pdfActionText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 13,
   },
 });
