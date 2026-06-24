@@ -474,7 +474,11 @@ export default function InvoicesScreen() {
         {displayedInvoices.length === 0 ? (
           <Text style={styles.empty}>Aucune facture créée</Text>
         ) : isDesktop ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator
+            contentContainerStyle={styles.horizontalTableContent}
+          >
             <View style={styles.table}>
               <View style={styles.tableHeader}>
                 <Text style={[styles.th, styles.colNumber]}>N° Facture</Text>
@@ -892,7 +896,7 @@ const styles = StyleSheet.create({
   },
 
   table: {
-    minWidth: 1350,
+    minWidth: 1500,
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
     overflow: "hidden",
@@ -957,7 +961,7 @@ const styles = StyleSheet.create({
   },
 
   colActions: {
-    width: 320,
+    width: 420,
   },
 
   rowActions: {
@@ -1235,5 +1239,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 13,
+  },
+  horizontalTableContent: {
+    paddingBottom: 12,
   },
 });

@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import * as Linking from "expo-linking";
 import {
   CreditNote,
   getCreditNotesByInvoiceId,
@@ -361,6 +362,20 @@ export default function InvoiceDetailScreen() {
     } finally {
       setPdfLoading(false);
     }
+  }
+
+  function handleOpenStoredPdf() {
+    const pdfUrl = (invoice as any)?.pdfUrl;
+
+    if (!pdfUrl) {
+      Alert.alert(
+        "PDF indisponible",
+        "Cette facture ne possède pas encore de PDF archivé."
+      );
+      return;
+    }
+
+    Linking.openURL(pdfUrl);
   }
   function goToEditInvoice() {
     if (!invoice?.id) {
@@ -765,7 +780,16 @@ export default function InvoiceDetailScreen() {
           </Text>
         </TouchableOpacity>
       ) : null}
-
+      {(invoice as any)?.pdfUrl ? (
+        <TouchableOpacity
+          style={styles.viewPdfButton}
+          onPress={handleOpenStoredPdf}
+        >
+          <Text style={styles.viewPdfButtonText}>
+            Voir PDF archivé
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       <TouchableOpacity
         style={[styles.pdfButton, pdfLoading && styles.disabledButton]}
         onPress={handleGeneratePDF}
@@ -1142,6 +1166,19 @@ const styles = StyleSheet.create({
 
   issueButtonText: {
     color: "#fff",
+    fontWeight: "900",
+    fontSize: 15,
+  },
+  viewPdfButton: {
+    backgroundColor: "#059669",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  viewPdfButtonText: {
+    color: "#FFFFFF",
     fontWeight: "900",
     fontSize: 15,
   },
