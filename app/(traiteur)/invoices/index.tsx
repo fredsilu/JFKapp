@@ -20,6 +20,7 @@ import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 import { CateringInvoice } from "@/types/catering";
 
 import * as Linking from "expo-linking";
+import { generateInvoicePDF } from "@/src/services/invoicePdf.service";
 
 import {
   cancelCateringInvoice,
@@ -269,19 +270,60 @@ export default function InvoicesScreen() {
     });
   }
 
-  function openPdf(invoice: CateringInvoice) {
-    const pdfUrl = (invoice as any)?.pdfUrl;
+  async function openPdf(invoice: CateringInvoice) {
+  try {
+    // Archive historique
+    if ((invoice as any).source === "legacy_import") {
+      const pdfUrl = (invoice as any)?.pdfUrl;
 
-    if (!pdfUrl) {
-      Alert.alert(
-        "PDF indisponible",
-        "Aucun PDF archivé pour cette facture."
-      );
+      if (!pdfUrl) {
+        Alert.alert(
+          "PDF indisponible",
+          "Aucun PDF archivé pour cette facture."
+        );
+        return;
+      }
+
+      await Linking.openURL(pdfUrl);
       return;
     }
 
-    Linking.openURL(pdfUrl);
+    // Facture JFKApp
+    await generateInvoicePDF({
+      invoiceNumber: invoice.number,
+      documentType: invoice.documentType,
+      status: invoice.status,
+
+      date: new Date().toISOString(),
+
+      clientName: invoice.client?.name ?? "",
+      clientRccm: invoice.client?.rccm ?? "",
+      clientIdNat: invoice.client?.idNat ?? "",
+      clientNif: invoice.client?.nif ?? "",
+      clientAddress: invoice.client?.address ?? "",
+      clientCity: invoice.client?.city ?? "Kinshasa / RDC",
+
+      items: invoice.items ?? [],
+
+      subtotal: invoice.totals?.subtotal ?? 0,
+      discount: invoice.totals?.discount ?? 0,
+      discountAmount: 0,
+      totalAfterDiscount: invoice.totals?.total ?? 0,
+      total: invoice.totals?.total ?? 0,
+
+      eventName: invoice.eventName ?? invoice.designation ?? "",
+      eventDate: invoice.dateLivraison ?? "",
+      guestCount: invoice.guestCount ?? 0,
+    } as any);
+  } catch (error) {
+    console.error("❌ PDF facture:", error);
+
+    Alert.alert(
+      "Erreur",
+      "Impossible de générer le PDF."
+    );
   }
+}
 
   function createCreditNote(invoice: CateringInvoice) {
     if (!invoice.id) return;

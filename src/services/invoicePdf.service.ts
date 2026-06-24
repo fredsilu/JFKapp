@@ -2,8 +2,7 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
-import { Platform } from "react-native";
-import { htmlToPdfBlobWeb } from "@/src/utils/htmlToPdfBlobWeb";
+
 
 import { buildProformaHTML } from "@/src/utils/proformaHtml";
 import { CateringProforma } from "@/src/services/cateringProforma.service";
@@ -113,10 +112,7 @@ export async function generateInvoicePDF(
         )
       ) + ".pdf";
 
-    if (Platform.OS === "web") {
-      await htmlToPdfBlobWeb(html, finalFilename);
-      return "";
-    }
+   
 
     const { uri } = await Print.printToFileAsync({
       html,
@@ -174,15 +170,7 @@ export async function generateInvoicePDFFile(
       )
     ) + ".pdf";
 
-  if (Platform.OS === "web") {
-    const blob = await htmlToPdfBlobWeb(html, finalFilename);
 
-    return {
-      uri: "",
-      fileName: finalFilename,
-      blob,
-    };
-  }
 
   const { uri } = await Print.printToFileAsync({
     html,
@@ -233,15 +221,7 @@ export async function generateProformaPDFFile(
       (filename || `PROFORMA_${proforma.number}.pdf`).replace(/\.pdf$/i, "")
     ) + ".pdf";
 
-  if (Platform.OS === "web") {
-    const blob = await htmlToPdfBlobWeb(html, finalFilename);
 
-    return {
-      uri: "",
-      fileName: finalFilename,
-      blob,
-    };
-  }
 
   const { uri } = await Print.printToFileAsync({
     html,

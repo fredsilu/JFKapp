@@ -17,6 +17,7 @@ import {
 import { router, useFocusEffect, Stack } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
 import * as Linking from "expo-linking";
+import { generateProformaPDFFile } from "@/src/services/invoicePdf.service";
 
 import { formatShortDocumentDate } from '@/src/utils/dateFormat';
 import {
@@ -338,16 +339,24 @@ export default function ProformasScreen() {
     });
   }
 
-  function openPdf(pdfUrl?: string) {
-    if (!pdfUrl) {
-      Alert.alert(
-        "PDF indisponible",
-        "Cette proforma ne possède pas encore de PDF archivé."
-      );
-      return;
-    }
+  async function openPdf(proforma: CateringProforma) {
+    try {
+      if ((proforma as any).source === "legacy_import") {
+        if (!(proforma as any).pdfUrl) {
+          Alert.alert("PDF indisponible", "Aucun PDF archivé trouvé.");
+          return;
+        }
 
-    Linking.openURL(pdfUrl);
+        await Linking.openURL((proforma as any).pdfUrl);
+        return;
+      }
+
+      const pdfFile = await generateProformaPDFFile(proforma);
+      await Linking.openURL(pdfFile.uri);
+    } catch (error) {
+      console.error("❌ PDF proforma:", error);
+      Alert.alert("Erreur", "Impossible de générer le PDF.");
+    }
   }
 
   function renderStatusBadge(p: CateringProforma) {
@@ -586,15 +595,13 @@ export default function ProformasScreen() {
                       <Icon name="visibility" size={16} color="#007AFF" />
                       <Text style={styles.smallActionText}>Voir</Text>
                     </TouchableOpacity>
-                    {(p as any)?.pdfUrl ? (
-                      <TouchableOpacity
-                        style={styles.pdfActionButton}
-                        onPress={() => openPdf((p as any).pdfUrl)}
-                      >
-                        <Icon name="picture-as-pdf" size={16} color="#059669" />
-                        <Text style={styles.pdfActionText}>PDF</Text>
-                      </TouchableOpacity>
-                    ) : null}
+                    <TouchableOpacity
+                      style={styles.pdfActionButton}
+                      onPress={() => openPdf(p)}
+                    >
+                      <Icon name="picture-as-pdf" size={16} color="#059669" />
+                      <Text style={styles.pdfActionText}>PDF</Text>
+                    </TouchableOpacity>
 
                     {canCancelProforma(p) ? (
                       <TouchableOpacity
@@ -664,6 +671,12 @@ export default function ProformasScreen() {
                   onPress={() => openProforma(p.id)}
                 >
                   <Text style={styles.primaryActionText}>Voir</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.pdfMobileAction}
+                  onPress={() => openPdf(p)}
+                >
+                  <Text style={styles.pdfMobileActionText}>PDF</Text>
                 </TouchableOpacity>
 
                 {canCancelProforma(p) ? (
@@ -1128,5 +1141,20 @@ const styles = StyleSheet.create({
     color: "#059669",
     fontSize: 13,
     fontWeight: "700",
+  },
+  pdfMobileAction: {
+    flex: 1,
+    backgroundColor: "#ECFDF5",
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+
+  pdfMobileActionText: {
+    color: "#059669",
+    fontWeight: "800",
+    fontSize: 13,
   },
 });
