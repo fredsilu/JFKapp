@@ -7,7 +7,9 @@ import { storage } from "@/lib/firebase";
 export type DocumentStorageKind =
   | "invoices"
   | "proformas"
-  | "credit-notes";
+  | "credit-notes"
+  | "archived-invoices"
+  | "archived-proformas";
 
 function sanitizeFileName(value: string) {
   return value

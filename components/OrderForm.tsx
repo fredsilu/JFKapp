@@ -18,7 +18,7 @@ import { Keyboard } from 'react-native';
 import { EditableOrderItem } from '@/types/catering';
 
 import { useClients, useDishes } from '@/src/hooks/useFirestore';
-import { Order, Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
+import {  Client, Dish, OrderDish, OrderIngredient, Ingredient } from '@/types';
 import { formatCurrency } from '@/src/utils/costs';
 import ErrorMessage from '@/src/components/ErrorMessage';
 import LoadingSpinner from '@/src/components/LoadingSpinner';
