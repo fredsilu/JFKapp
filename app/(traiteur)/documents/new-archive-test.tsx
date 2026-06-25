@@ -46,7 +46,7 @@ export default function NewArchiveTestScreen() {
                 number,
                 clientName,
                 historicalClientName: clientName,
-                clientMatchStatus: "unmatched",
+                clientMatchStatus: "unmapped",
                 designation: "Archive test avec vrai PDF",
                 documentDate: new Date().toISOString().slice(0, 10),
                 amount: Number(amount) || 0,

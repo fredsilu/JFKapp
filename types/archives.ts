@@ -4,54 +4,57 @@ import { CateringCurrency } from "@/types/catering";
 
 export type ArchivedDocumentType = "invoice" | "proforma";
 
+export type ArchivedClientMatchStatus =
+  | "mapped"
+  | "new_historical_client"
+  | "unmapped"
+  | "manual_alias"
+  | "matched";
+
 export type ArchivedDocumentImportStatus =
-    | "complete"
-    | "metadata_incomplete"
-    | "pdf_without_excel_match"
-    | "excel_without_pdf"
-    | "duplicate_pdf";
+  | "complete"
+  | "metadata_incomplete"
+  | "pdf_without_excel_match"
+  | "excel_without_pdf"
+  | "duplicate_pdf";
 
 export interface ArchivedDocument {
-    id?: string;
+  id?: string;
 
-    type: ArchivedDocumentType;
+  type: ArchivedDocumentType;
+  number: string;
 
-    number: string;
+  clientName: string;
+  clientId?: string;
+  historicalClientName?: string;
+  clientMatchStatus?: ArchivedClientMatchStatus;
+  clientMatchReason?: string;
 
-    clientName: string;
-    clientId?: string;
-    historicalClientName?: string;
-    clientMatchStatus?: "matched" | "unmatched" | "manual_alias";
+  designation?: string;
 
+  documentDate?: string;
+  eventDate?: string;
+  eventTime?: string;
 
-    designation?: string;
+  amount?: number;
+  currency?: CateringCurrency;
 
-    documentDate?: string;
-    eventDate?: string;
-    eventTime?: string;
+  linkedInvoiceNumber?: string;
+  linkedProformaNumber?: string;
 
-    amount?: number;
+  fileName: string;
+  pdfUrl: string;
+  storagePath: string;
 
-    currency?: CateringCurrency;
+  source: "historical_import";
 
-    linkedInvoiceNumber?: string;
-    linkedProformaNumber?: string;
+  importBatch?: string;
+  importStatus?: ArchivedDocumentImportStatus;
 
-    fileName: string;
+  invoiceDate?: string;
+  paymentDate?: string;
 
-    pdfUrl: string;
-    storagePath: string;
-
-    source: "historical_import";
-
-    importBatch?: string;
-    importStatus?: ArchivedDocumentImportStatus;
-
-    invoiceDate?: string;
-    paymentDate?: string;
-
-    importedAt?: Timestamp;
-    createdAt?: Timestamp;
-    updatedAt?: Timestamp;
-
+  importedAt?: Timestamp;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
