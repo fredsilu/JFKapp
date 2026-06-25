@@ -177,6 +177,8 @@ export default function TraiteurLayout() {
       <Tabs.Screen name="documents/invoices" options={hiddenScreenOptions} />
       <Tabs.Screen name="documents/proformas" options={hiddenScreenOptions} />
       <Tabs.Screen name="documents/credit-notes" options={hiddenScreenOptions} />
+      <Tabs.Screen name="documents/archives" options={hiddenScreenOptions} />
+       <Tabs.Screen name="documents/new-archive-test" options={hiddenScreenOptions} />
 
 
       <Tabs.Screen name="config/help" options={hiddenScreenOptions} />

@@ -32,6 +32,10 @@
     "data:verify:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/verifyBackup.ts",
     "import:ingredients:dry": "tsx scripts/importIngredients.ts --dry",
     "import:ingredients:test": "tsx scripts/importIngredients.ts",
+    "build:client-mapping:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/build-client-mapping.js",
+    "import:archives:test": "dotenv -e .env.test -- node scripts/import-historical-archives.js --test",
+    "import:archives:prod:test": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js --test",
+    "import:archives:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js",
     "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
   },
   "expo": {
@@ -54,6 +58,7 @@
     "expo-asset": "~12.0.13",
     "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
+    "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.23",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",

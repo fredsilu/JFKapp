@@ -1,3 +1,4 @@
+//scripts/dataManager/firebaseAdmin.ts
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";

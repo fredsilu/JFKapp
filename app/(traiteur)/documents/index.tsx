@@ -25,6 +25,12 @@ export default function DocumentsHomeScreen() {
       route: "/(traiteur)/documents/credit-notes",
       icon: "↩️",
     },
+    {
+      title: "Archives historiques",
+      subtitle: "Consulter les anciennes factures et proformas importées",
+      route: "/(traiteur)/documents/archives",
+      icon: "🗂️",
+    },
   ];
 
   return (

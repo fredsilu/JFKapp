@@ -19,6 +19,10 @@ export interface ArchivedDocument {
     number: string;
 
     clientName: string;
+    clientId?: string;
+    historicalClientName?: string;
+    clientMatchStatus?: "matched" | "unmatched" | "manual_alias";
+
 
     designation?: string;
 
@@ -43,7 +47,11 @@ export interface ArchivedDocument {
     importBatch?: string;
     importStatus?: ArchivedDocumentImportStatus;
 
+    invoiceDate?: string;
+    paymentDate?: string;
+
     importedAt?: Timestamp;
     createdAt?: Timestamp;
     updatedAt?: Timestamp;
+
 }
