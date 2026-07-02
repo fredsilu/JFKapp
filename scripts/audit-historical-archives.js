@@ -1,3 +1,4 @@
+//scripts/audit-historical-archives.js
 const fs = require("fs");
 const path = require("path");
 const XLSX = require("xlsx");
@@ -19,6 +20,20 @@ function normalize(value) {
     .replace(/\.[^.]+$/i, "")
     .replace(/\s+/g, "")
     .replace(/-/g, "_");
+}
+
+function normalizeDocumentNumber(value) {
+  const text = normalize(value);
+
+  const match = text.match(/cr(\d{4})_([a-z]{2})_(\d+)/);
+
+  if (!match) return text;
+
+  const year = match[1];
+  const prefix = match[2];
+  const seq = String(Number(match[3])).padStart(3, "0");
+
+  return `cr${year}_${prefix}_${seq}`;
 }
 
 function normalizeColumnName(value) {
@@ -155,13 +170,15 @@ function readSheet(workbook, sheetName) {
 }
 
 function findMatches(files, documentType, number) {
-  const key = normalize(number);
+  const key = normalizeDocumentNumber(number);
 
-  return files.filter(
-    (file) =>
-      file.documentType === documentType &&
-      file.normalizedFileName.includes(key)
-  );
+  return files.filter((file) => {
+    if (file.documentType !== documentType) return false;
+
+    return (
+      normalizeDocumentNumber(file.normalizedFileName).includes(key)
+    );
+  });
 }
 
 function splitMatchesByKind(matches) {

@@ -12,6 +12,8 @@ import {
   router,
 } from "expo-router";
 
+
+
 import { useFocusEffect } from "@react-navigation/native";
 
 import SimulationEditor from "@/components/simulation/SimulationEditor";
@@ -95,9 +97,12 @@ export default function EditInvoiceV2Screen() {
       const items = sectionsToDocumentItems(payload.sections);
       const totals = buildDocumentTotalsFromSections(payload.sections);
 
+
       await updateDraftInvoice(invoice.id, {
         designation: payload.eventName || "Prestation traiteur",
         eventName: payload.eventName,
+
+
 
         guestCount: payload.numberOfPeople,
         eventDate: payload.eventDate,
@@ -175,7 +180,13 @@ export default function EditInvoiceV2Screen() {
       title={`Modifier ${invoice.number}`}
 
       initialEventName={invoice.eventName ?? invoice.designation ?? ""}
-      initialClientName={invoice.client?.name ?? ""}
+      initialClientId={(invoice as any).clientId ?? ""}
+      initialClientName={
+        invoice.client?.name ??
+        (invoice as any).clientName ??
+        (invoice as any).customerName ??
+        ""
+      }
       initialNumberOfPeople={invoice.guestCount ?? 0}
 
       initialEventDate={(invoice as any).eventDate ?? ""}

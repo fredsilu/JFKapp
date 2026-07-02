@@ -266,7 +266,7 @@ export function buildInvoiceHTML(
     safe((invoice as any).bankName) || "EQUITYBCDC";
 
   const bankAccountNumber =
-    safe((invoice as any).bankAccountNumber) || "0242000001008";
+    safe((invoice as any).bankAccountNumber) || "0121265120026";  	
 
   const bankCurrency =
     safe((invoice as any).bankCurrency) || "USD";

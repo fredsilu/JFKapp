@@ -1,3 +1,4 @@
+//components/simulation/ArticleSectionCard.tsx
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 
@@ -82,7 +83,7 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
         onChangeText={(value) =>
           onUpdate(section.id, "quantity", Number(value) || 0)
         }
-        keyboardType="numeric"
+       keyboardType="numeric"
         style={inputStyle}
       />
 
@@ -92,7 +93,7 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
         onChangeText={(value) =>
           onUpdate(section.id, "unitPrice", Number(value) || 0)
         }
-        keyboardType="numeric"
+         keyboardType="numbers-and-punctuation"
         style={inputStyle}
       />
 

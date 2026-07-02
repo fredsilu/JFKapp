@@ -68,7 +68,10 @@ export function sectionsToDocumentItems(
         totalPrice,
       };
     })
-    .filter((item) => item.quantity > 0 && item.unitPrice > 0);
+    .filter((item) => {
+      const totalPrice = Number(item.totalPrice ?? 0);
+      return item.quantity > 0 && totalPrice !== 0;
+    });
 }
 
 export function buildDocumentTotalsFromSections(

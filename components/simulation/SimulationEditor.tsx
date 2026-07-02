@@ -702,25 +702,29 @@ export default function SimulationEditor({
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>Choisir un client</Text>
-
               {clients.length === 0 ? (
                 <Text style={styles.emptyText}>
                   Aucun client trouvé. Crée d’abord un client dans le référentiel.
                 </Text>
               ) : (
-                clients.map((client) => (
-                  <TouchableOpacity
-                    key={client.id}
-                    onPress={() => {
-                      setClientId(client.id);
-                      setClientName(client.name);
-                      setShowClientModal(false);
-                    }}
-                    style={styles.modalOption}
-                  >
-                    <Text style={styles.modalOptionText}>{client.name}</Text>
-                  </TouchableOpacity>
-                ))
+                <ScrollView
+                  style={styles.modalScroll}
+                  showsVerticalScrollIndicator
+                >
+                  {clients.map((client) => (
+                    <TouchableOpacity
+                      key={client.id}
+                      onPress={() => {
+                        setClientId(client.id);
+                        setClientName(client.name);
+                        setShowClientModal(false);
+                      }}
+                      style={styles.modalOption}
+                    >
+                      <Text style={styles.modalOptionText}>{client.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               )}
 
               <TouchableOpacity
@@ -961,10 +965,10 @@ const styles = StyleSheet.create({
   datePickerPlaceholder: {
     color: "#94A3B8",
   },
-
   modalCard: {
     width: "100%",
     maxWidth: 420,
+    maxHeight: "85%",
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 18,
@@ -1092,6 +1096,9 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontSize: 14,
     marginBottom: 12,
+  },
+  modalScroll: {
+    maxHeight: 420,
   },
 
 });

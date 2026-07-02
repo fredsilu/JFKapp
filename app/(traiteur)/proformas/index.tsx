@@ -339,25 +339,7 @@ export default function ProformasScreen() {
     });
   }
 
-  async function openPdf(proforma: CateringProforma) {
-    try {
-      if ((proforma as any).source === "legacy_import") {
-        if (!(proforma as any).pdfUrl) {
-          Alert.alert("PDF indisponible", "Aucun PDF archivé trouvé.");
-          return;
-        }
 
-        await Linking.openURL((proforma as any).pdfUrl);
-        return;
-      }
-
-      const pdfFile = await generateProformaPDFFile(proforma);
-      await Linking.openURL(pdfFile.uri);
-    } catch (error) {
-      console.error("❌ PDF proforma:", error);
-      Alert.alert("Erreur", "Impossible de générer le PDF.");
-    }
-  }
 
   function renderStatusBadge(p: CateringProforma) {
     const colors = getStatusColors(p);
@@ -597,7 +579,12 @@ export default function ProformasScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.pdfActionButton}
-                      onPress={() => openPdf(p)}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(traiteur)/proformas/[id]",
+                          params: { id: String(p.id) },
+                        })
+                      }
                     >
                       <Icon name="picture-as-pdf" size={16} color="#059669" />
                       <Text style={styles.pdfActionText}>PDF</Text>
@@ -674,7 +661,12 @@ export default function ProformasScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.pdfMobileAction}
-                  onPress={() => openPdf(p)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(traiteur)/proformas/[id]",
+                      params: { id: String(p.id) },
+                    })
+                  }
                 >
                   <Text style={styles.pdfMobileActionText}>PDF</Text>
                 </TouchableOpacity>

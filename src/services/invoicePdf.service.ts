@@ -53,6 +53,7 @@ async function enrichInvoiceWithCompanySettings(
   const companySettings = await getCompanySettings();
   const bankAccount = getDefaultBankAccount(companySettings);
 
+
   return {
     ...invoice,
     companySettings,

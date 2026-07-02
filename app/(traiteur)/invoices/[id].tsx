@@ -14,6 +14,10 @@ import {
 } from "react-native";
 import * as Linking from "expo-linking";
 import {
+  getCompanySettings,
+  getDefaultBankAccount,
+} from "@/src/services/companySettings.service";
+import {
   CreditNote,
   getCreditNotesByInvoiceId,
 } from "@/src/services/creditNote.service";
@@ -170,6 +174,8 @@ export default function InvoiceDetailScreen() {
     };
 
     if (Platform.OS === "web") {
+     
+
       const confirmed = window.confirm(
         "Confirmer l'émission de cette facture ? Après émission, elle ne sera plus modifiable."
       );
@@ -339,14 +345,34 @@ export default function InvoiceDetailScreen() {
           }) ?? [],
       };
 
+
+
       invoicePdfData.logoBase64 = logoBase64;
       invoicePdfData.stampBase64 = stampBase64;
       invoicePdfData.signatureBase64 = signatureBase64;
 
       const filename = getInvoicePdfFileName(invoice);
 
+      const companySettings = await getCompanySettings();
+      const bankAccount = getDefaultBankAccount(companySettings);
+
+      const enrichedInvoicePdfData = {
+        ...invoicePdfData,
+        companySettings,
+        companyName: companySettings.companyName,
+        companyPhone: companySettings.phone,
+        companyEmail: companySettings.email,
+        companyAddress: companySettings.address,
+        companyRccm: companySettings.rccm,
+        companyIdNat: companySettings.idNat,
+        companyNif: companySettings.nif,
+        bankName: bankAccount.bankName,
+        bankAccountNumber: bankAccount.accountNumber,
+        bankCurrency: bankAccount.currency,
+      };
+
       if (Platform.OS === "web") {
-        const html = buildInvoiceHTML(invoicePdfData, {
+        const html = buildInvoiceHTML(enrichedInvoicePdfData, {
           logoBase64,
           stampBase64,
           signatureBase64,

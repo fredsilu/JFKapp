@@ -5,7 +5,7 @@ const path = require("path");
 const XLSX = require("xlsx");
 
 const EXCEL_PATH =
-    "B:/Professionnel/Creperie/Clientele/Archives_Crepolia/audit_import_archives_v3.xlsx";
+    "B:/Professionnel/Creperie/Clientele/Archives_Crepolia/audit_import_archives_v4.xlsx";
 
 const CLIENT_MAPPING_PATH =
     "B:/Professionnel/Creperie/Clientele/Archives_Crepolia/archive_client_mapping_v1.xlsx";
@@ -234,7 +234,11 @@ async function uploadPdf(bucket, row, kind) {
             storagePath,
         };
     }
+    const stats = fs.statSync(filePath);
 
+    if (stats.size === 0) {
+        throw new Error(`PDF vide : ${filePath}`);
+    }
     await bucket.upload(filePath, {
         destination: storagePath,
         metadata: { contentType: "application/pdf" },
@@ -261,6 +265,8 @@ function buildPayload(row, kind, uploadResult, clientMatch) {
         clientName: clientMatch.clientName || "",
         historicalClientName: clientMatch.historicalClientName,
         clientMatchStatus: clientMatch.clientMatchStatus,
+        matchType: cleanString(row.matchType),
+        matchReason: cleanString(row.matchReason),
 
         designation: cleanString(row.designation),
 
@@ -285,8 +291,26 @@ function buildPayload(row, kind, uploadResult, clientMatch) {
         storagePath: uploadResult.storagePath,
 
         source: "historical_import",
-        importBatch: IS_TEST ? "pilot_5_archives" : "historical_archives_v3",
+        importBatch: IS_TEST ? "pilot_5_archives" : "historical_archives_v4",
         importStatus: cleanString(row.importStatus) || "complete",
+        auditVersion: "v4",
+
+        metadataStatus:
+            cleanString(row.designation) &&
+                (isProforma
+                    ? excelDateToISO(row.documentDate)
+                    : excelDateToISO(row.invoiceDate))
+                ? "complete"
+                : "missing_info",
+
+        isMetadataVerified: false,
+
+        internalNote: "",
+
+        metadataUpdatedAt: null,
+
+        metadataUpdatedBy: null,
+        metadataVersion: 1,
 
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -341,8 +365,14 @@ async function importRows({ db, bucket, rows, kind, clientsByName, clientMapping
             if (clientMatch.clientId) matched++;
             else unmatched++;
 
+            console.log(
+                `📄 ${type.toUpperCase()} | ${number} | ${row.clientExcel} | ${row.fileName}`
+            );
+
             const uploadResult = await uploadPdf(bucket, row, kind);
             const payload = removeUndefined(buildPayload(row, kind, uploadResult, clientMatch));
+
+
 
             if (IS_DRY_RUN) {
                 console.log(
