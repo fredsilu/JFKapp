@@ -1,24 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 import {
   IS_TEST,
   APP_ENV,
-} from '@/lib/firebase';
+} from "@/lib/firebase";
 
 export default function EnvironmentBadge() {
+  if (!IS_TEST) {
+    return null;
+  }
+
   return (
-    <View
-      style={[
-        styles.container,
-        IS_TEST
-          ? styles.testContainer
-          : styles.productionContainer,
-      ]}
-    >
-      <Text style={styles.text}>
-        {IS_TEST ? 'MODE TEST' : 'PRODUCTION'}
-      </Text>
+    <View style={[styles.container, styles.testContainer]}>
+      <Text style={styles.text}>🧪 MODE TEST</Text>
 
       <Text style={styles.subText}>
         {APP_ENV.toUpperCase()}
@@ -32,26 +27,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: 8,
   },
 
   testContainer: {
-    backgroundColor: '#d32f2f',
-  },
-
-  productionContainer: {
-    backgroundColor: '#2e7d32',
+    backgroundColor: "#d32f2f",
   },
 
   text: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 12,
   },
 
   subText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
     opacity: 0.9,
   },

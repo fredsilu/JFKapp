@@ -166,17 +166,25 @@ export default function ArchivedDocumentsScreen() {
                     onChange={setFilterType}
                 />
 
-                <ArchiveStats
-                    total={stats.total}
-                    invoices={stats.invoices}
-                    proformas={stats.proformas}
-                    clients={stats.clients}
-                    totalInvoices={stats.totalInvoices}
-                    totalProformas={stats.totalProformas}
-                    mapped={stats.mapped}
-                    newHistorical={stats.newHistorical}
-                    unmapped={stats.unmapped}
-                />
+                {Platform.OS === "web" ? (
+                    <ArchiveStats
+                        total={stats.total}
+                        invoices={stats.invoices}
+                        proformas={stats.proformas}
+                        clients={stats.clients}
+                        totalInvoices={stats.totalInvoices}
+                        totalProformas={stats.totalProformas}
+                        mapped={stats.mapped}
+                        newHistorical={stats.newHistorical}
+                        unmapped={stats.unmapped}
+                    />
+                ) : (
+                    <View style={styles.mobileStats}>
+                        <Text style={styles.mobileStatsText}>
+                            {stats.total} archives · {stats.invoices} factures · {stats.proformas} proformas
+                        </Text>
+                    </View>
+                )}
 
                 <Text style={styles.count}>
                     {filteredDocuments.length} document(s)
@@ -272,8 +280,23 @@ const styles = StyleSheet.create({
         marginTop: 40,
     },
     topArea: {
-  flexShrink: 0,
-},
+        flexShrink: 0,
+    },
+    mobileStats: {
+        backgroundColor: "#FFFFFF",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 8,
+    },
+
+    mobileStatsText: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#374151",
+    },
 
 
 });
