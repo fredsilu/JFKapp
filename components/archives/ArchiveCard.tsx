@@ -23,12 +23,18 @@ export default function ArchiveCard({
           <ArchiveStatusBadge status={document.clientMatchStatus} />
         </View>
 
-        <TouchableOpacity
-          style={styles.pdfButton}
-          onPress={() => Linking.openURL(document.pdfUrl)}
-        >
-          <Text style={styles.pdfText}>PDF</Text>
-        </TouchableOpacity>
+        {document.pdfUrl ? (
+          <TouchableOpacity
+            style={styles.pdfButton}
+            onPress={() => Linking.openURL(document.pdfUrl)}
+          >
+            <Text style={styles.pdfText}>PDF</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={[styles.pdfButton, styles.pdfButtonDisabled]}>
+            <Text style={styles.pdfText}>PDF</Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.number}>{document.number}</Text>
@@ -74,10 +80,10 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFF",
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
   header: {
@@ -89,6 +95,7 @@ const styles = StyleSheet.create({
   badges: {
     flexDirection: "row",
     gap: 6,
+    flexShrink: 1,
   },
 
   pdfButton: {
@@ -98,49 +105,63 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
+  pdfButtonDisabled: {
+    opacity: 0.4,
+  },
+
   pdfText: {
     color: "#FFF",
     fontWeight: "700",
+    fontSize: 13,
   },
 
   number: {
     marginTop: 12,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "800",
+    color: "#111827",
   },
 
   client: {
-    marginTop: 8,
+    marginTop: 6,
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 15,
+    color: "#111827",
   },
 
   historical: {
     color: "#6B7280",
-    marginTop: 3,
+    marginTop: 2,
+    fontSize: 13,
   },
 
   designation: {
-    marginTop: 10,
+    marginTop: 8,
     color: "#374151",
+    fontSize: 13,
   },
 
   row: {
-    marginTop: 10,
+    marginTop: 8,
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: 12,
   },
 
   label: {
     color: "#6B7280",
+    fontSize: 13,
   },
 
   value: {
     fontWeight: "600",
+    fontSize: 13,
+    color: "#111827",
   },
 
   amount: {
     fontWeight: "700",
+    fontSize: 13,
     color: "#0F766E",
   },
 });

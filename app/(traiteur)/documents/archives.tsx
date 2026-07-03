@@ -7,6 +7,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    useWindowDimensions,
     View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -85,6 +86,8 @@ function buildStats(docs: ArchivedDocument[]) {
 }
 
 export default function ArchivedDocumentsScreen() {
+    const { width } = useWindowDimensions();
+    const isMobileLayout = width < 768;
     const [documents, setDocuments] = useState<ArchivedDocument[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -186,15 +189,11 @@ export default function ArchivedDocumentsScreen() {
                     </View>
                 )}
 
-                <Text style={styles.count}>
-                    {filteredDocuments.length} document(s)
-                </Text>
+
             </View>
 
             <View style={styles.tableArea}>
-                {Platform.OS === "web" ? (
-                    <ArchiveTable documents={filteredDocuments} />
-                ) : (
+                {isMobileLayout ? (
                     <ScrollView contentContainerStyle={styles.list}>
                         {filteredDocuments.map((doc) => (
                             <ArchiveCard
@@ -209,10 +208,16 @@ export default function ArchivedDocumentsScreen() {
                             </Text>
                         )}
                     </ScrollView>
-                )}
+                ) : (
+                    <>
+                        <ArchiveTable documents={filteredDocuments} />
 
-                {Platform.OS === "web" && filteredDocuments.length === 0 && (
-                    <Text style={styles.emptyText}>Aucune archive trouvée.</Text>
+                        {filteredDocuments.length === 0 && (
+                            <Text style={styles.emptyText}>
+                                Aucune archive trouvée.
+                            </Text>
+                        )}
+                    </>
                 )}
             </View>
         </View>
@@ -225,7 +230,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F8FAFC",
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingTop: Platform.OS === "web" ? 44 : 28,
+        paddingBottom: 16,
     },
     center: {
         flex: 1,
@@ -238,15 +245,15 @@ const styles = StyleSheet.create({
         color: "#6B7280",
     },
     title: {
-        fontSize: 24,
+        fontSize: 21,
         fontWeight: "700",
         color: "#111827",
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 12,
         color: "#6B7280",
-        marginTop: 4,
-        marginBottom: 14,
+        marginTop: 3,
+        marginBottom: 10,
     },
     searchInput: {
         backgroundColor: "#FFFFFF",
@@ -254,9 +261,9 @@ const styles = StyleSheet.create({
         borderColor: "#E5E7EB",
         borderRadius: 12,
         paddingHorizontal: 14,
-        paddingVertical: 10,
-        fontSize: 14,
-        marginBottom: 12,
+        paddingVertical: 9,
+        fontSize: 13,
+        marginBottom: 10,
     },
 
     count: {

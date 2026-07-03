@@ -348,9 +348,7 @@ export default function DocumentInvoicesScreen() {
                     </ScrollView>
                 </View>
 
-                <Text style={styles.resultCount}>
-                    {filteredInvoices.length} facture(s)
-                </Text>
+
                 <FlatList
                     data={filteredInvoices}
                     keyExtractor={(item: any) => item.id}
@@ -676,7 +674,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F8FAFC",
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingTop: 44,
+        paddingBottom: 16,
     },
     header: {
         marginBottom: 16,
@@ -687,14 +687,15 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: "800",
         color: "#064E3B",
     },
+
     subtitle: {
-        fontSize: 14,
+        fontSize: 13,
         color: "#6B7280",
-        marginTop: 4,
+        marginTop: 3,
     },
     searchBox: {
         height: 46,
@@ -827,10 +828,36 @@ const styles = StyleSheet.create({
     },
 
     mobileInvoiceNumber: {
+        fontSize: 18,
+        fontWeight: "800",
+        color: "#064E3B",
+    },
+
+    mobileClient: {
+        fontSize: 17,
+        fontWeight: "800",
+        color: "#111827",
+        marginBottom: 14,
+    },
+
+    mobileLabel: {
+        fontSize: 14,
+        color: "#6B7280",
+    },
+
+    mobileValue: {
+        fontSize: 14,
+        color: "#111827",
+        fontWeight: "500",
+    },
+
+    mobileAmount: {
         fontSize: 15,
         fontWeight: "800",
         color: "#064E3B",
     },
+
+
 
     mobileStatus: {
         fontSize: 12,
@@ -842,12 +869,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
     },
 
-    mobileClient: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#111827",
-        marginBottom: 10,
-    },
+
 
     mobileInfoRow: {
         flexDirection: "row",
@@ -856,23 +878,7 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
     },
 
-    mobileLabel: {
-        fontSize: 13,
-        color: "#6B7280",
-    },
 
-    mobileValue: {
-        flex: 1,
-        textAlign: "right",
-        fontSize: 13,
-        color: "#111827",
-    },
-
-    mobileAmount: {
-        fontSize: 14,
-        fontWeight: "800",
-        color: "#111827",
-    },
 
     mobileActions: {
         flexDirection: "row",
@@ -915,13 +921,12 @@ const styles = StyleSheet.create({
     },
 
     statLabel: {
-        fontSize: 12,
+        fontSize: 13,
         color: "#6B7280",
-        marginBottom: 6,
     },
 
     statValue: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: "800",
         color: "#064E3B",
     },

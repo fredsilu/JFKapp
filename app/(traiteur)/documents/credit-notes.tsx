@@ -304,9 +304,7 @@ export default function DocumentCreditNotesScreen() {
 
         {renderFilters()}
 
-        <Text style={styles.resultCount}>
-          {filteredCreditNotes.length} avoir(s)
-        </Text>
+
 
         <FlatList
           data={filteredCreditNotes}
@@ -413,9 +411,7 @@ export default function DocumentCreditNotesScreen() {
 
       {renderFilters()}
 
-      <Text style={styles.resultCount}>
-        {filteredCreditNotes.length} avoir(s)
-      </Text>
+
 
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={styles.table}>
@@ -509,7 +505,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 16,
   },
   header: {
     marginBottom: 16,
@@ -520,14 +518,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "800",
     color: "#064E3B",
   },
+
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#6B7280",
-    marginTop: 4,
+    marginTop: 3,
   },
   searchBox: {
     height: 46,
@@ -653,38 +652,45 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+
   mobileInvoiceNumber: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#064E3B",
+  },
+
+  mobileClient: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 14,
+  },
+
+  mobileLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+
+  mobileValue: {
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "500",
+  },
+
+  mobileAmount: {
     fontSize: 15,
     fontWeight: "800",
     color: "#064E3B",
   },
-  mobileClient: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 10,
-  },
+
+
   mobileInfoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
     paddingVertical: 5,
   },
-  mobileLabel: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
-  mobileValue: {
-    flex: 1,
-    textAlign: "right",
-    fontSize: 13,
-    color: "#111827",
-  },
-  mobileAmount: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#111827",
-  },
+
   mobileActions: {
     flexDirection: "row",
     gap: 10,
@@ -722,12 +728,12 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#6B7280",
-    marginBottom: 6,
   },
+
   statValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "800",
     color: "#064E3B",
   },
