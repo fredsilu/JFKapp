@@ -1,3 +1,4 @@
+//components/archives/ArchiveCard.tsx
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { ArchivedDocument } from "@/types/archives";

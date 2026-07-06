@@ -436,34 +436,34 @@ export default function ProformasScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Proformas en cours</Text>
-              <Text style={styles.summaryValue}>{activeProformas.length}</Text>
-              <Text style={styles.summaryLabel}>Total en cours</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
-            </View>
+            <View style={styles.summaryGrid}>
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>En cours</Text>
+                <Text style={styles.summaryValue}>{activeProformas.length}</Text>
+                <Text style={styles.summarySubLabel}>Total</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
+              </View>
 
-            <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
-              <Text style={styles.summaryLabel}>
-                Proformas acceptées non converties
-              </Text>
-              <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
-              <Text style={styles.summaryLabel}>Total accepté</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
-            </View>
+              <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
+                <Text style={styles.summaryLabel}>Acceptées</Text>
+                <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
+                <Text style={styles.summarySubLabel}>Total</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
+              </View>
 
-            <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
-              <Text style={styles.summaryLabel}>Proformas converties</Text>
-              <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
-              <Text style={styles.summaryLabel}>Total converti</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
-            </View>
+              <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
+                <Text style={styles.summaryLabel}>Converties</Text>
+                <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
+                <Text style={styles.summarySubLabel}>Total</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
+              </View>
 
-            <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
-              <Text style={styles.summaryLabel}>Proformas facturées</Text>
-              <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
-              <Text style={styles.summaryLabel}>Total facturé</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
+              <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
+                <Text style={styles.summaryLabel}>Facturées</Text>
+                <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
+                <Text style={styles.summarySubLabel}>Total</Text>
+                <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
+              </View>
             </View>
           </>
         )}
@@ -699,7 +699,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F8',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 16,
   },
 
   content: {
@@ -802,45 +804,62 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 2,
   },
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
 
   summaryCard: {
-    backgroundColor: '#111827',
+    width: "48%",
+    backgroundColor: "#111827",
     borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
   },
 
   approvedSummaryCard: {
-    backgroundColor: '#92400E',
+    backgroundColor: "#92400E",
   },
 
   convertedSummaryCard: {
-    backgroundColor: '#065F46',
+    backgroundColor: "#065F46",
   },
 
   invoicedSummaryCard: {
-    backgroundColor: '#1E3A8A',
+    backgroundColor: "#1E3A8A",
   },
 
   summaryLabel: {
-    color: '#D1D5DB',
-    fontSize: 13,
+    color: "#D1D5DB",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  summarySubLabel: {
+    color: "#D1D5DB",
+    fontSize: 11,
     marginBottom: 2,
   },
 
   summaryValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 10,
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "800",
+    marginBottom: 8,
   },
 
   summaryAmount: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '900',
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "900",
   },
 
+
+ 
   searchInput: {
     backgroundColor: '#fff',
     borderWidth: 1,

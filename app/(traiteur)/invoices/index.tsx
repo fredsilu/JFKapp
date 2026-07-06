@@ -409,21 +409,28 @@ export default function InvoicesScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Nombre total de factures</Text>
-            <Text style={styles.summaryValue}>{invoices.length}</Text>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Total</Text>
+              <Text style={styles.summaryValue}>{invoices.length}</Text>
+              <Text style={styles.summarySubLabel}>Factures</Text>
+            </View>
 
-            <Text style={styles.summaryLabel}>Factures actives</Text>
-            <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Actives</Text>
+              <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
+              <Text style={styles.summarySubLabel}>Factures</Text>
+            </View>
 
-            <Text style={styles.summaryLabel}>
-              Chiffre d’affaires facturé actif
-            </Text>
-            <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>CA actif</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
+            </View>
 
-            <Text style={styles.summaryHint}>
-              Les factures annulées ou remplacées ne sont pas incluses.
-            </Text>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Payées</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(paidAmount)}</Text>
+            </View>
           </View>
         )}
 
@@ -713,7 +720,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F4F6F8",
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 16,
   },
 
   content: {
@@ -810,36 +819,49 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
   summaryCard: {
+    width: "48%",
     backgroundColor: "#065F46",
     borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
   },
 
   summaryLabel: {
     color: "#D1FAE5",
-    fontSize: 13,
-    marginBottom: 2,
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  summarySubLabel: {
+    color: "#D1FAE5",
+    fontSize: 11,
+    marginTop: 2,
   },
 
   summaryValue: {
     color: "#fff",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
-    marginBottom: 10,
   },
 
   summaryAmount: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "900",
   },
 
   summaryHint: {
-    color: "#D1FAE5",
-    fontSize: 12,
-    marginTop: 8,
+    display: "none",
   },
 
   searchInput: {

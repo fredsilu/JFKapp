@@ -619,19 +619,35 @@ export default function OrdersScreen() {
         </View>
       ) : (
         <>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Commandes créées</Text>
-            <Text style={styles.summaryValue}>{orders.length}</Text>
+          <View style={styles.summaryGrid}>
 
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Créées</Text>
+              <Text style={styles.summaryValue}>{orders.length}</Text>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Confirmées</Text>
+              <Text style={styles.summaryValue}>{confirmedOrders}</Text>
+            </View>
+
+            <View style={[styles.summaryCard, styles.productionSummaryCard]}>
+              <Text style={styles.summaryLabel}>Préparation</Text>
+              <Text style={styles.summaryValue}>{productionOrders}</Text>
+            </View>
+
+            <View style={[styles.summaryCard, styles.deliveredSummaryCard]}>
+              <Text style={styles.summaryLabel}>Livrées</Text>
+              <Text style={styles.summaryValue}>{completedOrders}</Text>
+            </View>
+
+          </View>
+
+          <View style={styles.totalSummaryCard}>
             <Text style={styles.summaryLabel}>Valeur totale</Text>
             <Text style={styles.summaryAmount}>
               {formatCurrency(totalAmount)}
             </Text>
-          </View>
-
-          <View style={[styles.summaryCard, styles.deliveredSummaryCard]}>
-            <Text style={styles.summaryLabel}>Commandes terminées</Text>
-            <Text style={styles.summaryAmount}>{completedOrders}</Text>
           </View>
         </>
       )}
@@ -716,7 +732,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F8',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 44,
+    paddingBottom: 16,
   },
 
   content: {
@@ -824,24 +842,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#065F46',
   },
 
-  summaryLabel: {
-    color: '#D1D5DB',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-
-  summaryValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '800',
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
 
-  summaryAmount: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '900',
+
+  productionSummaryCard: {
+    backgroundColor: "#92400E",
   },
+
+
+
+  totalSummaryCard: {
+    backgroundColor: "#1E3A8A",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+
+  summaryLabel: {
+    color: "#D1D5DB",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  summaryValue: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  summaryAmount: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+
 
   searchInput: {
     backgroundColor: '#fff',
