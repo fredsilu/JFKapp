@@ -80,8 +80,28 @@ function mapArchivedDocument(id: string, data: any): ArchivedDocument {
 }
 
 export async function fetchArchivedDocuments(): Promise<ArchivedDocument[]> {
-  const q = query(collection(db, COLLECTION_NAME), orderBy("documentDate", "desc"));
-  const snapshot = await getDocs(q);
+  const snapshot = await getDocs(collection(db, COLLECTION_NAME));
+
+  console.log("Total documents Firestore :", snapshot.size);
+
+  const docs = snapshot.docs.map((d) => mapArchivedDocument(d.id, d.data()));
+
+const byYear: Record<string, number> = {};
+
+for (const doc of docs) {
+  const date =
+    doc.documentDate ||
+    doc.invoiceDate ||
+    doc.eventDate;
+
+  const year = date ? date.substring(0, 4) : "Sans date";
+
+  byYear[year] = (byYear[year] || 0) + 1;
+}
+
+console.log("Archives par année :", byYear);
+
+return docs;
 
   return snapshot.docs.map((d) => mapArchivedDocument(d.id, d.data()));
 }

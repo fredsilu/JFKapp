@@ -5,39 +5,24 @@
   "scripts": {
     "start": "npm run start:test",
     "reset-project": "node ./scripts/reset-project.js",
-
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-
-
-
     "start:test": "dotenv -e .env.test -- expo start --clear",
     "start:production": "dotenv -e .env.production -- expo start --clear",
-
     "android:test": "dotenv -e .env.test -- expo run:android",
     "android:production": "dotenv -e .env.production -- expo run:android",
-
     "web:test": "dotenv -e .env.test -- expo start --web",
     "web:production": "dotenv -e .env.production -- expo start --web",
-
-
     "build:android:apk:test": "eas build --platform android --profile test-apk",
     "build:android:apk:production": "eas build --platform android --profile production-apk",
     "build:android:aab:production": "eas build --platform android --profile production-aab",
-
-
     "build:web:test": "dotenv -e .env.test -- cross-env EXPO_PUBLIC_APP_ENV=test expo export --platform web --clear",
     "build:web:production": "dotenv -e .env.production -- cross-env EXPO_PUBLIC_APP_ENV=production expo export --platform web --clear",
-    
     "save:web:test": "if exist builds\\test rmdir /S /Q builds\\test && mkdir builds\\test && xcopy dist builds\\test /E /I /Y",
     "save:web:production": "if exist builds\\production rmdir /S /Q builds\\production && mkdir builds\\production && xcopy dist builds\\production /E /I /Y",
-    
     "export:web:test": "npm run build:web:test && npm run save:web:test",
     "export:web:production": "npm run build:web:production && npm run save:web:production",
-    
-
-
     "data:migrate:seed:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/restoreSeedToProduction.ts",
     "data:backup:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/backup.ts",
     "data:restore:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/restore.ts",
@@ -47,10 +32,8 @@
     "data:list:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/listBackups.ts",
     "data:verify:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/verifyBackup.ts",
     "data:verify:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/verifyBackup.ts",
-    
     "create:historical-clients:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/createHistoricalClients.js",
     "build:client-mapping:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/build-client-mapping.js",
-    
     "import:ingredients:dry": "tsx scripts/importIngredients.ts --dry",
     "import:ingredients:test": "tsx scripts/importIngredients.ts",
     "import:archives:test": "dotenv -e .env.test -- node scripts/import-historical-archives.js --test",
