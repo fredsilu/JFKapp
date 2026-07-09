@@ -32,6 +32,7 @@
     "data:list:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/listBackups.ts",
     "data:verify:test": "dotenv -e .env.test -- cross-env APP_ENV=test tsx scripts/dataManager/verifyBackup.ts",
     "data:verify:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/verifyBackup.ts",
+    "data:reset:prod": "dotenv -e .env.production -- cross-env APP_ENV=production tsx scripts/dataManager/reset.ts",
     "create:historical-clients:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/createHistoricalClients.js",
     "build:client-mapping:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/build-client-mapping.js",
     "import:ingredients:dry": "tsx scripts/importIngredients.ts --dry",

@@ -1,3 +1,4 @@
+// scripts/dataManager/reset.ts
 import fs from "fs";
 import path from "path";
 
@@ -88,16 +89,28 @@ async function deleteCollection(collectionName: string) {
 
 async function main() {
     const env = getEnv();
-    const isDryRun = process.argv.includes("--dry-run");
 
-    if (env !== "test") {
-        throw new Error("RESET INTERDIT EN PRODUCTION");
-    }
+    const isDryRun = process.argv.includes("--dry-run");
+    const allowProductionReset =
+        process.argv.includes("--allow-production-reset") ||
+        process.env.ALLOW_PRODUCTION_RESET === "true";
 
     const groupName = process.argv[2];
 
     if (!groupName) {
-        throw new Error("Usage : npm run data:reset:test -- operations");
+        throw new Error(
+            "Usage : npm run data:reset:test -- operations --dry-run"
+        );
+    }
+
+    if (env === "production" && !allowProductionReset) {
+        throw new Error(
+            "RESET PRODUCTION INTERDIT sans le flag --allow-production-reset"
+        );
+    }
+
+    if (env !== "test" && env !== "production") {
+        throw new Error(`Environnement non autorisé pour reset : ${env}`);
     }
 
     const collections = getCollectionsFromGroup(groupName);
@@ -109,6 +122,10 @@ async function main() {
     console.log("Environment :", env);
     console.log("Group       :", groupName);
     console.log("Dry Run     :", isDryRun ? "YES" : "NO");
+    console.log(
+        "Prod Reset  :",
+        env === "production" && allowProductionReset ? "AUTHORIZED" : "NO"
+    );
     console.log("");
 
     let total = 0;
@@ -138,7 +155,12 @@ async function main() {
     console.log("Toutes les données du groupe vont être supprimées.");
     console.log("");
 
-    await requireConfirmation("RESET_TEST_JFKAPP");
+    const confirmationCode =
+        env === "production"
+            ? "RESET_PRODUCTION_JFKAPP"
+            : "RESET_TEST_JFKAPP";
+
+    await requireConfirmation(confirmationCode);
 
     for (const collectionName of collections) {
         await deleteCollection(collectionName);

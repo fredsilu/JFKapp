@@ -345,6 +345,27 @@ function buildInvoiceRecord(row, pdf, number) {
     };
 }
 
+function isCreditNoteRow(row) {
+  const text = [
+    row.number,
+    row.normalizedNumber,
+    row.clientExcel,
+    row.fileName,
+    row.designation,
+    row.reason,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const rawAmount = String(row.amount || "")
+    .replace(",", ".")
+    .replace(/\s/g, "");
+
+  const amount = Number(rawAmount);
+
+  return text.includes("avoir") || (Number.isFinite(amount) && amount < 0);
+}
+
 function main() {
     console.log("Lecture Excel...");
 

@@ -11,6 +11,7 @@ export type DataGroupName =
     | "proformas"
     | "orders"
     | "invoices"
+    | "production_clean"
     | "production_seed";
 
 export const APP_NAME = "JFKApp";
@@ -24,6 +25,14 @@ export const DATA_GROUPS: Record<DataGroupName, string[]> = {
         "orders",
         "catering_invoices",
     ],
+    production_clean: [
+    "counters",
+    "catering_simulations",
+    "catering_proformas",
+    "orders",
+    "catering_invoices",
+    "archived_documents",
+],
     production_seed: [
         "clients",
         "ingredients",
