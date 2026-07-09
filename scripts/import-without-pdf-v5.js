@@ -77,7 +77,7 @@ async function main() {
 
             const isInvoice = type === "invoice";
 
-            await db.collection(COLLECTION).add({
+            const payload = removeUndefined({
                 type,
                 number,
 
@@ -111,6 +111,8 @@ async function main() {
                 importedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
+            await db.collection(COLLECTION).add(payload);
+
             console.log("Importé sans PDF :", type, number);
             imported++;
         } catch (e) {
@@ -121,6 +123,16 @@ async function main() {
 
     console.log("===== RÉSUMÉ =====");
     console.log({ total: rows.length, imported, skipped, failed });
+}
+
+function removeUndefined(payload) {
+    Object.keys(payload).forEach((key) => {
+        if (payload[key] === undefined) {
+            delete payload[key];
+        }
+    });
+
+    return payload;
 }
 
 main().catch(console.error);

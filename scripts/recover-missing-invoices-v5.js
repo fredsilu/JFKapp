@@ -74,6 +74,29 @@ function cleanAmount(value) {
   return Number.isFinite(amount) ? amount : undefined;
 }
 
+function isCreditNoteRow(row) {
+  const text = [
+    row.number,
+    row.clientExcel,
+    row.fileName,
+    row.designation,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const amount = cleanAmount(row.amount);
+
+  return text.includes("avoir") || (amount !== undefined && amount < 0);
+}
+
+function getPositiveAmount(value) {
+  const amount = cleanAmount(value);
+
+  if (amount === undefined) return undefined;
+
+  return Math.abs(amount);
+}
+
 function excelDateToISO(value) {
   if (!value) return undefined;
 
@@ -179,8 +202,9 @@ async function uploadPdf(bucket, row) {
 }
 
 function buildPayload(row, uploadResult) {
+  const isCreditNote = isCreditNoteRow(row);
   return removeUndefined({
-    type: "invoice",
+    type: isCreditNote ? "credit_note" : "invoice",
     number: cleanString(row.number) || "",
 
     clientId: undefined,
@@ -194,7 +218,14 @@ function buildPayload(row, uploadResult) {
     invoiceDate: excelDateToISO(row.invoiceDate),
     eventDate: excelDateToISO(row.eventDate),
 
-    amount: cleanAmount(row.amount),
+    amount: isCreditNote
+      ? getPositiveAmount(row.amount)
+      : cleanAmount(row.amount),
+
+    reason: isCreditNote
+      ? "Avoir historique importé"
+      : undefined,
+
     currency: "USD",
 
     fileName: cleanString(row.fileName) || "",
@@ -208,7 +239,7 @@ function buildPayload(row, uploadResult) {
 
     metadataStatus:
       cleanString(row.designation) &&
-      (excelDateToISO(row.invoiceDate) || excelDateToISO(row.eventDate))
+        (excelDateToISO(row.invoiceDate) || excelDateToISO(row.eventDate))
         ? "complete"
         : "missing_info",
 
@@ -267,7 +298,9 @@ async function main() {
 
   for (const row of rows) {
     const number = cleanString(row.number);
-    const type = "invoice";
+    const type = isCreditNoteRow(row)
+      ? "credit_note"
+      : "invoice";
 
     if (!number) {
       skipped.push({
