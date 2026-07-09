@@ -1,6 +1,6 @@
 // app/(traiteur)/documents/proformas.tsx
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,12 +10,17 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Linking,
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { useProformas } from "@/src/hooks/useFirestore";
+import {
+  fetchArchivedProformas,
+  normalizeArchivedProforma
+} from "@/src/services/archivedDocument.service";
 
 type ProformaStatusFilter =
   | "all"
@@ -25,6 +30,7 @@ type ProformaStatusFilter =
   | "rejected"
   | "converted"
   | "invoiced"
+  | "historical"
   | "cancelled";
 
 const statusFilters: { label: string; value: ProformaStatusFilter }[] = [
@@ -36,7 +42,16 @@ const statusFilters: { label: string; value: ProformaStatusFilter }[] = [
   { label: "Converties", value: "converted" },
   { label: "Facturées", value: "invoiced" },
   { label: "Annulées", value: "cancelled" },
+  { label: "Archives", value: "historical", },
 ];
+async function openPdf(item: any) {
+  if (item?.pdfUrl) {
+    await Linking.openURL(item.pdfUrl);
+    return;
+  }
+
+  console.log("PDF indisponible", item.id);
+}
 
 function formatAmount(value?: number) {
   if (!value) return "0,00 $";
@@ -84,6 +99,8 @@ function getStatusLabel(status?: string) {
       return "Brouillon";
     case "sent":
       return "Envoyée";
+    case "historical":
+      return "Archive";
     case "approved":
       return "Approuvée";
     case "rejected":
@@ -113,6 +130,11 @@ function getStatusColors(status?: string) {
       return { background: "#E0E7FF", text: "#3730A3" };
     case "invoiced":
       return { background: "#ECFDF5", text: "#047857" };
+    case "historical":
+      return {
+        background: "#E5E7EB",
+        text: "#374151",
+      };
     case "cancelled":
       return { background: "#FEE2E2", text: "#B91C1C" };
     default:
@@ -122,7 +144,9 @@ function getStatusColors(status?: string) {
 
 export default function DocumentProformasScreen() {
   const router = useRouter();
-  const { data: proformas, loading, error } = useProformas();
+  const { data: appProformas, loading, error } = useProformas();
+
+  const [archivedProformas, setArchivedProformas] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -130,6 +154,20 @@ export default function DocumentProformasScreen() {
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+
+  useEffect(() => {
+    fetchArchivedProformas().then(setArchivedProformas);
+  }, []);
+
+
+  const proformas = useMemo(() => {
+
+    const normalizedArchives =
+      archivedProformas.map(normalizeArchivedProforma);
+
+    return [...(appProformas || []), ...normalizedArchives];
+
+  }, [appProformas, archivedProformas]);
 
   const filteredProformas = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -202,8 +240,17 @@ export default function DocumentProformasScreen() {
     };
   }, [filteredProformas]);
 
-  function openProforma(proformaId: string) {
-    router.push(`/(traiteur)/proformas/${proformaId}` as never);
+  function openProforma(proforma: any) {
+    if (proforma?.isHistorical) {
+      router.push(
+        `/(traiteur)/documents/history/${proforma.id}` as never
+      );
+      return;
+    }
+
+    router.push(
+      `/(traiteur)/proformas/${proforma.id}` as never
+    );
   }
 
   function renderStatusBadge(status?: string) {
@@ -406,7 +453,7 @@ export default function DocumentProformasScreen() {
               <View style={styles.mobileActions}>
                 <TouchableOpacity
                   style={styles.mobileButton}
-                  onPress={() => openProforma(item.id)}
+                  onPress={() => openProforma(item)}
                 >
                   <MaterialIcons name="visibility" size={18} color="#065F46" />
                   <Text style={styles.mobileButtonText}>Voir</Text>
@@ -414,7 +461,7 @@ export default function DocumentProformasScreen() {
 
                 <TouchableOpacity
                   style={styles.mobileButton}
-                  onPress={() => console.log("PDF proforma", item.id)}
+                  onPress={() => openPdf(item)}
                 >
                   <MaterialIcons
                     name="picture-as-pdf"
@@ -531,14 +578,14 @@ export default function DocumentProformasScreen() {
                 <View style={[styles.actions, styles.colActions]}>
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => openProforma(item.id)}
+                    onPress={() => openProforma(item)}
                   >
                     <MaterialIcons name="visibility" size={18} color="#065F46" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => console.log("PDF proforma", item.id)}
+                    onPress={() => openPdf(item)}
                   >
                     <MaterialIcons
                       name="picture-as-pdf"

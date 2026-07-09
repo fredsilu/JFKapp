@@ -7,10 +7,10 @@ import {
   doc,
   getDoc,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   Timestamp,
+  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -83,28 +83,32 @@ function mapArchivedDocument(id: string, data: any): ArchivedDocument {
 export async function fetchArchivedDocuments(): Promise<ArchivedDocument[]> {
   const snapshot = await getDocs(collection(db, COLLECTION_NAME));
 
-  console.log("Total documents Firestore :", snapshot.size);
-
-  const docs = snapshot.docs.map((d) => mapArchivedDocument(d.id, d.data()));
-
-const byYear: Record<string, number> = {};
-
-for (const doc of docs) {
-  const date =
-    doc.documentDate ||
-    doc.invoiceDate ||
-    doc.eventDate;
-
-  const year = date ? date.substring(0, 4) : "Sans date";
-
-  byYear[year] = (byYear[year] || 0) + 1;
+  return snapshot.docs.map((d) => mapArchivedDocument(d.id, d.data()));
 }
 
-console.log("Archives par année :", byYear);
+export async function fetchArchivedDocumentsByType(
+  type: "invoice" | "proforma" | "credit_note"
+): Promise<ArchivedDocument[]> {
+  const q = query(
+    collection(db, COLLECTION_NAME),
+    where("type", "==", type)
+  );
 
-return docs;
+  const snapshot = await getDocs(q);
 
   return snapshot.docs.map((d) => mapArchivedDocument(d.id, d.data()));
+}
+
+export async function fetchArchivedInvoices(): Promise<ArchivedDocument[]> {
+  return fetchArchivedDocumentsByType("invoice");
+}
+
+export async function fetchArchivedProformas(): Promise<ArchivedDocument[]> {
+  return fetchArchivedDocumentsByType("proforma");
+}
+
+export async function fetchArchivedCreditNotes(): Promise<ArchivedDocument[]> {
+  return fetchArchivedDocumentsByType("credit_note");
 }
 
 export async function fetchArchivedDocumentById(
@@ -134,6 +138,35 @@ export async function createArchivedDocument(
   return docRef.id;
 }
 
+export async function updateArchivedDocument(
+  id: string,
+  payload: Partial<
+    Pick<
+      ArchivedDocument,
+      | "number"
+      | "clientId"
+      | "clientName"
+      | "historicalClientName"
+      | "clientMatchStatus"
+      | "designation"
+      | "documentDate"
+      | "eventDate"
+      | "eventTime"
+      | "invoiceDate"
+      | "paymentDate"
+      | "amount"
+      | "currency"
+      | "linkedInvoiceNumber"
+      | "linkedProformaNumber"
+    >
+  >
+): Promise<void> {
+  await updateDoc(doc(db, COLLECTION_NAME, id), {
+    ...payload,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function updateArchivedDocumentPdf(
   id: string,
   payload: {
@@ -149,4 +182,112 @@ export async function updateArchivedDocumentPdf(
     importStatus: "complete",
     updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Convertit une archive en objet compatible avec une facture.
+ */
+export function normalizeArchivedInvoice(archive: ArchivedDocument) {
+  return {
+    id: archive.id,
+
+    number: archive.number,
+
+    clientName:
+      archive.clientName ||
+      archive.historicalClientName ||
+      "-",
+
+    designation: archive.designation,
+    eventName: archive.designation,
+
+    eventDate: archive.eventDate || archive.documentDate,
+    issuedAt: archive.invoiceDate || archive.documentDate,
+
+    createdAt: archive.createdAt || archive.importedAt,
+
+    totals: {
+      total: archive.amount || 0,
+    },
+
+    currency: archive.currency || "USD",
+
+    status: "historical",
+
+    pdfUrl: archive.pdfUrl,
+    storagePath: archive.storagePath,
+
+    source: archive.source,
+    isHistorical: true,
+  };
+}
+
+/**
+ * Convertit une archive en objet compatible avec une proforma.
+ */
+export function normalizeArchivedProforma(archive: ArchivedDocument) {
+  return {
+    id: archive.id,
+
+    number: archive.number,
+
+    clientName:
+      archive.clientName ||
+      archive.historicalClientName ||
+      "-",
+
+    eventName: archive.designation,
+
+    eventDate: archive.eventDate || archive.documentDate,
+
+    createdAt: archive.createdAt || archive.importedAt,
+
+    validityDate: undefined,
+
+    totals: {
+      total: archive.amount || 0,
+    },
+
+    currency: archive.currency || "USD",
+
+    status: "historical",
+
+    pdfUrl: archive.pdfUrl,
+    storagePath: archive.storagePath,
+
+    source: archive.source,
+    isHistorical: true,
+  };
+}
+
+/**
+ * Convertit une archive en objet compatible avec un avoir.
+ */
+export function normalizeArchivedCreditNote(archive: ArchivedDocument) {
+  return {
+    id: archive.id,
+
+    number: archive.number,
+
+    clientName:
+      archive.clientName ||
+      archive.historicalClientName ||
+      "-",
+
+    invoiceNumber: archive.linkedInvoiceNumber,
+
+    createdAt: archive.createdAt || archive.importedAt,
+
+    amount: archive.amount || 0,
+
+    currency: archive.currency || "USD",
+
+    status: "historical",
+
+    pdfUrl: archive.pdfUrl,
+    storagePath: archive.storagePath,
+
+    source: archive.source,
+    isHistorical: true,
+  };
 }

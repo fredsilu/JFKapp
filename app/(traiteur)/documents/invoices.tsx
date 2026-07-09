@@ -1,6 +1,6 @@
 // app/(traiteur)/documents/invoices.tsx
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -10,12 +10,14 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    Linking,
     useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import { useInvoices } from "@/src/hooks/useFirestore";
+import { fetchArchivedInvoices, normalizeArchivedInvoice } from "@/src/services/archivedDocument.service";
 
 function formatAmount(value?: number) {
     if (!value) return "0,00 $";
@@ -24,6 +26,14 @@ function formatAmount(value?: number) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })} $`;
+}
+async function openPdf(item: any) {
+    if (item?.pdfUrl) {
+        await Linking.openURL(item.pdfUrl);
+        return;
+    }
+
+    console.log("PDF indisponible", item.id);
 }
 
 function formatDate(value?: any) {
@@ -94,6 +104,8 @@ function getStatusLabel(status?: string) {
             return "Remplacée";
         case "cancelled":
             return "Annulée";
+        case "historical":
+            return "Archive";
         default:
             return status || "-";
     }
@@ -130,6 +142,11 @@ function getStatusColors(status?: string) {
                 background: "#FEE2E2",
                 text: "#B91C1C",
             };
+        case "historical":
+            return {
+                background: "#E5E7EB",
+                text: "#374151",
+            };
 
         case "replaced":
             return {
@@ -152,7 +169,8 @@ type InvoiceStatusFilter =
     | "paid"
     | "partial"
     | "cancelled"
-    | "replaced";
+    | "replaced"
+    | "historical";
 
 const statusFilters: {
     label: string;
@@ -165,11 +183,14 @@ const statusFilters: {
         { label: "Partielles", value: "partial" },
         { label: "Annulées", value: "cancelled" },
         { label: "Remplacées", value: "replaced" },
+        { label: "Archives", value: "historical" },
     ];
+
 
 export default function DocumentInvoicesScreen() {
     const router = useRouter();
-    const { data: invoices, loading, error } = useInvoices();
+    const { data: appInvoices, loading, error } = useInvoices();
+    const [archivedInvoices, setArchivedInvoices] = useState<any[]>([]);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] =
         useState<InvoiceStatusFilter>("all");
@@ -177,6 +198,13 @@ export default function DocumentInvoicesScreen() {
     const { width } = useWindowDimensions();
     const isMobile = width < 768;
 
+
+    const invoices = useMemo(() => {
+        const normalizedArchives =
+            archivedInvoices.map(normalizeArchivedInvoice);
+
+        return [...(appInvoices || []), ...normalizedArchives];
+    }, [appInvoices, archivedInvoices]);
 
 
     const filteredInvoices = useMemo(() => {
@@ -245,9 +273,20 @@ export default function DocumentInvoicesScreen() {
         };
     }, [filteredInvoices]);
 
-    function openInvoice(invoiceId: string) {
-        router.push(`/(traiteur)/invoices/${invoiceId}` as never);
+    function openInvoice(invoice: any) {
+        if (invoice?.isHistorical) {
+            router.push(`/(traiteur)/documents/history/${invoice.id}` as never);
+            return;
+        }
+
+        router.push(`/(traiteur)/invoices/${invoice.id}` as never);
     }
+
+    useEffect(() => {
+        fetchArchivedInvoices().then(setArchivedInvoices);
+    }, []);
+
+
 
     if (loading) {
         return (
@@ -441,7 +480,7 @@ export default function DocumentInvoicesScreen() {
                             <View style={styles.mobileActions}>
                                 <TouchableOpacity
                                     style={styles.mobileButton}
-                                    onPress={() => openInvoice(item.id)}
+                                    onPress={() => openInvoice(item)}
                                 >
                                     <MaterialIcons name="visibility" size={18} color="#065F46" />
                                     <Text style={styles.mobileButtonText}>Voir</Text>
@@ -449,9 +488,7 @@ export default function DocumentInvoicesScreen() {
 
                                 <TouchableOpacity
                                     style={styles.mobileButton}
-                                    onPress={() =>
-                                        console.log("PDF invoice", item.id)
-                                    }
+                                    onPress={() => openPdf(item)}
                                 >
                                     <MaterialIcons
                                         name="picture-as-pdf"
@@ -641,7 +678,7 @@ export default function DocumentInvoicesScreen() {
                                 <View style={[styles.actions, styles.colActions]}>
                                     <TouchableOpacity
                                         style={styles.actionButton}
-                                        onPress={() => openInvoice(item.id)}
+                                        onPress={() => openInvoice(item)}
                                     >
                                         <MaterialIcons
                                             name="visibility"
@@ -651,9 +688,7 @@ export default function DocumentInvoicesScreen() {
                                     </TouchableOpacity>
 
                                     <TouchableOpacity style={styles.actionButton}
-                                        onPress={() =>
-                                            console.log("PDF invoice", item.id)
-                                        }>
+                                        onPress={() => openPdf(item)}>
                                         <MaterialIcons
                                             name="picture-as-pdf"
                                             size={18}

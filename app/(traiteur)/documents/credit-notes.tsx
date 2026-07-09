@@ -1,6 +1,6 @@
 // app/(traiteur)/documents/credit-notes.tsx
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,14 +10,24 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Linking,
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import {
+  fetchArchivedCreditNotes,
+  normalizeArchivedCreditNote,
+} from "@/src/services/archivedDocument.service";
 
 import { useCreditNotes } from "@/src/hooks/useFirestore";
 
-type CreditNoteStatusFilter = "all" | "draft" | "issued" | "cancelled";
+type CreditNoteStatusFilter =
+  | "all"
+  | "draft"
+  | "issued"
+  | "cancelled"
+  | "historical";
 
 const statusFilters: {
   label: string;
@@ -27,6 +37,7 @@ const statusFilters: {
     { label: "Brouillons", value: "draft" },
     { label: "Émis", value: "issued" },
     { label: "Annulés", value: "cancelled" },
+    { label: "Archives", value: "historical" },
   ];
 
 function formatAmount(value?: number) {
@@ -36,6 +47,14 @@ function formatAmount(value?: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} $`;
+}
+async function openPdf(item: any) {
+  if (item?.pdfUrl) {
+    await Linking.openURL(item.pdfUrl);
+    return;
+  }
+
+  console.log("PDF indisponible", item.id);
 }
 
 function formatDate(value?: any) {
@@ -76,6 +95,8 @@ function getStatusLabel(status?: string) {
       return "Émis";
     case "cancelled":
       return "Annulé";
+    case "historical":
+      return "Archive";
     default:
       return status || "-";
   }
@@ -89,6 +110,11 @@ function getStatusColors(status?: string) {
       return { background: "#DCFCE7", text: "#166534" };
     case "cancelled":
       return { background: "#FEE2E2", text: "#B91C1C" };
+    case "historical":
+      return {
+        background: "#E5E7EB",
+        text: "#374151",
+      };
     default:
       return { background: "#F3F4F6", text: "#374151" };
   }
@@ -96,7 +122,8 @@ function getStatusColors(status?: string) {
 
 export default function DocumentCreditNotesScreen() {
   const router = useRouter();
-  const { data: creditNotes, loading, error } = useCreditNotes();
+  const { data: appCreditNotes, loading, error } = useCreditNotes();
+  const [archivedCreditNotes, setArchivedCreditNotes] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -104,6 +131,17 @@ export default function DocumentCreditNotesScreen() {
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+
+  useEffect(() => {
+    fetchArchivedCreditNotes().then(setArchivedCreditNotes);
+  }, []);
+
+  const creditNotes = useMemo(() => {
+    const normalizedArchives =
+      archivedCreditNotes.map(normalizeArchivedCreditNote);
+
+    return [...(appCreditNotes || []), ...normalizedArchives];
+  }, [appCreditNotes, archivedCreditNotes]);
 
   const filteredCreditNotes = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -169,8 +207,17 @@ export default function DocumentCreditNotesScreen() {
     };
   }, [filteredCreditNotes]);
 
-  function openCreditNote(creditNoteId: string) {
-    router.push(`/(traiteur)/credit-notes/${creditNoteId}` as never);
+  function openCreditNote(creditNote: any) {
+    if (creditNote?.isHistorical) {
+      router.push(
+        `/(traiteur)/documents/history/${creditNote.id}` as never
+      );
+      return;
+    }
+
+    router.push(
+      `/(traiteur)/credit-notes/${creditNote.id}` as never
+    );
   }
 
   function renderStatusBadge(status?: string) {
@@ -361,7 +408,7 @@ export default function DocumentCreditNotesScreen() {
               <View style={styles.mobileActions}>
                 <TouchableOpacity
                   style={styles.mobileButton}
-                  onPress={() => openCreditNote(item.id)}
+                  onPress={() => openCreditNote(item)}
                 >
                   <MaterialIcons name="visibility" size={18} color="#065F46" />
                   <Text style={styles.mobileButtonText}>Voir</Text>
@@ -369,7 +416,7 @@ export default function DocumentCreditNotesScreen() {
 
                 <TouchableOpacity
                   style={styles.mobileButton}
-                  onPress={() => console.log("PDF credit note", item.id)}
+                  onPress={() => openPdf(item)}
                 >
                   <MaterialIcons
                     name="picture-as-pdf"
@@ -476,14 +523,14 @@ export default function DocumentCreditNotesScreen() {
                 <View style={[styles.actions, styles.colActions]}>
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => openCreditNote(item.id)}
+                    onPress={() => openCreditNote(item)}
                   >
                     <MaterialIcons name="visibility" size={18} color="#065F46" />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => console.log("PDF credit note", item.id)}
+                    onPress={() => openPdf(item)}
                   >
                     <MaterialIcons
                       name="picture-as-pdf"

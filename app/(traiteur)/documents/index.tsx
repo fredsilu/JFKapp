@@ -8,36 +8,30 @@ export default function DocumentsHomeScreen() {
 
   const items = [
     {
-      title: "Factures",
-      subtitle: "Consulter les factures émises et leurs documents PDF",
+      title: "Historique Factures",
+      subtitle: "Factures créées dans l’app et factures historiques importées",
       route: "/(traiteur)/documents/invoices",
       icon: "🧾",
     },
     {
-      title: "Proformas",
-      subtitle: "Consulter les proformas archivées",
+      title: "Historique Proformas",
+      subtitle: "Proformas créées dans l’app et proformas historiques importées",
       route: "/(traiteur)/documents/proformas",
       icon: "📄",
     },
     {
-      title: "Avoirs",
-      subtitle: "Consulter les avoirs émis",
+      title: "Historique Avoirs",
+      subtitle: "Avoirs créés dans l’app et avoirs historiques importés",
       route: "/(traiteur)/documents/credit-notes",
       icon: "↩️",
-    },
-    {
-      title: "Archives historiques",
-      subtitle: "Consulter les anciennes factures et proformas importées",
-      route: "/(traiteur)/documents/archives",
-      icon: "🗂️",
     },
   ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Documents / Archives</Text>
+      <Text style={styles.title}>Documents</Text>
       <Text style={styles.subtitle}>
-        Retrouvez ici les factures, proformas et avoirs générés.
+        Retrouvez les historiques complets des factures, proformas et avoirs.
       </Text>
 
       {items.map((item) => (
