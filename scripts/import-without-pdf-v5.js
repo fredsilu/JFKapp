@@ -1,4 +1,5 @@
-require("dotenv").config({ path: ".env.test" });
+//scripts/import-without-pdf-v5.js
+require("dotenv").config({ path: ".env.production" });
 
 const admin = require("firebase-admin");
 const fs = require("fs");

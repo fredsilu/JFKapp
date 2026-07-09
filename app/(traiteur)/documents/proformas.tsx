@@ -45,12 +45,19 @@ const statusFilters: { label: string; value: ProformaStatusFilter }[] = [
   { label: "Archives", value: "historical", },
 ];
 async function openPdf(item: any) {
-  if (item?.pdfUrl) {
-    await Linking.openURL(item.pdfUrl);
+  if (!item?.pdfUrl) {
+    console.log("PDF indisponible", item?.id);
     return;
   }
 
-  console.log("PDF indisponible", item.id);
+  console.log("Ouverture PDF :", item.pdfUrl);
+
+  if (typeof window !== "undefined") {
+    window.open(item.pdfUrl, "_blank");
+    return;
+  }
+
+  await Linking.openURL(item.pdfUrl);
 }
 
 function formatAmount(value?: number) {

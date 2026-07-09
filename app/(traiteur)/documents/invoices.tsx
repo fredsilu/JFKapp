@@ -28,12 +28,19 @@ function formatAmount(value?: number) {
     })} $`;
 }
 async function openPdf(item: any) {
-    if (item?.pdfUrl) {
-        await Linking.openURL(item.pdfUrl);
+    if (!item?.pdfUrl) {
+        console.log("PDF indisponible", item?.id);
         return;
     }
 
-    console.log("PDF indisponible", item.id);
+    console.log("Ouverture PDF :", item.pdfUrl);
+
+    if (typeof window !== "undefined") {
+        window.open(item.pdfUrl, "_blank");
+        return;
+    }
+
+    await Linking.openURL(item.pdfUrl);
 }
 
 function formatDate(value?: any) {
@@ -59,10 +66,13 @@ function getInvoiceAmount(invoice: any) {
     );
 }
 
-
-
 function getClientName(invoice: any) {
-    return invoice?.client?.name ?? "-";
+    return (
+        invoice?.client?.name ??
+        invoice?.clientName ??
+        invoice?.historicalClientName ??
+        "-"
+    );
 }
 
 function getEventName(invoice: any) {
@@ -205,7 +215,6 @@ export default function DocumentInvoicesScreen() {
 
         return [...(appInvoices || []), ...normalizedArchives];
     }, [appInvoices, archivedInvoices]);
-
 
     const filteredInvoices = useMemo(() => {
         const query = search.trim().toLowerCase();

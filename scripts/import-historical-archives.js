@@ -151,6 +151,35 @@ function cleanAmount(value) {
     return Number.isFinite(amount) ? amount : undefined;
 }
 
+function isCreditNoteRow(row) {
+    const text = [
+        row.number,
+        row.normalizedNumber,
+        row.clientExcel,
+        row.fileName,
+        row.designation,
+        row.reason,
+    ]
+        .join(" ")
+        .toLowerCase();
+
+    const rawAmount = String(row.amount || "")
+        .replace(",", ".")
+        .replace(/\s/g, "");
+
+    const amount = Number(rawAmount);
+
+    return text.includes("avoir") || (Number.isFinite(amount) && amount < 0);
+}
+
+function getPositiveAmount(value) {
+    const amount = cleanAmount(value);
+
+    if (amount === undefined) return undefined;
+
+    return Math.abs(amount);
+}
+
 function sanitizeFileName(value) {
     return String(value || "")
         .trim()
@@ -256,9 +285,10 @@ async function uploadPdf(bucket, row, kind) {
 
 function buildPayload(row, kind, uploadResult, clientMatch) {
     const isProforma = kind === "archived-proformas";
+    const isCreditNote = !isProforma && isCreditNoteRow(row);
 
     return {
-        type: isProforma ? "proforma" : "invoice",
+        type: isProforma ? "proforma" : isCreditNote ? "credit_note" : "invoice",
         number: cleanString(row.number) || "",
 
         clientId: clientMatch.clientId,
@@ -269,21 +299,26 @@ function buildPayload(row, kind, uploadResult, clientMatch) {
         matchReason: cleanString(row.matchReason),
 
         designation: cleanString(row.designation),
+        reason: isCreditNote ? "Avoir historique importé" : undefined,
 
         documentDate: isProforma
             ? excelDateToISO(row.documentDate)
-            : excelDateToISO(row.invoiceDate),
+            : excelDateToISO(row.invoiceDate) || excelDateToISO(row.eventDate),
 
         eventDate: excelDateToISO(row.eventDate),
         eventTime: cleanString(row.eventTime),
 
-        invoiceDate: isProforma ? undefined : excelDateToISO(row.invoiceDate),
-        paymentDate: isProforma ? undefined : excelDateToISO(row.paymentDate),
+        invoiceDate: isProforma || isCreditNote ? undefined : excelDateToISO(row.invoiceDate),
+        paymentDate: isProforma || isCreditNote ? undefined : excelDateToISO(row.paymentDate),
 
-        amount: cleanAmount(row.amount),
+        amount: isCreditNote ? getPositiveAmount(row.amount) : cleanAmount(row.amount),
         currency: "USD",
 
-        linkedInvoiceNumber: isProforma ? cleanString(row.linkedInvoiceNumber) : undefined,
+        linkedInvoiceNumber: isCreditNote
+            ? cleanString(row.number)
+            : isProforma
+                ? cleanString(row.linkedInvoiceNumber)
+                : undefined,
         linkedProformaNumber: undefined,
 
         fileName: cleanString(row.fileName) || "",
@@ -345,7 +380,12 @@ async function importRows({ db, bucket, rows, kind, clientsByName, clientMapping
 
     for (const row of rows) {
         const number = cleanString(row.number);
-        const type = kind === "archived-proformas" ? "proforma" : "invoice";
+        const type =
+            kind === "archived-proformas"
+                ? "proforma"
+                : isCreditNoteRow(row)
+                    ? "credit_note"
+                    : "invoice";
 
         if (!number) {
             skipped++;
@@ -369,9 +409,16 @@ async function importRows({ db, bucket, rows, kind, clientsByName, clientMapping
                 `📄 ${type.toUpperCase()} | ${number} | ${row.clientExcel} | ${row.fileName}`
             );
 
-            const uploadResult = await uploadPdf(bucket, row, kind);
-            const payload = removeUndefined(buildPayload(row, kind, uploadResult, clientMatch));
+            const storageFolder =
+                type === "credit_note"
+                    ? "archived-credit-notes"
+                    : kind;
 
+            const uploadResult = await uploadPdf(bucket, row, storageFolder);
+
+            const payload = removeUndefined(
+                buildPayload(row, kind, uploadResult, clientMatch)
+            );
 
 
             if (IS_DRY_RUN) {
