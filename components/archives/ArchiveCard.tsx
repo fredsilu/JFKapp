@@ -1,8 +1,8 @@
-//components/archives/ArchiveCard.tsx
+// components/archives/ArchiveCard.tsx
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FileText, Upload } from "lucide-react-native";
 
 import { ArchivedDocument } from "@/types/archives";
-
 import ArchiveStatusBadge from "./ArchiveStatusBadge";
 import ArchiveTypeBadge from "./ArchiveTypeBadge";
 
@@ -13,9 +13,22 @@ function formatAmount(amount?: number, currency?: string) {
 
 export default function ArchiveCard({
   document,
+  onUploadPdf,
 }: {
   document: ArchivedDocument;
+  onUploadPdf?: (document: ArchivedDocument) => void;
 }) {
+  const hasPdf = Boolean(document.pdfUrl);
+
+  const handlePdfPress = () => {
+    if (hasPdf && document.pdfUrl) {
+      Linking.openURL(document.pdfUrl);
+      return;
+    }
+
+    onUploadPdf?.(document);
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -24,18 +37,22 @@ export default function ArchiveCard({
           <ArchiveStatusBadge status={document.clientMatchStatus} />
         </View>
 
-        {document.pdfUrl ? (
-          <TouchableOpacity
-            style={styles.pdfButton}
-            onPress={() => Linking.openURL(document.pdfUrl)}
-          >
-            <Text style={styles.pdfText}>PDF</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={[styles.pdfButton, styles.pdfButtonDisabled]}>
-            <Text style={styles.pdfText}>PDF</Text>
-          </View>
-        )}
+        <TouchableOpacity
+          style={[styles.pdfButton, !hasPdf && styles.uploadButton]}
+          onPress={handlePdfPress}
+        >
+          {hasPdf ? (
+            <>
+              <FileText size={16} color="#FFFFFF" />
+              <Text style={styles.pdfText}>PDF</Text>
+            </>
+          ) : (
+            <>
+              <Upload size={16} color="#FFFFFF" />
+              <Text style={styles.pdfText}>Upload</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.number}>{document.number}</Text>
@@ -50,14 +67,11 @@ export default function ArchiveCard({
         )}
 
       {!!document.designation && (
-        <Text style={styles.designation}>
-          {document.designation}
-        </Text>
+        <Text style={styles.designation}>{document.designation}</Text>
       )}
 
       <View style={styles.row}>
         <Text style={styles.label}>Date</Text>
-
         <Text style={styles.value}>
           {document.documentDate ??
             document.invoiceDate ??
@@ -68,7 +82,6 @@ export default function ArchiveCard({
 
       <View style={styles.row}>
         <Text style={styles.label}>Montant</Text>
-
         <Text style={styles.amount}>
           {formatAmount(document.amount, document.currency)}
         </Text>
@@ -104,10 +117,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 
-  pdfButtonDisabled: {
-    opacity: 0.4,
+  uploadButton: {
+    backgroundColor: "#EA580C",
   },
 
   pdfText: {

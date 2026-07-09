@@ -2,6 +2,7 @@
 
 import {
   addDoc,
+  updateDoc,
   collection,
   doc,
   getDoc,
@@ -131,4 +132,21 @@ export async function createArchivedDocument(
   });
 
   return docRef.id;
+}
+
+export async function updateArchivedDocumentPdf(
+  id: string,
+  payload: {
+    pdfUrl: string;
+    storagePath: string;
+    fileName?: string;
+  }
+): Promise<void> {
+  await updateDoc(doc(db, COLLECTION_NAME, id), {
+    pdfUrl: payload.pdfUrl,
+    storagePath: payload.storagePath,
+    ...(payload.fileName ? { fileName: payload.fileName } : {}),
+    importStatus: "complete",
+    updatedAt: serverTimestamp(),
+  });
 }

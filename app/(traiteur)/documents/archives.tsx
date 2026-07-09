@@ -148,6 +148,10 @@ export default function ArchivedDocumentsScreen() {
         );
     }
 
+    const handleUploadPdf = useCallback((document: ArchivedDocument) => {
+        alert(`PDF à uploader pour : ${document.number}`);
+    }, []);
+
     return (
         <View style={styles.container}>
             <View style={styles.topArea}>
@@ -196,10 +200,11 @@ export default function ArchivedDocumentsScreen() {
                 {isMobileLayout ? (
                     <ScrollView contentContainerStyle={styles.list}>
                         {filteredDocuments.map((doc) => (
-                            <ArchiveCard
-                                key={doc.id || doc.storagePath}
-                                document={doc}
-                            />
+                           <ArchiveCard
+  key={doc.id || doc.storagePath || doc.number}
+  document={doc}
+  onUploadPdf={handleUploadPdf}
+/>
                         ))}
 
                         {filteredDocuments.length === 0 && (
@@ -210,7 +215,10 @@ export default function ArchivedDocumentsScreen() {
                     </ScrollView>
                 ) : (
                     <>
-                        <ArchiveTable documents={filteredDocuments} />
+                       <ArchiveTable
+  documents={filteredDocuments}
+  onUploadPdf={handleUploadPdf}
+/>
 
                         {filteredDocuments.length === 0 && (
                             <Text style={styles.emptyText}>

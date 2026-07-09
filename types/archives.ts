@@ -9,13 +9,15 @@ export type ArchivedClientMatchStatus =
   | "new_historical_client"
   | "unmapped"
   | "manual_alias"
-  | "matched";
+  | "matched"
+  | "recovered_missing_invoice";
 
 export type ArchivedDocumentImportStatus =
   | "complete"
   | "metadata_incomplete"
   | "pdf_without_excel_match"
   | "excel_without_pdf"
+  | "missing_pdf"
   | "duplicate_pdf";
 
 export interface ArchivedDocument {
@@ -36,6 +38,9 @@ export interface ArchivedDocument {
   eventDate?: string;
   eventTime?: string;
 
+  invoiceDate?: string;
+  paymentDate?: string;
+
   amount?: number;
   currency?: CateringCurrency;
 
@@ -43,16 +48,13 @@ export interface ArchivedDocument {
   linkedProformaNumber?: string;
 
   fileName: string;
-  pdfUrl: string;
-  storagePath: string;
+  pdfUrl?: string;
+  storagePath?: string;
 
   source: "historical_import";
 
   importBatch?: string;
-  importStatus?: ArchivedDocumentImportStatus;
-
-  invoiceDate?: string;
-  paymentDate?: string;
+  importStatus?: ArchivedDocumentImportStatus | string;
 
   importedAt?: Timestamp;
   createdAt?: Timestamp;
