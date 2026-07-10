@@ -29,6 +29,17 @@ type CreditNoteStatusFilter =
   | "cancelled"
   | "historical";
 
+type SortField =
+  | "number"
+  | "invoiceNumber"
+  | "type"
+  | "reason"
+  | "amount"
+  | "issuedAt"
+  | "createdAt";
+
+type SortDirection = "asc" | "desc";
+
 const statusFilters: {
   label: string;
   value: CreditNoteStatusFilter;
@@ -75,6 +86,30 @@ function formatDate(value?: any) {
   return date.toLocaleDateString("fr-FR");
 }
 
+function getDateTimestamp(value?: any): number {
+  if (!value) return 0;
+
+  if (typeof value?.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? 0 : value.getTime();
+  }
+
+  if (typeof value === "string") {
+    const frenchDate = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+    if (frenchDate) {
+      const [, day, month, year] = frenchDate;
+      return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+    }
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
 function getCreditNoteAmount(note: any) {
   return note?.amount ?? 0;
 }
@@ -92,6 +127,10 @@ function getCreditType(note: any) {
   if (note?.type === "partial") return "Partiel";
 
   return "-";
+}
+
+function hasPdf(item: any) {
+  return Boolean(item?.pdfUrl);
 }
 
 function getStatusLabel(status?: string) {
@@ -136,8 +175,13 @@ export default function DocumentCreditNotesScreen() {
   const [statusFilter, setStatusFilter] =
     useState<CreditNoteStatusFilter>("all");
 
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isMobile = width < 768;
+  const tableHeight = Math.max(320, Math.min(700, height - 360));
+
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("desc");
 
   useEffect(() => {
     fetchArchivedCreditNotes().then(setArchivedCreditNotes);
@@ -155,24 +199,68 @@ export default function DocumentCreditNotesScreen() {
 
     return [...(creditNotes || [])]
       .sort((a: any, b: any) => {
-        const dateA =
-          a?.createdAt?.toDate?.() ??
-          a?.issuedAt?.toDate?.() ??
-          new Date(a?.createdAt || a?.issuedAt || 0);
+        let valueA: string | number;
+        let valueB: string | number;
 
-        const dateB =
-          b?.createdAt?.toDate?.() ??
-          b?.issuedAt?.toDate?.() ??
-          new Date(b?.createdAt || b?.issuedAt || 0);
+        switch (sortField) {
+          case "number":
+            valueA = a?.number || "";
+            valueB = b?.number || "";
+            break;
 
-        return dateB.getTime() - dateA.getTime();
+          case "invoiceNumber":
+            valueA = getInvoiceNumber(a);
+            valueB = getInvoiceNumber(b);
+            break;
+
+          case "type":
+            valueA = getCreditType(a);
+            valueB = getCreditType(b);
+            break;
+
+          case "reason":
+            valueA = getReason(a);
+            valueB = getReason(b);
+            break;
+
+          case "amount":
+            valueA = getCreditNoteAmount(a);
+            valueB = getCreditNoteAmount(b);
+            break;
+
+          case "issuedAt":
+            valueA = getDateTimestamp(a?.issuedAt);
+            valueB = getDateTimestamp(b?.issuedAt);
+            break;
+
+          case "createdAt":
+          default:
+            valueA = getDateTimestamp(a?.createdAt ?? a?.issuedAt);
+            valueB = getDateTimestamp(b?.createdAt ?? b?.issuedAt);
+            break;
+        }
+
+        if (typeof valueA === "string" && typeof valueB === "string") {
+          const result = valueA.localeCompare(valueB, "fr", {
+            numeric: true,
+            sensitivity: "base",
+          });
+
+          return sortDirection === "asc" ? result : -result;
+        }
+
+        const numericA = Number(valueA) || 0;
+        const numericB = Number(valueB) || 0;
+
+        return sortDirection === "asc"
+          ? numericA - numericB
+          : numericB - numericA;
       })
       .filter((note: any) => {
         const matchesStatus =
           statusFilter === "all" || note?.status === statusFilter;
 
         if (!matchesStatus) return false;
-
         if (!query) return true;
 
         const target = [
@@ -188,7 +276,13 @@ export default function DocumentCreditNotesScreen() {
 
         return target.includes(query);
       });
-  }, [creditNotes, search, statusFilter]);
+  }, [
+    creditNotes,
+    search,
+    statusFilter,
+    sortField,
+    sortDirection,
+  ]);
 
   const creditNoteStats = useMemo(() => {
     const totalCreditNotes = filteredCreditNotes.length;
@@ -213,6 +307,48 @@ export default function DocumentCreditNotesScreen() {
       draftAmount,
     };
   }, [filteredCreditNotes]);
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((current) =>
+        current === "asc" ? "desc" : "asc"
+      );
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection("asc");
+  }
+
+  function renderSortableHeader(
+    label: string,
+    field: SortField,
+    columnStyle: any
+  ) {
+    const active = sortField === field;
+
+    return (
+      <TouchableOpacity
+        style={[styles.sortableHeader, columnStyle]}
+        onPress={() => toggleSort(field)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.th}>{label}</Text>
+
+        <MaterialIcons
+          name={
+            active
+              ? sortDirection === "asc"
+                ? "arrow-upward"
+                : "arrow-downward"
+              : "unfold-more"
+          }
+          size={15}
+          color={active ? "#FFFFFF" : "#D1FAE5"}
+        />
+      </TouchableOpacity>
+    );
+  }
 
   function openCreditNote(creditNote: any) {
     if (creditNote?.isHistorical) {
@@ -422,17 +558,38 @@ export default function DocumentCreditNotesScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.mobileButton}
+                  style={[
+                    styles.mobileButton,
+                    !hasPdf(item) && styles.actionButtonDisabled,
+                  ]}
                   onPress={() => openPdf(item)}
+                  disabled={!hasPdf(item)}
                 >
                   <MaterialIcons
                     name="picture-as-pdf"
                     size={18}
-                    color="#065F46"
+                    color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                   />
-                  <Text style={styles.mobileButtonText}>PDF</Text>
+
+                  <Text
+                    style={[
+                      styles.mobileButtonText,
+                      !hasPdf(item) && styles.mobileButtonTextDisabled,
+                    ]}
+                  >
+                    PDF
+                  </Text>
                 </TouchableOpacity>
               </View>
+              {item?.isHistorical && !hasPdf(item) && (
+                <View style={styles.mobileNoPdfRow}>
+                  <View style={styles.noPdfBadge}>
+                    <Text style={styles.noPdfBadgeText}>
+                      Sans PDF
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
           )}
         />
@@ -467,27 +624,55 @@ export default function DocumentCreditNotesScreen() {
 
 
 
-      <ScrollView horizontal showsHorizontalScrollIndicator>
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.th, styles.colInvoice]}>N° Avoir</Text>
-            <Text style={[styles.th, styles.colDate]}>Facture</Text>
-            <Text style={[styles.th, styles.colType]}>Type</Text>
-            <Text style={[styles.th, styles.colReason]}>Motif</Text>
-            <Text style={[styles.th, styles.colAmount]}>Montant</Text>
-            <Text style={[styles.th, styles.colDate]}>Date émission</Text>
-            <Text style={[styles.th, styles.colDate]}>Date création</Text>
-            <Text style={[styles.th, styles.colStatus]}>Statut</Text>
-            <Text style={[styles.th, styles.colActions]}>Actions</Text>
-          </View>
+      <View style={styles.tableViewport}>
+        <ScrollView
+          horizontal
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator
+          style={styles.horizontalScroll}
+          contentContainerStyle={styles.horizontalScrollContent}
+        >
+          <View style={[styles.table, { height: tableHeight }]}>
+            <View style={styles.tableHeader}>
+              {renderSortableHeader(
+                "N° Avoir",
+                "number",
+                styles.colInvoice
+              )}
+              {renderSortableHeader(
+                "Facture",
+                "invoiceNumber",
+                styles.colDate
+              )}
+              {renderSortableHeader("Type", "type", styles.colType)}
+              {renderSortableHeader("Motif", "reason", styles.colReason)}
+              {renderSortableHeader(
+                "Montant",
+                "amount",
+                styles.colAmount
+              )}
+              {renderSortableHeader(
+                "Date émission",
+                "issuedAt",
+                styles.colDate
+              )}
+              {renderSortableHeader(
+                "Date création",
+                "createdAt",
+                styles.colDate
+              )}
+              <Text style={[styles.th, styles.colStatus]}>Statut</Text>
+              <Text style={[styles.th, styles.colActions]}>Actions</Text>
+            </View>
 
-          <FlatList
-            data={filteredCreditNotes}
-            style={{
-              flex: 1,
-              minHeight: 0,
-            }}
-            keyExtractor={(item: any) => item.id}
+            <FlatList
+              data={filteredCreditNotes}
+              style={styles.desktopList}
+              contentContainerStyle={styles.desktopListContent}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled"
+              keyExtractor={(item: any) => item.id}
             ListEmptyComponent={
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyText}>Aucun avoir trouvé.</Text>
@@ -495,9 +680,22 @@ export default function DocumentCreditNotesScreen() {
             }
             renderItem={({ item }: any) => (
               <View style={styles.tableRow}>
-                <Text style={[styles.td, styles.colInvoice]}>
-                  {item?.number || "-"}
-                </Text>
+                <View style={styles.creditNoteNumberCell}>
+                  <Text
+                    style={styles.creditNoteNumberText}
+                    numberOfLines={2}
+                  >
+                    {item?.number || "-"}
+                  </Text>
+
+                  {item?.isHistorical && !hasPdf(item) && (
+                    <View style={styles.noPdfBadge}>
+                      <Text style={styles.noPdfBadgeText}>
+                        Sans PDF
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
                 <Text style={[styles.td, styles.colDate]}>
                   {getInvoiceNumber(item)}
@@ -536,21 +734,26 @@ export default function DocumentCreditNotesScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.actionButton}
+                    style={[
+                      styles.actionButton,
+                      !hasPdf(item) && styles.actionButtonDisabled,
+                    ]}
                     onPress={() => openPdf(item)}
+                    disabled={!hasPdf(item)}
                   >
                     <MaterialIcons
                       name="picture-as-pdf"
                       size={18}
-                      color="#065F46"
+                      color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                     />
                   </TouchableOpacity>
                 </View>
               </View>
             )}
-          />
-        </View>
-      </ScrollView>
+            />
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -599,6 +802,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#111827",
   },
+  tableViewport: {
+    flex: 1,
+    minHeight: 0,
+  },
+  horizontalScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  horizontalScrollContent: {
+    alignItems: "stretch",
+  },
   table: {
     minWidth: 1300,
     backgroundColor: "#FFFFFF",
@@ -606,7 +820,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    height: 700,
+  },
+  desktopList: {
+    flex: 1,
+    minHeight: 0,
+  },
+  desktopListContent: {
+    flexGrow: 1,
   },
   tableHeader: {
     flexDirection: "row",
@@ -621,6 +841,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
+  sortableHeader: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+  },
   th: {
     color: "#FFFFFF",
     fontSize: 13,
@@ -633,7 +860,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   colInvoice: {
-    width: 150,
+    width: 200,
   },
   colDate: {
     width: 130,
@@ -836,5 +1063,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6B7280",
     marginBottom: 12,
+  },
+  creditNoteNumberCell: {
+    width: 200,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  creditNoteNumberText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#111827",
+  },
+
+  actionButtonDisabled: {
+    backgroundColor: "#F3F4F6",
+    opacity: 0.55,
+  },
+
+  mobileButtonTextDisabled: {
+    color: "#9CA3AF",
+  },
+
+  noPdfBadge: {
+    backgroundColor: "#FEF3C7",
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+
+  noPdfBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#92400E",
+  },
+
+  mobileNoPdfRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 8,
   },
 });

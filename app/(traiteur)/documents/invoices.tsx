@@ -19,6 +19,9 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useInvoices } from "@/src/hooks/useFirestore";
 import { fetchArchivedInvoices, normalizeArchivedInvoice } from "@/src/services/archivedDocument.service";
 
+
+
+
 function formatAmount(value?: number) {
     if (!value) return "0,00 $";
 
@@ -55,6 +58,7 @@ function formatDate(value?: any) {
 
     return date.toLocaleDateString("fr-FR");
 }
+
 
 function getInvoiceAmount(invoice: any) {
     return (
@@ -98,7 +102,9 @@ function getDeliveryAddress(invoice: any) {
         "-"
     );
 }
-
+function hasPdf(item: any) {
+    return Boolean(item?.pdfUrl);
+}
 
 function getStatusLabel(status?: string) {
     switch (status) {
@@ -172,6 +178,15 @@ function getStatusColors(status?: string) {
     }
 }
 
+type SortField =
+    | "number"
+    | "client"
+    | "amount"
+    | "invoiceDate"
+    | "createdAt";
+
+type SortDirection = "asc" | "desc";
+
 type InvoiceStatusFilter =
     | "all"
     | "draft"
@@ -196,6 +211,17 @@ const statusFilters: {
         { label: "Archives", value: "historical" },
     ];
 
+function getDateTimestamp(value?: any): number {
+    if (!value) return 0;
+
+    if (typeof value?.toDate === "function") {
+        return value.toDate().getTime();
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
 
 export default function DocumentInvoicesScreen() {
     const router = useRouter();
@@ -216,22 +242,68 @@ export default function DocumentInvoicesScreen() {
         return [...(appInvoices || []), ...normalizedArchives];
     }, [appInvoices, archivedInvoices]);
 
+
+
+    const [sortField, setSortField] = useState<SortField>("createdAt");
+    const [sortDirection, setSortDirection] =
+        useState<SortDirection>("desc");
+
     const filteredInvoices = useMemo(() => {
         const query = search.trim().toLowerCase();
 
         return [...(invoices || [])]
             .sort((a: any, b: any) => {
-                const dateA =
-                    a?.createdAt?.toDate?.() ??
-                    a?.issuedAt?.toDate?.() ??
-                    new Date(a?.createdAt || a?.issuedAt || 0);
+                let valueA: any;
+                let valueB: any;
 
-                const dateB =
-                    b?.createdAt?.toDate?.() ??
-                    b?.issuedAt?.toDate?.() ??
-                    new Date(b?.createdAt || b?.issuedAt || 0);
+                switch (sortField) {
+                    case "number":
+                        valueA = a?.number || "";
+                        valueB = b?.number || "";
+                        break;
 
-                return dateB.getTime() - dateA.getTime();
+                    case "client":
+                        valueA = getClientName(a);
+                        valueB = getClientName(b);
+                        break;
+
+                    case "amount":
+                        valueA = getInvoiceAmount(a);
+                        valueB = getInvoiceAmount(b);
+                        break;
+
+                    case "invoiceDate":
+                        valueA = getDateTimestamp(
+                            a?.issuedAt ??
+                            a?.invoiceDate ??
+                            a?.documentDate
+                        );
+
+                        valueB = getDateTimestamp(
+                            b?.issuedAt ??
+                            b?.invoiceDate ??
+                            b?.documentDate
+                        );
+                        break;
+
+                    case "createdAt":
+                    default:
+                        valueA = getDateTimestamp(a?.createdAt);
+                        valueB = getDateTimestamp(b?.createdAt);
+                        break;
+                }
+
+                if (typeof valueA === "string") {
+                    const result = valueA.localeCompare(valueB, "fr", {
+                        numeric: true,
+                    });
+
+                    return sortDirection === "asc" ? result : -result;
+                }
+
+                return sortDirection === "asc"
+                    ? valueA - valueB
+                    : valueB - valueA;
             })
             .filter((invoice: any) => {
                 const matchesStatus =
@@ -254,7 +326,7 @@ export default function DocumentInvoicesScreen() {
 
                 return target.includes(query);
             });
-    }, [invoices, search, statusFilter]);
+    }, [invoices, search, statusFilter, sortField, sortDirection]);
 
     const invoiceStats = useMemo(() => {
         const totalInvoices = filteredInvoices.length;
@@ -281,6 +353,48 @@ export default function DocumentInvoicesScreen() {
             pendingAmount,
         };
     }, [filteredInvoices]);
+
+    function renderSortableHeader(
+        label: string,
+        field: SortField,
+        columnStyle: any
+    ) {
+        const active = sortField === field;
+
+        return (
+            <TouchableOpacity
+                style={[styles.sortableHeader, columnStyle]}
+                onPress={() => toggleSort(field)}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.th}>{label}</Text>
+
+                <MaterialIcons
+                    name={
+                        active
+                            ? sortDirection === "asc"
+                                ? "arrow-upward"
+                                : "arrow-downward"
+                            : "unfold-more"
+                    }
+                    size={15}
+                    color={active ? "#FFFFFF" : "#D1FAE5"}
+                />
+            </TouchableOpacity>
+        );
+    }
+
+    function toggleSort(field: SortField) {
+        if (sortField === field) {
+            setSortDirection((current) =>
+                current === "asc" ? "desc" : "asc"
+            );
+            return;
+        }
+
+        setSortField(field);
+        setSortDirection("asc");
+    }
 
     function openInvoice(invoice: any) {
         if (invoice?.isHistorical) {
@@ -455,7 +569,11 @@ export default function DocumentInvoicesScreen() {
                                 </Text>
 
                                 <Text style={styles.mobileValue}>
-                                    {formatDate(item?.issuedAt)}
+                                    {formatDate(
+                                        item?.issuedAt ??
+                                        item?.invoiceDate ??
+                                        item?.documentDate
+                                    )}
                                 </Text>
                             </View>
                             <View style={styles.mobileInfoRow}>
@@ -496,21 +614,37 @@ export default function DocumentInvoicesScreen() {
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={styles.mobileButton}
+                                    style={[
+                                        styles.mobileButton,
+                                        !hasPdf(item) && styles.actionButtonDisabled,
+                                    ]}
                                     onPress={() => openPdf(item)}
+                                    disabled={!hasPdf(item)}
                                 >
                                     <MaterialIcons
                                         name="picture-as-pdf"
                                         size={18}
-                                        color="#065F46"
+                                        color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                                     />
                                     <Text style={styles.mobileButtonText}>PDF</Text>
                                 </TouchableOpacity>
                             </View>
+                            {item?.isHistorical && !hasPdf(item) && (
+                                <View style={styles.mobileNoPdfRow}>
+                                    <View style={styles.noPdfBadge}>
+                                        <Text style={styles.noPdfBadgeText}>
+                                            Sans PDF
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
                         </View>
                     )}
                 />
             </View>
+
+
+
         );
     }
 
@@ -599,17 +733,59 @@ export default function DocumentInvoicesScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator>
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>
-                        <Text style={[styles.th, styles.colInvoice]}>N° Facture</Text>
-                        <Text style={[styles.th, styles.colClient]}>Client</Text>
-                        <Text style={[styles.th, styles.colEvent]}>Événement</Text>
-                        <Text style={[styles.th, styles.colDate]}>Date livraison</Text>
-                        <Text style={[styles.th, styles.colAddress]}>Adresse</Text>
-                        <Text style={[styles.th, styles.colPeople]}>#</Text>
-                        <Text style={[styles.th, styles.colAmount]}>Montant</Text>
-                        <Text style={[styles.th, styles.colDate]}>Date facture</Text>
-                        <Text style={[styles.th, styles.colDate]}>Date création</Text>
-                        <Text style={[styles.th, styles.colStatus]}>Statut</Text>
-                        <Text style={[styles.th, styles.colActions]}>Actions</Text>
+                        {renderSortableHeader(
+                            "N° Facture",
+                            "number",
+                            styles.colInvoice
+                        )}
+
+                        {renderSortableHeader(
+                            "Client",
+                            "client",
+                            styles.colClient
+                        )}
+
+                        <Text style={[styles.th, styles.colEvent]}>
+                            Événement
+                        </Text>
+
+                        <Text style={[styles.th, styles.colDate]}>
+                            Date livraison
+                        </Text>
+
+                        <Text style={[styles.th, styles.colAddress]}>
+                            Adresse
+                        </Text>
+
+                        <Text style={[styles.th, styles.colPeople]}>
+                            #
+                        </Text>
+
+                        {renderSortableHeader(
+                            "Montant",
+                            "amount",
+                            styles.colAmount
+                        )}
+
+                        {renderSortableHeader(
+                            "Date facture",
+                            "invoiceDate",
+                            styles.colDate
+                        )}
+
+                        {renderSortableHeader(
+                            "Date création",
+                            "createdAt",
+                            styles.colDate
+                        )}
+
+                        <Text style={[styles.th, styles.colStatus]}>
+                            Statut
+                        </Text>
+
+                        <Text style={[styles.th, styles.colActions]}>
+                            Actions
+                        </Text>
                     </View>
 
                     <FlatList
@@ -626,9 +802,22 @@ export default function DocumentInvoicesScreen() {
                         }
                         renderItem={({ item }: any) => (
                             <View style={styles.tableRow}>
-                                <Text style={[styles.td, styles.colInvoice]}>
-                                    {item?.number || "-"}
-                                </Text>
+                                <View style={styles.invoiceNumberCell}>
+                                    <Text
+                                        style={styles.invoiceNumberText}
+                                        numberOfLines={2}
+                                    >
+                                        {item?.number || "-"}
+                                    </Text>
+
+                                    {item?.isHistorical && !hasPdf(item) && (
+                                        <View style={styles.noPdfBadge}>
+                                            <Text style={styles.noPdfBadgeText}>
+                                                Sans PDF
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
 
                                 <Text style={[styles.td, styles.colClient]}>
                                     {getClientName(item)}
@@ -655,7 +844,11 @@ export default function DocumentInvoicesScreen() {
                                 </Text>
 
                                 <Text style={[styles.td, styles.colDate]}>
-                                    {formatDate(item?.issuedAt)}
+                                    {formatDate(
+                                        item?.issuedAt ??
+                                        item?.invoiceDate ??
+                                        item?.documentDate
+                                    )}
                                 </Text>
 
                                 <Text style={[styles.td, styles.colDate]}>
@@ -696,12 +889,18 @@ export default function DocumentInvoicesScreen() {
                                         />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity style={styles.actionButton}
-                                        onPress={() => openPdf(item)}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.actionButton,
+                                            !hasPdf(item) && styles.actionButtonDisabled,
+                                        ]}
+                                        onPress={() => openPdf(item)}
+                                        disabled={!hasPdf(item)}
+                                    >
                                         <MaterialIcons
                                             name="picture-as-pdf"
                                             size={18}
-                                            color="#065F46"
+                                            color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                                         />
                                     </TouchableOpacity>
                                 </View>
@@ -759,7 +958,7 @@ const styles = StyleSheet.create({
         color: "#111827",
     },
     table: {
-        minWidth: 1490,
+        minWidth: 1570,
         backgroundColor: "#FFFFFF",
         borderRadius: 12,
         overflow: "hidden",
@@ -785,7 +984,6 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 13,
         fontWeight: "700",
-        paddingHorizontal: 10,
     },
     td: {
         color: "#111827",
@@ -793,7 +991,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     colInvoice: {
-        width: 130,
+        width: 210,
     },
     colClient: {
         width: 160,
@@ -990,6 +1188,32 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 2,
     },
+    invoiceNumberCell: {
+        width: 210,
+        paddingHorizontal: 10,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+
+    invoiceNumberText: {
+        flex: 1,
+        fontSize: 13,
+        color: "#111827",
+    },
+
+    noPdfBadge: {
+        backgroundColor: "#FEF3C7",
+        borderRadius: 999,
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+    },
+
+    noPdfBadgeText: {
+        fontSize: 10,
+        fontWeight: "700",
+        color: "#92400E",
+    },
 
     filterChip: {
         minHeight: 36,
@@ -1018,6 +1242,10 @@ const styles = StyleSheet.create({
     filterChipTextActive: {
         color: "#FFFFFF",
     },
+    actionButtonDisabled: {
+        backgroundColor: "#F3F4F6",
+        opacity: 0.55,
+    },
     statusBadge: {
         paddingHorizontal: 10,
         paddingVertical: 4,
@@ -1033,5 +1261,17 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#6B7280",
         marginBottom: 12,
+    },
+    sortableHeader: {
+        height: "100%",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+    },
+    mobileNoPdfRow: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        marginBottom: 8,
     },
 });

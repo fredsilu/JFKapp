@@ -19,8 +19,13 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useProformas } from "@/src/hooks/useFirestore";
 import {
   fetchArchivedProformas,
-  normalizeArchivedProforma
+  normalizeArchivedProforma,
 } from "@/src/services/archivedDocument.service";
+
+type SortField =
+  "number" | "client" | "eventDate" | "createdAt" | "validityDate" | "amount";
+
+type SortDirection = "asc" | "desc";
 
 type ProformaStatusFilter =
   | "all"
@@ -42,7 +47,7 @@ const statusFilters: { label: string; value: ProformaStatusFilter }[] = [
   { label: "Converties", value: "converted" },
   { label: "Facturées", value: "invoiced" },
   { label: "Annulées", value: "cancelled" },
-  { label: "Archives", value: "historical", },
+  { label: "Archives", value: "historical" },
 ];
 async function openPdf(item: any) {
   if (!item?.pdfUrl) {
@@ -98,6 +103,41 @@ function getEventDate(proforma: any) {
 
 function getValidityDate(proforma: any) {
   return proforma?.validityDate ?? null;
+}
+
+function getDateTimestamp(value?: any): number {
+  if (!value) return 0;
+
+  if (typeof value?.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? 0 : value.getTime();
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const frenchDateMatch = value.match(
+      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/,
+    );
+
+    if (frenchDateMatch) {
+      const [, day, month, year] = frenchDateMatch;
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+    }
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function hasPdf(item: any) {
+  return Boolean(item?.pdfUrl);
 }
 
 function getStatusLabel(status?: string) {
@@ -156,8 +196,9 @@ export default function DocumentProformasScreen() {
   const [archivedProformas, setArchivedProformas] = useState<any[]>([]);
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<ProformaStatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<ProformaStatusFilter>("all");
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -166,14 +207,10 @@ export default function DocumentProformasScreen() {
     fetchArchivedProformas().then(setArchivedProformas);
   }, []);
 
-
   const proformas = useMemo(() => {
-
-    const normalizedArchives =
-      archivedProformas.map(normalizeArchivedProforma);
+    const normalizedArchives = archivedProformas.map(normalizeArchivedProforma);
 
     return [...(appProformas || []), ...normalizedArchives];
-
   }, [appProformas, archivedProformas]);
 
   const filteredProformas = useMemo(() => {
@@ -181,15 +218,57 @@ export default function DocumentProformasScreen() {
 
     return [...(proformas || [])]
       .sort((a: any, b: any) => {
-        const dateA =
-          a?.createdAt?.toDate?.() ??
-          new Date(a?.createdAt || a?.issueDate || 0);
+        let valueA: string | number;
+        let valueB: string | number;
 
-        const dateB =
-          b?.createdAt?.toDate?.() ??
-          new Date(b?.createdAt || b?.issueDate || 0);
+        switch (sortField) {
+          case "number":
+            valueA = a?.number || "";
+            valueB = b?.number || "";
+            break;
 
-        return dateB.getTime() - dateA.getTime();
+          case "client":
+            valueA = getClientName(a);
+            valueB = getClientName(b);
+            break;
+
+          case "eventDate":
+            valueA = getDateTimestamp(getEventDate(a));
+            valueB = getDateTimestamp(getEventDate(b));
+            break;
+
+          case "validityDate":
+            valueA = getDateTimestamp(getValidityDate(a));
+            valueB = getDateTimestamp(getValidityDate(b));
+            break;
+
+          case "amount":
+            valueA = getProformaAmount(a);
+            valueB = getProformaAmount(b);
+            break;
+
+          case "createdAt":
+          default:
+            valueA = getDateTimestamp(a?.createdAt ?? a?.issueDate);
+            valueB = getDateTimestamp(b?.createdAt ?? b?.issueDate);
+            break;
+        }
+
+        if (typeof valueA === "string" && typeof valueB === "string") {
+          const result = valueA.localeCompare(valueB, "fr", {
+            numeric: true,
+            sensitivity: "base",
+          });
+
+          return sortDirection === "asc" ? result : -result;
+        }
+
+        const numericA = Number(valueA) || 0;
+        const numericB = Number(valueB) || 0;
+
+        return sortDirection === "asc"
+          ? numericA - numericB
+          : numericB - numericA;
       })
       .filter((proforma: any) => {
         const matchesStatus =
@@ -213,30 +292,30 @@ export default function DocumentProformasScreen() {
 
         return target.includes(query);
       });
-  }, [proformas, search, statusFilter]);
+  }, [proformas, search, statusFilter, sortField, sortDirection]);
 
   const proformaStats = useMemo(() => {
     const totalProformas = filteredProformas.length;
 
     const totalAmount = filteredProformas.reduce(
       (sum: number, proforma: any) => sum + getProformaAmount(proforma),
-      0
+      0,
     );
 
     const invoicedAmount = filteredProformas
       .filter((proforma: any) => proforma?.status === "invoiced")
       .reduce(
         (sum: number, proforma: any) => sum + getProformaAmount(proforma),
-        0
+        0,
       );
 
     const pendingAmount = filteredProformas
       .filter((proforma: any) =>
-        ["draft", "sent", "approved", "converted"].includes(proforma?.status)
+        ["draft", "sent", "approved", "converted"].includes(proforma?.status),
       )
       .reduce(
         (sum: number, proforma: any) => sum + getProformaAmount(proforma),
-        0
+        0,
       );
 
     return {
@@ -247,17 +326,52 @@ export default function DocumentProformasScreen() {
     };
   }, [filteredProformas]);
 
-  function openProforma(proforma: any) {
-    if (proforma?.isHistorical) {
-      router.push(
-        `/(traiteur)/documents/history/${proforma.id}` as never
-      );
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
 
-    router.push(
-      `/(traiteur)/proformas/${proforma.id}` as never
+    setSortField(field);
+    setSortDirection("asc");
+  }
+
+  function renderSortableHeader(
+    label: string,
+    field: SortField,
+    columnStyle: any,
+  ) {
+    const active = sortField === field;
+
+    return (
+      <TouchableOpacity
+        style={[styles.sortableHeader, columnStyle]}
+        onPress={() => toggleSort(field)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.th}>{label}</Text>
+        <MaterialIcons
+          name={
+            active
+              ? sortDirection === "asc"
+                ? "arrow-upward"
+                : "arrow-downward"
+              : "unfold-more"
+          }
+          size={15}
+          color={active ? "#FFFFFF" : "#D1FAE5"}
+        />
+      </TouchableOpacity>
     );
+  }
+
+  function openProforma(proforma: any) {
+    if (proforma?.isHistorical) {
+      router.push(`/(traiteur)/documents/history/${proforma.id}` as never);
+      return;
+    }
+
+    router.push(`/(traiteur)/proformas/${proforma.id}` as never);
   }
 
   function renderStatusBadge(status?: string) {
@@ -358,7 +472,9 @@ export default function DocumentProformasScreen() {
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Erreur de chargement des proformas.</Text>
+        <Text style={styles.errorText}>
+          Erreur de chargement des proformas.
+        </Text>
       </View>
     );
   }
@@ -388,8 +504,6 @@ export default function DocumentProformasScreen() {
         </View>
 
         {renderFilters()}
-
-
 
         <FlatList
           data={filteredProformas}
@@ -467,17 +581,36 @@ export default function DocumentProformasScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.mobileButton}
+                  style={[
+                    styles.mobileButton,
+                    !hasPdf(item) && styles.actionButtonDisabled,
+                  ]}
                   onPress={() => openPdf(item)}
+                  disabled={!hasPdf(item)}
                 >
                   <MaterialIcons
                     name="picture-as-pdf"
                     size={18}
-                    color="#065F46"
+                    color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                   />
-                  <Text style={styles.mobileButtonText}>PDF</Text>
+
+                  <Text
+                    style={[
+                      styles.mobileButtonText,
+                      !hasPdf(item) && styles.mobileButtonTextDisabled,
+                    ]}
+                  >
+                    PDF
+                  </Text>
                 </TouchableOpacity>
               </View>
+              {item?.isHistorical && !hasPdf(item) && (
+                <View style={styles.mobileNoPdfRow}>
+                  <View style={styles.noPdfBadge}>
+                    <Text style={styles.noPdfBadgeText}>Sans PDF</Text>
+                  </View>
+                </View>
+              )}
             </View>
           )}
         />
@@ -491,7 +624,8 @@ export default function DocumentProformasScreen() {
         <Text style={styles.breadcrumb}>Documents / Archives</Text>
         <Text style={styles.title}>Proformas</Text>
         <Text style={styles.subtitle}>
-          Consultez toutes les proformas créées et leurs informations principales.
+          Consultez toutes les proformas créées et leurs informations
+          principales.
         </Text>
       </View>
 
@@ -510,18 +644,20 @@ export default function DocumentProformasScreen() {
 
       {renderFilters()}
 
-
-
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.th, styles.colInvoice]}>N° Proforma</Text>
-            <Text style={[styles.th, styles.colClient]}>Client</Text>
+            {renderSortableHeader("N° Proforma", "number", styles.colInvoice)}
+            {renderSortableHeader("Client", "client", styles.colClient)}
             <Text style={[styles.th, styles.colEvent]}>Événement</Text>
-            <Text style={[styles.th, styles.colDate]}>Date événement</Text>
-            <Text style={[styles.th, styles.colDate]}>Date création</Text>
-            <Text style={[styles.th, styles.colDate]}>Validité</Text>
-            <Text style={[styles.th, styles.colAmount]}>Montant</Text>
+            {renderSortableHeader(
+              "Date événement",
+              "eventDate",
+              styles.colDate,
+            )}
+            {renderSortableHeader("Date création", "createdAt", styles.colDate)}
+            {renderSortableHeader("Validité", "validityDate", styles.colDate)}
+            {renderSortableHeader("Montant", "amount", styles.colAmount)}
             <Text style={[styles.th, styles.colStatus]}>Statut</Text>
             <Text style={[styles.th, styles.colDate]}>Commande</Text>
             <Text style={[styles.th, styles.colDate]}>Facture</Text>
@@ -542,9 +678,17 @@ export default function DocumentProformasScreen() {
             }
             renderItem={({ item }: any) => (
               <View style={styles.tableRow}>
-                <Text style={[styles.td, styles.colInvoice]}>
-                  {item?.number || "-"}
-                </Text>
+                <View style={styles.proformaNumberCell}>
+                  <Text style={styles.proformaNumberText} numberOfLines={2}>
+                    {item?.number || "-"}
+                  </Text>
+
+                  {item?.isHistorical && !hasPdf(item) && (
+                    <View style={styles.noPdfBadge}>
+                      <Text style={styles.noPdfBadgeText}>Sans PDF</Text>
+                    </View>
+                  )}
+                </View>
 
                 <Text style={[styles.td, styles.colClient]}>
                   {getClientName(item)}
@@ -587,17 +731,25 @@ export default function DocumentProformasScreen() {
                     style={styles.actionButton}
                     onPress={() => openProforma(item)}
                   >
-                    <MaterialIcons name="visibility" size={18} color="#065F46" />
+                    <MaterialIcons
+                      name="visibility"
+                      size={18}
+                      color="#065F46"
+                    />
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.actionButton}
+                    style={[
+                      styles.actionButton,
+                      !hasPdf(item) && styles.actionButtonDisabled,
+                    ]}
                     onPress={() => openPdf(item)}
+                    disabled={!hasPdf(item)}
                   >
                     <MaterialIcons
                       name="picture-as-pdf"
                       size={18}
-                      color="#065F46"
+                      color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
                     />
                   </TouchableOpacity>
                 </View>
@@ -669,6 +821,12 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: "center",
   },
+  sortableHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+  },
   tableRow: {
     flexDirection: "row",
     minHeight: 54,
@@ -688,7 +846,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   colInvoice: {
-    width: 130,
+    width: 210,
   },
   colClient: {
     width: 160,
@@ -890,5 +1048,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#6B7280",
     marginBottom: 12,
+  },
+  proformaNumberCell: {
+    width: 210,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  proformaNumberText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#111827",
+  },
+
+  actionButtonDisabled: {
+    backgroundColor: "#F3F4F6",
+    opacity: 0.55,
+  },
+
+  mobileButtonTextDisabled: {
+    color: "#9CA3AF",
+  },
+
+  noPdfBadge: {
+    backgroundColor: "#FEF3C7",
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+
+  noPdfBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#92400E",
+  },
+
+  mobileNoPdfRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 8,
   },
 });
