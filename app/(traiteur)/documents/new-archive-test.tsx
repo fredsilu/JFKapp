@@ -59,7 +59,7 @@ export default function NewArchiveTestScreen() {
             });
 
             Alert.alert("Succès", "Archive test créée.");
-            router.replace("/(traiteur)/documents/archives");
+            //router.replace("/(traiteur)/documents/archives");
         } catch (error) {
             console.error(error);
             Alert.alert("Erreur", "Impossible de créer l’archive test.");
