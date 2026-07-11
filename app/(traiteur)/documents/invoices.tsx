@@ -15,10 +15,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import { documentListStyles as styles } from "@/src/styles/documentList.styles";
 
 import { useInvoices } from "@/src/hooks/useFirestore";
 import { fetchArchivedInvoices, normalizeArchivedInvoice } from "@/src/services/archivedDocument.service";
-
+import DocumentPageHeader from "@/src/components/DocumentPageHeader";
 
 
 
@@ -430,88 +431,115 @@ export default function DocumentInvoicesScreen() {
 
     if (isMobile) {
         return (
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <Text style={styles.breadcrumb}>Documents / Archives</Text>
-                    <Text style={styles.title}>Factures</Text>
-                    <Text style={styles.subtitle}>
-                        Consultez toutes les factures émises.
+            <View style={[styles.container, styles.mobileContainer]}>
+                <View style={styles.mobileHeaderCompact}>
+                    <Text style={styles.mobileBreadcrumb}>
+                        Documents / Archives
                     </Text>
-                </View>
-                <View style={styles.statsGrid}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Total factures</Text>
-                        <Text style={styles.statValue}>
-                            {invoiceStats.totalInvoices}
-                        </Text>
-                    </View>
 
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Montant total</Text>
-                        <Text style={styles.statValue}>
+                    <View style={styles.mobileTitleRow}>
+                        <Text style={styles.mobilePageTitle}>Factures</Text>
+
+                        <View style={styles.mobileTotalBadge}>
+                            <Text style={styles.mobileTotalBadgeText}>
+                                {invoiceStats.totalInvoices}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.mobileStatsGrid}>
+                    <View style={styles.mobileCompactStatCard}>
+                        <Text style={styles.mobileCompactStatLabel}>
+                            Montant total
+                        </Text>
+
+                        <Text style={styles.mobileCompactStatValue}>
                             {formatAmount(invoiceStats.totalAmount)}
                         </Text>
                     </View>
 
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>Payées</Text>
-                        <Text style={styles.statValue}>
+                    <View style={styles.mobileCompactStatCard}>
+                        <Text style={styles.mobileCompactStatLabel}>
+                            Payées
+                        </Text>
+
+                        <Text style={styles.mobileCompactStatValue}>
                             {formatAmount(invoiceStats.paidAmount)}
                         </Text>
                     </View>
 
-                    <View style={styles.statCard}>
-                        <Text style={styles.statLabel}>En attente</Text>
-                        <Text style={styles.statValue}>
+                    <View style={styles.mobileCompactStatCard}>
+                        <Text style={styles.mobileCompactStatLabel}>
+                            En attente
+                        </Text>
+
+                        <Text style={styles.mobileCompactStatValue}>
                             {formatAmount(invoiceStats.pendingAmount)}
                         </Text>
                     </View>
                 </View>
 
-                <View style={styles.searchBox}>
-                    <MaterialIcons name="search" size={20} color="#6B7280" />
+                <View style={styles.mobileSearchBox}>
+                    <MaterialIcons
+                        name="search"
+                        size={18}
+                        color="#6B7280"
+                    />
+
                     <TextInput
                         value={search}
                         onChangeText={setSearch}
-                        placeholder="Rechercher facture, client..."
+                        placeholder="Rechercher une facture..."
                         style={styles.searchInput}
                         placeholderTextColor="#9CA3AF"
                     />
-                </View>
-                <View style={styles.filterBarWrapper}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.filterBar}
-                    >
-                        {statusFilters.map((filter) => {
-                            const active = statusFilter === filter.value;
 
-                            return (
-                                <TouchableOpacity
-                                    key={filter.value}
-                                    style={[
-                                        styles.filterChip,
-                                        active && styles.filterChipActive,
-                                    ]}
-                                    onPress={() => setStatusFilter(filter.value)}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.filterChipText,
-                                            active && styles.filterChipTextActive,
-                                        ]}
-                                    >
-                                        {filter.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
+                    {search.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearch("")}>
+                            <MaterialIcons
+                                name="close"
+                                size={18}
+                                color="#64748B"
+                            />
+                        </TouchableOpacity>
+                    )}
                 </View>
+
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.mobileFilterScroll}
+                    contentContainerStyle={styles.mobileFilterBar}
+                >
+                    {statusFilters.map((filter) => {
+                        const active = statusFilter === filter.value;
+
+                        return (
+                            <TouchableOpacity
+                                key={filter.value}
+                                style={[
+                                    styles.mobileFilterChip,
+                                    active && styles.filterChipActive,
+                                ]}
+                                onPress={() => setStatusFilter(filter.value)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.mobileFilterChipText,
+                                        active && styles.filterChipTextActive,
+                                    ]}
+                                >
+                                    {filter.label}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
 
 
                 <FlatList
+                    style={styles.mobileFlatList}
                     data={filteredInvoices}
                     keyExtractor={(item: any) => item.id}
                     contentContainerStyle={styles.mobileList}
@@ -521,7 +549,7 @@ export default function DocumentInvoicesScreen() {
                     renderItem={({ item }: any) => (
                         <View style={styles.mobileCard}>
                             <View style={styles.mobileCardHeader}>
-                                <Text style={styles.mobileInvoiceNumber}>
+                                <Text style={styles.mobileDocumentNumber}>
                                     {item?.number || "-"}
                                 </Text>
                                 <View>
@@ -630,9 +658,9 @@ export default function DocumentInvoicesScreen() {
                                 </TouchableOpacity>
                             </View>
                             {item?.isHistorical && !hasPdf(item) && (
-                                <View style={styles.mobileNoPdfRow}>
-                                    <View style={styles.noPdfBadge}>
-                                        <Text style={styles.noPdfBadgeText}>
+                                <View style={localStyles.mobileNoPdfRow}>
+                                    <View style={localStyles.noPdfBadge}>
+                                        <Text style={localStyles.noPdfBadgeText}>
                                             Sans PDF
                                         </Text>
                                     </View>
@@ -650,58 +678,58 @@ export default function DocumentInvoicesScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.breadcrumb}>Documents / Archives</Text>
-                <Text style={styles.title}>Factures</Text>
-                <Text style={styles.subtitle}>
-                    Consultez toutes les factures émises et leurs informations principales.
-                </Text>
-            </View>
+            {/* En-tête compact */}
+            <DocumentPageHeader
+                title="Factures"
+                subtitle="Consultez toutes les factures émises et leurs informations principales."
+                stats={[
+                    {
+                        label: "Total factures",
+                        value: invoiceStats.totalInvoices,
+                    },
+                    {
+                        label: "Montant total",
+                        value: formatAmount(invoiceStats.totalAmount),
+                    },
+                    {
+                        label: "Payées",
+                        value: formatAmount(invoiceStats.paidAmount),
+                    },
+                    {
+                        label: "En attente",
+                        value: formatAmount(invoiceStats.pendingAmount),
+                    },
+                ]}
+            />
 
-            <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                    <Text style={styles.statLabel}>Total factures</Text>
-                    <Text style={styles.statValue}>{invoiceStats.totalInvoices}</Text>
+            {/* Recherche et filtres sur la même ligne */}
+            <View style={styles.desktopControlsRow}>
+                <View style={styles.desktopSearchBox}>
+                    <MaterialIcons name="search" size={19} color="#6B7280" />
+
+                    <TextInput
+                        value={search}
+                        onChangeText={setSearch}
+                        placeholder="Rechercher par facture, client, désignation..."
+                        style={styles.searchInput}
+                        placeholderTextColor="#9CA3AF"
+                    />
+
+                    {search.length > 0 && (
+                        <TouchableOpacity
+                            onPress={() => setSearch("")}
+                            style={styles.clearSearchButton}
+                        >
+                            <MaterialIcons name="close" size={18} color="#64748B" />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                <View style={styles.statCard}>
-                    <Text style={styles.statLabel}>Montant total</Text>
-                    <Text style={styles.statValue}>
-                        {formatAmount(invoiceStats.totalAmount)}
-                    </Text>
-                </View>
-
-                <View style={styles.statCard}>
-                    <Text style={styles.statLabel}>Payées</Text>
-                    <Text style={styles.statValue}>
-                        {formatAmount(invoiceStats.paidAmount)}
-                    </Text>
-                </View>
-
-                <View style={styles.statCard}>
-                    <Text style={styles.statLabel}>En attente</Text>
-                    <Text style={styles.statValue}>
-                        {formatAmount(invoiceStats.pendingAmount)}
-                    </Text>
-                </View>
-            </View>
-
-            <View style={styles.searchBox}>
-                <MaterialIcons name="search" size={20} color="#6B7280" />
-                <TextInput
-                    value={search}
-                    onChangeText={setSearch}
-                    placeholder="Rechercher par facture, client, désignation..."
-                    style={styles.searchInput}
-                    placeholderTextColor="#9CA3AF"
-                />
-            </View>
-
-            <View style={styles.filterBarWrapper}>
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.filterBar}
+                    style={styles.desktopFilterScroll}
+                    contentContainerStyle={styles.desktopFilterBar}
                 >
                     {statusFilters.map((filter) => {
                         const active = statusFilter === filter.value;
@@ -710,7 +738,7 @@ export default function DocumentInvoicesScreen() {
                             <TouchableOpacity
                                 key={filter.value}
                                 style={[
-                                    styles.filterChip,
+                                    styles.compactFilterChip,
                                     active && styles.filterChipActive,
                                 ]}
                                 onPress={() => setStatusFilter(filter.value)}
@@ -718,7 +746,7 @@ export default function DocumentInvoicesScreen() {
                             >
                                 <Text
                                     style={[
-                                        styles.filterChipText,
+                                        styles.compactFilterChipText,
                                         active && styles.filterChipTextActive,
                                     ]}
                                 >
@@ -730,272 +758,220 @@ export default function DocumentInvoicesScreen() {
                 </ScrollView>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator>
-                <View style={styles.table}>
-                    <View style={styles.tableHeader}>
-                        {renderSortableHeader(
-                            "N° Facture",
-                            "number",
-                            styles.colInvoice
-                        )}
+            {/* Tableau occupant tout l’espace disponible */}
+            <View style={styles.tableArea}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator
+                    style={styles.horizontalTableScroll}
+                    contentContainerStyle={styles.horizontalTableContent}
+                >
+                    <View style={styles.table}>
+                        <View style={styles.tableHeader}>
+                            {renderSortableHeader(
+                                "N° Facture",
+                                "number",
+                                localStyles.colInvoice
+                            )}
 
-                        {renderSortableHeader(
-                            "Client",
-                            "client",
-                            styles.colClient
-                        )}
+                            {renderSortableHeader(
+                                "Client",
+                                "client",
+                                localStyles.colClient
+                            )}
 
-                        <Text style={[styles.th, styles.colEvent]}>
-                            Événement
-                        </Text>
+                            <Text style={[styles.th, localStyles.colEvent]}>
+                                Événement
+                            </Text>
 
-                        <Text style={[styles.th, styles.colDate]}>
-                            Date livraison
-                        </Text>
+                            <Text style={[styles.th, localStyles.colDate]}>
+                                Date livraison
+                            </Text>
 
-                        <Text style={[styles.th, styles.colAddress]}>
-                            Adresse
-                        </Text>
+                            <Text style={[styles.th, localStyles.colAddress]}>
+                                Adresse
+                            </Text>
 
-                        <Text style={[styles.th, styles.colPeople]}>
-                            #
-                        </Text>
+                            <Text style={[styles.th, localStyles.colPeople]}>
+                                #
+                            </Text>
 
-                        {renderSortableHeader(
-                            "Montant",
-                            "amount",
-                            styles.colAmount
-                        )}
+                            {renderSortableHeader(
+                                "Montant",
+                                "amount",
+                                localStyles.colAmount
+                            )}
 
-                        {renderSortableHeader(
-                            "Date facture",
-                            "invoiceDate",
-                            styles.colDate
-                        )}
+                            {renderSortableHeader(
+                                "Date facture",
+                                "invoiceDate",
+                                localStyles.colDate
+                            )}
 
-                        {renderSortableHeader(
-                            "Date création",
-                            "createdAt",
-                            styles.colDate
-                        )}
+                            {renderSortableHeader(
+                                "Date création",
+                                "createdAt",
+                                localStyles.colDate
+                            )}
 
-                        <Text style={[styles.th, styles.colStatus]}>
-                            Statut
-                        </Text>
+                            <Text style={[styles.th, localStyles.colStatus]}>
+                                Statut
+                            </Text>
 
-                        <Text style={[styles.th, styles.colActions]}>
-                            Actions
-                        </Text>
-                    </View>
+                            <Text style={[styles.th, localStyles.colActions]}>
+                                Actions
+                            </Text>
+                        </View>
 
-                    <FlatList
-                        data={filteredInvoices}
-                        style={{
-                            flex: 1,
-                            minHeight: 0,
-                        }}
-                        keyExtractor={(item: any) => item.id}
-                        ListEmptyComponent={
-                            <View style={styles.emptyBox}>
-                                <Text style={styles.emptyText}>Aucune facture trouvée.</Text>
-                            </View>
-                        }
-                        renderItem={({ item }: any) => (
-                            <View style={styles.tableRow}>
-                                <View style={styles.invoiceNumberCell}>
+                        <FlatList
+                            data={filteredInvoices}
+                            style={styles.invoiceTableList}
+                            keyExtractor={(item: any) => item.id}
+                            showsVerticalScrollIndicator
+                            ListEmptyComponent={
+                                <View style={styles.emptyBox}>
+                                    <Text style={styles.emptyText}>
+                                        Aucune facture trouvée.
+                                    </Text>
+                                </View>
+                            }
+                            renderItem={({ item }: any) => (
+                                <View style={styles.tableRow}>
+                                    <View style={localStyles.invoiceNumberCell}>
+                                        <Text
+                                            style={localStyles.invoiceNumberText}
+                                            numberOfLines={2}
+                                        >
+                                            {item?.number || "-"}
+                                        </Text>
+
+                                        {item?.isHistorical && !hasPdf(item) && (
+                                            <View style={localStyles.noPdfBadge}>
+                                                <Text style={localStyles.noPdfBadgeText}>
+                                                    Sans PDF
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
+
                                     <Text
-                                        style={styles.invoiceNumberText}
+                                        style={[styles.td, localStyles.colClient]}
                                         numberOfLines={2}
                                     >
-                                        {item?.number || "-"}
+                                        {getClientName(item)}
                                     </Text>
 
-                                    {item?.isHistorical && !hasPdf(item) && (
-                                        <View style={styles.noPdfBadge}>
-                                            <Text style={styles.noPdfBadgeText}>
-                                                Sans PDF
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-
-                                <Text style={[styles.td, styles.colClient]}>
-                                    {getClientName(item)}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colEvent]}>
-                                    {getEventName(item)}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colDate]}>
-                                    {formatDate(getDeliveryDate(item))}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colAddress]}>
-                                    {getDeliveryAddress(item)}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colPeople]}>
-                                    {getPeopleCount(item)}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colAmount]}>
-                                    {formatAmount(getInvoiceAmount(item))}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colDate]}>
-                                    {formatDate(
-                                        item?.issuedAt ??
-                                        item?.invoiceDate ??
-                                        item?.documentDate
-                                    )}
-                                </Text>
-
-                                <Text style={[styles.td, styles.colDate]}>
-                                    {formatDate(item?.createdAt)}
-                                </Text>
-
-                                <View style={[styles.colStatus]}>
-                                    <View
-                                        style={[
-                                            styles.statusBadge,
-                                            {
-                                                backgroundColor: getStatusColors(item?.status).background,
-                                            },
-                                        ]}
+                                    <Text
+                                        style={[styles.td, localStyles.colEvent]}
+                                        numberOfLines={2}
                                     >
-                                        <Text
+                                        {getEventName(item)}
+                                    </Text>
+
+                                    <Text style={[styles.td, localStyles.colDate]}>
+                                        {formatDate(getDeliveryDate(item))}
+                                    </Text>
+
+                                    <Text
+                                        style={[styles.td, localStyles.colAddress]}
+                                        numberOfLines={2}
+                                    >
+                                        {getDeliveryAddress(item)}
+                                    </Text>
+
+                                    <Text style={[styles.td, localStyles.colPeople]}>
+                                        {getPeopleCount(item)}
+                                    </Text>
+
+                                    <Text style={[styles.td, localStyles.colAmount]}>
+                                        {formatAmount(getInvoiceAmount(item))}
+                                    </Text>
+
+                                    <Text style={[styles.td, localStyles.colDate]}>
+                                        {formatDate(
+                                            item?.issuedAt ??
+                                            item?.invoiceDate ??
+                                            item?.documentDate
+                                        )}
+                                    </Text>
+
+                                    <Text style={[styles.td, localStyles.colDate]}>
+                                        {formatDate(item?.createdAt)}
+                                    </Text>
+
+                                    <View style={localStyles.colStatus}>
+                                        <View
                                             style={[
-                                                styles.statusBadgeText,
+                                                styles.statusBadge,
                                                 {
-                                                    color: getStatusColors(item?.status).text,
+                                                    backgroundColor:
+                                                        getStatusColors(item?.status).background,
                                                 },
                                             ]}
                                         >
-                                            {getStatusLabel(item?.status)}
-                                        </Text>
+                                            <Text
+                                                style={[
+                                                    styles.statusBadgeText,
+                                                    {
+                                                        color:
+                                                            getStatusColors(item?.status).text,
+                                                    },
+                                                ]}
+                                            >
+                                                {getStatusLabel(item?.status)}
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.actions, localStyles.colActions]}>
+                                        <TouchableOpacity
+                                            style={styles.actionButton}
+                                            onPress={() => openInvoice(item)}
+                                        >
+                                            <MaterialIcons
+                                                name="visibility"
+                                                size={18}
+                                                color="#065F46"
+                                            />
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.actionButton,
+                                                !hasPdf(item) &&
+                                                styles.actionButtonDisabled,
+                                            ]}
+                                            onPress={() => openPdf(item)}
+                                            disabled={!hasPdf(item)}
+                                        >
+                                            <MaterialIcons
+                                                name="picture-as-pdf"
+                                                size={18}
+                                                color={
+                                                    hasPdf(item) ? "#065F46" : "#9CA3AF"
+                                                }
+                                            />
+                                        </TouchableOpacity>
                                     </View>
                                 </View>
-
-                                <View style={[styles.actions, styles.colActions]}>
-                                    <TouchableOpacity
-                                        style={styles.actionButton}
-                                        onPress={() => openInvoice(item)}
-                                    >
-                                        <MaterialIcons
-                                            name="visibility"
-                                            size={18}
-                                            color="#065F46"
-                                        />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.actionButton,
-                                            !hasPdf(item) && styles.actionButtonDisabled,
-                                        ]}
-                                        onPress={() => openPdf(item)}
-                                        disabled={!hasPdf(item)}
-                                    >
-                                        <MaterialIcons
-                                            name="picture-as-pdf"
-                                            size={18}
-                                            color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
-                    />
-                </View>
-            </ScrollView>
+                            )}
+                        />
+                    </View>
+                </ScrollView>
+            </View>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F8FAFC",
-        paddingHorizontal: 16,
-        paddingTop: 44,
-        paddingBottom: 16,
-    },
-    header: {
-        marginBottom: 16,
-    },
-    breadcrumb: {
-        fontSize: 13,
-        color: "#6B7280",
-        marginBottom: 4,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "800",
-        color: "#064E3B",
-    },
-
-    subtitle: {
-        fontSize: 13,
-        color: "#6B7280",
-        marginTop: 3,
-    },
-    searchBox: {
-        height: 46,
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#D1D5DB",
-        borderRadius: 12,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 12,
-        marginBottom: 16,
-        gap: 8,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 14,
-        color: "#111827",
-    },
-    table: {
-        minWidth: 1570,
-        backgroundColor: "#FFFFFF",
-        borderRadius: 12,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "#E5E7EB",
-
-        height: 700,
-    },
-    tableHeader: {
-        flexDirection: "row",
-        backgroundColor: "#2F6B4F",
-        minHeight: 44,
-        alignItems: "center",
-    },
-    tableRow: {
-        flexDirection: "row",
-        minHeight: 54,
-        alignItems: "center",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB",
-    },
-    th: {
-        color: "#FFFFFF",
-        fontSize: 13,
-        fontWeight: "700",
-    },
-    td: {
-        color: "#111827",
-        fontSize: 13,
-        paddingHorizontal: 10,
-    },
+const localStyles = StyleSheet.create({
     colInvoice: {
         width: 210,
     },
+
     colClient: {
         width: 160,
     },
+
     colDate: {
         width: 130,
     },
@@ -1004,173 +980,19 @@ const styles = StyleSheet.create({
         width: 70,
         textAlign: "center",
     },
+
     colAmount: {
         width: 140,
         textAlign: "right",
     },
+
     colStatus: {
         width: 110,
         justifyContent: "center",
     },
+
     colActions: {
         width: 110,
-    },
-    actions: {
-        flexDirection: "row",
-        gap: 8,
-        paddingHorizontal: 10,
-    },
-    actionButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        backgroundColor: "#ECFDF5",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    emptyBox: {
-        padding: 24,
-    },
-    emptyText: {
-        color: "#6B7280",
-        fontSize: 14,
-    },
-    center: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#F8FAFC",
-    },
-    loadingText: {
-        marginTop: 8,
-        color: "#6B7280",
-    },
-    errorText: {
-        color: "#DC2626",
-        fontWeight: "600",
-    },
-    mobileList: {
-        gap: 12,
-        paddingBottom: 24,
-    },
-
-    mobileCard: {
-        backgroundColor: "#FFFFFF",
-        borderRadius: 14,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: "#E5E7EB",
-    },
-
-    mobileCardHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-
-    mobileInvoiceNumber: {
-        fontSize: 18,
-        fontWeight: "800",
-        color: "#064E3B",
-    },
-
-    mobileClient: {
-        fontSize: 17,
-        fontWeight: "800",
-        color: "#111827",
-        marginBottom: 14,
-    },
-
-    mobileLabel: {
-        fontSize: 14,
-        color: "#6B7280",
-    },
-
-    mobileValue: {
-        fontSize: 14,
-        color: "#111827",
-        fontWeight: "500",
-    },
-
-    mobileAmount: {
-        fontSize: 15,
-        fontWeight: "800",
-        color: "#064E3B",
-    },
-
-
-
-    mobileStatus: {
-        fontSize: 12,
-        fontWeight: "700",
-        color: "#065F46",
-        backgroundColor: "#ECFDF5",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 999,
-    },
-
-
-
-    mobileInfoRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        gap: 12,
-        paddingVertical: 5,
-    },
-
-
-
-    mobileActions: {
-        flexDirection: "row",
-        gap: 10,
-        marginTop: 12,
-    },
-
-    mobileButton: {
-        flex: 1,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: "#ECFDF5",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "row",
-        gap: 6,
-    },
-
-    mobileButtonText: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: "#065F46",
-    },
-    statsGrid: {
-        flexDirection: "row",
-        gap: 12,
-        marginBottom: 16,
-        flexWrap: "wrap",
-    },
-
-    statCard: {
-        flex: 1,
-        minWidth: 140,
-        maxWidth: "48%",
-        backgroundColor: "#FFFFFF",
-        borderRadius: 14,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: "#E5E7EB",
-    },
-
-    statLabel: {
-        fontSize: 13,
-        color: "#6B7280",
-    },
-
-    statValue: {
-        fontSize: 20,
-        fontWeight: "800",
-        color: "#064E3B",
     },
 
     colEvent: {
@@ -1180,14 +1002,7 @@ const styles = StyleSheet.create({
     colAddress: {
         width: 180,
     },
-    filterBarWrapper: {
-        marginBottom: 14,
-    },
 
-    filterBar: {
-        gap: 8,
-        paddingVertical: 2,
-    },
     invoiceNumberCell: {
         width: 210,
         paddingHorizontal: 10,
@@ -1215,60 +1030,6 @@ const styles = StyleSheet.create({
         color: "#92400E",
     },
 
-    filterChip: {
-        minHeight: 36,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 999,
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#D1D5DB",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    filterChipActive: {
-        backgroundColor: "#065F46",
-        borderColor: "#065F46",
-    },
-
-    filterChipText: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: "#374151",
-        lineHeight: 16,
-    },
-
-    filterChipTextActive: {
-        color: "#FFFFFF",
-    },
-    actionButtonDisabled: {
-        backgroundColor: "#F3F4F6",
-        opacity: 0.55,
-    },
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 999,
-        alignSelf: "flex-start",
-    },
-
-    statusBadgeText: {
-        fontSize: 12,
-        fontWeight: "700",
-    },
-    resultCount: {
-        fontSize: 13,
-        color: "#6B7280",
-        marginBottom: 12,
-    },
-    sortableHeader: {
-        height: "100%",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 10,
-    },
     mobileNoPdfRow: {
         flexDirection: "row",
         justifyContent: "flex-end",

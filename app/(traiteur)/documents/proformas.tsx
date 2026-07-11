@@ -13,6 +13,7 @@ import {
   Linking,
   useWindowDimensions,
 } from "react-native";
+import { documentListStyles as styles } from "@/src/styles/documentList.styles";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -21,6 +22,7 @@ import {
   fetchArchivedProformas,
   normalizeArchivedProforma,
 } from "@/src/services/archivedDocument.service";
+import DocumentPageHeader from "@/src/components/DocumentPageHeader";
 
 type SortField =
   "number" | "client" | "eventDate" | "createdAt" | "validityDate" | "amount";
@@ -515,7 +517,7 @@ export default function DocumentProformasScreen() {
           renderItem={({ item }: any) => (
             <View style={styles.mobileCard}>
               <View style={styles.mobileCardHeader}>
-                <Text style={styles.mobileInvoiceNumber}>
+                <Text style={styles.mobileDocumentNumber}>
                   {item?.number || "-"}
                 </Text>
 
@@ -597,7 +599,7 @@ export default function DocumentProformasScreen() {
                   <Text
                     style={[
                       styles.mobileButtonText,
-                      !hasPdf(item) && styles.mobileButtonTextDisabled,
+                      !hasPdf(item) && localStyles.mobileButtonTextDisabled,
                     ]}
                   >
                     PDF
@@ -605,9 +607,9 @@ export default function DocumentProformasScreen() {
                 </TouchableOpacity>
               </View>
               {item?.isHistorical && !hasPdf(item) && (
-                <View style={styles.mobileNoPdfRow}>
-                  <View style={styles.noPdfBadge}>
-                    <Text style={styles.noPdfBadgeText}>Sans PDF</Text>
+                <View style={localStyles.mobileNoPdfRow}>
+                  <View style={localStyles.noPdfBadge}>
+                    <Text style={localStyles.noPdfBadgeText}>Sans PDF</Text>
                   </View>
                 </View>
               )}
@@ -620,16 +622,28 @@ export default function DocumentProformasScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.breadcrumb}>Documents / Archives</Text>
-        <Text style={styles.title}>Proformas</Text>
-        <Text style={styles.subtitle}>
-          Consultez toutes les proformas créées et leurs informations
-          principales.
-        </Text>
-      </View>
-
-      {renderStats()}
+      <DocumentPageHeader
+        title="Proformas"
+        subtitle="Consultez toutes les proformas créées et leurs informations principales."
+        stats={[
+          {
+            label: "Total proformas",
+            value: proformaStats.totalProformas,
+          },
+          {
+            label: "Montant total",
+            value: formatAmount(proformaStats.totalAmount),
+          },
+          {
+            label: "Facturées",
+            value: formatAmount(proformaStats.invoicedAmount),
+          },
+          {
+            label: "En attente",
+            value: formatAmount(proformaStats.pendingAmount),
+          },
+        ]}
+      />
 
       <View style={styles.searchBox}>
         <MaterialIcons name="search" size={20} color="#6B7280" />
@@ -647,21 +661,21 @@ export default function DocumentProformasScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            {renderSortableHeader("N° Proforma", "number", styles.colInvoice)}
-            {renderSortableHeader("Client", "client", styles.colClient)}
-            <Text style={[styles.th, styles.colEvent]}>Événement</Text>
+            {renderSortableHeader("N° Proforma", "number", localStyles.colInvoice)}
+            {renderSortableHeader("Client", "client", localStyles.colClient)}
+            <Text style={[styles.th, localStyles.colEvent]}>Événement</Text>
             {renderSortableHeader(
               "Date événement",
               "eventDate",
-              styles.colDate,
+              localStyles.colDate,
             )}
-            {renderSortableHeader("Date création", "createdAt", styles.colDate)}
-            {renderSortableHeader("Validité", "validityDate", styles.colDate)}
-            {renderSortableHeader("Montant", "amount", styles.colAmount)}
-            <Text style={[styles.th, styles.colStatus]}>Statut</Text>
-            <Text style={[styles.th, styles.colDate]}>Commande</Text>
-            <Text style={[styles.th, styles.colDate]}>Facture</Text>
-            <Text style={[styles.th, styles.colActions]}>Actions</Text>
+            {renderSortableHeader("Date création", "createdAt", localStyles.colDate)}
+            {renderSortableHeader("Validité", "validityDate", localStyles.colDate)}
+            {renderSortableHeader("Montant", "amount", localStyles.colAmount)}
+            <Text style={[styles.th, localStyles.colStatus]}>Statut</Text>
+            <Text style={[styles.th, localStyles.colDate]}>Commande</Text>
+            <Text style={[styles.th, localStyles.colDate]}>Facture</Text>
+            <Text style={[styles.th, localStyles.colActions]}>Actions</Text>
           </View>
 
           <FlatList
@@ -678,55 +692,55 @@ export default function DocumentProformasScreen() {
             }
             renderItem={({ item }: any) => (
               <View style={styles.tableRow}>
-                <View style={styles.proformaNumberCell}>
-                  <Text style={styles.proformaNumberText} numberOfLines={2}>
+                <View style={localStyles.proformaNumberCell}>
+                  <Text style={localStyles.proformaNumberText} numberOfLines={2}>
                     {item?.number || "-"}
                   </Text>
 
                   {item?.isHistorical && !hasPdf(item) && (
-                    <View style={styles.noPdfBadge}>
-                      <Text style={styles.noPdfBadgeText}>Sans PDF</Text>
+                    <View style={localStyles.noPdfBadge}>
+                      <Text style={localStyles.noPdfBadgeText}>Sans PDF</Text>
                     </View>
                   )}
                 </View>
 
-                <Text style={[styles.td, styles.colClient]}>
+                <Text style={[styles.td, localStyles.colClient]}>
                   {getClientName(item)}
                 </Text>
 
-                <Text style={[styles.td, styles.colEvent]}>
+                <Text style={[styles.td, localStyles.colEvent]}>
                   {getEventName(item)}
                 </Text>
 
-                <Text style={[styles.td, styles.colDate]}>
+                <Text style={[styles.td, localStyles.colDate]}>
                   {formatDate(getEventDate(item))}
                 </Text>
 
-                <Text style={[styles.td, styles.colDate]}>
+                <Text style={[styles.td, localStyles.colDate]}>
                   {formatDate(item?.createdAt)}
                 </Text>
 
-                <Text style={[styles.td, styles.colDate]}>
+                <Text style={[styles.td, localStyles.colDate]}>
                   {formatDate(getValidityDate(item))}
                 </Text>
 
-                <Text style={[styles.td, styles.colAmount]}>
+                <Text style={[styles.td, localStyles.colAmount]}>
                   {formatAmount(getProformaAmount(item))}
                 </Text>
 
-                <View style={styles.colStatus}>
+                <View style={localStyles.colStatus}>
                   {renderStatusBadge(item?.status)}
                 </View>
 
-                <Text style={[styles.td, styles.colDate]}>
+                <Text style={[styles.td, localStyles.colDate]}>
                   {item?.orderNumber || "-"}
                 </Text>
 
-                <Text style={[styles.td, styles.colDate]}>
+                <Text style={[styles.td, localStyles.colDate]}>
                   {item?.invoiceNumber || "-"}
                 </Text>
 
-                <View style={[styles.actions, styles.colActions]}>
+                <View style={[styles.actions, localStyles.colActions]}>
                   <TouchableOpacity
                     style={styles.actionButton}
                     onPress={() => openProforma(item)}
@@ -762,293 +776,37 @@ export default function DocumentProformasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  breadcrumb: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-  subtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 3,
-  },
-  searchBox: {
-    height: 46,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: "#111827",
-  },
-  table: {
-    minWidth: 1510,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    height: 700,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#2F6B4F",
-    minHeight: 44,
-    alignItems: "center",
-  },
-  sortableHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-  },
-  tableRow: {
-    flexDirection: "row",
-    minHeight: 54,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  th: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-    paddingHorizontal: 10,
-  },
-  td: {
-    color: "#111827",
-    fontSize: 13,
-    paddingHorizontal: 10,
-  },
+const localStyles = StyleSheet.create({
   colInvoice: {
     width: 210,
   },
+
   colClient: {
     width: 160,
   },
+
   colDate: {
     width: 130,
   },
+
   colAmount: {
     width: 140,
     textAlign: "right",
   },
+
   colStatus: {
     width: 110,
     justifyContent: "center",
   },
+
   colActions: {
     width: 110,
   },
+
   colEvent: {
     width: 220,
   },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 10,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#ECFDF5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyBox: {
-    padding: 24,
-  },
-  emptyText: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  loadingText: {
-    marginTop: 8,
-    color: "#6B7280",
-  },
-  errorText: {
-    color: "#DC2626",
-    fontWeight: "600",
-  },
-  mobileList: {
-    gap: 12,
-    paddingBottom: 24,
-  },
-  mobileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  mobileCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
 
-  mobileInvoiceNumber: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-  mobileClient: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 14,
-  },
-
-  mobileLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-
-  mobileValue: {
-    fontSize: 14,
-    color: "#111827",
-    fontWeight: "500",
-  },
-
-  mobileAmount: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-  mobileInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 5,
-  },
-
-  mobileActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-  },
-  mobileButton: {
-    flex: 1,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#ECFDF5",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 6,
-  },
-  mobileButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#065F46",
-  },
-  statsGrid: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-    flexWrap: "wrap",
-  },
-  statCard: {
-    flex: 1,
-    minWidth: 140,
-    maxWidth: "48%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  statLabel: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
-
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-  filterBarWrapper: {
-    marginBottom: 14,
-  },
-  filterBar: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  filterChip: {
-    minHeight: 36,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterChipActive: {
-    backgroundColor: "#065F46",
-    borderColor: "#065F46",
-  },
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#374151",
-    lineHeight: 16,
-  },
-  filterChipTextActive: {
-    color: "#FFFFFF",
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    alignSelf: "flex-start",
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  resultCount: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginBottom: 12,
-  },
   proformaNumberCell: {
     width: 210,
     paddingHorizontal: 10,
@@ -1061,15 +819,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: "#111827",
-  },
-
-  actionButtonDisabled: {
-    backgroundColor: "#F3F4F6",
-    opacity: 0.55,
-  },
-
-  mobileButtonTextDisabled: {
-    color: "#9CA3AF",
   },
 
   noPdfBadge: {
@@ -1089,5 +838,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     marginTop: 8,
+  },
+
+  mobileButtonTextDisabled: {
+    color: "#9CA3AF",
   },
 });

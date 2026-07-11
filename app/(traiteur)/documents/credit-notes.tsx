@@ -19,8 +19,10 @@ import {
   fetchArchivedCreditNotes,
   normalizeArchivedCreditNote,
 } from "@/src/services/archivedDocument.service";
+import { documentListStyles as styles } from "@/src/styles/documentList.styles";
 
 import { useCreditNotes } from "@/src/hooks/useFirestore";
+import DocumentPageHeader from "@/src/components/DocumentPageHeader";
 
 type CreditNoteStatusFilter =
   | "all"
@@ -506,7 +508,7 @@ export default function DocumentCreditNotesScreen() {
           renderItem={({ item }: any) => (
             <View style={styles.mobileCard}>
               <View style={styles.mobileCardHeader}>
-                <Text style={styles.mobileInvoiceNumber}>
+                <Text style={styles.mobileDocumentNumber}>
                   {item?.number || "-"}
                 </Text>
 
@@ -574,7 +576,7 @@ export default function DocumentCreditNotesScreen() {
                   <Text
                     style={[
                       styles.mobileButtonText,
-                      !hasPdf(item) && styles.mobileButtonTextDisabled,
+                      !hasPdf(item) && localStyles.mobileButtonTextDisabled,
                     ]}
                   >
                     PDF
@@ -582,9 +584,9 @@ export default function DocumentCreditNotesScreen() {
                 </TouchableOpacity>
               </View>
               {item?.isHistorical && !hasPdf(item) && (
-                <View style={styles.mobileNoPdfRow}>
-                  <View style={styles.noPdfBadge}>
-                    <Text style={styles.noPdfBadgeText}>
+                <View style={localStyles.mobileNoPdfRow}>
+                  <View style={localStyles.noPdfBadge}>
+                    <Text style={localStyles.noPdfBadgeText}>
                       Sans PDF
                     </Text>
                   </View>
@@ -599,15 +601,28 @@ export default function DocumentCreditNotesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.breadcrumb}>Documents / Archives</Text>
-        <Text style={styles.title}>Avoirs</Text>
-        <Text style={styles.subtitle}>
-          Consultez tous les avoirs créés et leurs informations principales.
-        </Text>
-      </View>
-
-      {renderStats()}
+      <DocumentPageHeader
+        title="Avoirs"
+        subtitle="Consultez tous les avoirs créés et leurs informations principales."
+        stats={[
+          {
+            label: "Total avoirs",
+            value: creditNoteStats.totalCreditNotes,
+          },
+          {
+            label: "Montant total",
+            value: formatAmount(creditNoteStats.totalAmount),
+          },
+          {
+            label: "Émis",
+            value: formatAmount(creditNoteStats.issuedAmount),
+          },
+          {
+            label: "Brouillons",
+            value: formatAmount(creditNoteStats.draftAmount),
+          },
+        ]}
+      />
 
       <View style={styles.searchBox}>
         <MaterialIcons name="search" size={20} color="#6B7280" />
@@ -624,132 +639,132 @@ export default function DocumentCreditNotesScreen() {
 
 
 
-      <View style={styles.tableViewport}>
+      <View style={localStyles.tableViewport}>
         <ScrollView
           horizontal
           nestedScrollEnabled
           showsHorizontalScrollIndicator
-          style={styles.horizontalScroll}
-          contentContainerStyle={styles.horizontalScrollContent}
+          style={localStyles.horizontalScroll}
+          contentContainerStyle={localStyles.horizontalScrollContent}
         >
-          <View style={[styles.table, { height: tableHeight }]}>
+          <View style={[localStyles.table, { height: tableHeight }]}>
             <View style={styles.tableHeader}>
               {renderSortableHeader(
                 "N° Avoir",
                 "number",
-                styles.colInvoice
+                localStyles.colInvoice
               )}
               {renderSortableHeader(
                 "Facture",
                 "invoiceNumber",
-                styles.colDate
+                localStyles.colDate
               )}
-              {renderSortableHeader("Type", "type", styles.colType)}
-              {renderSortableHeader("Motif", "reason", styles.colReason)}
+              {renderSortableHeader("Type", "type", localStyles.colType)}
+              {renderSortableHeader("Motif", "reason", localStyles.colReason)}
               {renderSortableHeader(
                 "Montant",
                 "amount",
-                styles.colAmount
+                localStyles.colAmount
               )}
               {renderSortableHeader(
                 "Date émission",
                 "issuedAt",
-                styles.colDate
+                localStyles.colDate
               )}
               {renderSortableHeader(
                 "Date création",
                 "createdAt",
-                styles.colDate
+                localStyles.colDate
               )}
-              <Text style={[styles.th, styles.colStatus]}>Statut</Text>
-              <Text style={[styles.th, styles.colActions]}>Actions</Text>
+              <Text style={[styles.th, localStyles.colStatus]}>Statut</Text>
+              <Text style={[styles.th, localStyles.colActions]}>Actions</Text>
             </View>
 
             <FlatList
               data={filteredCreditNotes}
-              style={styles.desktopList}
-              contentContainerStyle={styles.desktopListContent}
+              style={localStyles.desktopList}
+              contentContainerStyle={localStyles.desktopListContent}
               nestedScrollEnabled
               showsVerticalScrollIndicator
               keyboardShouldPersistTaps="handled"
               keyExtractor={(item: any) => item.id}
-            ListEmptyComponent={
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>Aucun avoir trouvé.</Text>
-              </View>
-            }
-            renderItem={({ item }: any) => (
-              <View style={styles.tableRow}>
-                <View style={styles.creditNoteNumberCell}>
-                  <Text
-                    style={styles.creditNoteNumberText}
-                    numberOfLines={2}
-                  >
-                    {item?.number || "-"}
+              ListEmptyComponent={
+                <View style={styles.emptyBox}>
+                  <Text style={styles.emptyText}>Aucun avoir trouvé.</Text>
+                </View>
+              }
+              renderItem={({ item }: any) => (
+                <View style={styles.tableRow}>
+                  <View style={localStyles.creditNoteNumberCell}>
+                    <Text
+                      style={localStyles.creditNoteNumberText}
+                      numberOfLines={2}
+                    >
+                      {item?.number || "-"}
+                    </Text>
+
+                    {item?.isHistorical && !hasPdf(item) && (
+                      <View style={localStyles.noPdfBadge}>
+                        <Text style={localStyles.noPdfBadgeText}>
+                          Sans PDF
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <Text style={[styles.td, localStyles.colDate]}>
+                    {getInvoiceNumber(item)}
                   </Text>
 
-                  {item?.isHistorical && !hasPdf(item) && (
-                    <View style={styles.noPdfBadge}>
-                      <Text style={styles.noPdfBadgeText}>
-                        Sans PDF
-                      </Text>
-                    </View>
-                  )}
+                  <Text style={[styles.td, localStyles.colType]}>
+                    {getCreditType(item)}
+                  </Text>
+
+                  <Text style={[styles.td, localStyles.colReason]}>
+                    {getReason(item)}
+                  </Text>
+
+                  <Text style={[styles.td, localStyles.colAmount]}>
+                    {formatAmount(getCreditNoteAmount(item))}
+                  </Text>
+
+                  <Text style={[styles.td, localStyles.colDate]}>
+                    {formatDate(item?.issuedAt)}
+                  </Text>
+
+                  <Text style={[styles.td, localStyles.colDate]}>
+                    {formatDate(item?.createdAt)}
+                  </Text>
+
+                  <View style={localStyles.colStatus}>
+                    {renderStatusBadge(item?.status)}
+                  </View>
+
+                  <View style={[styles.actions, localStyles.colActions]}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => openCreditNote(item)}
+                    >
+                      <MaterialIcons name="visibility" size={18} color="#065F46" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.actionButton,
+                        !hasPdf(item) && styles.actionButtonDisabled,
+                      ]}
+                      onPress={() => openPdf(item)}
+                      disabled={!hasPdf(item)}
+                    >
+                      <MaterialIcons
+                        name="picture-as-pdf"
+                        size={18}
+                        color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-
-                <Text style={[styles.td, styles.colDate]}>
-                  {getInvoiceNumber(item)}
-                </Text>
-
-                <Text style={[styles.td, styles.colType]}>
-                  {getCreditType(item)}
-                </Text>
-
-                <Text style={[styles.td, styles.colReason]}>
-                  {getReason(item)}
-                </Text>
-
-                <Text style={[styles.td, styles.colAmount]}>
-                  {formatAmount(getCreditNoteAmount(item))}
-                </Text>
-
-                <Text style={[styles.td, styles.colDate]}>
-                  {formatDate(item?.issuedAt)}
-                </Text>
-
-                <Text style={[styles.td, styles.colDate]}>
-                  {formatDate(item?.createdAt)}
-                </Text>
-
-                <View style={styles.colStatus}>
-                  {renderStatusBadge(item?.status)}
-                </View>
-
-                <View style={[styles.actions, styles.colActions]}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => openCreditNote(item)}
-                  >
-                    <MaterialIcons name="visibility" size={18} color="#065F46" />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.actionButton,
-                      !hasPdf(item) && styles.actionButtonDisabled,
-                    ]}
-                    onPress={() => openPdf(item)}
-                    disabled={!hasPdf(item)}
-                  >
-                    <MaterialIcons
-                      name="picture-as-pdf"
-                      size={18}
-                      color={hasPdf(item) ? "#065F46" : "#9CA3AF"}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+              )}
             />
           </View>
         </ScrollView>
@@ -757,62 +772,21 @@ export default function DocumentCreditNotesScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  breadcrumb: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-  subtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 3,
-  },
-  searchBox: {
-    height: 46,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: "#111827",
-  },
+const localStyles = StyleSheet.create({
   tableViewport: {
     flex: 1,
     minHeight: 0,
   },
+
   horizontalScroll: {
     flex: 1,
     minHeight: 0,
   },
+
   horizontalScrollContent: {
     alignItems: "stretch",
   },
+
   table: {
     minWidth: 1300,
     backgroundColor: "#FFFFFF",
@@ -821,249 +795,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
+
   desktopList: {
     flex: 1,
     minHeight: 0,
   },
+
   desktopListContent: {
     flexGrow: 1,
   },
-  tableHeader: {
-    flexDirection: "row",
-    backgroundColor: "#2F6B4F",
-    minHeight: 44,
-    alignItems: "center",
-  },
-  tableRow: {
-    flexDirection: "row",
-    minHeight: 54,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  sortableHeader: {
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-  },
-  th: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-    paddingHorizontal: 10,
-  },
-  td: {
-    color: "#111827",
-    fontSize: 13,
-    paddingHorizontal: 10,
-  },
+
   colInvoice: {
     width: 200,
   },
+
   colDate: {
     width: 130,
   },
+
   colType: {
     width: 110,
   },
+
   colReason: {
     width: 260,
   },
+
   colAmount: {
     width: 140,
     textAlign: "right",
   },
+
   colStatus: {
     width: 110,
     justifyContent: "center",
   },
+
   colActions: {
     width: 110,
   },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 10,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#ECFDF5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyBox: {
-    padding: 24,
-  },
-  emptyText: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  loadingText: {
-    marginTop: 8,
-    color: "#6B7280",
-  },
-  errorText: {
-    color: "#DC2626",
-    fontWeight: "600",
-  },
-  mobileList: {
-    gap: 12,
-    paddingBottom: 24,
-  },
-  mobileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  mobileCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
 
-  mobileInvoiceNumber: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-  mobileClient: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 14,
-  },
-
-  mobileLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-
-  mobileValue: {
-    fontSize: 14,
-    color: "#111827",
-    fontWeight: "500",
-  },
-
-  mobileAmount: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-
-
-  mobileInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 5,
-  },
-
-  mobileActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-  },
-  mobileButton: {
-    flex: 1,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#ECFDF5",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 6,
-  },
-  mobileButtonText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#065F46",
-  },
-  statsGrid: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
-    flexWrap: "wrap",
-  },
-  statCard: {
-    flex: 1,
-    minWidth: 140,
-    maxWidth: "48%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  statLabel: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
-
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#064E3B",
-  },
-  filterBarWrapper: {
-    marginBottom: 14,
-  },
-  filterBar: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  filterChip: {
-    minHeight: 36,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterChipActive: {
-    backgroundColor: "#065F46",
-    borderColor: "#065F46",
-  },
-  filterChipText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#374151",
-    lineHeight: 16,
-  },
-  filterChipTextActive: {
-    color: "#FFFFFF",
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    alignSelf: "flex-start",
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  resultCount: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginBottom: 12,
-  },
   creditNoteNumberCell: {
     width: 200,
     paddingHorizontal: 10,
@@ -1076,11 +847,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: "#111827",
-  },
-
-  actionButtonDisabled: {
-    backgroundColor: "#F3F4F6",
-    opacity: 0.55,
   },
 
   mobileButtonTextDisabled: {
