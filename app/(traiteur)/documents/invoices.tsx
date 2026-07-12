@@ -15,6 +15,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 import { documentListStyles as styles } from "@/src/styles/documentList.styles";
 
 import { useInvoices } from "@/src/hooks/useFirestore";
@@ -432,114 +437,38 @@ export default function DocumentInvoicesScreen() {
     if (isMobile) {
         return (
             <View style={[styles.container, styles.mobileContainer]}>
-                <View style={styles.mobileHeaderCompact}>
-                    <Text style={styles.mobileBreadcrumb}>
-                        Documents / Archives
-                    </Text>
+        <View style={localStyles.mobileControls}>
+                <MobileListHeader
+                    title="Factures"
+                    total={invoiceStats.totalInvoices}
+                    onBack={() => router.replace("/(traiteur)/documents" as never)}
+                />
 
-                    <View style={styles.mobileTitleRow}>
-                        <Text style={styles.mobilePageTitle}>Factures</Text>
+                <MobileStatsBar
+                    items={[
+                        { label: "Montant total", value: formatAmount(invoiceStats.totalAmount), wide: true },
+                        { label: "Payées", value: formatAmount(invoiceStats.paidAmount), wide: true },
+                        { label: "En attente", value: formatAmount(invoiceStats.pendingAmount), wide: true },
+                    ]}
+                />
 
-                        <View style={styles.mobileTotalBadge}>
-                            <Text style={styles.mobileTotalBadgeText}>
-                                {invoiceStats.totalInvoices}
-                            </Text>
-                        </View>
-                    </View>
+                <MobileSearchBar
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder="Rechercher une facture..."
+                />
+
+                <MobileFilterBar
+                    items={statusFilters}
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                />
+
+
                 </View>
 
-                <View style={styles.mobileStatsGrid}>
-                    <View style={styles.mobileCompactStatCard}>
-                        <Text style={styles.mobileCompactStatLabel}>
-                            Montant total
-                        </Text>
-
-                        <Text style={styles.mobileCompactStatValue}>
-                            {formatAmount(invoiceStats.totalAmount)}
-                        </Text>
-                    </View>
-
-                    <View style={styles.mobileCompactStatCard}>
-                        <Text style={styles.mobileCompactStatLabel}>
-                            Payées
-                        </Text>
-
-                        <Text style={styles.mobileCompactStatValue}>
-                            {formatAmount(invoiceStats.paidAmount)}
-                        </Text>
-                    </View>
-
-                    <View style={styles.mobileCompactStatCard}>
-                        <Text style={styles.mobileCompactStatLabel}>
-                            En attente
-                        </Text>
-
-                        <Text style={styles.mobileCompactStatValue}>
-                            {formatAmount(invoiceStats.pendingAmount)}
-                        </Text>
-                    </View>
-                </View>
-
-                <View style={styles.mobileSearchBox}>
-                    <MaterialIcons
-                        name="search"
-                        size={18}
-                        color="#6B7280"
-                    />
-
-                    <TextInput
-                        value={search}
-                        onChangeText={setSearch}
-                        placeholder="Rechercher une facture..."
-                        style={styles.searchInput}
-                        placeholderTextColor="#9CA3AF"
-                    />
-
-                    {search.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearch("")}>
-                            <MaterialIcons
-                                name="close"
-                                size={18}
-                                color="#64748B"
-                            />
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.mobileFilterScroll}
-                    contentContainerStyle={styles.mobileFilterBar}
-                >
-                    {statusFilters.map((filter) => {
-                        const active = statusFilter === filter.value;
-
-                        return (
-                            <TouchableOpacity
-                                key={filter.value}
-                                style={[
-                                    styles.mobileFilterChip,
-                                    active && styles.filterChipActive,
-                                ]}
-                                onPress={() => setStatusFilter(filter.value)}
-                            >
-                                <Text
-                                    style={[
-                                        styles.mobileFilterChipText,
-                                        active && styles.filterChipTextActive,
-                                    ]}
-                                >
-                                    {filter.label}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-
-
-                <FlatList
-                    style={styles.mobileFlatList}
+        <FlatList
+                    style={[localStyles.mobileListFlex, styles.mobileFlatList]}
                     data={filteredInvoices}
                     keyExtractor={(item: any) => item.id}
                     contentContainerStyle={styles.mobileList}
@@ -964,6 +893,15 @@ export default function DocumentInvoicesScreen() {
 }
 
 const localStyles = StyleSheet.create({
+  mobileControls: {
+    paddingTop: 2,
+    paddingBottom: 6,
+    backgroundColor: "#F4F6F8",
+  },
+  mobileListFlex: {
+    flex: 1,
+  },
+
     colInvoice: {
         width: 210,
     },

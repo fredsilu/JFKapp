@@ -15,6 +15,11 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { MaterialIcons as Icon } from "@expo/vector-icons";
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 
 import { formatShortDocumentDate } from "@/src/utils/dateFormat";
 import { CateringInvoice } from "@/types/catering";
@@ -327,9 +332,11 @@ export default function InvoicesScreen() {
     { label: "Annulées", value: "cancelled" },
     { label: "Remplacées", value: "replaced" },
   ];
-
+const RootContainer: any = isDesktop ? ScrollView : View;
   if (loading) {
-    return (
+    
+
+  return (
       <View style={styles.center}>
         <ActivityIndicator />
         <Text style={styles.loadingText}>Chargement des factures...</Text>
@@ -339,30 +346,40 @@ export default function InvoicesScreen() {
 
   return (
     <>
-      <ScrollView
+      <RootContainer
         style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          isDesktop && styles.desktopContent,
-        ]}
+        {...(isDesktop
+          ? { contentContainerStyle: [styles.content, styles.desktopContent] }
+          : {})}
       >
-        <TouchableOpacity
-          onPress={() => router.replace("/(traiteur)/sales")}
-          style={styles.backPill}
-          activeOpacity={0.75}
-        >
-          <Icon name="arrow-back" size={18} color="#0F4C81" />
-          <Text style={styles.backPillText}>Retour aux ventes</Text>
-        </TouchableOpacity>
+        <View style={!isDesktop ? styles.mobileStickyControls : undefined}>
+        {isDesktop ? (
+          <>
+            <TouchableOpacity
+              onPress={() => router.replace("/(traiteur)/sales")}
+              style={styles.backPill}
+              activeOpacity={0.75}
+            >
+              <Icon name="arrow-back" size={18} color="#0F4C81" />
+              <Text style={styles.backPillText}>Retour aux ventes</Text>
+            </TouchableOpacity>
 
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Factures</Text>
-            <Text style={styles.subtitle}>
-              Suivez les factures émises, payées, annulées et remplacées.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>Factures</Text>
+                <Text style={styles.subtitle}>
+                  Suivez les factures émises, payées, annulées et remplacées.
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <MobileListHeader
+            title="Factures"
+            total={invoices.length}
+            onBack={() => router.replace("/(traiteur)/sales")}
+          />
+        )}
 
         {isDesktop ? (
           <View style={styles.statsGrid}>
@@ -409,61 +426,56 @@ export default function InvoicesScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Total</Text>
-              <Text style={styles.summaryValue}>{invoices.length}</Text>
-              <Text style={styles.summarySubLabel}>Factures</Text>
-            </View>
-
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Actives</Text>
-              <Text style={styles.summaryValue}>{activeInvoices.length}</Text>
-              <Text style={styles.summarySubLabel}>Factures</Text>
-            </View>
-
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>CA actif</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(totalAmount)}</Text>
-            </View>
-
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Payées</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(paidAmount)}</Text>
-            </View>
-          </View>
+          <MobileStatsBar
+            items={[
+              { label: "Total", value: invoices.length },
+              { label: "Actives", value: activeInvoices.length },
+              { label: "CA actif", value: formatCurrency(totalAmount), wide: true },
+              { label: "Payées", value: formatCurrency(paidAmount), wide: true },
+              { label: "En attente", value: formatCurrency(pendingAmount), wide: true },
+            ]}
+          />
         )}
 
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher par client, numéro, statut..."
-          placeholderTextColor="#9CA3AF"
-          value={search}
-          onChangeText={setSearch}
-        />
+        {isDesktop ? (
+          <>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher par client, numéro, statut..."
+              placeholderTextColor="#9CA3AF"
+              value={search}
+              onChangeText={setSearch}
+            />
+            <View style={styles.filterRow}>
+              {filterItems.map((item) => (
+                <TouchableOpacity
+                  key={item.value}
+                  style={[styles.filterChip, statusFilter === item.value && styles.activeFilterChip]}
+                  onPress={() => setStatusFilter(item.value)}
+                >
+                  <Text style={[styles.filterChipText, statusFilter === item.value && styles.activeFilterChipText]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+            <MobileSearchBar value={search} onChangeText={setSearch} placeholder="Rechercher une facture..." />
+            <MobileFilterBar items={filterItems} value={statusFilter} onChange={setStatusFilter} />
+          </>
+        )}
 
-        <View style={styles.filterRow}>
-          {filterItems.map((item) => (
-            <TouchableOpacity
-              key={item.value}
-              style={[
-                styles.filterChip,
-                statusFilter === item.value && styles.activeFilterChip,
-              ]}
-              onPress={() => setStatusFilter(item.value)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  statusFilter === item.value && styles.activeFilterChipText,
-                ]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
         </View>
 
+        <ScrollView
+          style={!isDesktop ? styles.mobileListScroll : undefined}
+          contentContainerStyle={!isDesktop ? styles.mobileListContent : undefined}
+          nestedScrollEnabled
+          scrollEnabled={!isDesktop}
+          showsVerticalScrollIndicator={false}
+        >
         {displayedInvoices.length === 0 ? (
           <Text style={styles.empty}>Aucune facture créée</Text>
         ) : isDesktop ? (
@@ -664,8 +676,9 @@ export default function InvoicesScreen() {
           ))
         )}
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        </ScrollView>
+        {isDesktop ? <View style={{ height: 40 }} /> : null}
+      </RootContainer>
 
       <Modal
         visible={cancelModalVisible}
@@ -720,16 +733,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F4F6F8",
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
 
   content: {
-    paddingBottom: 30,
+    flexGrow: 1,
+    paddingBottom: 0,
   },
 
   desktopContent: {
+    paddingBottom: 30,
     width: "100%",
     maxWidth: 1500,
     alignSelf: "center",
@@ -746,6 +761,78 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: "#4B5563",
+  },
+
+
+  mobileHeader: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+
+  mobileBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#EEF6FF",
+  },
+
+  mobileTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  mobileHeaderSpacer: { width: 40 },
+
+  mobileStatsRow: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+
+  mobileStatCard: {
+    minWidth: 78,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#065F46",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatCardWide: {
+    minWidth: 118,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#065F46",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatValue: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  mobileStatAmount: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  mobileStatLabel: {
+    color: "#D1FAE5",
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
   },
 
   backPill: {
@@ -1258,5 +1345,20 @@ const styles = StyleSheet.create({
   },
   horizontalTableContent: {
     paddingBottom: 12,
+  },
+
+  mobileStickyControls: {
+    backgroundColor: "#F4F6F8",
+    paddingTop: 2,
+    paddingBottom: 6,
+    zIndex: 1,
+  },
+  mobileListScroll: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  mobileListContent: {
+    paddingTop: 8,
+    paddingBottom: 30,
   },
 });

@@ -14,10 +14,6 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
-import MobileListHeader from "@/src/components/mobile/MobileListHeader";
-import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
-import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
-import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
 
 import {
   getOrders,
@@ -544,11 +540,8 @@ export default function OrdersScreen() {
       { label: 'Annulées', value: 'cancelled' },
     ];
 
-    const RootContainer: any = isDesktop ? ScrollView : View;
   if (loading) {
-    
-
-  return (
+    return (
       <View style={styles.center}>
         <ActivityIndicator />
         <Text style={styles.loadingText}>Chargement des commandes...</Text>
@@ -557,98 +550,140 @@ export default function OrdersScreen() {
   }
 
   return (
-    <RootContainer
+    <ScrollView
       style={styles.container}
-      {...(isDesktop
-        ? { contentContainerStyle: [styles.content, styles.desktopContent] }
-        : {})}
+      contentContainerStyle={[
+        styles.content,
+        isDesktop && styles.desktopContent,
+      ]}
     >
-      <View style={!isDesktop ? styles.mobileStickyControls : undefined}>
-        {isDesktop ? (
-          <>
-            <TouchableOpacity
-              onPress={() => router.replace('/(traiteur)/sales')}
-              style={styles.backPill}
-              activeOpacity={0.75}
-            >
-              <Icon name="arrow-back" size={18} color="#0F4C81" />
-              <Text style={styles.backPillText}>Retour aux ventes</Text>
-            </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.replace('/(traiteur)/sales')}
+        style={styles.backPill}
+        activeOpacity={0.75}
+      >
+        <Icon name="arrow-back" size={18} color="#0F4C81" />
+        <Text style={styles.backPillText}>Retour aux ventes</Text>
+      </TouchableOpacity>
 
-            <View style={styles.headerRow}>
-              <View>
-                <Text style={styles.title}>Commandes</Text>
-                <Text style={styles.subtitle}>
-                  Suivez les commandes confirmées, en préparation et livrées.
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Icon name="assignment" size={24} color="#007AFF" />
-                <View><Text style={styles.statLabel}>Commandes créées</Text><Text style={styles.statValue}>{orders.length}</Text></View>
-              </View>
-              <View style={styles.statCard}>
-                <Icon name="event-available" size={24} color="#1D4ED8" />
-                <View><Text style={styles.statLabel}>Confirmées</Text><Text style={styles.statValue}>{confirmedOrders}</Text></View>
-              </View>
-              <View style={styles.statCard}>
-                <Icon name="restaurant" size={24} color="#D97706" />
-                <View><Text style={styles.statLabel}>Préparation</Text><Text style={styles.statValue}>{productionOrders}</Text></View>
-              </View>
-              <View style={styles.statCard}>
-                <Icon name="check-circle" size={24} color="#16A34A" />
-                <View><Text style={styles.statLabel}>Terminées</Text><Text style={styles.statValue}>{completedOrders}</Text></View>
-              </View>
-              <View style={styles.statCard}>
-                <Icon name="attach-money" size={24} color="#065F46" />
-                <View><Text style={styles.statLabel}>Valeur totale</Text><Text style={styles.statValue}>{formatCurrency(totalAmount)}</Text></View>
-              </View>
-            </View>
-
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Rechercher par client, numéro, statut..."
-              placeholderTextColor="#9CA3AF"
-              value={search}
-              onChangeText={setSearch}
-            />
-          </>
-        ) : (
-          <>
-            <MobileListHeader
-              title="Commandes"
-              total={orders.length}
-              onBack={() => router.replace('/(traiteur)/sales')}
-            />
-            <MobileStatsBar
-              items={[
-                { label: "Confirmées", value: confirmedOrders, tone: "blue", icon: "event-available" },
-                { label: "Préparation", value: productionOrders, tone: "orange", icon: "restaurant" },
-                { label: "Terminées", value: completedOrders, tone: "green", icon: "check-circle" },
-                { label: "Valeur totale", value: formatCurrency(totalAmount), wide: true, tone: "purple", icon: "payments" },
-              ]}
-            />
-            <MobileSearchBar
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Rechercher une commande..."
-            />
-            <MobileFilterBar
-              items={filterItems}
-              value={statusFilter}
-              onChange={setStatusFilter}
-            />
-          </>
-        )}
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.title}>Commandes</Text>
+          <Text style={styles.subtitle}>
+            Suivez les commandes confirmées, en préparation et livrées.
+          </Text>
+        </View>
       </View>
 
-      <ScrollView
-        style={!isDesktop ? styles.mobileListScroll : undefined}
-        contentContainerStyle={!isDesktop ? styles.mobileListContent : undefined}
-        nestedScrollEnabled
-      >
+      {isDesktop ? (
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Icon name="assignment" size={24} color="#007AFF" />
+            <View>
+              <Text style={styles.statLabel}>Commandes créées</Text>
+              <Text style={styles.statValue}>{orders.length}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="event-available" size={24} color="#1D4ED8" />
+            <View>
+              <Text style={styles.statLabel}>Confirmées</Text>
+              <Text style={styles.statValue}>{confirmedOrders}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="restaurant" size={24} color="#D97706" />
+            <View>
+              <Text style={styles.statLabel}>Préparation</Text>
+              <Text style={styles.statValue}>{productionOrders}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="check-circle" size={24} color="#16A34A" />
+            <View>
+              <Text style={styles.statLabel}>Terminées</Text>
+              <Text style={styles.statValue}>{completedOrders}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statCard}>
+            <Icon name="attach-money" size={24} color="#065F46" />
+            <View>
+              <Text style={styles.statLabel}>Valeur totale</Text>
+              <Text style={styles.statValue}>{formatCurrency(totalAmount)}</Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View style={styles.summaryGrid}>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Créées</Text>
+              <Text style={styles.summaryValue}>{orders.length}</Text>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Confirmées</Text>
+              <Text style={styles.summaryValue}>{confirmedOrders}</Text>
+            </View>
+
+            <View style={[styles.summaryCard, styles.productionSummaryCard]}>
+              <Text style={styles.summaryLabel}>Préparation</Text>
+              <Text style={styles.summaryValue}>{productionOrders}</Text>
+            </View>
+
+            <View style={[styles.summaryCard, styles.deliveredSummaryCard]}>
+              <Text style={styles.summaryLabel}>Livrées</Text>
+              <Text style={styles.summaryValue}>{completedOrders}</Text>
+            </View>
+
+          </View>
+
+          <View style={styles.totalSummaryCard}>
+            <Text style={styles.summaryLabel}>Valeur totale</Text>
+            <Text style={styles.summaryAmount}>
+              {formatCurrency(totalAmount)}
+            </Text>
+          </View>
+        </>
+      )}
+
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Rechercher par client, numéro, statut..."
+        placeholderTextColor="#9CA3AF"
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      {!isDesktop ? (
+        <View style={styles.filterRow}>
+          {filterItems.map((item) => (
+            <TouchableOpacity
+              key={item.value}
+              style={[
+                styles.filterChip,
+                statusFilter === item.value && styles.activeFilterChip,
+              ]}
+              onPress={() => setStatusFilter(item.value)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  statusFilter === item.value && styles.activeFilterChipText,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
+
       {displayedOrders.length === 0 ? (
         <Text style={styles.empty}>Aucune commande créée</Text>
       ) : isDesktop ? (
@@ -688,9 +723,8 @@ export default function OrdersScreen() {
         displayedOrders.map((order) => renderOrderCard(order))
       )}
 
-      </ScrollView>
-      {isDesktop ? <View style={{ height: 40 }} /> : null}
-    </RootContainer>
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
@@ -704,12 +738,10 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flexGrow: 1,
-    paddingBottom: 0,
+    paddingBottom: 30,
   },
 
   desktopContent: {
-    paddingBottom: 30,
     width: '100%',
     maxWidth: 1500,
     alignSelf: 'center',
@@ -810,24 +842,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#065F46',
   },
 
-  summaryLabel: {
-    color: '#D1D5DB',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-
-  summaryValue: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '800',
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
 
-  summaryAmount: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '900',
+
+  productionSummaryCard: {
+    backgroundColor: "#92400E",
   },
+
+
+
+  totalSummaryCard: {
+    backgroundColor: "#1E3A8A",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+
+  summaryLabel: {
+    color: "#D1D5DB",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  summaryValue: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  summaryAmount: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+
 
   searchInput: {
     backgroundColor: '#fff',
@@ -1189,20 +1245,5 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 14,
     textAlignVertical: 'center',
-  },
-
-  mobileStickyControls: {
-    backgroundColor: "#F4F6F8",
-    paddingTop: 2,
-    paddingBottom: 6,
-    zIndex: 1,
-  },
-  mobileListScroll: {
-    flex: 1,
-    overflow: "hidden",
-  },
-  mobileListContent: {
-    paddingTop: 8,
-    paddingBottom: 30,
   },
 });

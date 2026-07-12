@@ -12,6 +12,11 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 
 import {
   deleteCateringSimulation,
@@ -233,48 +238,52 @@ export default function CateringSimulationsScreen() {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
+  const RootContainer: any = isDesktop ? ScrollView : View;
+
   return (
     <>
-      <ScrollView
+      <RootContainer
         style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          isDesktop && styles.desktopContent,
-        ]}
+        {...(isDesktop
+          ? { contentContainerStyle: [styles.content, styles.desktopContent] }
+          : {})}
       >
-        <TouchableOpacity
-          onPress={() => router.replace('/(traiteur)/sales')}
-          style={styles.backPill}
-          activeOpacity={0.75}
-        >
-          <Icon name="arrow-back" size={18} color="#0F4C81" />
-          <Text style={styles.backPillText}>Retour aux ventes</Text>
-        </TouchableOpacity>
-
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Simulations traiteur</Text>
-            <Text style={styles.subtitle}>
-              Gérez vos simulations et créez des proformas.
-            </Text>
-          </View>
-
-          {isDesktop ? (
+        <View style={!isDesktop ? styles.mobileStickyControls : undefined}>
+        {isDesktop ? (
+          <>
             <TouchableOpacity
-              style={styles.desktopNewButton}
-              onPress={goToNewSimulation}
+              onPress={() => router.replace('/(traiteur)/sales')}
+              style={styles.backPill}
+              activeOpacity={0.75}
             >
-              <Icon name="add" size={20} color="#FFFFFF" />
-              <Text style={styles.newButtonText}>Nouvelle simulation</Text>
+              <Icon name="arrow-back" size={18} color="#0F4C81" />
+              <Text style={styles.backPillText}>Retour aux ventes</Text>
             </TouchableOpacity>
-          ) : null}
-        </View>
 
-        {!isDesktop ? (
-          <TouchableOpacity style={styles.newButton} onPress={goToNewSimulation}>
-            <Text style={styles.newButtonText}>➕ Nouvelle simulation</Text>
-          </TouchableOpacity>
-        ) : null}
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>Simulations traiteur</Text>
+                <Text style={styles.subtitle}>
+                  Gérez vos simulations et créez des proformas.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.desktopNewButton}
+                onPress={goToNewSimulation}
+              >
+                <Icon name="add" size={20} color="#FFFFFF" />
+                <Text style={styles.newButtonText}>Nouvelle simulation</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <MobileListHeader
+            title="Simulations"
+            total={stats.totalSimulations}
+            onBack={() => router.replace('/(traiteur)/sales')}
+            onAdd={goToNewSimulation}
+          />
+        )}
 
         {isDesktop ? (
           <View style={styles.statsGrid}>
@@ -312,19 +321,41 @@ export default function CateringSimulationsScreen() {
               </View>
             </View>
           </View>
-        ) : null}
-
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color="#6B7280" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Rechercher simulation, client, date, montant..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+        ) : (
+          <MobileStatsBar
+            items={[
+              { label: "Total", value: stats.totalSimulations },
+              { label: "CA potentiel", value: formatAmount(stats.totalTurnover), wide: true },
+              { label: "Personnes", value: stats.totalPeople },
+              { label: "Converties", value: stats.convertedCount },
+            ]}
           />
+        )}
+
+        {isDesktop ? (
+          <View style={styles.searchContainer}>
+            <Icon name="search" size={20} color="#6B7280" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher simulation, client, date, montant..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+        ) : (
+          <MobileSearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Rechercher une simulation..." />
+        )}
+
         </View>
 
+        <ScrollView
+          style={!isDesktop ? styles.mobileListScroll : undefined}
+          contentContainerStyle={!isDesktop ? styles.mobileListContent : undefined}
+          nestedScrollEnabled
+          scrollEnabled={!isDesktop}
+          showsVerticalScrollIndicator={false}
+        >
         {filteredSimulations.length === 0 ? (
           <Text style={styles.empty}>Aucune simulation</Text>
         ) : isDesktop ? (
@@ -481,8 +512,9 @@ export default function CateringSimulationsScreen() {
           })
         )}
 
-        <View style={{ height: 30 }} />
-      </ScrollView>
+        </ScrollView>
+        {isDesktop ? <View style={{ height: 30 }} /> : null}
+      </RootContainer>
 
       <ConfirmDeleteModal
         visible={!!toDelete}
@@ -499,19 +531,102 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
 
   content: {
-    paddingBottom: 30,
+    flexGrow: 1,
+    paddingBottom: 0,
   },
 
   desktopContent: {
+    paddingBottom: 30,
     width: '100%',
     maxWidth: 1500,
     alignSelf: 'center',
+  },
+
+
+  mobileHeader: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+
+  mobileBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#EEF6FF",
+  },
+
+  mobileTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  mobileHeaderSpacer: { width: 40 },
+
+  mobileAddButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#007AFF",
+  },
+
+  mobileStatsRow: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+
+  mobileStatCard: {
+    minWidth: 78,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatCardWide: {
+    minWidth: 118,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatValue: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  mobileStatAmount: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  mobileStatLabel: {
+    color: "#D1D5DB",
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
   },
 
   backPill: {
@@ -839,5 +954,20 @@ const styles = StyleSheet.create({
   datesBlock: {
     marginTop: 8,
     gap: 6,
+  },
+
+  mobileStickyControls: {
+    backgroundColor: "#F4F6F8",
+    paddingTop: 2,
+    paddingBottom: 6,
+    zIndex: 1,
+  },
+  mobileListScroll: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  mobileListContent: {
+    paddingTop: 8,
+    paddingBottom: 30,
   },
 });

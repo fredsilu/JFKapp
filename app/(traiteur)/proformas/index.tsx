@@ -16,6 +16,11 @@ import {
 } from 'react-native';
 import { router, useFocusEffect, Stack } from 'expo-router';
 import { MaterialIcons as Icon } from '@expo/vector-icons';
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 import * as Linking from "expo-linking";
 import { generateProformaPDFFile } from "@/src/services/invoicePdf.service";
 
@@ -357,9 +362,11 @@ export default function ProformasScreen() {
       </View>
     );
   }
-
+ const RootContainer: any = isDesktop ? ScrollView : View;
   if (loading) {
-    return (
+   
+
+  return (
       <View style={styles.center}>
         <ActivityIndicator />
         <Text style={styles.loadingText}>Chargement des proformas...</Text>
@@ -371,30 +378,40 @@ export default function ProformasScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView
+      <RootContainer
         style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          isDesktop && styles.desktopContent,
-        ]}
+        {...(isDesktop
+          ? { contentContainerStyle: [styles.content, styles.desktopContent] }
+          : {})}
       >
-        <TouchableOpacity
-          onPress={() => router.replace('/(traiteur)/sales')}
-          style={styles.backPill}
-          activeOpacity={0.75}
-        >
-          <Icon name="arrow-back" size={18} color="#0F4C81" />
-          <Text style={styles.backPillText}>Retour aux ventes</Text>
-        </TouchableOpacity>
+        <View style={!isDesktop ? styles.mobileStickyControls : undefined}>
+        {isDesktop ? (
+          <>
+            <TouchableOpacity
+              onPress={() => router.replace('/(traiteur)/sales')}
+              style={styles.backPill}
+              activeOpacity={0.75}
+            >
+              <Icon name="arrow-back" size={18} color="#0F4C81" />
+              <Text style={styles.backPillText}>Retour aux ventes</Text>
+            </TouchableOpacity>
 
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Proformas</Text>
-            <Text style={styles.subtitle}>
-              Suivez les proformas en cours, converties et facturées.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>Proformas</Text>
+                <Text style={styles.subtitle}>
+                  Suivez les proformas en cours, converties et facturées.
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <MobileListHeader
+            title="Proformas"
+            total={proformas.length}
+            onBack={() => router.replace('/(traiteur)/sales')}
+          />
+        )}
 
         {isDesktop ? (
           <View style={styles.statsGrid}>
@@ -435,47 +452,29 @@ export default function ProformasScreen() {
             </View>
           </View>
         ) : (
-          <>
-            <View style={styles.summaryGrid}>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>En cours</Text>
-                <Text style={styles.summaryValue}>{activeProformas.length}</Text>
-                <Text style={styles.summarySubLabel}>Total</Text>
-                <Text style={styles.summaryAmount}>{formatCurrency(activeTotal)}</Text>
-              </View>
-
-              <View style={[styles.summaryCard, styles.approvedSummaryCard]}>
-                <Text style={styles.summaryLabel}>Acceptées</Text>
-                <Text style={styles.summaryValue}>{approvedProformas.length}</Text>
-                <Text style={styles.summarySubLabel}>Total</Text>
-                <Text style={styles.summaryAmount}>{formatCurrency(approvedTotal)}</Text>
-              </View>
-
-              <View style={[styles.summaryCard, styles.convertedSummaryCard]}>
-                <Text style={styles.summaryLabel}>Converties</Text>
-                <Text style={styles.summaryValue}>{convertedProformas.length}</Text>
-                <Text style={styles.summarySubLabel}>Total</Text>
-                <Text style={styles.summaryAmount}>{formatCurrency(convertedTotal)}</Text>
-              </View>
-
-              <View style={[styles.summaryCard, styles.invoicedSummaryCard]}>
-                <Text style={styles.summaryLabel}>Facturées</Text>
-                <Text style={styles.summaryValue}>{invoicedProformas.length}</Text>
-                <Text style={styles.summarySubLabel}>Total</Text>
-                <Text style={styles.summaryAmount}>{formatCurrency(invoicedTotal)}</Text>
-              </View>
-            </View>
-          </>
+          <MobileStatsBar
+            items={[
+              { label: `En cours (${activeProformas.length})`, value: formatCurrency(activeTotal), wide: true },
+              { label: `Acceptées (${approvedProformas.length})`, value: formatCurrency(approvedTotal), wide: true },
+              { label: `Converties (${convertedProformas.length})`, value: formatCurrency(convertedTotal), wide: true },
+              { label: `Facturées (${invoicedProformas.length})`, value: formatCurrency(invoicedTotal), wide: true },
+            ]}
+          />
         )}
 
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher par client, numéro, statut..."
-          placeholderTextColor="#9CA3AF"
-          value={search}
-          onChangeText={setSearch}
-        />
+        {isDesktop ? (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher par client, numéro, statut..."
+            placeholderTextColor="#9CA3AF"
+            value={search}
+            onChangeText={setSearch}
+          />
+        ) : (
+          <MobileSearchBar value={search} onChangeText={setSearch} placeholder="Rechercher une proforma..." />
+        )}
 
+        {isDesktop ? (
         <View style={styles.tabs}>
           <TouchableOpacity
             style={[styles.tab, view === 'active' && styles.activeTab]}
@@ -519,7 +518,27 @@ export default function ProformasScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+        ) : (
+          <MobileFilterBar
+            items={[
+              { label: "En cours", value: "active" },
+              { label: "Converties", value: "converted" },
+              { label: "Toutes", value: "all" },
+            ]}
+            value={view}
+            onChange={setView}
+          />
+        )}
 
+        </View>
+
+        <ScrollView
+          style={!isDesktop ? styles.mobileListScroll : undefined}
+          contentContainerStyle={!isDesktop ? styles.mobileListContent : undefined}
+          nestedScrollEnabled
+          scrollEnabled={!isDesktop}
+          showsVerticalScrollIndicator={false}
+        >
         {displayedProformas.length === 0 ? (
           <Text style={styles.empty}>Aucune proforma dans cette vue</Text>
         ) : isDesktop ? (
@@ -689,8 +708,9 @@ export default function ProformasScreen() {
           ))
         )}
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        </ScrollView>
+        {isDesktop ? <View style={{ height: 40 }} /> : null}
+      </RootContainer>
     </>
   );
 }
@@ -699,16 +719,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F8',
-    paddingHorizontal: 16,
-    paddingTop: 44,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
 
   content: {
-    paddingBottom: 30,
+    flexGrow: 1,
+    paddingBottom: 0,
   },
 
   desktopContent: {
+    paddingBottom: 30,
     width: '100%',
     maxWidth: 1500,
     alignSelf: 'center',
@@ -725,6 +747,78 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: '#4B5563',
+  },
+
+
+  mobileHeader: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+
+  mobileBackButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    backgroundColor: "#EEF6FF",
+  },
+
+  mobileTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  mobileHeaderSpacer: { width: 40 },
+
+  mobileStatsRow: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+
+  mobileStatCard: {
+    minWidth: 78,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatCardWide: {
+    minWidth: 118,
+    height: 58,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mobileStatValue: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  mobileStatAmount: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  mobileStatLabel: {
+    color: "#D1D5DB",
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
   },
 
   backPill: {
@@ -1167,5 +1261,20 @@ const styles = StyleSheet.create({
     color: "#059669",
     fontWeight: "800",
     fontSize: 13,
+  },
+
+  mobileStickyControls: {
+    backgroundColor: "#F4F6F8",
+    paddingTop: 2,
+    paddingBottom: 6,
+    zIndex: 1,
+  },
+  mobileListScroll: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  mobileListContent: {
+    paddingTop: 8,
+    paddingBottom: 30,
   },
 });

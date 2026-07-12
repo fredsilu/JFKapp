@@ -15,6 +15,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 import {
   fetchArchivedCreditNotes,
   normalizeArchivedCreditNote,
@@ -473,32 +478,38 @@ export default function DocumentCreditNotesScreen() {
   if (isMobile) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.breadcrumb}>Documents / Archives</Text>
-          <Text style={styles.title}>Avoirs</Text>
-          <Text style={styles.subtitle}>
-            Consultez tous les avoirs créés.
-          </Text>
+        <View style={localStyles.mobileControls}>
+        <MobileListHeader
+          title="Avoirs"
+          total={creditNoteStats.totalCreditNotes}
+          onBack={() => router.replace("/(traiteur)/documents" as never)}
+        />
+
+        <MobileStatsBar
+          items={[
+              { label: "Montant total", value: formatAmount(creditNoteStats.totalAmount), wide: true },
+              { label: "Émis", value: formatAmount(creditNoteStats.issuedAmount), wide: true },
+              { label: "Brouillons", value: formatAmount(creditNoteStats.draftAmount), wide: true }
+          ]}
+        />
+
+        <MobileSearchBar
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Rechercher un avoir..."
+        />
+
+        <MobileFilterBar
+          items={statusFilters}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+
+
         </View>
-
-        {renderStats()}
-
-        <View style={styles.searchBox}>
-          <MaterialIcons name="search" size={20} color="#6B7280" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Rechercher avoir, facture, motif..."
-            style={styles.searchInput}
-            placeholderTextColor="#9CA3AF"
-          />
-        </View>
-
-        {renderFilters()}
-
-
 
         <FlatList
+          style={localStyles.mobileListFlex}
           data={filteredCreditNotes}
           keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.mobileList}
@@ -773,6 +784,15 @@ export default function DocumentCreditNotesScreen() {
   );
 }
 const localStyles = StyleSheet.create({
+  mobileControls: {
+    paddingTop: 2,
+    paddingBottom: 6,
+    backgroundColor: "#F4F6F8",
+  },
+  mobileListFlex: {
+    flex: 1,
+  },
+
   tableViewport: {
     flex: 1,
     minHeight: 0,

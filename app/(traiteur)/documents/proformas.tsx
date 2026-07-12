@@ -16,6 +16,11 @@ import {
 import { documentListStyles as styles } from "@/src/styles/documentList.styles";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import MobileListHeader from "@/src/components/mobile/MobileListHeader";
+import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
+import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
+import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
+
 
 import { useProformas } from "@/src/hooks/useFirestore";
 import {
@@ -484,30 +489,37 @@ export default function DocumentProformasScreen() {
   if (isMobile) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.breadcrumb}>Documents / Archives</Text>
-          <Text style={styles.title}>Proformas</Text>
-          <Text style={styles.subtitle}>
-            Consultez toutes les proformas créées.
-          </Text>
+        <View style={localStyles.mobileControls}>
+        <MobileListHeader
+          title="Proformas"
+          total={proformaStats.totalProformas}
+          onBack={() => router.replace("/(traiteur)/documents" as never)}
+        />
+
+        <MobileStatsBar
+          items={[
+              { label: "Montant total", value: formatAmount(proformaStats.totalAmount), wide: true },
+              { label: "Facturées", value: formatAmount(proformaStats.invoicedAmount), wide: true },
+              { label: "En attente", value: formatAmount(proformaStats.pendingAmount), wide: true }
+          ]}
+        />
+
+        <MobileSearchBar
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Rechercher une proforma..."
+        />
+
+        <MobileFilterBar
+          items={statusFilters}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+
         </View>
-
-        {renderStats()}
-
-        <View style={styles.searchBox}>
-          <MaterialIcons name="search" size={20} color="#6B7280" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Rechercher proforma, client..."
-            style={styles.searchInput}
-            placeholderTextColor="#9CA3AF"
-          />
-        </View>
-
-        {renderFilters()}
 
         <FlatList
+          style={localStyles.mobileListFlex}
           data={filteredProformas}
           keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.mobileList}
@@ -777,6 +789,15 @@ export default function DocumentProformasScreen() {
 }
 
 const localStyles = StyleSheet.create({
+  mobileControls: {
+    paddingTop: 2,
+    paddingBottom: 6,
+    backgroundColor: "#F4F6F8",
+  },
+  mobileListFlex: {
+    flex: 1,
+  },
+
   colInvoice: {
     width: 210,
   },
