@@ -31,12 +31,14 @@ type Props = {
     field: keyof CateringServiceDay,
     value: any
   ) => void;
-};
 
+  onDelete: (sectionId: string) => void;
+};
 export default function ServiceSectionCard({
   section,
   onUpdateSection,
   onUpdateServiceDay,
+  onDelete,
 }: Props) {
   const serviceDays = section.serviceDays ?? [];
 
@@ -107,6 +109,27 @@ export default function ServiceSectionCard({
             </Text>
 
             <Text style={styles.toggleModeHint}>Appuyer pour changer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onDelete(section.id)}
+            style={{
+              backgroundColor: "#FEF2F2",
+              borderWidth: 1,
+              borderColor: "#FECACA",
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "#B91C1C",
+                fontWeight: "800",
+                fontSize: 12,
+              }}
+            >
+              Supprimer
+            </Text>
           </TouchableOpacity>
 
           {serviceDays.map((day) => {

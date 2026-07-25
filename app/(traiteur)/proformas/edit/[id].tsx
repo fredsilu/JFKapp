@@ -87,6 +87,9 @@ export default function EditProformaScreen() {
       );
 
       await updateCateringProforma(proforma.id, {
+        clientId: payload.clientId,
+        clientName: payload.clientName,
+
         eventName: payload.eventName,
         eventDate: payload.eventDate,
         dateLivraison: payload.dateLivraison,
@@ -94,6 +97,7 @@ export default function EditProformaScreen() {
         numberOfPeople: payload.numberOfPeople,
         deliveryTime: payload.deliveryTime,
         deliveryAddress: payload.deliveryAddress,
+       // comment: payload.comment,
 
         sections: payload.sections,
 

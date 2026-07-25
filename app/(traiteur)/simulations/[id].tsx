@@ -277,7 +277,9 @@ export default function CateringSimulationDetailsScreen() {
             router.push({
               pathname: "/(traiteur)/tools/calculator-v2",
               params: {
+                mode: "reuse",
                 reuseSimulationId: sim.id,
+                sessionId: `reuse_${sim.id}_${Date.now()}`,
                 backTo: "/(traiteur)/simulations",
               },
             })

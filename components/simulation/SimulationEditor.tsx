@@ -91,20 +91,22 @@ export default function SimulationEditor({
   title = "Simulation",
   initialEventName = "",
   initialClientName = "",
+  initialClientId = "",
+  initialNumberOfPeople = 0,
+  initialSections,
   initialDateLivraison = "",
   initialDeliveryTime = "",
   initialServicePeriod = "",
   initialDeliveryAddress = "",
   initialComment = "",
-  initialNumberOfPeople = 0,
+  submitLabel = "Enregistrer",
   initialEventDate = "",
   initialDiscount = 0,
-  initialSections,
-  submitLabel = "Enregistrer",
-  initialClientId = "",
   saving = false,
   onSubmit,
 }: Props) {
+
+
   const [eventName, setEventName] = useState(initialEventName);
   const [eventDate, setEventDate] = useState(initialEventDate);
   const [clientName, setClientName] = useState(initialClientName);
@@ -182,7 +184,12 @@ export default function SimulationEditor({
 
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [
+    initialSections,
+    initialClientId,
+    initialClientName,
+    initialEventName,
+  ]);
 
 
   function addArticleSection(label: string) {
@@ -220,108 +227,224 @@ export default function SimulationEditor({
   async function loadInitialData() {
     try {
       setLoading(true);
+      setSections([]);
 
-      const settings = await getCateringServiceSettings();
+      const settings =
+        await getCateringServiceSettings();
+
       setServiceSettings(settings);
 
-      const loadedClients = await fetchClients();
+      const loadedClients =
+        await fetchClients();
+
       setClients(loadedClients);
 
+      if (
+        !initialClientId &&
+        initialClientName.trim()
+      ) {
+        const normalizedInitialName =
+          initialClientName
+            .trim()
+            .toLowerCase();
+
+        const matchingClient =
+          loadedClients.find(
+            (client) =>
+              client.name
+                ?.trim()
+                .toLowerCase() ===
+              normalizedInitialName
+          );
+
+        if (matchingClient) {
+          setClientId(
+            matchingClient.id
+          );
+
+          setClientName(
+            matchingClient.name
+          );
+        }
+      }
+
+      /*
+       * Réutilisation d’une simulation :
+       * reprendre les rubriques existantes.
+       */
       if (initialSections?.length) {
-        setSections(initialSections.map(calculateSection));
+        setSections(
+          initialSections.map(
+            calculateSection
+          )
+        );
+
         return;
       }
 
+      /*
+       * Nouvelle simulation :
+       * créer des rubriques vierges.
+       */
       let templates: any[] = [];
 
       try {
-        templates = await getCateringSectionTemplates();
+        templates =
+          await getCateringSectionTemplates();
       } catch (error) {
-        console.warn("Templates Firestore indisponibles, fallback local utilisé:", error);
+        console.warn(
+          "Templates Firestore indisponibles, fallback local utilisé:",
+          error
+        );
+
         templates = [];
       }
 
-      const emptySections = createEmptySectionsFromTemplates(templates);
-      const fallbackSections: CateringSection[] = [
-        {
-          id: "article_dejeuner",
-          key: "dejeuner",
-          kind: "article",
-          name: "Déjeuner",
-          type: "food",
-          position: 1,
-          enabled: true,
-          billingMode: "perDay",
-          quantity: 0,
-          unitPrice: 0,
-          numberOfDays: 1,
-          total: 0,
-          costRate: 0,
-          costAmount: 0,
-          margin: 0,
-          notes: "",
-        },
-        {
-          id: "service_traiteur",
-          key: "service_traiteur",
-          kind: "service",
-          name: "Service traiteur",
-          type: "service",
-          position: 2,
-          enabled: false,
-          quantity: 1,
-          unitPrice: 0,
-          numberOfDays: 1,
-          total: 0,
-          costRate: 0,
-          costAmount: 0,
-          margin: 0,
-          serviceMode: "identical_days",
-          serviceDays: [createServiceDay(1, settings)],
-          notes: "",
-        },
-      ];
+      const emptySections =
+        createEmptySectionsFromTemplates(
+          templates
+        );
 
-
+      const fallbackSections: CateringSection[] =
+        [
+          {
+            id: "article_dejeuner",
+            key: "dejeuner",
+            kind: "article",
+            name: "Déjeuner",
+            type: "food",
+            position: 1,
+            enabled: true,
+            billingMode: "perDay",
+            quantity: 0,
+            unitPrice: 0,
+            numberOfDays: 1,
+            total: 0,
+            costRate: 0,
+            costAmount: 0,
+            margin: 0,
+            notes: "",
+          },
+          {
+            id: "service_traiteur",
+            key: "service_traiteur",
+            kind: "service",
+            name: "Service traiteur",
+            type: "service",
+            position: 2,
+            enabled: false,
+            billingMode: "perDay",
+            quantity: 1,
+            unitPrice: 0,
+            numberOfDays: 1,
+            total: 0,
+            costRate: 0,
+            costAmount: 0,
+            margin: 0,
+            serviceMode:
+              "identical_days",
+            serviceDays: [
+              createServiceDay(
+                1,
+                settings
+              ),
+            ],
+            notes: "",
+          },
+        ];
 
       const sectionsSource =
-        emptySections.length > 0 ? emptySections : fallbackSections;
+        emptySections.length > 0
+          ? emptySections
+          : fallbackSections;
 
-      const hydratedSections = sectionsSource.map((section) => {
-        const normalizedSection: CateringSection = {
-          ...section,
-          billingMode: section.billingMode ?? "perDay",
-        };
-
-        if (normalizedSection.kind !== "service") {
-          return normalizedSection;
-        }
-
-        return {
-          ...normalizedSection,
-          serviceDays: [
+      const hydratedSections =
+        sectionsSource.map(
+          (section) => {
+            const normalizedSection: CateringSection =
             {
-              ...(normalizedSection.serviceDays?.[0] ?? createServiceDay(1, settings)),
-              serverRate: settings.defaultServerRate ?? 25,
-              cookRate: settings.defaultCookRate ?? 50,
-              serverDailyCost: settings.serverDailyCost ?? 20,
-              cookDailyCost: settings.cookDailyCost ?? 40,
-              electricityDailyCost: settings.electricityDailyCost ?? 10,
-              gasDailyCost: settings.gasDailyCost ?? 10,
-              fuelDailyCost: settings.fuelDailyCost ?? 10,
-              extraDailyCost:
-                (settings.electricityDailyCost ?? 10) +
-                (settings.gasDailyCost ?? 10) +
-                (settings.fuelDailyCost ?? 10),
-            },
-          ],
-        };
-      });
+              ...section,
 
-      setSections(hydratedSections.map(calculateSection));
+              billingMode:
+                section.billingMode ??
+                "perDay",
+            };
+
+            if (
+              normalizedSection.kind !==
+              "service"
+            ) {
+              return normalizedSection;
+            }
+
+            return {
+              ...normalizedSection,
+
+              serviceDays: [
+                {
+                  ...(normalizedSection
+                    .serviceDays?.[0] ??
+                    createServiceDay(
+                      1,
+                      settings
+                    )),
+
+                  serverRate:
+                    settings.defaultServerRate ??
+                    25,
+
+                  cookRate:
+                    settings.defaultCookRate ??
+                    50,
+
+                  serverDailyCost:
+                    settings.serverDailyCost ??
+                    20,
+
+                  cookDailyCost:
+                    settings.cookDailyCost ??
+                    40,
+
+                  electricityDailyCost:
+                    settings.electricityDailyCost ??
+                    10,
+
+                  gasDailyCost:
+                    settings.gasDailyCost ??
+                    10,
+
+                  fuelDailyCost:
+                    settings.fuelDailyCost ??
+                    10,
+
+                  extraDailyCost:
+                    (settings.electricityDailyCost ??
+                      10) +
+                    (settings.gasDailyCost ??
+                      10) +
+                    (settings.fuelDailyCost ??
+                      10),
+                },
+              ],
+            };
+          }
+        );
+
+      setSections(
+        hydratedSections.map(
+          calculateSection
+        )
+      );
     } catch (error) {
-      console.error("Erreur chargement éditeur simulation:", error);
-      Alert.alert("Erreur", "Impossible de charger l’éditeur.");
+      console.error(
+        "Erreur chargement éditeur simulation:",
+        error
+      );
+
+      Alert.alert(
+        "Erreur",
+        "Impossible de charger l’éditeur."
+      );
     } finally {
       setLoading(false);
     }
@@ -429,6 +552,71 @@ export default function SimulationEditor({
     );
   }
 
+
+  function deleteSection(sectionId: string) {
+    if (sections.length <= 1) {
+      const message =
+        "Le document doit contenir au moins une rubrique. Ajoutez une autre rubrique avant de supprimer celle-ci.";
+
+      if (Platform.OS === "web") {
+        window.alert(message);
+      } else {
+        Alert.alert("Suppression impossible", message);
+      }
+
+      return;
+    }
+
+    const sectionToDelete = sections.find(
+      (section) => section.id === sectionId
+    );
+
+    if (!sectionToDelete) {
+      return;
+    }
+
+    const executeDelete = () => {
+      setSections((previousSections) =>
+        previousSections
+          .filter((section) => section.id !== sectionId)
+          .map((section, index) => ({
+            ...section,
+            position: index + 1,
+          }))
+      );
+    };
+
+    const confirmationMessage =
+      `Voulez-vous supprimer entièrement la rubrique « ${sectionToDelete.name || "Sans nom"
+      } » ?`;
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(confirmationMessage);
+
+      if (confirmed) {
+        executeDelete();
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      "Supprimer la rubrique",
+      confirmationMessage,
+      [
+        {
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: executeDelete,
+        },
+      ]
+    );
+  }
+
   function updateServiceDay(
     sectionId: string,
     dayId: string,
@@ -468,6 +656,22 @@ export default function SimulationEditor({
 
     try {
       setFormError("");
+      if (sections.length === 0) {
+        setFormError(
+          "Le document doit contenir au moins une rubrique à facturer."
+        );
+        return;
+      }
+      const billableSections = sections.filter(
+        (section) => section.enabled !== false
+      );
+
+      if (billableSections.length === 0) {
+        setFormError(
+          "Le document doit contenir au moins une rubrique active à facturer."
+        );
+        return;
+      }
 
       if (!eventName.trim()) {
         setFormError("Veuillez saisir le nom de l’événement.");
@@ -690,6 +894,7 @@ export default function SimulationEditor({
               key={section.id}
               section={section}
               onUpdate={updateSectionField}
+              onDelete={deleteSection}
             />
           ))}
 
@@ -752,6 +957,7 @@ export default function SimulationEditor({
               section={section}
               onUpdateSection={updateSectionField}
               onUpdateServiceDay={updateServiceDay}
+              onDelete={deleteSection}
             />
           ))}
 

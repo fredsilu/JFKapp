@@ -54,19 +54,31 @@ export default function CateringNewSimulation() {
   }, []);
 
   function handleStart() {
-    if (!selectedClient) {
-      Alert.alert('Client requis', 'Veuillez sélectionner un client.');
-      return;
-    }
-
-    router.push({
-      pathname: '/(traiteur)/tools/calculator-v2',
-      params: {
-        clientId: selectedClient.id,
-        clientName: selectedClient.name,
-      },
-    } as any);
+  if (!selectedClient) {
+    Alert.alert(
+      "Client requis",
+      "Veuillez sélectionner un client."
+    );
+    return;
   }
+
+  const newSessionId =
+    `new_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
+
+  router.push({
+    pathname:
+      "/(traiteur)/tools/calculator-v2",
+    params: {
+      mode: "new",
+      sessionId: newSessionId,
+      reuseSimulationId: "",
+      clientId: selectedClient.id,
+      clientName: selectedClient.name,
+    },
+  } as any);
+}
 
   return (
     <View style={styles.container}>

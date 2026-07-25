@@ -217,10 +217,12 @@ export default function CateringSimulationsScreen() {
 
   function reuseSimulation(simulationId: string) {
     router.push({
-      pathname: '/(traiteur)/tools/calculator-v2',
+      pathname: "/(traiteur)/tools/calculator-v2",
       params: {
+        mode: "reuse",
         reuseSimulationId: simulationId,
-        backTo: '/(traiteur)/simulations',
+        sessionId: `reuse_${simulationId}_${Date.now()}`,
+        backTo: "/(traiteur)/simulations",
       },
     });
   }
@@ -249,103 +251,103 @@ export default function CateringSimulationsScreen() {
           : {})}
       >
         <View style={!isDesktop ? styles.mobileStickyControls : undefined}>
-        {isDesktop ? (
-          <>
-            <TouchableOpacity
-              onPress={() => router.replace('/(traiteur)/sales')}
-              style={styles.backPill}
-              activeOpacity={0.75}
-            >
-              <Icon name="arrow-back" size={18} color="#0F4C81" />
-              <Text style={styles.backPillText}>Retour aux ventes</Text>
-            </TouchableOpacity>
-
-            <View style={styles.headerRow}>
-              <View>
-                <Text style={styles.title}>Simulations traiteur</Text>
-                <Text style={styles.subtitle}>
-                  Gérez vos simulations et créez des proformas.
-                </Text>
-              </View>
+          {isDesktop ? (
+            <>
               <TouchableOpacity
-                style={styles.desktopNewButton}
-                onPress={goToNewSimulation}
+                onPress={() => router.replace('/(traiteur)/sales')}
+                style={styles.backPill}
+                activeOpacity={0.75}
               >
-                <Icon name="add" size={20} color="#FFFFFF" />
-                <Text style={styles.newButtonText}>Nouvelle simulation</Text>
+                <Icon name="arrow-back" size={18} color="#0F4C81" />
+                <Text style={styles.backPillText}>Retour aux ventes</Text>
               </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <MobileListHeader
-            title="Simulations"
-            total={stats.totalSimulations}
-            onBack={() => router.replace('/(traiteur)/sales')}
-            onAdd={goToNewSimulation}
-          />
-        )}
 
-        {isDesktop ? (
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Icon name="list-alt" size={24} color="#007AFF" />
-              <View>
-                <Text style={styles.statLabel}>Total simulations</Text>
-                <Text style={styles.statValue}>{stats.totalSimulations}</Text>
+              <View style={styles.headerRow}>
+                <View>
+                  <Text style={styles.title}>Simulations traiteur</Text>
+                  <Text style={styles.subtitle}>
+                    Gérez vos simulations et créez des proformas.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.desktopNewButton}
+                  onPress={goToNewSimulation}
+                >
+                  <Icon name="add" size={20} color="#FFFFFF" />
+                  <Text style={styles.newButtonText}>Nouvelle simulation</Text>
+                </TouchableOpacity>
               </View>
-            </View>
-
-            <View style={styles.statCard}>
-              <Icon name="attach-money" size={24} color="#16A34A" />
-              <View>
-                <Text style={styles.statLabel}>CA potentiel</Text>
-                <Text style={styles.statValue}>
-                  {formatAmount(stats.totalTurnover)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.statCard}>
-              <Icon name="groups" size={24} color="#7C3AED" />
-              <View>
-                <Text style={styles.statLabel}>Total personnes</Text>
-                <Text style={styles.statValue}>{stats.totalPeople}</Text>
-              </View>
-            </View>
-
-            <View style={styles.statCard}>
-              <Icon name="description" size={24} color="#EA580C" />
-              <View>
-                <Text style={styles.statLabel}>Converties</Text>
-                <Text style={styles.statValue}>{stats.convertedCount}</Text>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <MobileStatsBar
-            items={[
-              { label: "Total", value: stats.totalSimulations },
-              { label: "CA potentiel", value: formatAmount(stats.totalTurnover), wide: true },
-              { label: "Personnes", value: stats.totalPeople },
-              { label: "Converties", value: stats.convertedCount },
-            ]}
-          />
-        )}
-
-        {isDesktop ? (
-          <View style={styles.searchContainer}>
-            <Icon name="search" size={20} color="#6B7280" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Rechercher simulation, client, date, montant..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
+            </>
+          ) : (
+            <MobileListHeader
+              title="Simulations"
+              total={stats.totalSimulations}
+              onBack={() => router.replace('/(traiteur)/sales')}
+              onAdd={goToNewSimulation}
             />
-          </View>
-        ) : (
-          <MobileSearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Rechercher une simulation..." />
-        )}
+          )}
+
+          {isDesktop ? (
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Icon name="list-alt" size={24} color="#007AFF" />
+                <View>
+                  <Text style={styles.statLabel}>Total simulations</Text>
+                  <Text style={styles.statValue}>{stats.totalSimulations}</Text>
+                </View>
+              </View>
+
+              <View style={styles.statCard}>
+                <Icon name="attach-money" size={24} color="#16A34A" />
+                <View>
+                  <Text style={styles.statLabel}>CA potentiel</Text>
+                  <Text style={styles.statValue}>
+                    {formatAmount(stats.totalTurnover)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.statCard}>
+                <Icon name="groups" size={24} color="#7C3AED" />
+                <View>
+                  <Text style={styles.statLabel}>Total personnes</Text>
+                  <Text style={styles.statValue}>{stats.totalPeople}</Text>
+                </View>
+              </View>
+
+              <View style={styles.statCard}>
+                <Icon name="description" size={24} color="#EA580C" />
+                <View>
+                  <Text style={styles.statLabel}>Converties</Text>
+                  <Text style={styles.statValue}>{stats.convertedCount}</Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <MobileStatsBar
+              items={[
+                { label: "Total", value: stats.totalSimulations },
+                { label: "CA potentiel", value: formatAmount(stats.totalTurnover), wide: true },
+                { label: "Personnes", value: stats.totalPeople },
+                { label: "Converties", value: stats.convertedCount },
+              ]}
+            />
+          )}
+
+          {isDesktop ? (
+            <View style={styles.searchContainer}>
+              <Icon name="search" size={20} color="#6B7280" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Rechercher simulation, client, date, montant..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+          ) : (
+            <MobileSearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Rechercher une simulation..." />
+          )}
 
         </View>
 
@@ -356,161 +358,161 @@ export default function CateringSimulationsScreen() {
           scrollEnabled={!isDesktop}
           showsVerticalScrollIndicator={false}
         >
-        {filteredSimulations.length === 0 ? (
-          <Text style={styles.empty}>Aucune simulation</Text>
-        ) : isDesktop ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator>
-            <View style={styles.table}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.th, styles.colName]}>Simulation</Text>
-                <Text style={[styles.th, styles.colClient]}>Client</Text>
-                <Text style={[styles.th, styles.colPeople]}>Pers.</Text>
-                <Text style={[styles.th, styles.colDate]}>Livraison</Text>
-                <Text style={[styles.th, styles.colTime]}>Heure</Text>
-                <Text style={[styles.th, styles.colAmount]}>Montant</Text>
-                <Text style={[styles.th, styles.colDate]}>Créée le</Text>
-                <Text style={[styles.th, styles.colActions]}>Actions</Text>
+          {filteredSimulations.length === 0 ? (
+            <Text style={styles.empty}>Aucune simulation</Text>
+          ) : isDesktop ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator>
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.th, styles.colName]}>Simulation</Text>
+                  <Text style={[styles.th, styles.colClient]}>Client</Text>
+                  <Text style={[styles.th, styles.colPeople]}>Pers.</Text>
+                  <Text style={[styles.th, styles.colDate]}>Livraison</Text>
+                  <Text style={[styles.th, styles.colTime]}>Heure</Text>
+                  <Text style={[styles.th, styles.colAmount]}>Montant</Text>
+                  <Text style={[styles.th, styles.colDate]}>Créée le</Text>
+                  <Text style={[styles.th, styles.colActions]}>Actions</Text>
+                </View>
+
+                {filteredSimulations.map((sim) => {
+                  const clientLabel =
+                    clientsById[sim.clientId] || sim.clientId || '-';
+
+                  const amount =
+                    sim.globalTurnover || sim.totals?.grandTotal || 0;
+
+                  return (
+                    <View key={sim.id} style={styles.tableRow}>
+                      <View style={styles.colName}>
+                        <Text style={styles.tableName} numberOfLines={1}>
+                          {sim.name || 'Simulation sans nom'}
+                        </Text>
+                        <Text style={styles.tableSubText} numberOfLines={1}>
+                          {sim.designation || sim.status || '—'}
+                        </Text>
+                      </View>
+
+                      <Text style={[styles.td, styles.colClient]} numberOfLines={1}>
+                        {clientLabel}
+                      </Text>
+
+                      <Text style={[styles.td, styles.colPeople]}>
+                        {sim.guestCount ?? 0}
+                      </Text>
+
+                      <Text style={[styles.td, styles.colDate]}>
+                        {displayDate(sim.dateLivraison)}
+                      </Text>
+
+                      <Text style={[styles.td, styles.colTime]}>
+                        {sim.deliveryTime || '—'}
+                      </Text>
+
+                      <Text style={[styles.td, styles.colAmount]}>
+                        {formatAmount(amount)}
+                      </Text>
+
+                      <Text style={[styles.td, styles.colDate]}>
+                        {formatShortDocumentDate(sim.createdAt)}
+                      </Text>
+
+                      <View style={[styles.rowActions, styles.colActions]}>
+                        <TouchableOpacity
+                          style={styles.smallActionButton}
+                          onPress={() => openSimulation(sim.id)}
+                        >
+                          <Icon name="visibility" size={16} color="#007AFF" />
+                          <Text style={styles.smallActionText}>Voir</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.smallActionButton}
+                          onPress={() => reuseSimulation(sim.id)}
+                        >
+                          <Icon name="refresh" size={16} color="#007AFF" />
+                          <Text style={styles.smallActionText}>Réutiliser</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.proformaActionButton}
+                          onPress={() => createProforma(sim.id)}
+                        >
+                          <Icon name="description" size={16} color="#16A34A" />
+                          <Text style={styles.proformaActionText}>Proforma</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.deleteActionButton}
+                          onPress={() => setToDelete(sim)}
+                        >
+                          <Icon name="delete" size={16} color="#DC2626" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
+            </ScrollView>
+          ) : (
+            filteredSimulations.map((sim) => {
+              const clientLabel = clientsById[sim.clientId] || sim.clientId || '-';
 
-              {filteredSimulations.map((sim) => {
-                const clientLabel =
-                  clientsById[sim.clientId] || sim.clientId || '-';
+              return (
+                <View key={sim.id} style={styles.card}>
+                  <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
 
-                const amount =
-                  sim.globalTurnover || sim.totals?.grandTotal || 0;
+                  <Text style={styles.client}>Client : {clientLabel}</Text>
 
-                return (
-                  <View key={sim.id} style={styles.tableRow}>
-                    <View style={styles.colName}>
-                      <Text style={styles.tableName} numberOfLines={1}>
-                        {sim.name || 'Simulation sans nom'}
-                      </Text>
-                      <Text style={styles.tableSubText} numberOfLines={1}>
-                        {sim.designation || sim.status || '—'}
-                      </Text>
-                    </View>
+                  <Text style={styles.client}>
+                    Nombre de personnes : {sim.guestCount ?? 0}
+                  </Text>
 
-                    <Text style={[styles.td, styles.colClient]} numberOfLines={1}>
-                      {clientLabel}
-                    </Text>
-
-                    <Text style={[styles.td, styles.colPeople]}>
-                      {sim.guestCount ?? 0}
-                    </Text>
-
-                    <Text style={[styles.td, styles.colDate]}>
-                      {displayDate(sim.dateLivraison)}
-                    </Text>
-
-                    <Text style={[styles.td, styles.colTime]}>
-                      {sim.deliveryTime || '—'}
-                    </Text>
-
-                    <Text style={[styles.td, styles.colAmount]}>
-                      {formatAmount(amount)}
-                    </Text>
-
-                    <Text style={[styles.td, styles.colDate]}>
-                      {formatShortDocumentDate(sim.createdAt)}
-                    </Text>
-
-                    <View style={[styles.rowActions, styles.colActions]}>
-                      <TouchableOpacity
-                        style={styles.smallActionButton}
-                        onPress={() => openSimulation(sim.id)}
-                      >
-                        <Icon name="visibility" size={16} color="#007AFF" />
-                        <Text style={styles.smallActionText}>Voir</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.smallActionButton}
-                        onPress={() => reuseSimulation(sim.id)}
-                      >
-                        <Icon name="refresh" size={16} color="#007AFF" />
-                        <Text style={styles.smallActionText}>Réutiliser</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.proformaActionButton}
-                        onPress={() => createProforma(sim.id)}
-                      >
-                        <Icon name="description" size={16} color="#16A34A" />
-                        <Text style={styles.proformaActionText}>Proforma</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.deleteActionButton}
-                        onPress={() => setToDelete(sim)}
-                      >
-                        <Icon name="delete" size={16} color="#DC2626" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </ScrollView>
-        ) : (
-          filteredSimulations.map((sim) => {
-            const clientLabel = clientsById[sim.clientId] || sim.clientId || '-';
-
-            return (
-              <View key={sim.id} style={styles.card}>
-                <Text style={styles.name}>{sim.name || 'Simulation sans nom'}</Text>
-
-                <Text style={styles.client}>Client : {clientLabel}</Text>
-
-                <Text style={styles.client}>
-                  Nombre de personnes : {sim.guestCount ?? 0}
-                </Text>
-
-                <View style={styles.datesBlock}>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                      Créée le : {formatShortDocumentDate(sim.createdAt)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                      Livraison : {displayDate(sim.dateLivraison)}
-                    </Text>
-                  </View>
-
-                  {sim.deliveryTime ? (
+                  <View style={styles.datesBlock}>
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>
-                        Heure : {sim.deliveryTime}
+                        Créée le : {formatShortDocumentDate(sim.createdAt)}
                       </Text>
                     </View>
-                  ) : null}
+
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>
+                        Livraison : {displayDate(sim.dateLivraison)}
+                      </Text>
+                    </View>
+
+                    {sim.deliveryTime ? (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          Heure : {sim.deliveryTime}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.createProformaBtn}
+                    onPress={() => createProforma(sim.id)}
+                  >
+                    <Text style={styles.createProformaText}>Créer proforma</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => openSimulation(sim.id)}>
+                      <Text style={styles.link}>Voir</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => reuseSimulation(sim.id)}>
+                      <Text style={styles.link}>Réutiliser</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => setToDelete(sim)}>
+                      <Text style={[styles.link, styles.delete]}>Supprimer</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-
-                <TouchableOpacity
-                  style={styles.createProformaBtn}
-                  onPress={() => createProforma(sim.id)}
-                >
-                  <Text style={styles.createProformaText}>Créer proforma</Text>
-                </TouchableOpacity>
-
-                <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => openSimulation(sim.id)}>
-                    <Text style={styles.link}>Voir</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => reuseSimulation(sim.id)}>
-                    <Text style={styles.link}>Réutiliser</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => setToDelete(sim)}>
-                    <Text style={[styles.link, styles.delete]}>Supprimer</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })
-        )}
+              );
+            })
+          )}
 
         </ScrollView>
         {isDesktop ? <View style={{ height: 30 }} /> : null}

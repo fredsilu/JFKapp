@@ -1,21 +1,36 @@
 //components/simulation/ArticleSectionCard.tsx
+
 import React from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 
 import { CateringSection } from "@/types/catering";
 import { formatCurrency } from "@/src/utils/costs";
 
 type Props = {
   section: CateringSection;
+
   onUpdate: (
     sectionId: string,
     field: keyof CateringSection,
     value: any
   ) => void;
+
+  onDelete: (sectionId: string) => void;
 };
 
-export default function ArticleSectionCard({ section, onUpdate }: Props) {
+export default function ArticleSectionCard({
+  section,
+  onUpdate,
+  onDelete,
+}: Props) {
   const billingMode = section.billingMode ?? "perDay";
+
+
 
   return (
     <View
@@ -28,11 +43,49 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
         backgroundColor: "#fff",
       }}
     >
-      <Text style={{ fontSize: 18, fontWeight: "700" }}>
-        {section.name || "Rubrique"}
-      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <Text
+          style={{
+            flex: 1,
+            fontSize: 18,
+            fontWeight: "700",
+          }}
+        >
+          {section.name || "Rubrique"}
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => onDelete(section.id)}
+          style={{
+            backgroundColor: "#FEF2F2",
+            borderWidth: 1,
+            borderColor: "#FECACA",
+            borderRadius: 8,
+            paddingVertical: 8,
+            paddingHorizontal: 10,
+          }}
+        >
+          <Text
+            style={{
+              color: "#B91C1C",
+              fontWeight: "800",
+              fontSize: 12,
+            }}
+          >
+            Supprimer
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={{ marginTop: 10 }}>Libellé</Text>
+
       <TextInput
         value={section.name}
         onChangeText={(value) => onUpdate(section.id, "name", value)}
@@ -78,28 +131,31 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
       </View>
 
       <Text>Nombre de personnes</Text>
+
       <TextInput
         value={String(section.quantity ?? 0)}
         onChangeText={(value) =>
           onUpdate(section.id, "quantity", Number(value) || 0)
         }
-       keyboardType="numeric"
+        keyboardType="numeric"
         style={inputStyle}
       />
 
       <Text>Prix unitaire</Text>
+
       <TextInput
         value={String(section.unitPrice ?? 0)}
         onChangeText={(value) =>
           onUpdate(section.id, "unitPrice", Number(value) || 0)
         }
-         keyboardType="numbers-and-punctuation"
+        keyboardType="numbers-and-punctuation"
         style={inputStyle}
       />
 
       {billingMode === "perDay" ? (
         <>
           <Text>Nombre de jours</Text>
+
           <TextInput
             value={String(section.numberOfDays ?? "")}
             onChangeText={(value) => {
@@ -112,7 +168,10 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
               );
             }}
             onBlur={() => {
-              if (!section.numberOfDays || Number(section.numberOfDays) < 1) {
+              if (
+                !section.numberOfDays ||
+                Number(section.numberOfDays) < 1
+              ) {
                 onUpdate(section.id, "numberOfDays", 1);
               }
             }}
@@ -121,12 +180,19 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
           />
         </>
       ) : (
-        <Text style={{ marginBottom: 8, color: "#6B7280", fontSize: 12 }}>
+        <Text
+          style={{
+            marginBottom: 8,
+            color: "#6B7280",
+            fontSize: 12,
+          }}
+        >
           Cette ligne sera calculée sans multiplier par le nombre de jours.
         </Text>
       )}
 
       <Text>Taux coût matière (%)</Text>
+
       <TextInput
         value={String(section.costRate ?? 0)}
         onChangeText={(value) =>
@@ -147,6 +213,7 @@ export default function ArticleSectionCard({ section, onUpdate }: Props) {
         <Text>
           Mode : {billingMode === "fixed" ? "Une seule fois" : "Par jour"}
         </Text>
+
         <Text>CA : {formatCurrency(section.total ?? 0)}</Text>
         <Text>Coût : {formatCurrency(section.costAmount ?? 0)}</Text>
         <Text>Marge : {formatCurrency(section.margin ?? 0)}</Text>

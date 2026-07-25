@@ -1,20 +1,41 @@
 // app/(traiteur)/tools/calculator-v2.tsx
+
+
 import React, { useEffect, useState } from "react";
-import { Alert, Platform, View, Text } from "react-native";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import {
+  Alert,
+  Platform,
+  View,
+  Text,
+} from "react-native";
+
+import {
+  router,
+  Stack,
+  useLocalSearchParams,
+} from "expo-router";
 
 import SimulationEditor from "@/components/simulation/SimulationEditor";
+
 import {
   createCateringSimulation,
   getSimulationById,
 } from "@/src/services/cateringSimulation.service";
 
-function paramToString(value?: string | string[]) {
+function paramToString(
+  value?: string | string[]
+): string {
   if (!value) return "";
-  return Array.isArray(value) ? value[0] : value;
+
+  return Array.isArray(value)
+    ? value[0] ?? ""
+    : value;
 }
 
-function showAlert(title: string, message: string) {
+function showAlert(
+  title: string,
+  message: string
+) {
   if (Platform.OS === "web") {
     window.alert(`${title}\n${message}`);
     return;
@@ -27,7 +48,9 @@ function formatDateFr(value: any): string {
   if (!value) return "";
 
   if (typeof value?.toDate === "function") {
-    return value.toDate().toLocaleDateString("fr-FR");
+    return value
+      .toDate()
+      .toLocaleDateString("fr-FR");
   }
 
   if (value instanceof Date) {
@@ -35,10 +58,13 @@ function formatDateFr(value: any): string {
   }
 
   if (typeof value === "string") {
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return value;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+      return value;
+    }
 
     if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
       const date = new Date(value);
+
       if (!Number.isNaN(date.getTime())) {
         return date.toLocaleDateString("fr-FR");
       }
@@ -55,109 +81,267 @@ export default function CalculatorV2Screen() {
     clientId?: string | string[];
     clientName?: string | string[];
     reuseSimulationId?: string | string[];
+    sessionId?: string | string[];
+    mode?: string | string[];
   }>();
 
-  const clientId = paramToString(params.clientId);
-  const clientName = decodeURIComponent(paramToString(params.clientName));
-  const reuseSimulationId = paramToString(params.reuseSimulationId);
+  /*
+   * Lire tous les paramètres avant de calculer le mode.
+   */
+  const clientId = paramToString(
+    params.clientId
+  );
 
-  const [saving, setSaving] = useState(false);
-  const [loadingReuse, setLoadingReuse] = useState(false);
-  const [reuseSimulation, setReuseSimulation] = useState<any>(null);
+  const rawClientName = paramToString(
+    params.clientName
+  );
+
+  const reuseSimulationId = paramToString(
+    params.reuseSimulationId
+  );
+
+  const sessionId = paramToString(
+    params.sessionId
+  );
+
+  const mode = paramToString(
+    params.mode
+  );
+
+  /*
+   * Une réutilisation n'est valide que lorsque :
+   * 1. mode vaut "reuse"
+   * 2. un identifiant de simulation est présent
+   */
+  const isReuseMode =
+    mode === "reuse" &&
+    Boolean(reuseSimulationId);
+
+  let clientName = "";
+
+  try {
+    clientName = decodeURIComponent(
+      rawClientName
+    );
+  } catch {
+    clientName = rawClientName;
+  }
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [loadingReuse, setLoadingReuse] =
+    useState(false);
+
+  const [
+    reuseSimulation,
+    setReuseSimulation,
+  ] = useState<any>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadReuseSimulation() {
-      if (!reuseSimulationId) return;
+      /*
+       * Mode nouvelle simulation :
+       * supprimer toute ancienne simulation
+       * conservée en mémoire.
+       */
+      if (!isReuseMode) {
+        setReuseSimulation(null);
+        setLoadingReuse(false);
+        return;
+      }
 
       try {
         setLoadingReuse(true);
+        setReuseSimulation(null);
 
-        const found = await getSimulationById(reuseSimulationId);
-        setReuseSimulation(found);
+        const found =
+          await getSimulationById(
+            reuseSimulationId
+          );
+
+        if (!found) {
+          throw new Error(
+            "Simulation introuvable."
+          );
+        }
+
+        if (isMounted) {
+          setReuseSimulation(found);
+        }
       } catch (error) {
-        console.error("❌ load reuse simulation error:", error);
-        showAlert("Erreur", "Impossible de charger la simulation à réutiliser.");
+        console.error(
+          "❌ load reuse simulation error:",
+          error
+        );
+
+        if (isMounted) {
+          setReuseSimulation(null);
+
+          showAlert(
+            "Erreur",
+            "Impossible de charger la simulation à réutiliser."
+          );
+        }
       } finally {
-        setLoadingReuse(false);
+        if (isMounted) {
+          setLoadingReuse(false);
+        }
       }
     }
 
     loadReuseSimulation();
-  }, [reuseSimulationId]);
 
-  async function handleSubmit(payload: any) {
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    isReuseMode,
+    reuseSimulationId,
+  ]);
+
+  async function handleSubmit(
+    payload: any
+  ) {
     if (saving) return;
 
     try {
       setSaving(true);
 
-      const subtotal = Number(payload.totals?.subtotal ?? 0);
+      const subtotal = Number(
+        payload.totals?.subtotal ?? 0
+      );
+
       const discount = Number(
-        payload.discount ?? payload.totals?.discountAmount ?? 0
+        payload.discount ??
+        payload.totals?.discountAmount ??
+        0
       );
+
       const grandTotal = Number(
-        payload.totals?.grandTotal ?? Math.max(subtotal - discount, 0)
+        payload.totals?.grandTotal ??
+        Math.max(
+          subtotal - discount,
+          0
+        )
       );
-      const totalCost = Number(payload.totals?.totalCost ?? 0);
-      const margin = Number(payload.totals?.margin ?? grandTotal - totalCost);
 
-      const simulationId = await createCateringSimulation({
-        name: payload.eventName || "Simulation traiteur",
-        eventName: payload.eventName || "Simulation traiteur",
+      const totalCost = Number(
+        payload.totals?.totalCost ?? 0
+      );
 
-        clientId: payload.clientId || clientId || reuseSimulation?.clientId || "",
-        clientName:
-          payload.clientName ||
-          clientName ||
-          reuseSimulation?.clientName ||
-          "",
+      const margin = Number(
+        payload.totals?.margin ??
+        grandTotal - totalCost
+      );
 
-        eventDate: payload.eventDate || "",
-        dateEvenement: payload.eventDate || "",
+      const simulationId =
+        await createCateringSimulation({
+          name:
+            payload.eventName ||
+            "Simulation traiteur",
 
-        servicePeriod: payload.servicePeriod || "",
+          eventName:
+            payload.eventName ||
+            "Simulation traiteur",
 
-        numberOfPeople: Number(payload.numberOfPeople) || 0,
-        guestCount: Number(payload.numberOfPeople) || 0,
+          clientId:
+            payload.clientId ||
+            clientId ||
+            "",
 
+          clientName:
+            payload.clientName ||
+            clientName ||
+            "",
 
-        dateLivraison: payload.dateLivraison || "",
-        deliveryDate: payload.dateLivraison || "",
-        deliveryTime: payload.deliveryTime || "",
-        deliveryAddress: payload.deliveryAddress || "",
-        comment: payload.comment || "",
+          eventDate:
+            payload.eventDate || "",
 
-        sections: payload.sections ?? [],
+          dateEvenement:
+            payload.eventDate || "",
 
-        totals: {
-          subtotal,
-          discountAmount: discount,
-          grandTotal,
-          totalCost,
-          margin,
-        },
+          servicePeriod:
+            payload.servicePeriod || "",
 
-        globalTurnover: grandTotal,
-        globalCost: totalCost,
-        globalMargin: margin,
+          numberOfPeople:
+            Number(
+              payload.numberOfPeople
+            ) || 0,
 
-        discount,
+          guestCount:
+            Number(
+              payload.numberOfPeople
+            ) || 0,
 
-        status: "draft",
-        isDeleted: false,
-        convertedToOrder: false,
-        sourceSimulationId: reuseSimulationId || null,
-      } as any);
+          dateLivraison:
+            payload.dateLivraison || "",
 
-      showAlert("Succès", "Simulation enregistrée.");
+          deliveryDate:
+            payload.dateLivraison || "",
+
+          deliveryTime:
+            payload.deliveryTime || "",
+
+          deliveryAddress:
+            payload.deliveryAddress || "",
+
+          comment:
+            payload.comment || "",
+
+          sections:
+            payload.sections ?? [],
+
+          totals: {
+            subtotal,
+            discountAmount: discount,
+            grandTotal,
+            totalCost,
+            margin,
+          },
+
+          globalTurnover: grandTotal,
+          globalCost: totalCost,
+          globalMargin: margin,
+
+          discount,
+
+          status: "draft",
+          isDeleted: false,
+
+          convertedToOrder: false,
+
+          sourceSimulationId:
+            isReuseMode
+              ? reuseSimulationId
+              : null,
+        } as any);
+
+      showAlert(
+        "Succès",
+        "Simulation enregistrée."
+      );
 
       router.replace({
-        pathname: "/(traiteur)/simulations/[id]",
-        params: { id: simulationId },
+        pathname:
+          "/(traiteur)/simulations/[id]",
+
+        params: {
+          id: simulationId,
+        },
       });
     } catch (error) {
-      console.error("❌ create simulation v2 error:", error);
-      showAlert("Erreur", "Impossible d'enregistrer.");
+      console.error(
+        "❌ create simulation v2 error:",
+        error
+      );
+
+      showAlert(
+        "Erreur",
+        "Impossible d'enregistrer."
+      );
     } finally {
       setSaving(false);
     }
@@ -165,8 +349,43 @@ export default function CalculatorV2Screen() {
 
   if (loadingReuse) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Chargement de la simulation...</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text>
+          Chargement de la simulation...
+        </Text>
+      </View>
+    );
+  }
+
+  /*
+   * En mode réutilisation, ne jamais afficher
+   * un formulaire vide lorsque la simulation
+   * demandée n'a pas été chargée.
+   */
+  if (
+    isReuseMode &&
+    !loadingReuse &&
+    !reuseSimulation
+  ) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+        }}
+      >
+        <Text>
+          La simulation à réutiliser
+          n’a pas pu être chargée.
+        </Text>
       </View>
     );
   }
@@ -175,45 +394,119 @@ export default function CalculatorV2Screen() {
     <>
       <Stack.Screen
         options={{
-          title: reuseSimulationId
+          title: isReuseMode
             ? "Réutiliser simulation"
             : "Nouvelle simulation",
         }}
       />
 
       <SimulationEditor
+        /*
+         * Chaque nouvelle session crée un nouvel
+         * éditeur et efface l'ancien état React.
+         */
+        key={
+          isReuseMode
+            ? `reuse-${reuseSimulationId}`
+            : `new-${sessionId || "default"}`
+        }
         title={
-          reuseSimulationId
+          isReuseMode
             ? "Réutilisation de simulation"
             : "Création de simulation"
         }
-        initialEventName={reuseSimulation?.eventName || reuseSimulation?.name || ""}
-        initialServicePeriod={reuseSimulation?.servicePeriod || ""}
-
+        initialEventName={
+          isReuseMode
+            ? reuseSimulation?.eventName ||
+            reuseSimulation?.name ||
+            ""
+            : ""
+        }
+        initialServicePeriod={
+          isReuseMode
+            ? reuseSimulation
+              ?.servicePeriod || ""
+            : ""
+        }
         initialClientId={
-          reuseSimulation?.clientId || clientId || ""
+          isReuseMode
+            ? reuseSimulation?.clientId ||
+            ""
+            : clientId
         }
         initialClientName={
-          reuseSimulation?.clientName || clientName || ""
+          isReuseMode
+            ? reuseSimulation
+              ?.clientName || ""
+            : clientName
         }
         initialNumberOfPeople={
-          Number(reuseSimulation?.numberOfPeople ?? reuseSimulation?.guestCount ?? 0)
+          isReuseMode
+            ? Number(
+              reuseSimulation
+                ?.numberOfPeople ??
+              reuseSimulation
+                ?.guestCount ??
+              0
+            )
+            : 0
         }
-        initialEventDate={formatDateFr(
-          reuseSimulation?.eventDate || reuseSimulation?.dateEvenement
-        )}
-        initialDateLivraison={formatDateFr(
-          reuseSimulation?.dateLivraison || reuseSimulation?.deliveryDate
-        )}
-        initialDeliveryTime={reuseSimulation?.deliveryTime || ""}
-        initialDeliveryAddress={reuseSimulation?.deliveryAddress || ""}
-        initialComment={reuseSimulation?.comment || ""}
-        initialSections={reuseSimulation?.sections ?? undefined}
-        initialDiscount={Number(
-          reuseSimulation?.discount ??
-          reuseSimulation?.totals?.discountAmount ??
-          0
-        )}
+        initialEventDate={
+          isReuseMode
+            ? formatDateFr(
+              reuseSimulation
+                ?.eventDate ||
+              reuseSimulation
+                ?.dateEvenement
+            )
+            : ""
+        }
+        initialDateLivraison={
+          isReuseMode
+            ? formatDateFr(
+              reuseSimulation
+                ?.dateLivraison ||
+              reuseSimulation
+                ?.deliveryDate
+            )
+            : ""
+        }
+        initialDeliveryTime={
+          isReuseMode
+            ? reuseSimulation
+              ?.deliveryTime || ""
+            : ""
+        }
+        initialDeliveryAddress={
+          isReuseMode
+            ? reuseSimulation
+              ?.deliveryAddress || ""
+            : ""
+        }
+        initialComment={
+          isReuseMode
+            ? reuseSimulation?.comment ||
+            ""
+            : ""
+        }
+        initialSections={
+          isReuseMode
+            ? reuseSimulation?.sections ??
+            []
+            : undefined
+        }
+        initialDiscount={
+          isReuseMode
+            ? Number(
+              reuseSimulation
+                ?.discount ??
+              reuseSimulation
+                ?.totals
+                ?.discountAmount ??
+              0
+            )
+            : 0
+        }
         submitLabel="Enregistrer"
         saving={saving}
         onSubmit={handleSubmit}
