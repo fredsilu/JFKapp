@@ -1,5 +1,5 @@
 //src/utils/proformaHtml.ts
-import { CateringProforma } from '@/src/services/cateringProforma.service';
+import { CateringProforma } from "@/src/services/cateringProforma.service";
 
 type ProformaPdfAssets = {
   logoBase64?: string;
@@ -8,7 +8,7 @@ type ProformaPdfAssets = {
 };
 
 function money(value?: number) {
-  return Number(value || 0).toLocaleString('fr-FR', {
+  return Number(value || 0).toLocaleString("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -25,7 +25,7 @@ function getExchangeRate(proforma: CateringProforma): number {
 function convertFromUsd(
   value: number | undefined,
   currency: "USD" | "CDF",
-  exchangeRate: number
+  exchangeRate: number,
 ): number {
   const amount = Number(value || 0);
   return currency === "CDF" ? amount * exchangeRate : amount;
@@ -43,14 +43,14 @@ function formatMoneyByCurrency(value: number, currency: "USD" | "CDF") {
 }
 
 function safe(value?: string | null) {
-  return value && value.trim() ? value.trim() : '';
+  return value && value.trim() ? value.trim() : "";
 }
 
 function safeClientName(proforma: CateringProforma) {
   const name = safe(proforma.clientName);
 
-  if (!name || name.toLowerCase() === 'client') {
-    return 'NOM DU CLIENT À RENSEIGNER';
+  if (!name || name.toLowerCase() === "client") {
+    return "NOM DU CLIENT À RENSEIGNER";
   }
 
   return name;
@@ -63,7 +63,7 @@ function toDate(value: any): Date | null {
 
   if (value instanceof Date) return value;
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
 
     // Format français : JJ/MM/AAAA
@@ -88,39 +88,37 @@ function toDate(value: any): Date | null {
 }
 
 // Date complète → mercredi 06/05/2026
-function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
+function formatLongDate(value: any, lang: "fr" | "en" = "fr") {
   const date = toDate(value);
-  if (!date) return '—';
+  if (!date) return "—";
 
-  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = lang === "fr" ? "fr-FR" : "en-US";
 
   return date.toLocaleDateString(locale, {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }
 
 // Date courte → 06/05/2026
-function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
+function formatShortDate(value: any, lang: "fr" | "en" = "fr") {
   const date = toDate(value);
-  if (!date) return '—';
+  if (!date) return "—";
 
-  const locale = lang === 'fr' ? 'fr-FR' : 'en-US';
+  const locale = lang === "fr" ? "fr-FR" : "en-US";
 
   return date.toLocaleDateString(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }
 
 export function buildProformaHTML(
-
-
   proforma: CateringProforma,
-  assets?: ProformaPdfAssets
+  assets?: ProformaPdfAssets,
 ): string {
   const documentCurrency = getDocumentCurrency(proforma);
   const exchangeRate = getExchangeRate(proforma);
@@ -130,35 +128,40 @@ export function buildProformaHTML(
       (item) => `
 <tr>
   <td class="designation">${safe(item.label)}</td>
-  <td class="center">${Number(item.numberOfDays || 1)}</td>
+  <td class="center">${Number(item.numberOfDays ?? 0) > 0 ? Number(item.numberOfDays) : "-"}</td>
   <td class="center">${item.quantity || 0}</td>
   <td class="currency">${currency}</td>
 <td class="price">
   ${formatMoneyByCurrency(
-        convertFromUsd(item.unitPrice, documentCurrency, exchangeRate),
-        documentCurrency
-      )}
+    convertFromUsd(item.unitPrice, documentCurrency, exchangeRate),
+    documentCurrency,
+  )}
 </td>
 <td class="currency">${currency}</td>
 <td class="price">
   ${formatMoneyByCurrency(
-        convertFromUsd(item.total, documentCurrency, exchangeRate),
-        documentCurrency
-      )}
+    convertFromUsd(item.total, documentCurrency, exchangeRate),
+    documentCurrency,
+  )}
 </td>
-</tr>`
+</tr>`,
     )
-    .join('');
+    .join("");
 
   const subtotal = proforma.totals?.subtotal ?? 0;
   const discount = proforma.totals?.discount ?? 0;
   const total = proforma.totals?.total ?? subtotal - discount;
 
-
-
-
-  const displayedSubtotal = convertFromUsd(subtotal, documentCurrency, exchangeRate);
-  const displayedDiscount = convertFromUsd(discount, documentCurrency, exchangeRate);
+  const displayedSubtotal = convertFromUsd(
+    subtotal,
+    documentCurrency,
+    exchangeRate,
+  );
+  const displayedDiscount = convertFromUsd(
+    discount,
+    documentCurrency,
+    exchangeRate,
+  );
   const displayedTotal = convertFromUsd(total, documentCurrency, exchangeRate);
 
   const clientName = safeClientName(proforma);
@@ -166,35 +169,40 @@ export function buildProformaHTML(
   const clientIdNat = safe(proforma.clientIdNat);
   const clientAddress = safe(proforma.clientAddress);
   const clientCity =
-    safe(proforma.clientCity)
-      .replace('/ RDC', '')
-      .replace('/RDC', '')
-      .trim() || 'Kinshasa';
-  const issueDateFormatted = formatLongDate(proforma.issueDate, 'fr');
-  const eventDateFormatted = formatShortDate(proforma.eventDate, 'fr');
-  const eventName =
-    safe((proforma as any).eventName) ||
-    'Évènement sans nom';
-  const validityDateFormatted = formatShortDate(proforma.validityDate, 'fr');
+    safe(proforma.clientCity).replace("/ RDC", "").replace("/RDC", "").trim() ||
+    "Kinshasa";
+  const issueDateFormatted = formatLongDate(proforma.issueDate, "fr");
+  const eventDateFormatted = formatShortDate(proforma.eventDate, "fr");
+  const eventName = safe((proforma as any).eventName) || "Évènement sans nom";
+  const validityDateFormatted = formatShortDate(proforma.validityDate, "fr");
   const clientNif = safe(proforma.clientNif);
 
+  const numberOfPeople = Number(
+    (proforma as any).numberOfPeople ?? (proforma as any).guestCount ?? 0,
+  );
+
+  const numberOfPeopleHtml =
+    numberOfPeople > 0
+      ? `<strong>Nbr de personnes :</strong> ${numberOfPeople}`
+      : "";
   const menuRows =
     proforma.menu && proforma.menu.length > 0
       ? proforma.menu
-        .map(
-          (item, index) => `
+          .map(
+            (item, index) => `
 <tr>
   <td class="center">${index + 1}</td>
   <td>
     ${safe(item.name)}
-    ${item.notes
-              ? `<br/><span class="dish-note">${safe(item.notes)}</span>`
-              : ''
-            }
+    ${
+      item.notes
+        ? `<br/><span class="dish-note">${safe(item.notes)}</span>`
+        : ""
+    }
   </td>
-</tr>`
-        )
-        .join('')
+</tr>`,
+          )
+          .join("")
       : `
 <tr>
   <td class="center">1</td>
@@ -204,7 +212,7 @@ export function buildProformaHTML(
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ''}
+    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ""}
   </div>
 
   <div class="address">
@@ -594,10 +602,10 @@ body {
   <div class="client-block">
     <div class="client-name">${clientName}</div>
 
-    <div>RCCM : ${clientRccm || '—'}</div>
-    <div>IdNat : ${clientIdNat || '—'}</div>
-    <div>NIF : ${clientNif || '—'}</div>
-    <div>${clientAddress || '—'}</div>
+    <div>RCCM : ${clientRccm || "—"}</div>
+    <div>IdNat : ${clientIdNat || "—"}</div>
+    <div>NIF : ${clientNif || "—"}</div>
+    <div>${clientAddress || "—"}</div>
     <div><u>${clientCity} / RDC</u></div>
 
     <div class="issue-date">
@@ -633,7 +641,7 @@ body {
         <td>
           <strong>Evénement :</strong> ${eventName}<br/>
           <strong>Date événement :</strong> ${eventDateFormatted}<br/>
-          <strong>Nbr de personnes :</strong> ${proforma.items?.[0]?.quantity || ''}
+          ${numberOfPeopleHtml}
         </td>
         <td></td>
         <td></td>
@@ -656,37 +664,36 @@ body {
 </div>
     </div>
 
-    ${discount > 0 ? `
+    ${
+      discount > 0
+        ? `
 <div class="subtotal">
   <div>Remise :</div>
   <div>${currency}</div>
 <div style="text-align:right;">
-  -${formatMoneyByCurrency(
-    displayedDiscount,
-    documentCurrency
-  )}
+  -${formatMoneyByCurrency(displayedDiscount, documentCurrency)}
 </div>
 </div>
-` : ''}
+`
+        : ""
+    }
 
     <div class="grand-total">
       <div>Total à payer :</div>
       <div>${currency}</div>
 <div style="text-align:right;">
-  ${formatMoneyByCurrency(
-    displayedTotal,
-    documentCurrency
-  )}
+  ${formatMoneyByCurrency(displayedTotal, documentCurrency)}
 </div>
     </div>
-    ${documentCurrency === "CDF"
-      ? `
+    ${
+      documentCurrency === "CDF"
+        ? `
   <div style="text-align:right; font-size:10px; margin-top:5px; color:#6b7280;">
     Équivalent indicatif : USD ${money(total)}<br/>
     Taux appliqué : 1 USD = ${formatMoneyByCurrency(exchangeRate, "CDF")} CDF
   </div>
   `
-      : ''
+        : ""
     }
   </div>
 
@@ -697,18 +704,20 @@ body {
 
   <div class="signature-area">
     <div class="stamp">
-      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
+      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ""}
     </div>
 
     <div class="signature">
-      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ""}
     </div>
   </div>
 
   ${footerHTML}
 </div>
 
-${proforma.menu && proforma.menu.length > 0 ? `
+${
+  proforma.menu && proforma.menu.length > 0
+    ? `
 <div class="pdf-page">
   ${headerHTML}
 
@@ -741,7 +750,9 @@ ${proforma.menu && proforma.menu.length > 0 ? `
 
   ${footerHTML}
 </div>
-` : ''}
+`
+    : ""
+}
 
 </body>
 </html>
