@@ -45,7 +45,7 @@ export default function EditProformaScreen() {
       if (data.status !== "draft") {
         Alert.alert(
           "Proforma verrouillée",
-          "Seule une proforma brouillon peut être modifiée."
+          "Seule une proforma brouillon peut être modifiée.",
         );
 
         router.replace({
@@ -71,7 +71,7 @@ export default function EditProformaScreen() {
   useFocusEffect(
     useCallback(() => {
       loadProforma();
-    }, [loadProforma])
+    }, [loadProforma]),
   );
 
   async function handleSave(payload: any) {
@@ -83,7 +83,7 @@ export default function EditProformaScreen() {
       const items = sectionsToDocumentItems(payload.sections);
       const totals = buildDocumentTotalsFromSections(
         payload.sections,
-        payload.discount
+        payload.discount,
       );
 
       await updateCateringProforma(proforma.id, {
@@ -97,7 +97,7 @@ export default function EditProformaScreen() {
         numberOfPeople: payload.numberOfPeople,
         deliveryTime: payload.deliveryTime,
         deliveryAddress: payload.deliveryAddress,
-       // comment: payload.comment,
+        // comment: payload.comment,
 
         sections: payload.sections,
 
@@ -106,7 +106,7 @@ export default function EditProformaScreen() {
           quantity: Number(item.quantity ?? 0),
           unitPrice: Number(item.unitPrice ?? 0),
           total: Number(item.totalPrice ?? item.total ?? 0),
-          numberOfDays: Number(item.days ?? item.numberOfDays ?? 1),
+          numberOfDays: Number(item.days ?? item.numberOfDays ?? 0),
         })),
 
         currency: proforma.currency ?? "USD",
@@ -133,9 +133,7 @@ export default function EditProformaScreen() {
 
       Alert.alert(
         "Erreur",
-        error instanceof Error
-          ? error.message
-          : "Impossible de sauvegarder"
+        error instanceof Error ? error.message : "Impossible de sauvegarder",
       );
     } finally {
       setSaving(false);

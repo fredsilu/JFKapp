@@ -9,20 +9,20 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-import { db } from '@/lib/firebase';
-import { getNextProformaNumber } from '@/src/services/proformaNumber.service';
+import { db } from "@/lib/firebase";
+import { getNextProformaNumber } from "@/src/services/proformaNumber.service";
 import { CateringSection } from "@/types/catering";
 
 export type ProformaStatus =
-  | 'draft'
-  | 'sent'
-  | 'approved'
-  | 'rejected'
-  | 'converted'
-  | 'invoiced'
-  | 'cancelled';
+  | "draft"
+  | "sent"
+  | "approved"
+  | "rejected"
+  | "converted"
+  | "invoiced"
+  | "cancelled";
 
 export type CateringProformaItem = {
   label: string;
@@ -100,7 +100,7 @@ export type CateringProforma = {
     discount?: number;
     tax?: number;
     total: number;
-    currency: 'USD' | 'CDF';
+    currency: "USD" | "CDF";
   };
 
   createdAt?: any;
@@ -108,23 +108,27 @@ export type CateringProforma = {
   isDeleted?: boolean;
 };
 
-const COLLECTION = 'catering_proformas';
+const COLLECTION = "catering_proformas";
 
 function cleanText(value?: string | null): string {
-  return value && value.trim() ? value.trim() : '';
+  return value && value.trim() ? value.trim() : "";
 }
 
 function normalizeClientName(value?: string | null): string {
   const clientName = cleanText(value);
 
-  if (!clientName || clientName.toLowerCase() === 'client') {
-    throw new Error('Le nom du client est obligatoire pour créer une proforma.');
+  if (!clientName || clientName.toLowerCase() === "client") {
+    throw new Error(
+      "Le nom du client est obligatoire pour créer une proforma.",
+    );
   }
 
   return clientName;
 }
 
-function normalizeItems(items?: CateringProformaItem[]): CateringProformaItem[] {
+function normalizeItems(
+  items?: CateringProformaItem[],
+): CateringProformaItem[] {
   if (!Array.isArray(items)) return [];
 
   return items
@@ -138,14 +142,14 @@ function normalizeItems(items?: CateringProformaItem[]): CateringProformaItem[] 
         quantity,
         unitPrice,
         total,
-        numberOfDays: Number(item.numberOfDays || 1),
+        numberOfDays: item.numberOfDays == null ? 0 : Number(item.numberOfDays),
       };
     })
     .filter((item) => item.label.length > 0);
 }
 
 function normalizeMenu(
-  menu?: CateringProformaMenuItem[]
+  menu?: CateringProformaMenuItem[],
 ): CateringProformaMenuItem[] {
   if (!Array.isArray(menu)) return [];
 
@@ -159,28 +163,26 @@ function normalizeMenu(
     .filter((item) => item.dishId.length > 0 && item.name.length > 0);
 }
 
-function normalizeTotals(totals?: CateringProforma['totals']) {
+function normalizeTotals(totals?: CateringProforma["totals"]) {
   const subtotal = Number(totals?.subtotal || 0);
   const discount = Number(totals?.discount || 0);
   const tax = Number(totals?.tax || 0);
-  const total = Number(
-    totals?.total || Math.max(subtotal - discount + tax, 0)
-  );
+  const total = Number(totals?.total || Math.max(subtotal - discount + tax, 0));
 
   return {
     subtotal,
     discount,
     tax,
     total,
-    currency: totals?.currency || 'USD',
+    currency: totals?.currency || "USD",
   };
 }
 
 function normalizeProformaData(
   data: Omit<
     CateringProforma,
-    'id' | 'number' | 'createdAt' | 'updatedAt' | 'isDeleted'
-  >
+    "id" | "number" | "createdAt" | "updatedAt" | "isDeleted"
+  >,
 ) {
   const clientName = normalizeClientName(data.clientName);
   const items = normalizeItems(data.items);
@@ -195,14 +197,12 @@ function normalizeProformaData(
     clientIdNat: cleanText(data.clientIdNat),
     clientAddress: cleanText(data.clientAddress),
     clientNif: cleanText(data.clientNif),
-    clientCity: cleanText(data.clientCity) || 'Kinshasa / RDC',
+    clientCity: cleanText(data.clientCity) || "Kinshasa / RDC",
 
     currency: data.currency ?? "USD",
 
     exchangeRate:
-      Number(data.exchangeRate || 0) > 0
-        ? Number(data.exchangeRate)
-        : 1,
+      Number(data.exchangeRate || 0) > 0 ? Number(data.exchangeRate) : 1,
 
     baseCurrency: "USD",
 
@@ -224,19 +224,19 @@ function normalizeProformaData(
 
     guestCount: Number(
       data.guestCount ||
-      data.numberOfPeople ||
-      (data as any).numberOfGuests ||
-      0
+        data.numberOfPeople ||
+        (data as any).numberOfGuests ||
+        0,
     ),
 
     numberOfPeople: Number(
       data.numberOfPeople ||
-      data.guestCount ||
-      (data as any).numberOfGuests ||
-      0
+        data.guestCount ||
+        (data as any).numberOfGuests ||
+        0,
     ),
 
-    status: data.status || 'draft',
+    status: data.status || "draft",
     isInvoiced: Boolean(data.isInvoiced),
 
     orderId: cleanText(data.orderId),
@@ -248,15 +248,14 @@ function normalizeProformaData(
     items,
     menu,
     totals: normalizeTotals(data.totals),
-
   };
 }
 
 export async function createCateringProforma(
   data: Omit<
     CateringProforma,
-    'id' | 'number' | 'createdAt' | 'updatedAt' | 'isDeleted'
-  >
+    "id" | "number" | "createdAt" | "updatedAt" | "isDeleted"
+  >,
 ): Promise<string> {
   const number = await getNextProformaNumber();
   const normalizedData = normalizeProformaData(data);
@@ -264,7 +263,7 @@ export async function createCateringProforma(
   const ref = await addDoc(collection(db, COLLECTION), {
     ...normalizedData,
     number,
-    status: normalizedData.status || 'draft',
+    status: normalizedData.status || "draft",
     isInvoiced: false,
     isDeleted: false,
     createdAt: serverTimestamp(),
@@ -275,12 +274,12 @@ export async function createCateringProforma(
 }
 
 export async function getCateringProformas(): Promise<CateringProforma[]> {
-  const q = query(collection(db, COLLECTION), where('isDeleted', '==', false));
+  const q = query(collection(db, COLLECTION), where("isDeleted", "==", false));
 
   const snap = await getDocs(q);
 
   const data: CateringProforma[] = snap.docs.map((d) => {
-    const raw = d.data() as Omit<CateringProforma, 'id'>;
+    const raw = d.data() as Omit<CateringProforma, "id">;
 
     return {
       id: d.id,
@@ -296,8 +295,7 @@ export async function getCateringProformas(): Promise<CateringProforma[]> {
       dateLivraison: raw.dateLivraison || raw.deliveryDate || "",
       deliveryDate: raw.deliveryDate || raw.dateLivraison || "",
       deliveryTime: raw.deliveryTime || "",
-      deliveryAddress:
-        raw.deliveryAddress || (raw as any).address || "",
+      deliveryAddress: raw.deliveryAddress || (raw as any).address || "",
 
       guestCount:
         raw.guestCount ||
@@ -321,28 +319,24 @@ export async function getCateringProformas(): Promise<CateringProforma[]> {
 
   return data.sort((a, b) => {
     const aTime =
-      a.createdAt?.toMillis?.() ||
-      new Date(a.issueDate || '').getTime() ||
-      0;
+      a.createdAt?.toMillis?.() || new Date(a.issueDate || "").getTime() || 0;
 
     const bTime =
-      b.createdAt?.toMillis?.() ||
-      new Date(b.issueDate || '').getTime() ||
-      0;
+      b.createdAt?.toMillis?.() || new Date(b.issueDate || "").getTime() || 0;
 
     return bTime - aTime;
   });
 }
 
 export async function getCateringProformaById(
-  id: string
+  id: string,
 ): Promise<CateringProforma | null> {
   const ref = doc(db, COLLECTION, id);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) return null;
 
-  const data = snap.data() as Omit<CateringProforma, 'id'>;
+  const data = snap.data() as Omit<CateringProforma, "id">;
 
   return {
     id: snap.id,
@@ -375,7 +369,7 @@ export async function getCateringProformaById(
 
 export async function updateCateringProforma(
   id: string,
-  data: Partial<CateringProforma>
+  data: Partial<CateringProforma>,
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
@@ -383,127 +377,124 @@ export async function updateCateringProforma(
     ...data,
   };
 
-  if (typeof data.clientName !== 'undefined') {
+  if (typeof data.clientName !== "undefined") {
     payload.clientName = normalizeClientName(data.clientName);
   }
 
-
-
-  if (typeof data.clientId !== 'undefined') {
+  if (typeof data.clientId !== "undefined") {
     payload.clientId = cleanText(data.clientId);
   }
 
-  if (typeof data.clientRccm !== 'undefined') {
+  if (typeof data.clientRccm !== "undefined") {
     payload.clientRccm = cleanText(data.clientRccm);
   }
 
-  if (typeof data.clientIdNat !== 'undefined') {
+  if (typeof data.clientIdNat !== "undefined") {
     payload.clientIdNat = cleanText(data.clientIdNat);
   }
-  if (typeof data.clientNif !== 'undefined') {
+  if (typeof data.clientNif !== "undefined") {
     payload.clientNif = cleanText(data.clientNif);
   }
 
-  if (typeof data.clientAddress !== 'undefined') {
+  if (typeof data.clientAddress !== "undefined") {
     payload.clientAddress = cleanText(data.clientAddress);
   }
 
-
-  if (typeof data.service !== 'undefined') {
+  if (typeof data.service !== "undefined") {
     payload.service = cleanText(data.service);
   }
 
-  if (typeof data.serviceType !== 'undefined') {
+  if (typeof data.serviceType !== "undefined") {
     payload.serviceType = cleanText(data.serviceType);
   }
 
-  if (typeof data.clientCity !== 'undefined') {
+  if (typeof data.clientCity !== "undefined") {
     payload.clientCity = cleanText(data.clientCity);
   }
 
-  if (typeof data.simulationId !== 'undefined') {
+  if (typeof data.simulationId !== "undefined") {
     payload.simulationId = cleanText(data.simulationId);
   }
 
-  if (typeof data.issueDate !== 'undefined') {
+  if (typeof data.issueDate !== "undefined") {
     payload.issueDate = cleanText(data.issueDate);
   }
 
-  if (typeof data.validityDate !== 'undefined') {
+  if (typeof data.validityDate !== "undefined") {
     payload.validityDate = cleanText(data.validityDate);
   }
 
-  if (typeof data.eventDate !== 'undefined') {
+  if (typeof data.eventDate !== "undefined") {
     payload.eventDate = cleanText(data.eventDate);
   }
 
-  if (typeof data.eventName !== 'undefined') {
+  if (typeof data.eventName !== "undefined") {
     payload.eventName = cleanText(data.eventName);
   }
 
-  if (typeof data.orderId !== 'undefined') {
+  if (typeof data.orderId !== "undefined") {
     payload.orderId = cleanText(data.orderId);
   }
 
-  if (typeof data.orderNumber !== 'undefined') {
+  if (typeof data.orderNumber !== "undefined") {
     payload.orderNumber = cleanText(data.orderNumber);
   }
 
-  if (typeof data.invoiceId !== 'undefined') {
+  if (typeof data.invoiceId !== "undefined") {
     payload.invoiceId = cleanText(data.invoiceId);
   }
 
-  if (typeof data.invoiceNumber !== 'undefined') {
+  if (typeof data.invoiceNumber !== "undefined") {
     payload.invoiceNumber = cleanText(data.invoiceNumber);
   }
-  if (typeof data.pdfUrl !== 'undefined') {
+  if (typeof data.pdfUrl !== "undefined") {
     payload.pdfUrl = data.pdfUrl;
   }
 
-  if (typeof data.pdfPath !== 'undefined') {
+  if (typeof data.pdfPath !== "undefined") {
     payload.pdfPath = data.pdfPath;
   }
 
-  if (typeof data.pdfGeneratedAt !== 'undefined') {
+  if (typeof data.pdfGeneratedAt !== "undefined") {
     payload.pdfGeneratedAt = data.pdfGeneratedAt;
   }
-  if (typeof data.items !== 'undefined') {
+  if (typeof data.items !== "undefined") {
     payload.items = normalizeItems(data.items);
   }
 
-  if (typeof data.menu !== 'undefined') {
+  if (typeof data.menu !== "undefined") {
     payload.menu = normalizeMenu(data.menu);
   }
 
-  if (typeof data.totals !== 'undefined') {
+  if (typeof data.totals !== "undefined") {
     payload.totals = normalizeTotals(data.totals);
   }
 
-  if (typeof data.dateLivraison !== 'undefined') {
+  if (typeof data.dateLivraison !== "undefined") {
     payload.dateLivraison = cleanText(data.dateLivraison);
   }
 
-  if (typeof data.deliveryDate !== 'undefined') {
+  if (typeof data.deliveryDate !== "undefined") {
     payload.deliveryDate = cleanText(data.deliveryDate);
   }
 
-  if (typeof data.deliveryTime !== 'undefined') {
+  if (typeof data.deliveryTime !== "undefined") {
     payload.deliveryTime = cleanText(data.deliveryTime);
   }
 
-  if (typeof data.deliveryAddress !== 'undefined') {
+  if (typeof data.deliveryAddress !== "undefined") {
     payload.deliveryAddress = cleanText(data.deliveryAddress);
   }
 
-  if (typeof data.servicePeriod !== 'undefined') {
+  if (typeof data.servicePeriod !== "undefined") {
     payload.servicePeriod = cleanText(data.servicePeriod);
   }
 
-  if (typeof data.guestCount !== 'undefined') {
+  if (typeof data.guestCount !== "undefined") {
     payload.guestCount = Number(data.guestCount || 0);
   }
 
-  if (typeof data.numberOfPeople !== 'undefined') {
+  if (typeof data.numberOfPeople !== "undefined") {
     payload.numberOfPeople = Number(data.numberOfPeople || 0);
   }
 
@@ -515,7 +506,7 @@ export async function updateCateringProforma(
 
 export async function updateCateringProformaMenu(
   id: string,
-  menu: CateringProformaMenuItem[]
+  menu: CateringProformaMenuItem[],
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
@@ -531,24 +522,24 @@ export async function updateCateringProformaMenu(
 export async function markProformaAsConvertedToOrder(
   id: string,
   orderId: string,
-  orderNumber: string
+  orderNumber: string,
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   const current = await getCateringProformaById(id);
 
   if (!current) {
-    throw new Error('Proforma introuvable');
+    throw new Error("Proforma introuvable");
   }
 
-  if ((current as any).status === 'cancelled') {
+  if ((current as any).status === "cancelled") {
     throw new Error(
-      'Cette proforma est annulée et ne peut plus être convertie.'
+      "Cette proforma est annulée et ne peut plus être convertie.",
     );
   }
 
   await updateDoc(ref, {
-    status: 'converted',
+    status: "converted",
     orderId,
     orderNumber,
     convertedAt: serverTimestamp(),
@@ -563,22 +554,22 @@ export async function markProformaAsConvertedToOrder(
 export async function markProformaAsInvoiced(
   id: string,
   invoiceId: string,
-  invoiceNumber: string
+  invoiceNumber: string,
 ): Promise<void> {
   const ref = doc(db, COLLECTION, id);
   const current = await getCateringProformaById(id);
 
   if (!current) {
-    throw new Error('Proforma introuvable');
+    throw new Error("Proforma introuvable");
   }
 
-  if ((current as any).status === 'cancelled') {
+  if ((current as any).status === "cancelled") {
     throw new Error(
-      'Cette proforma est annulée et ne peut plus être facturée.'
+      "Cette proforma est annulée et ne peut plus être facturée.",
     );
   }
   await updateDoc(ref, {
-    status: 'invoiced',
+    status: "invoiced",
     isInvoiced: true,
     invoiceId,
     invoiceNumber,
@@ -587,13 +578,11 @@ export async function markProformaAsInvoiced(
   });
 }
 
-export async function cancelCateringProforma(
-  id: string
-): Promise<void> {
+export async function cancelCateringProforma(id: string): Promise<void> {
   const ref = doc(db, COLLECTION, id);
 
   await updateDoc(ref, {
-    status: 'cancelled',
+    status: "cancelled",
     cancelledAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

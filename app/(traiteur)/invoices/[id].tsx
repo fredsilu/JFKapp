@@ -51,8 +51,6 @@ function toIsoDate(value: any): string {
   return "";
 }
 
-
-
 function getStatusLabel(status?: string) {
   switch (status) {
     case "draft":
@@ -73,8 +71,9 @@ function getStatusLabel(status?: string) {
 }
 
 function getItemDays(item: InvoiceItem): number {
-  const days = Number((item as any).numberOfDays ?? (item as any).days ?? 1);
-  return Number.isFinite(days) && days > 0 ? days : 1;
+  const days = Number((item as any).numberOfDays ?? (item as any).days ?? 0);
+
+  return Number.isFinite(days) ? days : 0;
 }
 
 function getItemTotal(item: InvoiceItem): number {
@@ -90,8 +89,6 @@ export default function InvoiceDetailScreen() {
   const [invoice, setInvoice] = useState<CateringInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
-
-
 
   const loadInvoice = useCallback(async () => {
     if (!id) {
@@ -125,28 +122,20 @@ export default function InvoiceDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       loadInvoice();
-    }, [loadInvoice])
+    }, [loadInvoice]),
   );
 
+  const isFullyCredited = invoice?.creditNoteSummary?.isFullyCredited === true;
 
-  const isFullyCredited =
-    invoice?.creditNoteSummary?.isFullyCredited === true;
+  const canCancel = invoice?.status === "issued" && !isFullyCredited;
 
-  const canCancel =
-    invoice?.status === "issued" && !isFullyCredited;
-
-  const hasDraftCreditNote =
-    creditNotes.some((n) => n.status === "draft");
+  const hasDraftCreditNote = creditNotes.some((n) => n.status === "draft");
 
   const canCreateCreditNote =
-    invoice?.status === "issued" &&
-    !isFullyCredited &&
-    !hasDraftCreditNote;
+    invoice?.status === "issued" && !isFullyCredited && !hasDraftCreditNote;
 
-  const canReplace =
-    invoice?.status === "issued" && !isFullyCredited;
-  const isDraft =
-    invoice?.status === "draft";
+  const canReplace = invoice?.status === "issued" && !isFullyCredited;
+  const isDraft = invoice?.status === "draft";
 
   function handleIssueDraftInvoice() {
     if (!invoice?.id) {
@@ -166,7 +155,7 @@ export default function InvoiceDetailScreen() {
           "Erreur",
           error instanceof Error
             ? error.message
-            : "Impossible d'émettre la facture"
+            : "Impossible d'émettre la facture",
         );
       } finally {
         setLoading(false);
@@ -174,10 +163,8 @@ export default function InvoiceDetailScreen() {
     };
 
     if (Platform.OS === "web") {
-     
-
       const confirmed = window.confirm(
-        "Confirmer l'émission de cette facture ? Après émission, elle ne sera plus modifiable."
+        "Confirmer l'émission de cette facture ? Après émission, elle ne sera plus modifiable.",
       );
 
       if (confirmed) confirmIssue();
@@ -190,29 +177,29 @@ export default function InvoiceDetailScreen() {
       [
         { text: "Annuler", style: "cancel" },
         { text: "Émettre", onPress: confirmIssue },
-      ]
+      ],
     );
   }
   function getInvoicePdfFileName(invoice: CateringInvoice) {
     const documentType = (invoice as any)?.documentType;
     const status = invoice?.status;
 
-    const number = invoice?.number || invoice?.id || 'document';
+    const number = invoice?.number || invoice?.id || "document";
     const eventName =
       (invoice as any).eventName ||
       invoice.designation ||
       invoice.client?.name ||
-      'Evenement';
+      "Evenement";
 
-    if (documentType === 'CREDIT_NOTE') {
+    if (documentType === "CREDIT_NOTE") {
       return `AVOIR_${number}.pdf`;
     }
 
-    if (status === 'cancelled') {
+    if (status === "cancelled") {
       return `FACTURE_ANNULEE_${number}.pdf`;
     }
 
-    if (status === 'replaced') {
+    if (status === "replaced") {
       return `FACTURE_REMPLACEE_${number}.pdf`;
     }
 
@@ -248,7 +235,7 @@ export default function InvoiceDetailScreen() {
       setPdfLoading(true);
 
       const logoBase64 = await getImageSource(
-        require("@/assets/images/crepolia-logo.png")
+        require("@/assets/images/crepolia-logo.png"),
       );
 
       let stampBase64 = "";
@@ -256,19 +243,17 @@ export default function InvoiceDetailScreen() {
 
       try {
         stampBase64 = await getImageSource(
-          require("@/assets/images/crepolia-stamp.png")
+          require("@/assets/images/crepolia-stamp.png"),
         );
-      } catch { }
+      } catch {}
 
       try {
         signatureBase64 = await getImageSource(
-          require("@/assets/images/crepolia-signature.png")
+          require("@/assets/images/crepolia-signature.png"),
         );
-      } catch { }
+      } catch {}
       const eventDate =
-        (invoice as any).eventDate ||
-        (invoice as any).dateEvenement ||
-        "-";
+        (invoice as any).eventDate || (invoice as any).dateEvenement || "-";
 
       const guestCount =
         (invoice as any).guestCount ||
@@ -277,21 +262,13 @@ export default function InvoiceDetailScreen() {
         0;
 
       const deliveryDate =
-        (invoice as any).dateLivraison ||
-        (invoice as any).deliveryDate ||
-        "-";
+        (invoice as any).dateLivraison || (invoice as any).deliveryDate || "-";
 
-      const deliveryTime =
-        (invoice as any).deliveryTime ||
-        "-";
+      const deliveryTime = (invoice as any).deliveryTime || "-";
 
-      const deliveryAddress =
-        (invoice as any).deliveryAddress ||
-        "-";
+      const deliveryAddress = (invoice as any).deliveryAddress || "-";
 
-      const servicePeriod =
-        (invoice as any).servicePeriod ||
-        "-";
+      const servicePeriod = (invoice as any).servicePeriod || "-";
       const totals: any = invoice.totals ?? {};
       const client: any = invoice.client ?? {};
 
@@ -322,7 +299,7 @@ export default function InvoiceDetailScreen() {
         discount: Number(totals.discount ?? 0),
         discountAmount: Number(totals.discountAmount ?? totals.discount ?? 0),
         totalAfterDiscount: Number(
-          totals.totalAfterDiscount ?? totals.total ?? totals.subtotal ?? 0
+          totals.totalAfterDiscount ?? totals.total ?? totals.subtotal ?? 0,
         ),
         total: Number(totals.total ?? totals.totalAfterDiscount ?? 0),
 
@@ -344,8 +321,6 @@ export default function InvoiceDetailScreen() {
             };
           }) ?? [],
       };
-
-
 
       invoicePdfData.logoBase64 = logoBase64;
       invoicePdfData.stampBase64 = stampBase64;
@@ -396,7 +371,7 @@ export default function InvoiceDetailScreen() {
     if (!pdfUrl) {
       Alert.alert(
         "PDF indisponible",
-        "Cette facture ne possède pas encore de PDF archivé."
+        "Cette facture ne possède pas encore de PDF archivé.",
       );
       return;
     }
@@ -480,9 +455,7 @@ export default function InvoiceDetailScreen() {
   }
 
   const eventDate =
-    (invoice as any).eventDate ||
-    (invoice as any).dateEvenement ||
-    "-";
+    (invoice as any).eventDate || (invoice as any).dateEvenement || "-";
 
   const guestCount =
     (invoice as any).guestCount ||
@@ -491,24 +464,21 @@ export default function InvoiceDetailScreen() {
     0;
 
   const deliveryDate =
-    (invoice as any).dateLivraison ||
-    (invoice as any).deliveryDate ||
-    "-";
+    (invoice as any).dateLivraison || (invoice as any).deliveryDate || "-";
 
-  const deliveryTime =
-    (invoice as any).deliveryTime ||
-    "-";
+  const deliveryTime = (invoice as any).deliveryTime || "-";
 
-  const deliveryAddress =
-    (invoice as any).deliveryAddress ||
-    "-";
+  const deliveryAddress = (invoice as any).deliveryAddress || "-";
 
-  const servicePeriod =
-    (invoice as any).servicePeriod ||
-    "-";
+  const servicePeriod = (invoice as any).servicePeriod || "-";
 
   const totals: any = invoice.totals ?? {};
   const discountAmount = Number(totals.discountAmount ?? totals.discount ?? 0);
+
+  function displayItemDays(item: InvoiceItem): string | number {
+    const days = getItemDays(item);
+    return days > 0 ? days : "-";
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -520,7 +490,9 @@ export default function InvoiceDetailScreen() {
         <Text style={styles.number}>{invoice.number || "—"}</Text>
 
         <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{getStatusLabel(invoice.status)}</Text>
+          <Text style={styles.statusText}>
+            {getStatusLabel(invoice.status)}
+          </Text>
         </View>
 
         <Text style={styles.client}>
@@ -530,9 +502,7 @@ export default function InvoiceDetailScreen() {
 
       {invoice.correction?.replacesInvoiceNumber ? (
         <View style={styles.relationCard}>
-          <Text style={styles.relationLabel}>
-            Facture remplacée
-          </Text>
+          <Text style={styles.relationLabel}>Facture remplacée</Text>
 
           <Text style={styles.relationValue}>
             Cette facture annule et remplace :
@@ -546,9 +516,7 @@ export default function InvoiceDetailScreen() {
 
       {invoice.correction?.replacedByInvoiceNumber ? (
         <View style={styles.relationCard}>
-          <Text style={styles.relationLabel}>
-            Facture remplacée
-          </Text>
+          <Text style={styles.relationLabel}>Facture remplacée</Text>
 
           <Text style={styles.relationValue}>
             Cette facture a été remplacée par :
@@ -560,21 +528,16 @@ export default function InvoiceDetailScreen() {
         </View>
       ) : null}
 
-
       {invoice.cancellation ? (
         <View style={styles.auditCard}>
-          <Text style={styles.auditTitle}>
-            Informations d’annulation
-          </Text>
+          <Text style={styles.auditTitle}>Informations d’annulation</Text>
 
           <Text style={styles.line}>
             Motif : {invoice.cancellation.reason || "—"}
           </Text>
 
           <Text style={styles.line}>
-            Date :
-            {" "}
-            {formatShortDocumentDate(invoice.cancellation.cancelledAt)}
+            Date : {formatShortDocumentDate(invoice.cancellation.cancelledAt)}
           </Text>
         </View>
       ) : null}
@@ -584,9 +547,7 @@ export default function InvoiceDetailScreen() {
 
         <Text style={styles.line}>RCCM : {invoice.client?.rccm || "—"}</Text>
         <Text style={styles.line}>idNat : {invoice.client?.idNat || "—"}</Text>
-        <Text style={styles.line}>
-          NIF : {invoice.client?.nif || "—"}
-        </Text>
+        <Text style={styles.line}>NIF : {invoice.client?.nif || "—"}</Text>
 
         <Text style={styles.line}>
           Adresse : {invoice.client?.address || "—"}
@@ -598,13 +559,9 @@ export default function InvoiceDetailScreen() {
           Date facture : {formatShortDocumentDate(invoice.issuedAt)}
         </Text>
         <View style={styles.currencyCard}>
-          <Text style={styles.currencyTitle}>
-            Paramètres monétaires
-          </Text>
+          <Text style={styles.currencyTitle}>Paramètres monétaires</Text>
 
-          <Text style={styles.line}>
-            Devise : {invoice.currency ?? "USD"}
-          </Text>
+          <Text style={styles.line}>Devise : {invoice.currency ?? "USD"}</Text>
 
           <Text style={styles.line}>
             Taux : 1 USD ={" "}
@@ -618,33 +575,19 @@ export default function InvoiceDetailScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>
-          Informations événement
-        </Text>
+        <Text style={styles.sectionTitle}>Informations événement</Text>
 
-        <Text style={styles.line}>
-          Nombre de personnes : {guestCount}
-        </Text>
+        <Text style={styles.line}>Nombre de personnes : {guestCount}</Text>
 
-        <Text style={styles.line}>
-          Date événement : {eventDate}
-        </Text>
+        <Text style={styles.line}>Date événement : {eventDate}</Text>
 
-        <Text style={styles.line}>
-          Date livraison : {deliveryDate}
-        </Text>
+        <Text style={styles.line}>Date livraison : {deliveryDate}</Text>
 
-        <Text style={styles.line}>
-          Heure livraison : {deliveryTime}
-        </Text>
+        <Text style={styles.line}>Heure livraison : {deliveryTime}</Text>
 
-        <Text style={styles.line}>
-          Période prestation : {servicePeriod}
-        </Text>
+        <Text style={styles.line}>Période prestation : {servicePeriod}</Text>
 
-        <Text style={styles.line}>
-          Adresse livraison : {deliveryAddress}
-        </Text>
+        <Text style={styles.line}>Adresse livraison : {deliveryAddress}</Text>
       </View>
 
       <View style={styles.card}>
@@ -660,7 +603,7 @@ export default function InvoiceDetailScreen() {
                 <Text style={styles.itemLabel}>{item.label || "—"}</Text>
 
                 <Text style={styles.itemSub}>
-                  Jrs : {getItemDays(item)} × Qté : {item.quantity ?? 0} ×{" "}
+                  Jrs : {displayItemDays(item)} × Qté : {item.quantity ?? 0} ×{" "}
                   {formatCurrency(Number((item as any).unitPrice ?? 0))}
                 </Text>
               </View>
@@ -720,7 +663,9 @@ export default function InvoiceDetailScreen() {
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Solde créditable</Text>
             <Text style={styles.totalValue}>
-              {formatCurrency(invoice.creditNoteSummary.remainingCreditableAmount ?? 0)}
+              {formatCurrency(
+                invoice.creditNoteSummary.remainingCreditableAmount ?? 0,
+              )}
             </Text>
           </View>
 
@@ -784,26 +729,17 @@ export default function InvoiceDetailScreen() {
       ) : null}
 
       {isDraft ? (
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={goToEditInvoice}
-        >
-          <Text style={styles.editButtonText}>
-            Modifier la facture
-          </Text>
+        <TouchableOpacity style={styles.editButton} onPress={goToEditInvoice}>
+          <Text style={styles.editButtonText}>Modifier la facture</Text>
         </TouchableOpacity>
       ) : null}
-
-
 
       {isDraft ? (
         <TouchableOpacity
           style={styles.issueButton}
           onPress={handleIssueDraftInvoice}
         >
-          <Text style={styles.issueButtonText}>
-            Émettre la facture
-          </Text>
+          <Text style={styles.issueButtonText}>Émettre la facture</Text>
         </TouchableOpacity>
       ) : null}
       {(invoice as any)?.pdfUrl ? (
@@ -811,9 +747,7 @@ export default function InvoiceDetailScreen() {
           style={styles.viewPdfButton}
           onPress={handleOpenStoredPdf}
         >
-          <Text style={styles.viewPdfButtonText}>
-            Voir PDF archivé
-          </Text>
+          <Text style={styles.viewPdfButtonText}>Voir PDF archivé</Text>
         </TouchableOpacity>
       ) : null}
       <TouchableOpacity
@@ -833,9 +767,7 @@ export default function InvoiceDetailScreen() {
           style={styles.cancelButton}
           onPress={goToCancelInvoice}
         >
-          <Text style={styles.cancelButtonText}>
-            Annuler facture
-          </Text>
+          <Text style={styles.cancelButtonText}>Annuler facture</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -844,23 +776,15 @@ export default function InvoiceDetailScreen() {
           style={styles.replaceButton}
           onPress={goToReplaceInvoice}
         >
-          <Text style={styles.replaceButtonText}>
-            Annule et remplace
-          </Text>
+          <Text style={styles.replaceButtonText}>Annule et remplace</Text>
         </TouchableOpacity>
       ) : null}
 
       {canCreateCreditNote ? (
-        <TouchableOpacity
-          style={styles.creditButton}
-          onPress={goToCreditNote}
-        >
-          <Text style={styles.creditButtonText}>
-            Créer un avoir
-          </Text>
+        <TouchableOpacity style={styles.creditButton} onPress={goToCreditNote}>
+          <Text style={styles.creditButtonText}>Créer un avoir</Text>
         </TouchableOpacity>
       ) : null}
-
 
       <TouchableOpacity
         style={styles.historyButton}
@@ -868,7 +792,6 @@ export default function InvoiceDetailScreen() {
       >
         <Text style={styles.historyButtonText}>Voir historique</Text>
       </TouchableOpacity>
-
 
       <TouchableOpacity
         style={styles.backButton}
@@ -1208,5 +1131,4 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 15,
   },
-
 });

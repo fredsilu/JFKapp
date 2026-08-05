@@ -143,6 +143,7 @@ export function buildInvoiceHTML(
   assets?: InvoicePdfAssets,
 ): string {
   const items = invoice.items || [];
+
   const isCreditNote = (invoice as any).documentType === "CREDIT_NOTE";
   const documentCurrency = getDocumentCurrency(invoice);
   const exchangeRate = getExchangeRate(invoice);
@@ -153,7 +154,13 @@ export function buildInvoiceHTML(
       (item: any) => `
 <tr>
   <td class="designation">${safe(item.label)}</td>
-  <td class="center">${item.days && item.days > 0 ? item.days : "-"}</td>
+  <td class="center">
+  ${
+    Number(item.days ?? item.numberOfDays ?? 0) > 0
+      ? Number(item.days ?? item.numberOfDays)
+      : "-"
+  }
+</td>
   <td class="center">${item.quantity || 0}</td>
   <td class="currency">${currency}</td>
 <td class="price">

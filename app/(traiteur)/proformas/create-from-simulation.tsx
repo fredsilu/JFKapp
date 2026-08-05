@@ -1,5 +1,5 @@
 //app/(traiteur)/proformas/create-form-simulation.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,24 +9,24 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { collection, getDocs } from 'firebase/firestore';
+} from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { sectionsToDocumentItems } from "@/src/utils/cateringSectionsToDocumentItems";
 import {
   getCompanySettings,
   DocumentCurrency,
 } from "@/src/services/companySettings.service";
 
-import { db } from '@/lib/firebase';
-import { getCateringSimulations } from '@/src/services/cateringSimulation.service';
+import { db } from "@/lib/firebase";
+import { getCateringSimulations } from "@/src/services/cateringSimulation.service";
 import {
   createCateringProforma,
   CateringProformaMenuItem,
-} from '@/src/services/cateringProforma.service';
-import { fetchClients } from '@/src/services/clientService';
-import { formatCurrency } from '@/src/utils/costs';
-import { Picker } from '@react-native-picker/picker';
-
+} from "@/src/services/cateringProforma.service";
+import { fetchClients } from "@/src/services/clientService";
+import { formatCurrency } from "@/src/utils/costs";
+import { Picker } from "@react-native-picker/picker";
 
 type CateringDish = {
   id: string;
@@ -37,18 +37,16 @@ type CateringDish = {
 };
 
 async function fetchCateringDishes(): Promise<CateringDish[]> {
-  const snap = await getDocs(collection(db, 'dishes'));
+  const snap = await getDocs(collection(db, "dishes"));
 
   return snap.docs
     .map((d) => ({
       id: d.id,
-      ...(d.data() as Omit<CateringDish, 'id'>),
+      ...(d.data() as Omit<CateringDish, "id">),
     }))
     .filter((dish) => dish.name && dish.isDeleted !== true)
     .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
-
-
 
 export default function CreateProformaFromSimulationScreen() {
   const params = useLocalSearchParams<{
@@ -65,9 +63,13 @@ export default function CreateProformaFromSimulationScreen() {
   const [simulation, setSimulation] = useState<any>(null);
   const [client, setClient] = useState<any>(null);
   const [dishes, setDishes] = useState<CateringDish[]>([]);
-  const [selectedDishId, setSelectedDishId] = useState<string>('');
-  const [selectedMenu, setSelectedMenu] = useState<CateringProformaMenuItem[]>([]);
-  const [menuNotesByDishId, setMenuNotesByDishId] = useState<Record<string, string>>({});
+  const [selectedDishId, setSelectedDishId] = useState<string>("");
+  const [selectedMenu, setSelectedMenu] = useState<CateringProformaMenuItem[]>(
+    [],
+  );
+  const [menuNotesByDishId, setMenuNotesByDishId] = useState<
+    Record<string, string>
+  >({});
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,7 +98,7 @@ export default function CreateProformaFromSimulationScreen() {
         }
 
         const foundClient = clients.find(
-          (c: any) => c.id === foundSimulation.clientId
+          (c: any) => c.id === foundSimulation.clientId,
         );
 
         setSimulation(foundSimulation);
@@ -107,8 +109,8 @@ export default function CreateProformaFromSimulationScreen() {
         setDocumentCurrency(settings.defaultDocumentCurrency);
         setUsdToCdfRate(String(settings.usdToCdfRate ?? 2850));
       } catch (e) {
-        console.error('❌ load simulation proforma error:', e);
-        Alert.alert('Erreur', 'Impossible de charger la simulation');
+        console.error("❌ load simulation proforma error:", e);
+        Alert.alert("Erreur", "Impossible de charger la simulation");
       } finally {
         setLoading(false);
       }
@@ -124,85 +126,43 @@ export default function CreateProformaFromSimulationScreen() {
   const items = useMemo(() => {
     if (!simulation) return [];
 
-    return (simulation.sections ?? [])
-      .filter((section: any) => section.enabled)
-      .map((section: any) => {
-        const isService =
-          section.kind === "service" || section.type === "service";
-
-        if (isService && section.serviceMode === "different_days") {
-          const total = Number(section.total ?? 0);
-
-          return {
-            label: "Forfait Service traiteur",
-            quantity: 1,
-            numberOfDays: 1,
-            unitPrice: total,
-            total,
-          };
-        }
-
-        if (isService) {
-          const numberOfDays = Number(section.numberOfDays ?? 1);
-          const unitPrice = Number(section.unitPrice ?? 0);
-          const total = Number(section.total ?? numberOfDays * unitPrice);
-
-          return {
-            label: "Service traiteur",
-            quantity: 1,
-            numberOfDays,
-            unitPrice,
-            total,
-          };
-        }
-
-        const quantity = Number(section.quantity ?? 0);
-        const numberOfDays = Number(section.numberOfDays ?? 1);
-        const unitPrice = Number(section.unitPrice ?? 0);
-        const total = Number(section.total ?? quantity * numberOfDays * unitPrice);
-
-        return {
-          label: section.name,
-          quantity,
-          numberOfDays,
-          unitPrice,
-          total,
-        };
-      })
-      .filter((item: any) => item.quantity > 0 && item.unitPrice > 0);
+    return sectionsToDocumentItems(simulation.sections ?? []).map(
+      (item: any) => ({
+        label: item.label,
+        quantity: Number(item.quantity ?? 0),
+        numberOfDays: Number(item.days ?? item.numberOfDays ?? 0),
+        unitPrice: Number(item.unitPrice ?? 0),
+        total: Number(item.totalPrice ?? item.total ?? 0),
+      }),
+    );
   }, [simulation]);
 
   const subtotal = useMemo((): number => {
     return items.reduce(
-      (sum: number, item: {
-        total: number;
-      }) => sum + Number(item.total || 0),
-      0
+      (
+        sum: number,
+        item: {
+          total: number;
+        },
+      ) => sum + Number(item.total || 0),
+      0,
     );
   }, [items]);
 
   const generalDiscount = Number(
-    simulation?.totals?.discountAmount ??
-    simulation?.discount ??
-    0
+    simulation?.totals?.discountAmount ?? simulation?.discount ?? 0,
   );
 
-  const totalAfterDiscount = Math.max(
-    subtotal - generalDiscount,
-    0
-  );
+  const totalAfterDiscount = Math.max(subtotal - generalDiscount, 0);
 
   function getClientName() {
-    return client?.name || client?.clientName || simulation?.clientName || 'Client';
+    return (
+      client?.name || client?.clientName || simulation?.clientName || "Client"
+    );
   }
 
   function getClientRccm() {
-    return (
-      client?.rccm ??
-      client?.RCCM ??
-      simulation?.clientRccm ??
-      ''
-    );
+    return client?.rccm ?? client?.RCCM ?? simulation?.clientRccm ?? "";
   }
 
   function getClientIdNat() {
@@ -211,33 +171,24 @@ export default function CreateProformaFromSimulationScreen() {
       client?.idnat ??
       client?.idNAT ??
       simulation?.clientIdNat ??
-      ''
+      ""
     );
   }
 
   function getClientNif() {
-    return (
-      client?.nif ??
-      client?.NIF ??
-      simulation?.clientNif ??
-      ''
-    );
+    return client?.nif ?? client?.NIF ?? simulation?.clientNif ?? "";
   }
 
   function getClientAddress() {
-    return client?.address || simulation?.clientAddress || '';
+    return client?.address || simulation?.clientAddress || "";
   }
 
   function getClientCity() {
-    return (
-      client?.city ??
-      simulation?.clientCity ??
-      'Kinshasa'
-    );
+    return client?.city ?? simulation?.clientCity ?? "Kinshasa";
   }
 
   function getEventDate() {
-    return simulation?.dateLivraison || simulation?.eventDate || '';
+    return simulation?.dateLivraison || simulation?.eventDate || "";
   }
 
   function getValidityDate() {
@@ -256,11 +207,11 @@ export default function CreateProformaFromSimulationScreen() {
       prev.map((item) =>
         item.dishId === dishId
           ? {
-            ...item,
-            notes,
-          }
-          : item
-      )
+              ...item,
+              notes,
+            }
+          : item,
+      ),
     );
   }
 
@@ -275,8 +226,8 @@ export default function CreateProformaFromSimulationScreen() {
 
     if (items.length === 0) {
       Alert.alert(
-        'Erreur',
-        'Impossible de créer une proforma sans lignes commerciales.'
+        "Erreur",
+        "Impossible de créer une proforma sans lignes commerciales.",
       );
       return;
     }
@@ -299,53 +250,34 @@ export default function CreateProformaFromSimulationScreen() {
         issueDate: new Date().toISOString().slice(0, 10),
         validityDate: getValidityDate(),
 
-        eventDate:
-          simulation.eventDate ||
-          simulation.dateEvenement ||
-          "",
+        eventDate: simulation.eventDate || simulation.dateEvenement || "",
 
         eventName:
-          simulation.name ||
-          simulation.eventName ||
-          "Évènement sans nom",
+          simulation.name || simulation.eventName || "Évènement sans nom",
 
         dateLivraison:
-          simulation.dateLivraison ||
-          simulation.deliveryDate ||
-          "",
+          simulation.dateLivraison || simulation.deliveryDate || "",
 
-        deliveryDate:
-          simulation.deliveryDate ||
-          simulation.dateLivraison ||
-          "",
+        deliveryDate: simulation.deliveryDate || simulation.dateLivraison || "",
 
-        deliveryTime:
-          simulation.deliveryTime || "",
+        deliveryTime: simulation.deliveryTime || "",
 
-        deliveryAddress:
-          simulation.deliveryAddress || "",
+        deliveryAddress: simulation.deliveryAddress || "",
 
-        guestCount:
-          Number(
-            simulation.guestCount ||
-            simulation.numberOfPeople ||
-            0
-          ),
+        guestCount: Number(
+          simulation.guestCount || simulation.numberOfPeople || 0,
+        ),
 
-        numberOfPeople:
-          Number(
-            simulation.numberOfPeople ||
-            simulation.guestCount ||
-            0
-          ),
+        numberOfPeople: Number(
+          simulation.numberOfPeople || simulation.guestCount || 0,
+        ),
 
-        servicePeriod:
-          simulation.servicePeriod || "",
+        servicePeriod: simulation.servicePeriod || "",
 
-        status: 'draft',
+        status: "draft",
 
-        service: 'Service traiteur',
-        serviceType: 'Service traiteur',
+        service: "Service traiteur",
+        serviceType: "Service traiteur",
         sections: simulation.sections ?? [],
         items,
         menu: selectedMenu,
@@ -358,18 +290,18 @@ export default function CreateProformaFromSimulationScreen() {
         },
       });
 
-      Alert.alert('Succès', 'Proforma créée avec succès');
+      Alert.alert("Succès", "Proforma créée avec succès");
 
       router.replace({
-        pathname: '/(traiteur)/proformas/[id]',
+        pathname: "/(traiteur)/proformas/[id]",
         params: {
           id: proformaId,
-          backTo: backTo || '/(traiteur)/simulations',
+          backTo: backTo || "/(traiteur)/simulations",
         },
       });
     } catch (e: any) {
-      console.error('❌ create proforma error:', e);
-      Alert.alert('Erreur', e?.message || 'Impossible de créer la proforma');
+      console.error("❌ create proforma error:", e);
+      Alert.alert("Erreur", e?.message || "Impossible de créer la proforma");
     } finally {
       setSaving(false);
     }
@@ -398,9 +330,13 @@ export default function CreateProformaFromSimulationScreen() {
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Simulation</Text>
-        <Text style={styles.line}>{simulation.name || 'Simulation sans nom'}</Text>
+        <Text style={styles.line}>
+          {simulation.name || "Simulation sans nom"}
+        </Text>
         <Text style={styles.line}>Client : {getClientName()}</Text>
-        <Text style={styles.line}>Date événement : {getEventDate() || '—'}</Text>
+        <Text style={styles.line}>
+          Date événement : {getEventDate() || "—"}
+        </Text>
       </View>
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Devise du document</Text>
@@ -463,8 +399,10 @@ export default function CreateProformaFromSimulationScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.itemLabel}>{item.label}</Text>
               <Text style={styles.itemSub}>
-                Jrs : {item.numberOfDays || 1} | Qté : {item.quantity} ×{' '}
-                {formatCurrency(item.unitPrice)}
+                Jrs :{" "}
+                {Number(item.numberOfDays ?? 0) > 0 ? item.numberOfDays : "-"}
+                {" | "}
+                Qté : {item.quantity} × {formatCurrency(item.unitPrice)}
               </Text>
             </View>
 
@@ -522,7 +460,7 @@ export default function CreateProformaFromSimulationScreen() {
             if (!dish) return;
 
             if (selectedMenu.some((m) => m.dishId === dish.id)) {
-              Alert.alert('Déjà ajouté', 'Ce plat est déjà dans le menu.');
+              Alert.alert("Déjà ajouté", "Ce plat est déjà dans le menu.");
               return;
             }
 
@@ -531,12 +469,12 @@ export default function CreateProformaFromSimulationScreen() {
               {
                 dishId: dish.id,
                 name: dish.name,
-                category: dish.category || '',
-                notes: '',
+                category: dish.category || "",
+                notes: "",
               },
             ]);
 
-            setSelectedDishId('');
+            setSelectedDishId("");
           }}
         >
           <Text style={styles.addButtonText}>Ajouter le plat</Text>
@@ -556,7 +494,7 @@ export default function CreateProformaFromSimulationScreen() {
             <TouchableOpacity
               onPress={() =>
                 setSelectedMenu((prev) =>
-                  prev.filter((d) => d.dishId !== item.dishId)
+                  prev.filter((d) => d.dishId !== item.dishId),
                 )
               }
             >
@@ -581,9 +519,7 @@ export default function CreateProformaFromSimulationScreen() {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() =>
-          router.replace(
-            (backTo || '/(traiteur)/simulations') as any
-          )
+          router.replace((backTo || "/(traiteur)/simulations") as any)
         }
       >
         <Text style={styles.backButtonText}>Retour aux simulations</Text>
@@ -598,29 +534,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#F4F6F8',
+    backgroundColor: "#F4F6F8",
   },
 
   center: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   loadingText: {
     marginTop: 10,
-    color: '#4B5563',
+    color: "#4B5563",
   },
 
   title: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 16,
-    color: '#111827',
+    color: "#111827",
   },
 
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 12,
     marginBottom: 14,
@@ -628,95 +564,95 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 10,
     fontSize: 16,
-    color: '#111827',
+    color: "#111827",
   },
 
   helperText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 12,
   },
 
   line: {
     fontSize: 14,
-    color: '#4B5563',
+    color: "#4B5563",
     marginBottom: 5,
   },
 
   itemRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
     paddingVertical: 10,
   },
 
   itemLabel: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
   },
 
   itemSub: {
     fontSize: 13,
-    color: '#6B7280',
+    color: "#6B7280",
     marginTop: 3,
   },
 
   itemTotal: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
     marginLeft: 10,
   },
 
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: "#E5E7EB",
   },
 
   totalLabel: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#111827',
+    fontWeight: "900",
+    color: "#111827",
   },
 
   totalValue: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#111827',
+    fontWeight: "900",
+    color: "#111827",
   },
 
   dishName: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
   },
 
   notesInput: {
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 10,
     padding: 10,
     minHeight: 44,
-    color: '#111827',
-    backgroundColor: '#fff',
-    textAlignVertical: 'top',
+    color: "#111827",
+    backgroundColor: "#fff",
+    textAlignVertical: "top",
   },
 
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     padding: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 4,
   },
 
@@ -725,55 +661,55 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
   },
 
   backButton: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     padding: 13,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
 
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 10,
     marginBottom: 10,
   },
 
   addButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: "#10B981",
     padding: 12,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
   },
 
   addButtonText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
   },
 
   selectedDish: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     padding: 10,
     borderRadius: 10,
     marginBottom: 8,
   },
 
   removeText: {
-    color: '#EF4444',
-    fontWeight: '700',
+    color: "#EF4444",
+    fontWeight: "700",
     marginTop: 5,
   },
 
   backButtonText: {
-    color: '#111827',
-    fontWeight: '800',
+    color: "#111827",
+    fontWeight: "800",
   },
   currencyRow: {
     flexDirection: "row",
