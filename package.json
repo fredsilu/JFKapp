@@ -40,7 +40,9 @@
     "import:archives:test": "dotenv -e .env.test -- node scripts/import-historical-archives.js --test",
     "import:archives:prod:test": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js --test",
     "import:archives:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js",
-    "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
+    "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts",
+    "normalize:invoice-numbers:dry": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/normalize-historical-invoice-numbers.js",
+    "normalize:invoice-numbers:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/normalize-historical-invoice-numbers.js --commit"
   },
   "expo": {
     "doctor": {
