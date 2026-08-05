@@ -1,7 +1,7 @@
 {
   "name": "jfkapp",
   "main": "expo-router/entry",
-  "version": "3.4.1",
+  "version": "3.5.0",
   "scripts": {
     "start": "npm run start:test",
     "reset-project": "node ./scripts/reset-project.js",
@@ -40,7 +40,9 @@
     "import:archives:test": "dotenv -e .env.test -- node scripts/import-historical-archives.js --test",
     "import:archives:prod:test": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js --test",
     "import:archives:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/import-historical-archives.js",
-    "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts"
+    "import:ingredients:prod": "dotenv -e .env.production -- tsx scripts/importIngredients.ts",
+    "normalize:invoice-numbers:dry": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/normalize-historical-invoice-numbers.js",
+    "normalize:invoice-numbers:prod": "dotenv -e .env.production -- cross-env APP_ENV=production node scripts/normalize-historical-invoice-numbers.js --commit"
   },
   "expo": {
     "doctor": {
@@ -58,7 +60,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "dotenv": "^17.4.2",
-    "expo": "~54.0.34",
+    "expo": "~54.0.36",
     "expo-asset": "~12.0.13",
     "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
@@ -74,7 +76,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
-    "expo-updates": "~29.0.18",
+    "expo-updates": "~29.0.19",
     "expo-web-browser": "~15.0.11",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.10.0",

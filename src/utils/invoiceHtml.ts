@@ -1,5 +1,5 @@
 //src/utils/invoiceHtml.ts
-import { InvoicePdfData } from '@/types/invoicePdf.types';
+import { InvoicePdfData } from "@/types/invoicePdf.types";
 
 type InvoicePdfAssets = {
   logoBase64?: string;
@@ -8,7 +8,7 @@ type InvoicePdfAssets = {
 };
 
 function money(value?: number) {
-  return Number(value || 0).toLocaleString('fr-FR', {
+  return Number(value || 0).toLocaleString("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -25,7 +25,7 @@ function getExchangeRate(invoice: InvoicePdfData): number {
 function convertFromUsd(
   value: number | undefined,
   currency: "USD" | "CDF",
-  exchangeRate: number
+  exchangeRate: number,
 ): number {
   const amount = Number(value || 0);
   return currency === "CDF" ? amount * exchangeRate : amount;
@@ -43,7 +43,7 @@ function formatMoneyByCurrency(value: number, currency: "USD" | "CDF") {
 }
 
 function safe(value?: string | null) {
-  return value && value.trim() ? value.trim() : '';
+  return value && value.trim() ? value.trim() : "";
 }
 
 function toDate(value: any): Date | null {
@@ -53,7 +53,7 @@ function toDate(value: any): Date | null {
 
   if (value instanceof Date) return value;
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
 
     // Format français : JJ/MM/AAAA
@@ -77,34 +77,34 @@ function toDate(value: any): Date | null {
   return null;
 }
 
-function formatLongDate(value: any, lang: 'fr' | 'en' = 'fr') {
+function formatLongDate(value: any, lang: "fr" | "en" = "fr") {
   const date = toDate(value);
-  if (!date) return '—';
+  if (!date) return "—";
 
-  return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+  return date.toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }
 
-function formatShortDate(value: any, lang: 'fr' | 'en' = 'fr') {
+function formatShortDate(value: any, lang: "fr" | "en" = "fr") {
   const date = toDate(value);
-  if (!date) return '—';
+  if (!date) return "—";
 
-  return date.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+  return date.toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 }
 
 function safeClientName(invoice: InvoicePdfData) {
   const name = safe(invoice.clientName);
 
-  if (!name || name.toLowerCase() === 'client') {
-    return 'NOM DU CLIENT À RENSEIGNER';
+  if (!name || name.toLowerCase() === "client") {
+    return "NOM DU CLIENT À RENSEIGNER";
   }
 
   return name;
@@ -113,42 +113,38 @@ function safeClientName(invoice: InvoicePdfData) {
 function formatClientCity(value?: string | null) {
   const city = safe(value);
 
-  if (!city) return 'Kinshasa / RDC';
+  if (!city) return "Kinshasa / RDC";
 
-  if (city.toLowerCase().includes('rdc')) {
+  if (city.toLowerCase().includes("rdc")) {
     return city;
   }
 
   return `${city} / RDC`;
 }
 
-
-
-function getDocumentTitle(
-  status?: string,
-  documentType?: string
-) {
-  if (documentType === 'CREDIT_NOTE') {
-    return 'FACTURE D’AVOIR';
+function getDocumentTitle(status?: string, documentType?: string) {
+  if (documentType === "CREDIT_NOTE") {
+    return "FACTURE D’AVOIR";
   }
 
-  if (status === 'cancelled') {
-    return 'FACTURE ANNULÉE';
+  if (status === "cancelled") {
+    return "FACTURE ANNULÉE";
   }
 
-  if (status === 'replaced') {
-    return 'FACTURE ANNULÉE ET REMPLACÉE';
+  if (status === "replaced") {
+    return "FACTURE ANNULÉE ET REMPLACÉE";
   }
 
-  return 'FACTURE';
+  return "FACTURE";
 }
 
 export function buildInvoiceHTML(
   invoice: InvoicePdfData,
-  assets?: InvoicePdfAssets
+  assets?: InvoicePdfAssets,
 ): string {
   const items = invoice.items || [];
-  const isCreditNote = (invoice as any).documentType === 'CREDIT_NOTE';
+
+  const isCreditNote = (invoice as any).documentType === "CREDIT_NOTE";
   const documentCurrency = getDocumentCurrency(invoice);
   const exchangeRate = getExchangeRate(invoice);
   const currency = currencySymbol(documentCurrency);
@@ -158,34 +154,36 @@ export function buildInvoiceHTML(
       (item: any) => `
 <tr>
   <td class="designation">${safe(item.label)}</td>
-  <td class="center">${item.days && item.days > 0 ? item.days : "-"}</td>
+  <td class="center">
+  ${
+    Number(item.days ?? item.numberOfDays ?? 0) > 0
+      ? Number(item.days ?? item.numberOfDays)
+      : "-"
+  }
+</td>
   <td class="center">${item.quantity || 0}</td>
   <td class="currency">${currency}</td>
 <td class="price">
   ${formatMoneyByCurrency(
-        convertFromUsd(
-          item.unitPrice,
-          documentCurrency,
-          exchangeRate
-        ),
-        documentCurrency
-      )}
+    convertFromUsd(item.unitPrice, documentCurrency, exchangeRate),
+    documentCurrency,
+  )}
 </td>
 
 <td class="currency">${currency}</td>
 <td class="price">
   ${formatMoneyByCurrency(
-        convertFromUsd(
-          item.totalPrice ?? item.total,
-          documentCurrency,
-          exchangeRate
-        ),
-        documentCurrency
-      )}
+    convertFromUsd(
+      item.totalPrice ?? item.total,
+      documentCurrency,
+      exchangeRate,
+    ),
+    documentCurrency,
+  )}
 </td>
-</tr>`
+</tr>`,
     )
-    .join('');
+    .join("");
 
   const subtotal = invoice.subtotal ?? invoice.total ?? 0;
   const discountAmount = (invoice as any).discountAmount ?? 0;
@@ -196,22 +194,22 @@ export function buildInvoiceHTML(
   const displayedSubtotal = convertFromUsd(
     subtotal,
     documentCurrency,
-    exchangeRate
+    exchangeRate,
   );
 
   const displayedDiscountAmount = convertFromUsd(
     discountAmount,
     documentCurrency,
-    exchangeRate
+    exchangeRate,
   );
 
   const displayedTotalAfterDiscount = convertFromUsd(
     totalAfterDiscount,
     documentCurrency,
-    exchangeRate
+    exchangeRate,
   );
 
-  const status = (invoice as any).status ?? 'issued';
+  const status = (invoice as any).status ?? "issued";
 
   const clientName = safeClientName(invoice);
   const clientRccm = safe(invoice.clientRccm);
@@ -220,63 +218,58 @@ export function buildInvoiceHTML(
   const clientCity = formatClientCity(invoice.clientCity);
   const clientNif = safe((invoice as any).clientNif);
 
-  const invoiceDateFormatted = formatLongDate(invoice.date, 'fr');
+  const invoiceDateFormatted = formatLongDate(invoice.date, "fr");
 
   const eventDateFormatted = formatShortDate(
     (invoice as any).eventDate ||
-    (invoice as any).dateEvenement ||
-    (invoice as any).deliveryDate ||
-    (invoice as any).dateLivraison,
-    'fr'
+      (invoice as any).dateEvenement ||
+      (invoice as any).deliveryDate ||
+      (invoice as any).dateLivraison,
+    "fr",
   );
-  const servicePeriod =
-    safe((invoice as any).servicePeriod);
+  const servicePeriod = safe((invoice as any).servicePeriod);
 
-  const guestCount =
-    (invoice as any).guestCount ||
-    (invoice as any).numberOfPeople ||
-    items?.[0]?.quantity ||
-    0;
+  const guestCount = Number(
+    (invoice as any).guestCount ?? (invoice as any).numberOfPeople ?? 0,
+  );
+
+  const guestCountHtml =
+    guestCount > 0 ? `<strong>Nbr de personnes :</strong> ${guestCount}` : "";
+
   const eventName =
     safe((invoice as any).eventName) ||
     safe((invoice as any).eventTitle) ||
-    'Évènement sans nom';
+    "Évènement sans nom";
 
-  const companyPhone =
-    safe((invoice as any).companyPhone) || "+243 898111165";
+  const companyPhone = safe((invoice as any).companyPhone) || "+243 898111165";
 
   const companyEmail =
     safe((invoice as any).companyEmail) || "contact@crepolia.com";
 
   const companyAddress = (
-    safe((invoice as any).companyAddress) ||
-    "54, Avenue de la Justice\nC/Gombe"
+    safe((invoice as any).companyAddress) || "54, Avenue de la Justice\nC/Gombe"
   ).replace(/\n/g, "<br/>");
 
   const companyRccm =
     safe((invoice as any).companyRccm) || "CD/KNG/RCCM/20-A-00139";
 
-  const companyIdNat =
-    safe((invoice as any).companyIdNat) || "01-852-N58548R";
+  const companyIdNat = safe((invoice as any).companyIdNat) || "01-852-N58548R";
 
-  const companyNif =
-    safe((invoice as any).companyNif) || "A2171348B";
+  const companyNif = safe((invoice as any).companyNif) || "A2171348B";
 
-  const bankName =
-    safe((invoice as any).bankName) || "EQUITYBCDC";
+  const bankName = safe((invoice as any).bankName) || "EQUITYBCDC";
 
   const bankAccountNumber =
-    safe((invoice as any).bankAccountNumber) || "0121265120026";  	
+    safe((invoice as any).bankAccountNumber) || "0121265120026";
 
-  const bankCurrency =
-    safe((invoice as any).bankCurrency) || "USD";
+  const bankCurrency = safe((invoice as any).bankCurrency) || "USD";
 
   const bankText = `${bankName} : ${bankAccountNumber} ${bankCurrency}`;
 
   const headerHTML = `
 <div class="header">
   <div class="logo">
-    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ''}
+    ${assets?.logoBase64 ? `<img src="${assets.logoBase64}" />` : ""}
   </div>
 
   <div class="address">
@@ -649,28 +642,26 @@ body {
 <body>
 <div class="pdf-page">
 
-${status === 'cancelled'
-      ? `
+${
+  status === "cancelled"
+    ? `
 <div class="watermark">ANNULÉE</div>
 `
-      : status === 'replaced'
-        ? `
+    : status === "replaced"
+      ? `
 <div class="watermark">REMPLACÉE</div>
 `
-        : (invoice as any).documentType === 'CREDIT_NOTE'
-          ? `
+      : (invoice as any).documentType === "CREDIT_NOTE"
+        ? `
 <div class="watermark">AVOIR</div>
 `
-          : ''
-    }
+        : ""
+}
 
 ${headerHTML}
 
 <div class="title">
-  ${getDocumentTitle(
-      status,
-      (invoice as any).documentType
-    )}
+  ${getDocumentTitle(status, (invoice as any).documentType)}
 </div>
 <div class="number">Numéro : ${safe(invoice.invoiceNumber)}</div>
 
@@ -678,18 +669,19 @@ ${headerHTML}
 
 <div class="client-block">
   <div class="client-name">${clientName}</div>
-  <div>RCCM : ${clientRccm || '—'}</div>
-  <div>idNat : ${clientIdNat || '—'}</div>
+  <div>RCCM : ${clientRccm || "—"}</div>
+  <div>idNat : ${clientIdNat || "—"}</div>
   <div>NIF : ${clientNif || "—"}</div>
-  <div>${clientAddress || '—'}</div>
+  <div>${clientAddress || "—"}</div>
   <div><u>${clientCity}</u></div>
 
   <div class="issue-date">
     ${invoiceDateFormatted}
   </div>
 </div>
-${(invoice as any).correction?.replacesInvoiceNumber
-      ? `
+${
+  (invoice as any).correction?.replacesInvoiceNumber
+    ? `
 <div class="relation-box relation-replace">
   Cette facture annule et remplace la facture :
   <strong>
@@ -697,11 +689,12 @@ ${(invoice as any).correction?.replacesInvoiceNumber
   </strong>
 </div>
 `
-      : ''
-    }
+    : ""
+}
 
-${(invoice as any).correction?.replacedByInvoiceNumber
-      ? `
+${
+  (invoice as any).correction?.replacedByInvoiceNumber
+    ? `
 <div class="relation-box relation-replaced">
   Cette facture a été remplacée par :
   <strong>
@@ -709,11 +702,12 @@ ${(invoice as any).correction?.replacedByInvoiceNumber
   </strong>
 </div>
 `
-      : ''
-    }
+    : ""
+}
 
-${(invoice as any).creditNoteForInvoiceNumber
-      ? `
+${
+  (invoice as any).creditNoteForInvoiceNumber
+    ? `
 <div class="relation-box relation-credit">
   Avoir relatif à la facture :
   <strong>
@@ -721,12 +715,14 @@ ${(invoice as any).creditNoteForInvoiceNumber
   </strong>
 </div>
 `
-      : ''
-    }
+    : ""
+}
 <div class="intro">
-  ${isCreditNote
+  ${
+    isCreditNote
       ? "Vous trouverez ci-dessous l’avoir relatif à la facture concernée :"
-      : "Vous trouverez ci-dessous la facture relative aux prestations convenues :"}
+      : "Vous trouverez ci-dessous la facture relative aux prestations convenues :"
+  }
 </div>
 
 <table class="main-table">
@@ -754,12 +750,13 @@ ${(invoice as any).creditNoteForInvoiceNumber
     <tr class="event">
       <td>
         <strong>Evénement :</strong> ${eventName}<br/>
-        ${servicePeriod
-      ? `<strong>Période prestation :</strong> ${servicePeriod}<br/>`
-      : `<strong>Date événement :</strong> ${eventDateFormatted}<br/>`
-    }
+        ${
+          servicePeriod
+            ? `<strong>Période prestation :</strong> ${servicePeriod}<br/>`
+            : `<strong>Date événement :</strong> ${eventDateFormatted}<br/>`
+        }
 
-<strong>Nbr de personnes :</strong> ${guestCount}
+${guestCountHtml}
       </td>
       <td></td>
       <td></td>
@@ -780,7 +777,8 @@ ${(invoice as any).creditNoteForInvoiceNumber
 </div>
   </div>
 
-  ${discountAmount > 0
+  ${
+    discountAmount > 0
       ? `
   <div class="subtotal">
     <div>Remise :</div>
@@ -790,8 +788,8 @@ ${(invoice as any).creditNoteForInvoiceNumber
 </div>
   </div>
   `
-      : ''
-    }
+      : ""
+  }
 
   <div class="grand-total">
     <div>${isCreditNote ? "Montant de l’avoir :" : "Total à payer :"}</div>
@@ -800,19 +798,21 @@ ${(invoice as any).creditNoteForInvoiceNumber
   ${formatMoneyByCurrency(displayedTotalAfterDiscount, documentCurrency)}
 </div>
   </div>
-  ${documentCurrency === "CDF"
+  ${
+    documentCurrency === "CDF"
       ? `
   <div style="text-align:right; font-size:10px; margin-top:5px; color:#6b7280;">
     Équivalent indicatif : USD ${money(totalAfterDiscount)}<br/>
     Taux appliqué : 1 USD = ${formatMoneyByCurrency(exchangeRate, "CDF")} CDF
   </div>
   `
-      : ''
-    }
+      : ""
+  }
 </div>
 
-${(invoice as any).cancellation?.reason
-      ? `
+${
+  (invoice as any).cancellation?.reason
+    ? `
 <div class="relation-box relation-replaced">
   Motif d’annulation :
   <strong>
@@ -820,16 +820,17 @@ ${(invoice as any).cancellation?.reason
   </strong>
 </div>
 `
-      : ''
-    }
+    : ""
+}
 
-${isCreditNote
-      ? `
+${
+  isCreditNote
+    ? `
 <div class="payment">
   Cet avoir vient en déduction de la facture concernée.
 </div>
 `
-      : `
+    : `
 <div class="payment-block">
   <div class="payment-title">
     Les paiements peuvent se faire en espèces, par chèque ou par virement bancaire - ${bankText}
@@ -848,15 +849,16 @@ ${isCreditNote
     MERCI DE NOUS FAIRE CONFIANCE
   </div>
 </div>
-`}
+`
+}
 
 <div class="signature-area">
     <div class="stamp">
-      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ''}
+      ${assets?.stampBase64 ? `<img src="${assets.stampBase64}" />` : ""}
     </div>
 
     <div class="signature">
-      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ''}
+      ${assets?.signatureBase64 ? `<img src="${assets.signatureBase64}" />` : ""}
     </div>
   </div>
 

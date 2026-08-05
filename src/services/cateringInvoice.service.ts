@@ -19,6 +19,8 @@ import {
   CateringInvoiceHistoryType,
 } from "@/types/catering";
 
+import { sectionsToDocumentItems } from "@/src/utils/cateringSectionsToDocumentItems";
+
 const COLLECTION = "catering_invoices";
 
 export type DiscountType = "none" | "percentage" | "fixed";
@@ -31,7 +33,7 @@ export type InvoiceDiscount = {
 
 function calculateDiscountAmount(
   subtotal: number,
-  discount?: InvoiceDiscount
+  discount?: InvoiceDiscount,
 ): number {
   if (!discount || discount.type === "none") return 0;
   if (discount.value <= 0) return 0;
@@ -49,7 +51,7 @@ function calculateDiscountAmount(
 
 function normalizeTotals(
   totals: any,
-  discount?: InvoiceDiscount
+  discount?: InvoiceDiscount,
 ): CateringInvoice["totals"] {
   const subtotal = Number(totals?.subtotal ?? totals?.totalHT ?? 0);
   const tax = Number(totals?.tax ?? 0);
@@ -79,11 +81,11 @@ function normalizeTotals(
 async function addInvoiceHistory(
   invoiceId: string,
   payload: {
-    type: CateringInvoiceHistoryType
+    type: CateringInvoiceHistoryType;
     message: string;
     createdBy?: string | null;
     snapshot?: any;
-  }
+  },
 ) {
   await addDoc(collection(db, COLLECTION, invoiceId, "history"), {
     type: payload.type,
@@ -95,7 +97,7 @@ async function addInvoiceHistory(
 }
 
 export async function getCateringInvoiceById(
-  id: string
+  id: string,
 ): Promise<CateringInvoice | null> {
   const ref = doc(db, COLLECTION, id);
   const snap = await getDoc(ref);
@@ -123,7 +125,7 @@ export async function getCateringInvoices(): Promise<CateringInvoice[]> {
 ========================================= */
 export async function createInvoiceFromOrder(
   order: any,
-  discount?: InvoiceDiscount
+  discount?: InvoiceDiscount,
 ): Promise<CateringInvoice> {
   if (!order?.id) {
     throw new Error("Commande invalide");
@@ -132,8 +134,6 @@ export async function createInvoiceFromOrder(
   if (order.invoiceId) {
     throw new Error("Cette commande possède déjà une facture");
   }
-
-
 
   const freshOrderRef = doc(db, "orders", order.id);
 
@@ -146,10 +146,33 @@ export async function createInvoiceFromOrder(
   const freshOrder = freshOrderSnap.data();
 
   if (freshOrder?.invoiceId) {
-    throw new Error(
-      "Cette commande possède déjà une facture"
-    );
+    throw new Error("Cette commande possède déjà une facture");
   }
+
+  const invoiceItems =
+    Array.isArray(order.sections) && order.sections.length > 0
+      ? sectionsToDocumentItems(order.sections).map((item: any) => {
+          const days = Number(item.days ?? item.numberOfDays ?? 0);
+
+          return {
+            label: item.label,
+            quantity: Number(item.quantity ?? 0),
+            unitPrice: Number(item.unitPrice ?? 0),
+            days,
+            numberOfDays: days,
+            total: Number(item.totalPrice ?? item.total ?? 0),
+            totalPrice: Number(item.totalPrice ?? item.total ?? 0),
+          };
+        })
+      : (order.items ?? []).map((item: any) => {
+          const days = Number(item.days ?? item.numberOfDays ?? 0);
+
+          return {
+            ...item,
+            days,
+            numberOfDays: days,
+          };
+        });
 
   const invoiceNumber = await getNextInvoiceNumber();
   const totals = normalizeTotals(order.totals, discount);
@@ -158,17 +181,10 @@ export async function createInvoiceFromOrder(
     documentType: "INVOICE",
 
     orderId: order.id,
-    orderNumber:
-      order.number ??
-      order.orderNumber ??
-      order.reference ??
-      "",
+    orderNumber: order.number ?? order.orderNumber ?? order.reference ?? "",
 
     proformaId: order.proformaId ?? order.sourceProformaId ?? null,
-    proformaNumber:
-      order.proformaNumber ??
-      order.sourceProformaNumber ??
-      "",
+    proformaNumber: order.proformaNumber ?? order.sourceProformaNumber ?? "",
     sourceProformaId: order.proformaId ?? order.sourceProformaId ?? null,
 
     number: invoiceNumber,
@@ -176,29 +192,15 @@ export async function createInvoiceFromOrder(
 
     clientId: order.clientId ?? "",
     client: {
-      name:
-        order.client?.name ??
-        order.clientName ??
-        "",
+      name: order.client?.name ?? order.clientName ?? "",
 
-      address:
-        order.client?.address ??
-        order.clientAddress ??
-        "",
+      address: order.client?.address ?? order.clientAddress ?? "",
 
-      city:
-        order.client?.city ??
-        order.clientCity ??
-        "Kinshasa / RDC",
+      city: order.client?.city ?? order.clientCity ?? "Kinshasa / RDC",
 
-      phone:
-        order.client?.phone ??
-        order.clientPhone ??
-        "",
+      phone: order.client?.phone ?? order.clientPhone ?? "",
 
-      notes:
-        order.client?.notes ??
-        "",
+      notes: order.client?.notes ?? "",
 
       rccm:
         order.client?.rccm ??
@@ -247,7 +249,7 @@ export async function createInvoiceFromOrder(
 
     comment: order.comment ?? "",
 
-    items: order.items ?? [],
+    items: invoiceItems,
 
     sections: order.sections ?? [],
 
@@ -289,13 +291,11 @@ export async function createInvoiceFromOrder(
     },
   });
 
-
-
   const createdInvoiceSnap = await getDoc(ref);
 
   return {
     id: createdInvoiceSnap.id,
-    ...(createdInvoiceSnap.data() as Omit<CateringInvoice, 'id'>),
+    ...(createdInvoiceSnap.data() as Omit<CateringInvoice, "id">),
   };
 }
 
@@ -304,7 +304,7 @@ export async function createInvoiceFromOrder(
 ========================================= */
 export async function cancelCateringInvoice(
   invoiceId: string,
-  reason: string
+  reason: string,
 ): Promise<boolean> {
   if (!invoiceId) {
     throw new Error("Facture invalide");
@@ -319,8 +319,6 @@ export async function cancelCateringInvoice(
   const ref = doc(db, COLLECTION, invoiceId);
   const snap = await getDoc(ref);
 
-
-
   if (!snap.exists()) {
     throw new Error("Facture introuvable");
   }
@@ -331,15 +329,11 @@ export async function cancelCateringInvoice(
   };
 
   if (invoice.status === "replaced") {
-    throw new Error(
-      "Cette facture ne peut plus être annulée"
-    );
+    throw new Error("Cette facture ne peut plus être annulée");
   }
 
   if (invoice.creditNoteSummary?.isFullyCredited === true) {
-    throw new Error(
-      "Cette facture est déjà totalement couverte par un avoir"
-    );
+    throw new Error("Cette facture est déjà totalement couverte par un avoir");
   }
 
   if (invoice.status === "cancelled") {
@@ -348,13 +342,13 @@ export async function cancelCateringInvoice(
 
   if (invoice.status === "paid" || invoice.status === "partial") {
     throw new Error(
-      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir"
+      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir",
     );
   }
 
   if (!isCateringInvoiceLocked(invoice)) {
     throw new Error(
-      "Une facture en brouillon doit être modifiée ou supprimée avant émission"
+      "Une facture en brouillon doit être modifiée ou supprimée avant émission",
     );
   }
 
@@ -396,7 +390,7 @@ export async function replaceInvoice(
     totals?: any;
     comment?: string;
     designation?: string;
-  }
+  },
 ): Promise<CateringInvoice> {
   if (!invoiceId) {
     throw new Error("Facture invalide");
@@ -417,27 +411,22 @@ export async function replaceInvoice(
 
   if (oldInvoice.status === "paid") {
     throw new Error(
-      "Une facture payée doit être corrigée par une facture d'avoir"
+      "Une facture payée doit être corrigée par une facture d'avoir",
     );
   }
 
   if (oldInvoice.status === "cancelled") {
-    throw new Error(
-      "Impossible de remplacer une facture annulée"
-    );
+    throw new Error("Impossible de remplacer une facture annulée");
   }
 
   if (oldInvoice.status === "replaced") {
-    throw new Error(
-      "Cette facture a déjà été remplacée"
-    );
+    throw new Error("Cette facture a déjà été remplacée");
   }
 
   /*
    * Nouveau numéro officiel
    */
-  const newInvoiceNumber =
-    await getNextInvoiceNumber();
+  const newInvoiceNumber = await getNextInvoiceNumber();
 
   /*
    * Nouvelle facture corrigée
@@ -456,21 +445,13 @@ export async function replaceInvoice(
       replacesInvoiceNumber: oldInvoice.number,
     },
 
-    items:
-      updatedData.items ??
-      oldInvoice.items,
+    items: updatedData.items ?? oldInvoice.items,
 
-    totals:
-      updatedData.totals ??
-      oldInvoice.totals,
+    totals: updatedData.totals ?? oldInvoice.totals,
 
-    designation:
-      updatedData.designation ??
-      oldInvoice.designation,
+    designation: updatedData.designation ?? oldInvoice.designation,
 
-    comment:
-      updatedData.comment ??
-      oldInvoice.comment,
+    comment: updatedData.comment ?? oldInvoice.comment,
 
     createdAt: serverTimestamp() as any,
     updatedAt: serverTimestamp() as any,
@@ -478,8 +459,7 @@ export async function replaceInvoice(
 
     cancellation: null,
 
-    version:
-      Number(oldInvoice.version ?? 1) + 1,
+    version: Number(oldInvoice.version ?? 1) + 1,
 
     isLocked: true,
   };
@@ -487,10 +467,7 @@ export async function replaceInvoice(
   /*
    * Création nouvelle facture
    */
-  const newRef = await addDoc(
-    collection(db, COLLECTION),
-    newInvoice
-  );
+  const newRef = await addDoc(collection(db, COLLECTION), newInvoice);
 
   /*
    * Ancienne facture => replaced
@@ -505,8 +482,7 @@ export async function replaceInvoice(
       correctionType: "ANNULLE_ET_REMPLACE",
 
       replacedByInvoiceId: newRef.id,
-      replacedByInvoiceNumber:
-        newInvoiceNumber,
+      replacedByInvoiceNumber: newInvoiceNumber,
     },
 
     updatedAt: serverTimestamp(),
@@ -517,15 +493,12 @@ export async function replaceInvoice(
    */
   await addInvoiceHistory(invoiceId, {
     type: "REPLACED",
-    message:
-      "Facture annulée et remplacée",
+    message: "Facture annulée et remplacée",
 
     snapshot: {
-      oldInvoiceNumber:
-        oldInvoice.number,
+      oldInvoiceNumber: oldInvoice.number,
 
-      replacedBy:
-        newInvoiceNumber,
+      replacedBy: newInvoiceNumber,
     },
   });
 
@@ -534,20 +507,17 @@ export async function replaceInvoice(
    */
   await addInvoiceHistory(newRef.id, {
     type: "CREATED",
-    message:
-      "Facture créée par annule et remplace",
+    message: "Facture créée par annule et remplace",
 
     snapshot: {
       number: newInvoiceNumber,
-      replaces:
-        oldInvoice.number,
+      replaces: oldInvoice.number,
     },
   });
 
   await addInvoiceHistory(newRef.id, {
     type: "ISSUED",
-    message:
-      "Nouvelle facture émise",
+    message: "Nouvelle facture émise",
 
     snapshot: {
       status: "issued",
@@ -568,7 +538,7 @@ export async function replaceInvoice(
 ========================================= */
 export async function createReplacementDraftInvoice(
   invoiceId: string,
-  reason: string
+  reason: string,
 ): Promise<CateringInvoice> {
   if (!invoiceId) throw new Error("Facture invalide");
 
@@ -592,7 +562,7 @@ export async function createReplacementDraftInvoice(
 
   if (oldInvoice.status === "paid" || oldInvoice.status === "partial") {
     throw new Error(
-      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir"
+      "Une facture payée ou partiellement payée doit être corrigée par une facture d'avoir",
     );
   }
 
@@ -606,7 +576,7 @@ export async function createReplacementDraftInvoice(
 
   if (oldInvoice.status !== "issued") {
     throw new Error(
-      "Seule une facture émise peut faire l'objet d'un annule et remplace"
+      "Seule une facture émise peut faire l'objet d'un annule et remplace",
     );
   }
 
@@ -688,7 +658,7 @@ export async function createReplacementDraftInvoice(
    ISSUE REPLACEMENT DRAFT INVOICE
 ========================================= */
 export async function issueReplacementDraftInvoice(
-  draftInvoiceId: string
+  draftInvoiceId: string,
 ): Promise<CateringInvoice> {
   if (!draftInvoiceId) {
     throw new Error("Facture brouillon invalide");
@@ -733,9 +703,7 @@ export async function issueReplacementDraftInvoice(
   };
 
   if (originalInvoice.status !== "issued") {
-    throw new Error(
-      "La facture originale ne peut plus être remplacée"
-    );
+    throw new Error("La facture originale ne peut plus être remplacée");
   }
 
   await updateDoc(draftRef, {
@@ -783,7 +751,7 @@ export async function issueReplacementDraftInvoice(
   };
 }
 export async function issueDraftInvoice(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<CateringInvoice> {
   if (!invoiceId) {
     throw new Error("Facture invalide");
@@ -832,24 +800,26 @@ export async function issueDraftInvoice(
 }
 export async function updateDraftInvoice(
   invoiceId: string,
-  data: Partial<Pick<
-    CateringInvoice,
-    | "designation"
-    | "eventName"
-    | "eventDate"
-    | "servicePeriod"
-    | "dateLivraison"
-    | "deliveryTime"
-    | "deliveryAddress"
-    | "guestCount"
-    | "comment"
-    | "sections"
-    | "items"
-    | "currency"
-    | "exchangeRate"
-    | "baseCurrency"
-    | "totals"
-  >>
+  data: Partial<
+    Pick<
+      CateringInvoice,
+      | "designation"
+      | "eventName"
+      | "eventDate"
+      | "servicePeriod"
+      | "dateLivraison"
+      | "deliveryTime"
+      | "deliveryAddress"
+      | "guestCount"
+      | "comment"
+      | "sections"
+      | "items"
+      | "currency"
+      | "exchangeRate"
+      | "baseCurrency"
+      | "totals"
+    >
+  >,
 ): Promise<boolean> {
   if (!invoiceId) {
     throw new Error("Facture invalide");
@@ -884,16 +854,14 @@ export async function updateDraftInvoice(
 
   return true;
 }
-export async function getInvoiceHistory(
-  invoiceId: string
-): Promise<any[]> {
+export async function getInvoiceHistory(invoiceId: string): Promise<any[]> {
   if (!invoiceId) {
     throw new Error("Facture invalide");
   }
 
   const q = query(
     collection(db, COLLECTION, invoiceId, "history"),
-    orderBy("createdAt", "asc")
+    orderBy("createdAt", "asc"),
   );
 
   const snap = await getDocs(q);

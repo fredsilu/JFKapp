@@ -75,7 +75,9 @@ export default function ArchiveTable({ documents, onUploadPdf }: Props) {
           const da = a.documentDate ?? a.invoiceDate ?? a.eventDate ?? "";
           const db = b.documentDate ?? b.invoiceDate ?? b.eventDate ?? "";
 
-          return direction === "asc" ? da.localeCompare(db) : db.localeCompare(da);
+          return direction === "asc"
+            ? da.localeCompare(db)
+            : db.localeCompare(da);
         }
 
         case "amount":
@@ -93,27 +95,45 @@ export default function ArchiveTable({ documents, onUploadPdf }: Props) {
       <View style={[styles.row, styles.header]}>
         <Text style={[styles.cell, styles.type, styles.headerText]}>Type</Text>
 
-        <Pressable style={[styles.cell, styles.number]} onPress={() => changeSort("number")}>
+        <Pressable
+          style={[styles.cell, styles.number]}
+          onPress={() => changeSort("number")}
+        >
           <Text style={styles.headerText}>Numéro{sortIndicator("number")}</Text>
         </Pressable>
 
-        <Pressable style={[styles.cell, styles.client]} onPress={() => changeSort("client")}>
+        <Pressable
+          style={[styles.cell, styles.client]}
+          onPress={() => changeSort("client")}
+        >
           <Text style={styles.headerText}>Client{sortIndicator("client")}</Text>
         </Pressable>
 
-        <Text style={[styles.cell, styles.designation, styles.headerText]}>Désignation</Text>
+        <Text style={[styles.cell, styles.designation, styles.headerText]}>
+          Désignation
+        </Text>
 
-        <Pressable style={[styles.cell, styles.date]} onPress={() => changeSort("date")}>
-          <Text style={styles.headerText}>Date document{sortIndicator("date")}</Text>
+        <Pressable
+          style={[styles.cell, styles.date]}
+          onPress={() => changeSort("date")}
+        >
+          <Text style={styles.headerText}>
+            Date document{sortIndicator("date")}
+          </Text>
         </Pressable>
 
-        <Pressable style={[styles.cell, styles.amount]} onPress={() => changeSort("amount")}>
+        <Pressable
+          style={[styles.cell, styles.amount]}
+          onPress={() => changeSort("amount")}
+        >
           <Text style={[styles.headerText, styles.textRight]}>
             Montant{sortIndicator("amount")}
           </Text>
         </Pressable>
 
-        <Text style={[styles.cell, styles.status, styles.headerText]}>Statut</Text>
+        <Text style={[styles.cell, styles.status, styles.headerText]}>
+          Statut
+        </Text>
         <Text style={[styles.cell, styles.pdf, styles.headerText]}>PDF</Text>
       </View>
 
@@ -125,9 +145,9 @@ export default function ArchiveTable({ documents, onUploadPdf }: Props) {
             <Pressable
               key={doc.id || doc.storagePath || doc.number}
               onPress={() => undefined}
-              style={({ hovered }) => [
+              style={({ pressed }) => [
                 styles.row,
-                Platform.OS === "web" && hovered ? styles.rowHover : null,
+                Platform.OS === "web" && pressed ? styles.rowHover : null,
               ]}
             >
               <View style={[styles.cell, styles.type]}>
