@@ -21,7 +21,6 @@ import MobileStatsBar from "@/src/components/mobile/MobileStatsBar";
 import MobileSearchBar from "@/src/components/mobile/MobileSearchBar";
 import MobileFilterBar from "@/src/components/mobile/MobileFilterBar";
 
-
 import { useProformas } from "@/src/hooks/useFirestore";
 import {
   fetchArchivedProformas,
@@ -30,7 +29,12 @@ import {
 import DocumentPageHeader from "@/src/components/DocumentPageHeader";
 
 type SortField =
-  "number" | "client" | "eventDate" | "createdAt" | "validityDate" | "amount";
+  | "number"
+  | "client"
+  | "eventDate"
+  | "createdAt"
+  | "validityDate"
+  | "amount";
 
 type SortDirection = "asc" | "desc";
 
@@ -204,7 +208,7 @@ export default function DocumentProformasScreen() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProformaStatusFilter>("all");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortField, setSortField] = useState<SortField>("number");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const { width } = useWindowDimensions();
@@ -490,32 +494,86 @@ export default function DocumentProformasScreen() {
     return (
       <View style={styles.container}>
         <View style={localStyles.mobileControls}>
-        <MobileListHeader
-          title="Proformas"
-          total={proformaStats.totalProformas}
-          onBack={() => router.replace("/(traiteur)/documents" as never)}
-        />
+          <MobileListHeader
+            title="Proformas"
+            total={proformaStats.totalProformas}
+            onBack={() => router.replace("/(traiteur)/documents" as never)}
+          />
 
-        <MobileStatsBar
-          items={[
-              { label: "Montant total", value: formatAmount(proformaStats.totalAmount), wide: true },
-              { label: "Facturées", value: formatAmount(proformaStats.invoicedAmount), wide: true },
-              { label: "En attente", value: formatAmount(proformaStats.pendingAmount), wide: true }
-          ]}
-        />
+          <MobileStatsBar
+            items={[
+              {
+                label: "Montant total",
+                value: formatAmount(proformaStats.totalAmount),
+                wide: true,
+              },
+              {
+                label: "Facturées",
+                value: formatAmount(proformaStats.invoicedAmount),
+                wide: true,
+              },
+              {
+                label: "En attente",
+                value: formatAmount(proformaStats.pendingAmount),
+                wide: true,
+              },
+            ]}
+          />
 
-        <MobileSearchBar
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Rechercher une proforma..."
-        />
+          <MobileSearchBar
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Rechercher une proforma..."
+          />
 
-        <MobileFilterBar
-          items={statusFilters}
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+          <MobileFilterBar
+            items={statusFilters}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
 
+          <View style={localStyles.mobileSortSection}>
+            <Text style={localStyles.mobileSortLabel}>Trier par</Text>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={localStyles.mobileSortContent}
+            >
+              {[
+                { label: "N° Proforma", field: "number" as SortField },
+                { label: "Client", field: "client" as SortField },
+                { label: "Montant", field: "amount" as SortField },
+                { label: "Date événement", field: "eventDate" as SortField },
+                { label: "Date création", field: "createdAt" as SortField },
+                { label: "Validité", field: "validityDate" as SortField },
+              ].map((option) => {
+                const active = sortField === option.field;
+
+                return (
+                  <TouchableOpacity
+                    key={option.field}
+                    style={[
+                      localStyles.mobileSortButton,
+                      active && localStyles.mobileSortButtonActive,
+                    ]}
+                    onPress={() => toggleSort(option.field)}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        localStyles.mobileSortButtonText,
+                        active && localStyles.mobileSortButtonTextActive,
+                      ]}
+                    >
+                      {option.label}
+                      {active ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         </View>
 
         <FlatList
@@ -673,7 +731,11 @@ export default function DocumentProformasScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            {renderSortableHeader("N° Proforma", "number", localStyles.colInvoice)}
+            {renderSortableHeader(
+              "N° Proforma",
+              "number",
+              localStyles.colInvoice,
+            )}
             {renderSortableHeader("Client", "client", localStyles.colClient)}
             <Text style={[styles.th, localStyles.colEvent]}>Événement</Text>
             {renderSortableHeader(
@@ -681,8 +743,16 @@ export default function DocumentProformasScreen() {
               "eventDate",
               localStyles.colDate,
             )}
-            {renderSortableHeader("Date création", "createdAt", localStyles.colDate)}
-            {renderSortableHeader("Validité", "validityDate", localStyles.colDate)}
+            {renderSortableHeader(
+              "Date création",
+              "createdAt",
+              localStyles.colDate,
+            )}
+            {renderSortableHeader(
+              "Validité",
+              "validityDate",
+              localStyles.colDate,
+            )}
             {renderSortableHeader("Montant", "amount", localStyles.colAmount)}
             <Text style={[styles.th, localStyles.colStatus]}>Statut</Text>
             <Text style={[styles.th, localStyles.colDate]}>Commande</Text>
@@ -705,7 +775,10 @@ export default function DocumentProformasScreen() {
             renderItem={({ item }: any) => (
               <View style={styles.tableRow}>
                 <View style={localStyles.proformaNumberCell}>
-                  <Text style={localStyles.proformaNumberText} numberOfLines={2}>
+                  <Text
+                    style={localStyles.proformaNumberText}
+                    numberOfLines={2}
+                  >
                     {item?.number || "-"}
                   </Text>
 
@@ -793,6 +866,47 @@ const localStyles = StyleSheet.create({
     paddingTop: 2,
     paddingBottom: 6,
     backgroundColor: "#F4F6F8",
+  },
+  mobileSortSection: {
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  mobileSortLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 6,
+    paddingHorizontal: 12,
+  },
+
+  mobileSortContent: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+
+  mobileSortButton: {
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+
+  mobileSortButtonActive: {
+    backgroundColor: "#065F46",
+    borderColor: "#065F46",
+  },
+
+  mobileSortButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#374151",
+  },
+
+  mobileSortButtonTextActive: {
+    color: "#FFFFFF",
   },
   mobileListFlex: {
     flex: 1,
