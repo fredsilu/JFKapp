@@ -1,12 +1,7 @@
 //components/simulation/ArticleSectionCard.tsx
 
-import React from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, TouchableOpacity } from "react-native";
 
 import { CateringSection } from "@/types/catering";
 import { formatCurrency } from "@/src/utils/costs";
@@ -17,7 +12,7 @@ type Props = {
   onUpdate: (
     sectionId: string,
     field: keyof CateringSection,
-    value: any
+    value: any,
   ) => void;
 
   onDelete: (sectionId: string) => void;
@@ -29,8 +24,13 @@ export default function ArticleSectionCard({
   onDelete,
 }: Props) {
   const billingMode = section.billingMode ?? "perDay";
+  const [unitPriceText, setUnitPriceText] = useState(
+    String(section.unitPrice ?? ""),
+  );
 
-
+  useEffect(() => {
+    setUnitPriceText(String(section.unitPrice ?? ""));
+  }, [section.unitPrice]);
 
   return (
     <View
@@ -144,11 +144,25 @@ export default function ArticleSectionCard({
       <Text>Prix unitaire</Text>
 
       <TextInput
-        value={String(section.unitPrice ?? 0)}
-        onChangeText={(value) =>
-          onUpdate(section.id, "unitPrice", Number(value) || 0)
-        }
-        keyboardType="numbers-and-punctuation"
+        value={unitPriceText}
+        onChangeText={(value) => {
+          const cleanValue = value.replace(",", ".").replace(/[^0-9.]/g, "");
+
+          const parts = cleanValue.split(".");
+
+          if (parts.length <= 2) {
+            setUnitPriceText(cleanValue);
+          }
+        }}
+        onBlur={() => {
+          const numericValue = Number(unitPriceText);
+
+          const finalValue = Number.isFinite(numericValue) ? numericValue : 0;
+
+          onUpdate(section.id, "unitPrice", finalValue);
+          setUnitPriceText(String(finalValue));
+        }}
+        keyboardType="decimal-pad"
         style={inputStyle}
       />
 
@@ -164,14 +178,11 @@ export default function ArticleSectionCard({
               onUpdate(
                 section.id,
                 "numberOfDays",
-                cleanValue === "" ? "" : Number(cleanValue)
+                cleanValue === "" ? "" : Number(cleanValue),
               );
             }}
             onBlur={() => {
-              if (
-                !section.numberOfDays ||
-                Number(section.numberOfDays) < 1
-              ) {
+              if (!section.numberOfDays || Number(section.numberOfDays) < 1) {
                 onUpdate(section.id, "numberOfDays", 1);
               }
             }}

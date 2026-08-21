@@ -51,12 +51,12 @@ const statusFilters: {
   label: string;
   value: CreditNoteStatusFilter;
 }[] = [
-    { label: "Tous", value: "all" },
-    { label: "Brouillons", value: "draft" },
-    { label: "Émis", value: "issued" },
-    { label: "Annulés", value: "cancelled" },
-    { label: "Archives", value: "historical" },
-  ];
+  { label: "Tous", value: "all" },
+  { label: "Brouillons", value: "draft" },
+  { label: "Émis", value: "issued" },
+  { label: "Annulés", value: "cancelled" },
+  { label: "Archives", value: "historical" },
+];
 
 function formatAmount(value?: number) {
   if (!value) return "0,00 $";
@@ -186,17 +186,17 @@ export default function DocumentCreditNotesScreen() {
   const isMobile = width < 768;
   const tableHeight = Math.max(320, Math.min(700, height - 360));
 
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] =
-    useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("number");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   useEffect(() => {
     fetchArchivedCreditNotes().then(setArchivedCreditNotes);
   }, []);
 
   const creditNotes = useMemo(() => {
-    const normalizedArchives =
-      archivedCreditNotes.map(normalizeArchivedCreditNote);
+    const normalizedArchives = archivedCreditNotes.map(
+      normalizeArchivedCreditNote,
+    );
 
     return [...(appCreditNotes || []), ...normalizedArchives];
   }, [appCreditNotes, archivedCreditNotes]);
@@ -283,20 +283,14 @@ export default function DocumentCreditNotesScreen() {
 
         return target.includes(query);
       });
-  }, [
-    creditNotes,
-    search,
-    statusFilter,
-    sortField,
-    sortDirection,
-  ]);
+  }, [creditNotes, search, statusFilter, sortField, sortDirection]);
 
   const creditNoteStats = useMemo(() => {
     const totalCreditNotes = filteredCreditNotes.length;
 
     const totalAmount = filteredCreditNotes.reduce(
       (sum: number, note: any) => sum + getCreditNoteAmount(note),
-      0
+      0,
     );
 
     const issuedAmount = filteredCreditNotes
@@ -317,9 +311,7 @@ export default function DocumentCreditNotesScreen() {
 
   function toggleSort(field: SortField) {
     if (sortField === field) {
-      setSortDirection((current) =>
-        current === "asc" ? "desc" : "asc"
-      );
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
 
@@ -330,7 +322,7 @@ export default function DocumentCreditNotesScreen() {
   function renderSortableHeader(
     label: string,
     field: SortField,
-    columnStyle: any
+    columnStyle: any,
   ) {
     const active = sortField === field;
 
@@ -359,15 +351,11 @@ export default function DocumentCreditNotesScreen() {
 
   function openCreditNote(creditNote: any) {
     if (creditNote?.isHistorical) {
-      router.push(
-        `/(traiteur)/documents/history/${creditNote.id}` as never
-      );
+      router.push(`/(traiteur)/documents/history/${creditNote.id}` as never);
       return;
     }
 
-    router.push(
-      `/(traiteur)/credit-notes/${creditNote.id}` as never
-    );
+    router.push(`/(traiteur)/credit-notes/${creditNote.id}` as never);
   }
 
   function renderStatusBadge(status?: string) {
@@ -479,33 +467,85 @@ export default function DocumentCreditNotesScreen() {
     return (
       <View style={styles.container}>
         <View style={localStyles.mobileControls}>
-        <MobileListHeader
-          title="Avoirs"
-          total={creditNoteStats.totalCreditNotes}
-          onBack={() => router.replace("/(traiteur)/documents" as never)}
-        />
+          <MobileListHeader
+            title="Avoirs"
+            total={creditNoteStats.totalCreditNotes}
+            onBack={() => router.replace("/(traiteur)/documents" as never)}
+          />
 
-        <MobileStatsBar
-          items={[
-              { label: "Montant total", value: formatAmount(creditNoteStats.totalAmount), wide: true },
-              { label: "Émis", value: formatAmount(creditNoteStats.issuedAmount), wide: true },
-              { label: "Brouillons", value: formatAmount(creditNoteStats.draftAmount), wide: true }
-          ]}
-        />
+          <MobileStatsBar
+            items={[
+              {
+                label: "Montant total",
+                value: formatAmount(creditNoteStats.totalAmount),
+                wide: true,
+              },
+              {
+                label: "Émis",
+                value: formatAmount(creditNoteStats.issuedAmount),
+                wide: true,
+              },
+              {
+                label: "Brouillons",
+                value: formatAmount(creditNoteStats.draftAmount),
+                wide: true,
+              },
+            ]}
+          />
 
-        <MobileSearchBar
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Rechercher un avoir..."
-        />
+          <MobileSearchBar
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Rechercher un avoir..."
+          />
 
-        <MobileFilterBar
-          items={statusFilters}
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+          <MobileFilterBar
+            items={statusFilters}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+          <View style={localStyles.mobileSortSection}>
+            <Text style={localStyles.mobileSortLabel}>Trier par</Text>
 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={localStyles.mobileSortContent}
+            >
+              {[
+                { label: "N° Avoir", field: "number" as SortField },
+                { label: "N° Facture", field: "invoiceNumber" as SortField },
+                { label: "Montant", field: "amount" as SortField },
+                { label: "Type", field: "type" as SortField },
+                { label: "Date émission", field: "issuedAt" as SortField },
+                { label: "Date création", field: "createdAt" as SortField },
+              ].map((option) => {
+                const active = sortField === option.field;
 
+                return (
+                  <TouchableOpacity
+                    key={option.field}
+                    style={[
+                      localStyles.mobileSortButton,
+                      active && localStyles.mobileSortButtonActive,
+                    ]}
+                    onPress={() => toggleSort(option.field)}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        localStyles.mobileSortButtonText,
+                        active && localStyles.mobileSortButtonTextActive,
+                      ]}
+                    >
+                      {option.label}
+                      {active ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         </View>
 
         <FlatList
@@ -597,9 +637,7 @@ export default function DocumentCreditNotesScreen() {
               {item?.isHistorical && !hasPdf(item) && (
                 <View style={localStyles.mobileNoPdfRow}>
                   <View style={localStyles.noPdfBadge}>
-                    <Text style={localStyles.noPdfBadgeText}>
-                      Sans PDF
-                    </Text>
+                    <Text style={localStyles.noPdfBadgeText}>Sans PDF</Text>
                   </View>
                 </View>
               )}
@@ -648,8 +686,6 @@ export default function DocumentCreditNotesScreen() {
 
       {renderFilters()}
 
-
-
       <View style={localStyles.tableViewport}>
         <ScrollView
           horizontal
@@ -663,29 +699,25 @@ export default function DocumentCreditNotesScreen() {
               {renderSortableHeader(
                 "N° Avoir",
                 "number",
-                localStyles.colInvoice
+                localStyles.colInvoice,
               )}
               {renderSortableHeader(
                 "Facture",
                 "invoiceNumber",
-                localStyles.colDate
+                localStyles.colDate,
               )}
               {renderSortableHeader("Type", "type", localStyles.colType)}
               {renderSortableHeader("Motif", "reason", localStyles.colReason)}
-              {renderSortableHeader(
-                "Montant",
-                "amount",
-                localStyles.colAmount
-              )}
+              {renderSortableHeader("Montant", "amount", localStyles.colAmount)}
               {renderSortableHeader(
                 "Date émission",
                 "issuedAt",
-                localStyles.colDate
+                localStyles.colDate,
               )}
               {renderSortableHeader(
                 "Date création",
                 "createdAt",
-                localStyles.colDate
+                localStyles.colDate,
               )}
               <Text style={[styles.th, localStyles.colStatus]}>Statut</Text>
               <Text style={[styles.th, localStyles.colActions]}>Actions</Text>
@@ -716,9 +748,7 @@ export default function DocumentCreditNotesScreen() {
 
                     {item?.isHistorical && !hasPdf(item) && (
                       <View style={localStyles.noPdfBadge}>
-                        <Text style={localStyles.noPdfBadgeText}>
-                          Sans PDF
-                        </Text>
+                        <Text style={localStyles.noPdfBadgeText}>Sans PDF</Text>
                       </View>
                     )}
                   </View>
@@ -756,7 +786,11 @@ export default function DocumentCreditNotesScreen() {
                       style={styles.actionButton}
                       onPress={() => openCreditNote(item)}
                     >
-                      <MaterialIcons name="visibility" size={18} color="#065F46" />
+                      <MaterialIcons
+                        name="visibility"
+                        size={18}
+                        color="#065F46"
+                      />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -890,5 +924,46 @@ const localStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end",
     marginTop: 8,
+  },
+  mobileSortSection: {
+    marginTop: 6,
+    marginBottom: 4,
+  },
+
+  mobileSortLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 6,
+    paddingHorizontal: 12,
+  },
+
+  mobileSortContent: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+
+  mobileSortButton: {
+    paddingVertical: 7,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+
+  mobileSortButtonActive: {
+    backgroundColor: "#065F46",
+    borderColor: "#065F46",
+  },
+
+  mobileSortButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#374151",
+  },
+
+  mobileSortButtonTextActive: {
+    color: "#FFFFFF",
   },
 });
