@@ -1,7 +1,13 @@
 //components/simulation/ArticleSectionCard.tsx
 
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 
 import { CateringSection } from "@/types/catering";
 import { formatCurrency } from "@/src/utils/costs";
@@ -146,12 +152,15 @@ export default function ArticleSectionCard({
       <TextInput
         value={unitPriceText}
         onChangeText={(value) => {
-          const cleanValue = value.replace(",", ".").replace(/[^0-9.]/g, "");
-
-          const parts = cleanValue.split(".");
-
-          if (parts.length <= 2) {
-            setUnitPriceText(cleanValue);
+          // Autorise :
+          // 100
+          // 100.50
+          // -100
+          // -100.50
+          // -
+          // -100.
+          if (/^-?\d*\.?\d*$/.test(value)) {
+            setUnitPriceText(value);
           }
         }}
         onBlur={() => {
@@ -162,7 +171,9 @@ export default function ArticleSectionCard({
           onUpdate(section.id, "unitPrice", finalValue);
           setUnitPriceText(String(finalValue));
         }}
-        keyboardType="decimal-pad"
+        keyboardType={
+          Platform.OS === "web" ? "default" : "numbers-and-punctuation"
+        }
         style={inputStyle}
       />
 

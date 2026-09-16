@@ -109,16 +109,16 @@ export default function EditProformaScreen() {
           numberOfDays: Number(item.days ?? item.numberOfDays ?? 0),
         })),
 
-        currency: proforma.currency ?? "USD",
-        exchangeRate: Number(proforma.exchangeRate ?? 1),
-        baseCurrency: proforma.baseCurrency ?? "USD",
+        currency: payload.currency,
+        exchangeRate: Number(payload.exchangeRate),
+        baseCurrency: "USD",
 
         totals: {
           subtotal: Number(totals.subtotal ?? 0),
           discount: Number((totals as any).discount ?? 0),
           tax: Number((totals as any).tax ?? 0),
           total: Number(totals.total ?? 0),
-          currency: proforma.currency ?? "USD",
+          currency: payload.currency,
         },
       });
 
@@ -165,6 +165,8 @@ export default function EditProformaScreen() {
       initialNumberOfPeople={Number(proforma.numberOfPeople ?? 0)}
       initialEventDate={proforma.eventDate ?? ""}
       initialDateLivraison={(proforma as any).dateLivraison ?? ""}
+      initialCurrency={(proforma.currency as "USD" | "CDF") ?? "USD"}
+      initialExchangeRate={Number(proforma.exchangeRate ?? 1)}
       initialServicePeriod={
         (proforma as any).servicePeriod ??
         (proforma as any).period ??

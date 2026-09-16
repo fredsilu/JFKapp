@@ -1,18 +1,8 @@
 //app/(traiteur)/invoices/edit-v2/[id].tsx
 import React, { useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Text, ActivityIndicator, Alert } from "react-native";
 
-import {
-  useLocalSearchParams,
-  router,
-} from "expo-router";
-
-
+import { useLocalSearchParams, router } from "expo-router";
 
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -59,7 +49,7 @@ export default function EditInvoiceV2Screen() {
       if (data.status !== "draft") {
         Alert.alert(
           "Facture verrouillée",
-          "Seule une facture brouillon peut être modifiée."
+          "Seule une facture brouillon peut être modifiée.",
         );
 
         router.replace({
@@ -85,7 +75,7 @@ export default function EditInvoiceV2Screen() {
   useFocusEffect(
     useCallback(() => {
       loadInvoice();
-    }, [loadInvoice])
+    }, [loadInvoice]),
   );
 
   async function handleSave(payload: any) {
@@ -97,12 +87,9 @@ export default function EditInvoiceV2Screen() {
       const items = sectionsToDocumentItems(payload.sections);
       const totals = buildDocumentTotalsFromSections(payload.sections);
 
-
       await updateDraftInvoice(invoice.id, {
         designation: payload.eventName || "Prestation traiteur",
         eventName: payload.eventName,
-
-
 
         guestCount: payload.numberOfPeople,
         eventDate: payload.eventDate,
@@ -114,15 +101,15 @@ export default function EditInvoiceV2Screen() {
 
         sections: payload.sections,
 
-        currency: invoice.currency ?? "USD",
-        exchangeRate: Number(invoice.exchangeRate ?? 1),
-        baseCurrency: invoice.baseCurrency ?? "USD",
+        currency: payload.currency,
+        exchangeRate: Number(payload.exchangeRate),
+        baseCurrency: "USD",
 
         items: items as any,
 
         totals: {
           ...(totals as any),
-          currency: invoice.currency ?? "USD",
+          currency: payload.currency,
         },
       });
 
@@ -137,9 +124,7 @@ export default function EditInvoiceV2Screen() {
 
       Alert.alert(
         "Erreur",
-        error instanceof Error
-          ? error.message
-          : "Impossible de sauvegarder"
+        error instanceof Error ? error.message : "Impossible de sauvegarder",
       );
     } finally {
       setSaving(false);
@@ -178,7 +163,6 @@ export default function EditInvoiceV2Screen() {
   return (
     <SimulationEditor
       title={`Modifier ${invoice.number}`}
-
       initialEventName={invoice.eventName ?? invoice.designation ?? ""}
       initialClientId={(invoice as any).clientId ?? ""}
       initialClientName={
@@ -187,21 +171,18 @@ export default function EditInvoiceV2Screen() {
         (invoice as any).customerName ??
         ""
       }
+      initialCurrency={(invoice.currency as "USD" | "CDF") ?? "USD"}
+      initialExchangeRate={Number(invoice.exchangeRate ?? 1)}
       initialNumberOfPeople={invoice.guestCount ?? 0}
-
       initialEventDate={(invoice as any).eventDate ?? ""}
       initialServicePeriod={(invoice as any).servicePeriod ?? ""}
       initialDateLivraison={invoice.dateLivraison ?? ""}
       initialDeliveryTime={invoice.deliveryTime ?? ""}
       initialDeliveryAddress={invoice.deliveryAddress ?? ""}
       initialComment={invoice.comment ?? ""}
-
       initialSections={invoice.sections ?? []}
-
       submitLabel="Sauvegarder la facture"
-
       saving={saving}
-
       onSubmit={handleSave}
     />
   );

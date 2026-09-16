@@ -18,10 +18,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import ArticleSectionCard from "@/components/simulation/ArticleSectionCard";
 import ServiceSectionCard from "@/components/simulation/ServiceSectionCard";
 
-import {
-  CateringSection,
-  CateringServiceDay,
-} from "@/types/catering";
+import { CateringSection, CateringServiceDay } from "@/types/catering";
 
 import {
   calculateSection,
@@ -59,6 +56,8 @@ type SimulationEditorSubmitPayload = {
   deliveryAddress: string;
   comment: string;
   sections: CateringSection[];
+  currency: "USD" | "CDF";
+  exchangeRate: number;
   totals: {
     subtotal: number;
     discountAmount: number;
@@ -83,6 +82,8 @@ type Props = {
   submitLabel?: string;
   initialEventDate?: string;
   initialDiscount?: number;
+  initialCurrency?: "USD" | "CDF";
+  initialExchangeRate?: number;
   saving?: boolean;
   onSubmit: (payload: SimulationEditorSubmitPayload) => Promise<void>;
 };
@@ -103,34 +104,47 @@ export default function SimulationEditor({
   initialEventDate = "",
   initialDiscount = 0,
   saving = false,
+  initialCurrency = "USD",
+  initialExchangeRate = 1,
   onSubmit,
 }: Props) {
-
-
   const [eventName, setEventName] = useState(initialEventName);
   const [eventDate, setEventDate] = useState(initialEventDate);
   const [clientName, setClientName] = useState(initialClientName);
   const [clientId, setClientId] = useState(initialClientId);
   const [clients, setClients] = useState<Client[]>([]);
+  const [currency, setCurrency] = useState<"USD" | "CDF">(initialCurrency);
+
+  const [exchangeRate, setExchangeRate] = useState(
+    String(initialExchangeRate || 1),
+  );
   const [showClientModal, setShowClientModal] = useState(false);
   const [numberOfPeople, setNumberOfPeople] = useState(
-    String(initialNumberOfPeople || 0)
+    String(initialNumberOfPeople || 0),
   );
 
   const [dateLivraison, setDateLivraison] = useState(initialDateLivraison);
   const [deliveryTime, setDeliveryTime] = useState(initialDeliveryTime);
-  const [deliveryAddress, setDeliveryAddress] = useState(initialDeliveryAddress);
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    initialDeliveryAddress,
+  );
   const [comment, setComment] = useState(initialComment);
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [showEventDatePicker, setShowEventDatePicker] = useState(false);
   const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState(false);
 
-  const [servicePeriod, setServicePeriod] =
-    useState(initialServicePeriod);
+  const [servicePeriod, setServicePeriod] = useState(initialServicePeriod);
 
   useEffect(() => {
     setEventName(initialEventName || "");
   }, [initialEventName]);
+  useEffect(() => {
+    setCurrency(initialCurrency || "USD");
+  }, [initialCurrency]);
+
+  useEffect(() => {
+    setExchangeRate(String(initialExchangeRate || 1));
+  }, [initialExchangeRate]);
 
   useEffect(() => {
     setEventDate(initialEventDate || "");
@@ -175,22 +189,17 @@ export default function SimulationEditor({
   const [serviceSettings, setServiceSettings] =
     useState<CateringServiceSettings | null>(null);
 
-  const [discountAmount, setDiscountAmount] = useState(String(initialDiscount || 0));
+  const [discountAmount, setDiscountAmount] = useState(
+    String(initialDiscount || 0),
+  );
 
   const [loading, setLoading] = useState(true);
 
   const [formError, setFormError] = useState("");
 
-
   useEffect(() => {
     loadInitialData();
-  }, [
-    initialSections,
-    initialClientId,
-    initialClientName,
-    initialEventName,
-  ]);
-
+  }, [initialSections, initialClientId, initialClientName, initialEventName]);
 
   function addArticleSection(label: string) {
     const id = `article_${Date.now()}_${Math.random()
@@ -229,42 +238,26 @@ export default function SimulationEditor({
       setLoading(true);
       setSections([]);
 
-      const settings =
-        await getCateringServiceSettings();
+      const settings = await getCateringServiceSettings();
 
       setServiceSettings(settings);
 
-      const loadedClients =
-        await fetchClients();
+      const loadedClients = await fetchClients();
 
       setClients(loadedClients);
 
-      if (
-        !initialClientId &&
-        initialClientName.trim()
-      ) {
-        const normalizedInitialName =
-          initialClientName
-            .trim()
-            .toLowerCase();
+      if (!initialClientId && initialClientName.trim()) {
+        const normalizedInitialName = initialClientName.trim().toLowerCase();
 
-        const matchingClient =
-          loadedClients.find(
-            (client) =>
-              client.name
-                ?.trim()
-                .toLowerCase() ===
-              normalizedInitialName
-          );
+        const matchingClient = loadedClients.find(
+          (client) =>
+            client.name?.trim().toLowerCase() === normalizedInitialName,
+        );
 
         if (matchingClient) {
-          setClientId(
-            matchingClient.id
-          );
+          setClientId(matchingClient.id);
 
-          setClientName(
-            matchingClient.name
-          );
+          setClientName(matchingClient.name);
         }
       }
 
@@ -273,11 +266,7 @@ export default function SimulationEditor({
        * reprendre les rubriques existantes.
        */
       if (initialSections?.length) {
-        setSections(
-          initialSections.map(
-            calculateSection
-          )
-        );
+        setSections(initialSections.map(calculateSection));
 
         return;
       }
@@ -289,162 +278,109 @@ export default function SimulationEditor({
       let templates: any[] = [];
 
       try {
-        templates =
-          await getCateringSectionTemplates();
+        templates = await getCateringSectionTemplates();
       } catch (error) {
         console.warn(
           "Templates Firestore indisponibles, fallback local utilisé:",
-          error
+          error,
         );
 
         templates = [];
       }
 
-      const emptySections =
-        createEmptySectionsFromTemplates(
-          templates
-        );
+      const emptySections = createEmptySectionsFromTemplates(templates);
 
-      const fallbackSections: CateringSection[] =
-        [
-          {
-            id: "article_dejeuner",
-            key: "dejeuner",
-            kind: "article",
-            name: "Déjeuner",
-            type: "food",
-            position: 1,
-            enabled: true,
-            billingMode: "perDay",
-            quantity: 0,
-            unitPrice: 0,
-            numberOfDays: 1,
-            total: 0,
-            costRate: 0,
-            costAmount: 0,
-            margin: 0,
-            notes: "",
-          },
-          {
-            id: "service_traiteur",
-            key: "service_traiteur",
-            kind: "service",
-            name: "Service traiteur",
-            type: "service",
-            position: 2,
-            enabled: false,
-            billingMode: "perDay",
-            quantity: 1,
-            unitPrice: 0,
-            numberOfDays: 1,
-            total: 0,
-            costRate: 0,
-            costAmount: 0,
-            margin: 0,
-            serviceMode:
-              "identical_days",
-            serviceDays: [
-              createServiceDay(
-                1,
-                settings
-              ),
-            ],
-            notes: "",
-          },
-        ];
+      const fallbackSections: CateringSection[] = [
+        {
+          id: "article_dejeuner",
+          key: "dejeuner",
+          kind: "article",
+          name: "Déjeuner",
+          type: "food",
+          position: 1,
+          enabled: true,
+          billingMode: "perDay",
+          quantity: 0,
+          unitPrice: 0,
+          numberOfDays: 1,
+          total: 0,
+          costRate: 0,
+          costAmount: 0,
+          margin: 0,
+          notes: "",
+        },
+        {
+          id: "service_traiteur",
+          key: "service_traiteur",
+          kind: "service",
+          name: "Service traiteur",
+          type: "service",
+          position: 2,
+          enabled: false,
+          billingMode: "perDay",
+          quantity: 1,
+          unitPrice: 0,
+          numberOfDays: 1,
+          total: 0,
+          costRate: 0,
+          costAmount: 0,
+          margin: 0,
+          serviceMode: "identical_days",
+          serviceDays: [createServiceDay(1, settings)],
+          notes: "",
+        },
+      ];
 
       const sectionsSource =
-        emptySections.length > 0
-          ? emptySections
-          : fallbackSections;
+        emptySections.length > 0 ? emptySections : fallbackSections;
 
-      const hydratedSections =
-        sectionsSource.map(
-          (section) => {
-            const normalizedSection: CateringSection =
+      const hydratedSections = sectionsSource.map((section) => {
+        const normalizedSection: CateringSection = {
+          ...section,
+
+          billingMode: section.billingMode ?? "perDay",
+        };
+
+        if (normalizedSection.kind !== "service") {
+          return normalizedSection;
+        }
+
+        return {
+          ...normalizedSection,
+
+          serviceDays: [
             {
-              ...section,
+              ...(normalizedSection.serviceDays?.[0] ??
+                createServiceDay(1, settings)),
 
-              billingMode:
-                section.billingMode ??
-                "perDay",
-            };
+              serverRate: settings.defaultServerRate ?? 25,
 
-            if (
-              normalizedSection.kind !==
-              "service"
-            ) {
-              return normalizedSection;
-            }
+              cookRate: settings.defaultCookRate ?? 50,
 
-            return {
-              ...normalizedSection,
+              serverDailyCost: settings.serverDailyCost ?? 20,
 
-              serviceDays: [
-                {
-                  ...(normalizedSection
-                    .serviceDays?.[0] ??
-                    createServiceDay(
-                      1,
-                      settings
-                    )),
+              cookDailyCost: settings.cookDailyCost ?? 40,
 
-                  serverRate:
-                    settings.defaultServerRate ??
-                    25,
+              electricityDailyCost: settings.electricityDailyCost ?? 10,
 
-                  cookRate:
-                    settings.defaultCookRate ??
-                    50,
+              gasDailyCost: settings.gasDailyCost ?? 10,
 
-                  serverDailyCost:
-                    settings.serverDailyCost ??
-                    20,
+              fuelDailyCost: settings.fuelDailyCost ?? 10,
 
-                  cookDailyCost:
-                    settings.cookDailyCost ??
-                    40,
+              extraDailyCost:
+                (settings.electricityDailyCost ?? 10) +
+                (settings.gasDailyCost ?? 10) +
+                (settings.fuelDailyCost ?? 10),
+            },
+          ],
+        };
+      });
 
-                  electricityDailyCost:
-                    settings.electricityDailyCost ??
-                    10,
-
-                  gasDailyCost:
-                    settings.gasDailyCost ??
-                    10,
-
-                  fuelDailyCost:
-                    settings.fuelDailyCost ??
-                    10,
-
-                  extraDailyCost:
-                    (settings.electricityDailyCost ??
-                      10) +
-                    (settings.gasDailyCost ??
-                      10) +
-                    (settings.fuelDailyCost ??
-                      10),
-                },
-              ],
-            };
-          }
-        );
-
-      setSections(
-        hydratedSections.map(
-          calculateSection
-        )
-      );
+      setSections(hydratedSections.map(calculateSection));
     } catch (error) {
-      console.error(
-        "Erreur chargement éditeur simulation:",
-        error
-      );
+      console.error("Erreur chargement éditeur simulation:", error);
 
-      Alert.alert(
-        "Erreur",
-        "Impossible de charger l’éditeur."
-      );
+      Alert.alert("Erreur", "Impossible de charger l’éditeur.");
     } finally {
       setLoading(false);
     }
@@ -465,7 +401,7 @@ export default function SimulationEditor({
   }
   function createServiceDay(
     dayNumber: number,
-    settings = serviceSettings
+    settings = serviceSettings,
   ): CateringServiceDay {
     return {
       id: `service_day_${dayNumber}_${Date.now()}_${Math.random()
@@ -496,13 +432,15 @@ export default function SimulationEditor({
 
   function normalizeServiceDays(
     section: CateringSection,
-    nextNumberOfDays: number
+    nextNumberOfDays: number,
   ): CateringServiceDay[] {
     const count = Math.max(Number(nextNumberOfDays || 1), 1);
     const existingDays = section.serviceDays ?? [];
 
     if (section.serviceMode !== "different_days") {
-      return existingDays.length > 0 ? [existingDays[0]] : [createServiceDay(1)];
+      return existingDays.length > 0
+        ? [existingDays[0]]
+        : [createServiceDay(1)];
     }
 
     return Array.from({ length: count }).map((_, index) => {
@@ -519,14 +457,14 @@ export default function SimulationEditor({
 
     return `${numbers.slice(0, 2)}/${numbers.slice(
       2,
-      4
+      4,
     )}/${numbers.slice(4, 8)}`;
   }
 
   function updateSectionField(
     sectionId: string,
     field: keyof CateringSection,
-    value: any
+    value: any,
   ) {
     setSections((prev) =>
       prev.map((section) => {
@@ -543,15 +481,14 @@ export default function SimulationEditor({
         ) {
           nextSection.serviceDays = normalizeServiceDays(
             nextSection,
-            Number(nextSection.numberOfDays ?? 1)
+            Number(nextSection.numberOfDays ?? 1),
           );
         }
 
         return calculateSection(nextSection);
-      })
+      }),
     );
   }
-
 
   function deleteSection(sectionId: string) {
     if (sections.length <= 1) {
@@ -568,7 +505,7 @@ export default function SimulationEditor({
     }
 
     const sectionToDelete = sections.find(
-      (section) => section.id === sectionId
+      (section) => section.id === sectionId,
     );
 
     if (!sectionToDelete) {
@@ -582,13 +519,13 @@ export default function SimulationEditor({
           .map((section, index) => ({
             ...section,
             position: index + 1,
-          }))
+          })),
       );
     };
 
-    const confirmationMessage =
-      `Voulez-vous supprimer entièrement la rubrique « ${sectionToDelete.name || "Sans nom"
-      } » ?`;
+    const confirmationMessage = `Voulez-vous supprimer entièrement la rubrique « ${
+      sectionToDelete.name || "Sans nom"
+    } » ?`;
 
     if (Platform.OS === "web") {
       const confirmed = window.confirm(confirmationMessage);
@@ -600,28 +537,24 @@ export default function SimulationEditor({
       return;
     }
 
-    Alert.alert(
-      "Supprimer la rubrique",
-      confirmationMessage,
-      [
-        {
-          text: "Annuler",
-          style: "cancel",
-        },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: executeDelete,
-        },
-      ]
-    );
+    Alert.alert("Supprimer la rubrique", confirmationMessage, [
+      {
+        text: "Annuler",
+        style: "cancel",
+      },
+      {
+        text: "Supprimer",
+        style: "destructive",
+        onPress: executeDelete,
+      },
+    ]);
   }
 
   function updateServiceDay(
     sectionId: string,
     dayId: string,
     field: keyof CateringServiceDay,
-    value: any
+    value: any,
   ) {
     setSections((prev) =>
       prev.map((section) => {
@@ -632,15 +565,15 @@ export default function SimulationEditor({
           serviceDays: (section.serviceDays ?? []).map((day) =>
             day.id === dayId
               ? {
-                ...day,
-                [field]: value,
-              }
-              : day
+                  ...day,
+                  [field]: value,
+                }
+              : day,
           ),
         };
 
         return calculateSection(updatedSection);
-      })
+      }),
     );
   }
 
@@ -653,22 +586,21 @@ export default function SimulationEditor({
   const finalMargin = grandTotal - totals.totalCost;
 
   async function handleSubmit() {
-
     try {
       setFormError("");
       if (sections.length === 0) {
         setFormError(
-          "Le document doit contenir au moins une rubrique à facturer."
+          "Le document doit contenir au moins une rubrique à facturer.",
         );
         return;
       }
       const billableSections = sections.filter(
-        (section) => section.enabled !== false
+        (section) => section.enabled !== false,
       );
 
       if (billableSections.length === 0) {
         setFormError(
-          "Le document doit contenir au moins une rubrique active à facturer."
+          "Le document doit contenir au moins une rubrique active à facturer.",
         );
         return;
       }
@@ -681,7 +613,12 @@ export default function SimulationEditor({
         setFormError("Veuillez choisir un client existant.");
         return;
       }
-
+      if (currency === "CDF" && Number(exchangeRate) <= 0) {
+        setFormError(
+          "Veuillez renseigner un taux de change valide pour la facture en francs congolais.",
+        );
+        return;
+      }
 
       await onSubmit({
         eventName: eventName.trim(),
@@ -691,6 +628,8 @@ export default function SimulationEditor({
         deliveryTime,
         deliveryAddress,
         comment,
+        currency,
+        exchangeRate: currency === "CDF" ? Number(exchangeRate) || 1 : 1,
         clientId,
         clientName: clientName.trim(),
         numberOfPeople: Number(numberOfPeople) || 0,
@@ -706,7 +645,9 @@ export default function SimulationEditor({
       });
     } catch (error) {
       console.error("Erreur enregistrement simulation:", error);
-      setFormError("Impossible d’enregistrer la simulation. Vérifie la console.");
+      setFormError(
+        "Impossible d’enregistrer la simulation. Vérifie la console.",
+      );
     }
   }
 
@@ -730,6 +671,65 @@ export default function SimulationEditor({
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Informations générales</Text>
+
+          <Text style={styles.label}>Devise de facturation</Text>
+
+          <View style={styles.currencyRow}>
+            <TouchableOpacity
+              style={[
+                styles.currencyButton,
+                currency === "USD" && styles.currencyButtonActive,
+              ]}
+              onPress={() => setCurrency("USD")}
+            >
+              <Text
+                style={[
+                  styles.currencyButtonText,
+                  currency === "USD" && styles.currencyButtonTextActive,
+                ]}
+              >
+                USD ($)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.currencyButton,
+                currency === "CDF" && styles.currencyButtonActive,
+              ]}
+              onPress={() => setCurrency("CDF")}
+            >
+              <Text
+                style={[
+                  styles.currencyButtonText,
+                  currency === "CDF" && styles.currencyButtonTextActive,
+                ]}
+              >
+                Franc congolais (FC)
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {currency === "CDF" && (
+            <>
+              <Text style={styles.label}>Taux de change</Text>
+
+              <TextInput
+                value={exchangeRate}
+                onChangeText={(value) => {
+                  const cleanValue = value.replace(/[^0-9.]/g, "");
+                  setExchangeRate(cleanValue);
+                }}
+                keyboardType="decimal-pad"
+                placeholder="Ex : 2300"
+                style={styles.input}
+              />
+
+              <Text style={styles.exchangeRateHint}>
+                1 USD = {exchangeRate || "0"} FC
+              </Text>
+            </>
+          )}
 
           <Text style={styles.label}>Nom de l’événement</Text>
           <TextInput
@@ -813,7 +813,9 @@ export default function SimulationEditor({
           {Platform.OS === "web" ? (
             <TextInput
               value={dateLivraison}
-              onChangeText={(value) => setDateLivraison(formatFrenchDate(value))}
+              onChangeText={(value) =>
+                setDateLivraison(formatFrenchDate(value))
+              }
               placeholder="JJ/MM/AAAA"
               keyboardType="numeric"
               maxLength={10}
@@ -837,7 +839,9 @@ export default function SimulationEditor({
 
               {showDeliveryDatePicker && (
                 <DateTimePicker
-                  value={dateLivraison ? parseFrenchDate(dateLivraison) : new Date()}
+                  value={
+                    dateLivraison ? parseFrenchDate(dateLivraison) : new Date()
+                  }
                   mode="date"
                   display="default"
                   locale="fr-FR"
@@ -909,7 +913,8 @@ export default function SimulationEditor({
               <Text style={styles.modalTitle}>Choisir un client</Text>
               {clients.length === 0 ? (
                 <Text style={styles.emptyText}>
-                  Aucun client trouvé. Crée d’abord un client dans le référentiel.
+                  Aucun client trouvé. Crée d’abord un client dans le
+                  référentiel.
                 </Text>
               ) : (
                 <ScrollView
@@ -960,8 +965,6 @@ export default function SimulationEditor({
               onDelete={deleteSection}
             />
           ))}
-
-
 
         <Modal
           visible={showAddSectionModal}
@@ -1032,8 +1035,6 @@ export default function SimulationEditor({
           </View>
         ) : null}
 
-
-
         <TouchableOpacity
           onPress={() => {
             handleSubmit();
@@ -1053,8 +1054,6 @@ export default function SimulationEditor({
 }
 
 const styles = StyleSheet.create({
-
-
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
@@ -1224,7 +1223,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-
   center: {
     flex: 1,
     backgroundColor: "#F4F6F8",
@@ -1255,11 +1253,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-
   textArea: {
     minHeight: 90,
   },
-
 
   disabledButton: {
     opacity: 0.6,
@@ -1271,6 +1267,44 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
+  },
+  currencyRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  currencyButton: {
+    flex: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#F8FAFC",
+    alignItems: "center",
+  },
+
+  currencyButtonActive: {
+    backgroundColor: "#0F766E",
+    borderColor: "#0F766E",
+  },
+
+  currencyButtonText: {
+    color: "#475569",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+
+  currencyButtonTextActive: {
+    color: "#FFFFFF",
+  },
+
+  exchangeRateHint: {
+    marginTop: -7,
+    marginBottom: 12,
+    fontSize: 12,
+    color: "#64748B",
   },
 
   errorText: {
@@ -1306,5 +1340,4 @@ const styles = StyleSheet.create({
   modalScroll: {
     maxHeight: 420,
   },
-
 });
